@@ -1,0 +1,16 @@
+{% extends 'questions_base.html' %}
+
+{% block content_block %}
+    <form class="pure-form" action="" method="post">
+        <fieldset>
+            <legend>Answer</legend>
+
+            <input type="text" name="question" placeholder="Question Id">
+            <input type="text" name="answered" placeholder="Answered Option Id">
+            <input type="text" name="response_time" placeholder="Response Time">
+            <button type="submit" class="pure-button pure-button-primary">Save</button>
+
+            {% csrf_token %}
+        </fieldset>
+    </form>
+{% endblock %}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" href="/static/proso_common/pure-min.css">
+		<link rel="stylesheet" href="/static/proso_common/side-menu.css">
+		{% block head_block %}{% endblock %}
+		<title>{% block title_block %}{% endblock %}</title>
+	</head>
+	<body>
+		<div id="layout">
+			<div id="menu">
+				{% block menu_block %}
+					<div class="pure-menu pure-menu-open">
+						<a class="pure-menu-heading" href="#">{% block menu_heading_block %}{% endblock %}</a>
+						{% block menu_list_block %}{% endblock %}
+					</div>
+				{% endblock %}
+			</div>
+			<div id="main">
+				{% block main_block %}
+					<div class="header">
+						{% block header_block %}{% endblock %}
+					</div>
+					<div class="content">
+						{% block content_block %}{% endblock %}
+					</div>
+				{% endblock %}
+			</div>
+		</div>
+		<script src="/static/proso_common/side-menu.js"></script>
+	</body>
+</html>
+

@@ -1,0 +1,38 @@
+TEST_DIR=$(CURDIR)/test
+RESOURCES_DIR=$(CURDIR)/resources
+
+PEP8=pep8 --ignore=E501,E225,E123
+
+################################################################################
+
+
+upload: test register
+	python setup.py sdist upload
+
+register:
+	python setup.py register
+
+################################################################################
+
+
+test: reinstall
+	cd testproject; python manage.py test proso_common --traceback
+	cd testproject; python manage.py test proso_models --traceback
+	cd testproject; python manage.py test proso_questions --traceback
+
+reinstall: uninstall install
+
+develop: check
+	python setup.py develop
+
+install:check
+	python setup.py sdist
+	pip install dist/proso-apps-*
+
+uninstall:
+	pip uninstall --yes proso-apps
+
+check:
+	${PEP8} proso_models proso_questions proso
+	pyflakes proso_models proso_questions proso
+
