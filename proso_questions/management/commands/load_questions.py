@@ -158,6 +158,8 @@ class Command(BaseCommand):
             for opt_data in question_data['options']:
                 correct = bool(opt_data.get('correct', False))
                 if correct:
+                    if one_option_correct:
+                        raise CommandError('At most one of the options has to be correct!')
                     one_option_correct = correct
                 option = Option(
                     text=opt_data['text'],

@@ -2,15 +2,61 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
-from proso.models.environment import CommonEnvironment
+from proso.models.environment import CommonEnvironment, InMemoryEnvironment
 from datetime import datetime
 from contextlib import closing
 from django.db import connection
+from django.conf import settings
+import re
+import os.path
+import proso.util
+
+
+################################################################################
+# getters
+################################################################################
+
+def get_environment():
+    return proso.util.instantiate(settings.PROSO_ENVIRONMENT)
+
+
+def get_predictive_model():
+    return proso.util.instantiate(settings.PROSO_PREDICTIVE_MODEL)
 
 
 ################################################################################
 # Environment
 ################################################################################
+
+
+class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
+
+    def flush(self):
+        to_skip = [
+            self.NUMBER_OF_ANSWERS, self.NUMBER_OF_FIRST_ANSWERS,
+            self.LAST_ANSWER_TIME, self.LAST_CORRECTNESS
+        ]
+        filename_audit = os.path.join(settings.DATA_DIR, 'environment_flush_audit.csv')
+        filename_variable = os.path.join(settings.DATA_DIR, 'environment_flush_variable.csv')
+        with open(filename_audit, 'w') as file_audit:
+            for (key, u, i_p, i_s), values in self._audit.iteritems():
+                if key in to_skip:
+                    continue
+                for (t, v) in values:
+                    file_audit.write(
+                        ('%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, t.strftime('%Y-%m-%d %H:%M:%S'), v)).replace('None', ''))
+        with open(filename_variable, 'w') as file_variable:
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            for (key, u, i_p, i_s), v in self._state.iteritems():
+                if key in to_skip:
+                    continue
+                file_variable.write(
+                    ('%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, current_time)).replace('None', ''))
+        print 'DELETE FROM proso_models_audit;'
+        print 'DELETE FROM proso_models_variable;'
+        print "\copy proso_models_audit (key, user_id, item_primary_id, item_secondary_id, time, value) FROM '%s' WITH (FORMAT csv);" % filename_audit
+        print "\copy proso_models_variable (key, user_id, item_primary_id, item_secondary_id, value, audit, updated) FROM '%s' WITH (FORMAT csv);" % filename_variable
+
 
 class DatabaseEnvironment(CommonEnvironment):
 
@@ -32,10 +78,10 @@ class DatabaseEnvironment(CommonEnvironment):
             cursor.execute(
                 'SELECT time, value FROM proso_models_audit WHERE '
                 + where +
-                ' ORDER BY time DESC LIMIT ?',
+                ' ORDER BY time DESC LIMIT %s',
                 where_params + [limit])
             result = cursor.fetchall()
-            result.reverse()
+            map(lambda (d, v): (self._ensure_is_datetime(d), v), result)
             return result
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None):
@@ -65,8 +111,11 @@ class DatabaseEnvironment(CommonEnvironment):
                 result = cursor.fetchall()
             else:
                 cursor.execute(
-                    'SELECT MAX(time), item_primary_id, item_secondary_id, value FROM proso_models_audit WHERE ' + where +
-                    ' GROUP BY key, item_primary_id, item_secondary_id',
+                    '''SELECT DISTINCT ON
+                        (key, item_primary_id, item_secondary_id, user_id, item_primary_id)
+                        item_secondary_id, value FROM proso_models_audit WHERE
+                    ''' + where +
+                    ' ORDER BY time',
                     where_params)
                 result = map(lambda (w, x, y, z): (x, y, z), cursor.fetchall())
             if item is None:
@@ -119,7 +168,7 @@ class DatabaseEnvironment(CommonEnvironment):
             cursor.execute(
                 'SELECT MAX(time) FROM proso_models_answer WHERE '
                 + where, where_params)
-            return cursor.fetchone()[0]
+            return self._ensure_is_datetime(cursor.fetchone()[0])
 
     def number_of_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
@@ -149,7 +198,8 @@ class DatabaseEnvironment(CommonEnvironment):
                 'SELECT item_id, MAX(time) FROM proso_models_answer WHERE '
                 + where + ' GROUP BY item_id' + ('' if user is None else ', user_id'),
                 where_params)
-            fetched = dict(cursor.fetchall())
+            fetched = dict(map(lambda (x, d): (x, self._ensure_is_datetime(d)), cursor.fetchall()))
+
             return map(lambda i: fetched.get(i, None), items)
 
     def shift_time(self, new_time):
@@ -161,9 +211,9 @@ class DatabaseEnvironment(CommonEnvironment):
                 '''
                 SELECT item_asked_id = item_answered_id
                 FROM proso_models_answer
-                WHERE user_id = ?
+                WHERE user_id = %s
                 ORDER BY id DESC
-                LIMIT ?
+                LIMIT %s
                 ''', [user, window_size])
             fetched = map(lambda x: x[0], cursor.fetchall())
             if len(fetched) == 0:
@@ -218,7 +268,7 @@ class DatabaseEnvironment(CommonEnvironment):
         else:
             raise Exception("Unsupported type of condition:" + str(type(condition)))
         if top_most and self.time is not None:
-            result_cond = '(%s) AND time < ?' % result_cond
+            result_cond = ('(%s) AND time < ?' % result_cond).replace('?', '%s')
             result_params = result_params + [self.time.strftime('%Y-%m-%d %H:%M:%S')]
         return result_cond, result_params
 
@@ -226,17 +276,26 @@ class DatabaseEnvironment(CommonEnvironment):
         if isinstance(value, list):
             value = filter(lambda x: x is not None, value)
             if len(value) > 0:
-                return column + ' IN (' + ','.join(['?' for i in value]) + ')', value
+                return column + ' IN (' + ','.join(['%s' for i in value]) + ')', value
             elif force_null:
                 return column + ' IS NULL', []
             else:
                 return '1', []
         elif value is not None:
-            return column + ' = ?', [value]
+            return column + ' = %s', [value]
         elif force_null:
             return column + ' IS NULL', []
         else:
             return '1', []
+
+    def _ensure_is_datetime(self, value):
+        if isinstance(value, datetime):
+            return value
+        else:
+            matched = re.match(r'([\d -\:]*)\.\d+', value)
+            if matched is not None:
+                value = matched.groups()[0]
+            return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
 
 
 ################################################################################
@@ -351,6 +410,20 @@ def sort_items(sender, instance, **kwargs):
             backup = instance.item_primary
             instance.item_primary = instance.item_secondary
             instance.item_secondary = backup
+
+
+@receiver(post_save, sender=Answer)
+def update_predictive_model(sender, instance, **kwargs):
+    environment = get_environment()
+    predictive_model = get_predictive_model()
+    predictive_model.predict_and_update(
+        environment,
+        instance.user.id,
+        instance.item_id,
+        instance.item_asked_id == instance.item_answered_id,
+        instance.time,
+        item_answered=instance.item_answered_id,
+        item_asked=instance.item_asked_id)
 
 
 @receiver(post_save, sender=Variable)

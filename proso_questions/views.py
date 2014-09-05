@@ -1,15 +1,13 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from models import Question, Option, DecoratedAnswer
 from proso_models.models import Answer
-from proso.django.response import JsonResponse
+from proso.django.response import render_json, redirect_pass_get
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from django.http import HttpResponse, HttpResponseBadRequest
 from ipware.ip import get_ip
 from django.db import transaction
 import json_enrich
-import proso.util
-from django.conf import settings
 
 
 def home(request):
@@ -19,12 +17,7 @@ def home(request):
 def show_one(request, object_class, id):
     obj = get_object_or_404(object_class, pk=id)
     json = _to_json(request, obj)
-    if 'html' in request.GET:
-        return render(
-            request, 'questions_json.html',
-            {'json': json})
-    else:
-        return JsonResponse(json)
+    return render_json(request, json, template='questions_json.html')
 
 
 def show_more(request, object_class, all=False):
@@ -53,12 +46,7 @@ def show_more(request, object_class, all=False):
     if not all:
         objs = objs[page * limit:(page + 1) * limit]
     json = _to_json(request, list(objs))
-    if 'html' in request.GET:
-        return render(
-            request, 'questions_json.html',
-            {'json': json})
-    else:
-        return JsonResponse(json)
+    return render_json(request, json, template='questions_json.html')
 
 
 def candidates(request, user, n):
@@ -73,12 +61,7 @@ def candidates(request, user, n):
         questions = questions.filter(question_set_id=question_set)
     candidates = Question.objects.candidates(int(user), int(n), questions=questions)
     json = _to_json(request, candidates)
-    if request.GET.get('html', False):
-        return render(
-            request, 'questions_json.html',
-            {'json': json})
-    else:
-        return JsonResponse(map(lambda q: q.to_json(), candidates))
+    return render_json(request, json, template='questions_json.html')
 
 
 @ensure_csrf_cookie
@@ -111,20 +94,8 @@ def answer(request):
             ip_address=get_ip(request))
         decorated_answer.save()
 
-        predictive_model = proso.util.instantiate(settings.PROSO_PREDICTIVE_MODEL)
-        environment = proso.util.instantiate(settings.PROSO_ENVIRONMENT)
-
-        predictive_model.predict_and_update(
-            environment,
-            request.user.id,
-            question.item_id,
-            option_asked.item_id,
-            option_answered.item_id,
-            answer.time)
         if 'html' in request.GET:
-            response = redirect('show_answer', id=decorated_answer.id)
-            response['location'] += '?html'
-            return response
+            return redirect_pass_get(request, 'show_answer', id=decorated_answer.id)
         else:
             return HttpResponse('ok', status=201)
     else:

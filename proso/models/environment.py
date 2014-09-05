@@ -166,7 +166,7 @@ class InMemoryEnvironment(CommonEnvironment):
 
     def _key(self, key, user, item, item_secondary):
         items = sorted([item, item_secondary])
-        return (key, user, items[0], items[1], items[0])
+        return (key, user, items[1], items[0])
 
 
 ################################################################################

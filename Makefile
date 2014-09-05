@@ -16,9 +16,9 @@ register:
 
 
 test: reinstall
-	cd testproject; python manage.py test proso_common --traceback
-	cd testproject; python manage.py test proso_models --traceback
-	cd testproject; python manage.py test proso_questions --traceback
+	python manage.py test proso_common --traceback
+	python manage.py test proso_models --traceback
+	python manage.py test proso_questions --traceback
 
 reinstall: uninstall install
 

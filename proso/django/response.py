@@ -1,7 +1,22 @@
 # -*- coding: utf-8 -*-
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from django.utils import simplejson
+import json as simplejson
 from django.conf import settings
+
+
+def redirect_pass_get(request, view, *args, **kwargs):
+    response = redirect(view, *args, **kwargs)
+    if len(request.GET.items()) > 0:
+        response['location'] += '?' + '&'.join(map(lambda (key, value): '%s=%s' % (key, value), request.GET.items()))
+    return response
+
+
+def render_json(request, json, template=None, status=None):
+    if 'html' in request.GET:
+        return render(request, template, {'json': json}, status=status)
+    else:
+        return JsonResponse(json, status=status)
 
 
 class JsonResponse(HttpResponse):

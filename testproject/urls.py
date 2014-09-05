@@ -7,5 +7,6 @@ urlpatterns = patterns(
     url(r'^media/(?P<path>image/.*)$', 'django.views.static.serve', {
     'document_root': settings.MEDIA_ROOT}),
     url(r'^questions/', include('proso_questions.urls')),
+    url(r'^models/', include('proso_models.urls')),
     url(r'^admin/', include(admin.site.urls)),
 )

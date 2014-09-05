@@ -16,6 +16,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 MEDIA_DIR = os.path.join(BASE_DIR, 'media')
+DATA_DIR = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = 'media/'
 
 
@@ -56,10 +57,19 @@ ROOT_URLCONF = 'testproject.urls'
 
 # Database
 
+# DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': os.path.join(BASE_DIR, 'testproject.sqlite3')
+#    }
+#}
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'testproject.sqlite3')
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'proso_apps',
+        'USER': 'proso_apps',
+        'PASSWORD': 'proso_apps',
+        'HOST': 'localhost'
     }
 }
 
@@ -87,5 +97,5 @@ AUTHENTICATION_BACKENDS = (
     'lazysignup.backends.LazySignupBackend',
 )
 
-PROSO_PREDICTIVE_MODEL = 'proso.models.prediction.AveragePredictiveModel'
+PROSO_PREDICTIVE_MODEL = 'proso.models.prediction.PriorCurrentPredictiveModel'
 PROSO_ENVIRONMENT = 'proso_models.models.DatabaseEnvironment'

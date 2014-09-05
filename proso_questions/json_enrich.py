@@ -1,10 +1,9 @@
 from models import Image, Option, Question
 from django.core.urlresolvers import reverse
 import markdown
-from django.conf import settings
-import datetime
 import numpy
-import proso.util
+from proso.django.request import get_time, get_user_id
+import proso_models.models
 
 
 def enrich(request, json, fun, nested=False):
@@ -141,19 +140,12 @@ def prediction_question(request, json_list, nested):
     object_type = json_list[0]['object_type']
     if object_type != 'question':
         raise Exception('object type "%s" is not supported' % object_type)
-    user = _get_user_id(request)
-    time = _get_time(request)
-
-    def _correct(question_json):
-        for opt in question_json['options']:
-            if opt['correct']:
-                return opt['item_id']
-        return None
+    user = get_user_id(request)
+    time = get_time(request)
     predictions = _predictive_model().predict_more_items(
         _environment(request),
         user,
         object_item_ids,
-        map(_correct, json_list),
         time)
     for question_json, prediction in zip(json_list, predictions):
         question_json['prediction'] = float("{0:.2f}".format(prediction))
@@ -176,16 +168,13 @@ def prediction_group(request, json_list, nested):
         found = questions_dict.get(object_id, [])
         found.append(q)
         questions_dict[object_id] = found
-    correct_options = Option.objects.get_correct_options(questions)
     question_item_ids = map(lambda x: x.item_id, questions)
-    correct_options_item_ids = map(lambda x: x.item_id, correct_options)
-    user = _get_user_id(request)
-    time = _get_time(request)
+    user = get_user_id(request)
+    time = get_time(request)
     predictions = _predictive_model().predict_more_items(
         _environment(request),
         user,
         question_item_ids,
-        correct_options_item_ids,
         time)
     predictions_dict = dict(zip(map(lambda x: x.id, questions), predictions))
     for obj in json_list:
@@ -199,7 +188,7 @@ def number_of_answers(request, json_list, nested):
     object_type = json_list[0]['object_type']
     if object_type != 'question':
         raise Exception('object type "%s" is not supported' % object_type)
-    user = _get_user_id(request)
+    user = get_user_id(request)
     object_item_ids = map(lambda x: x['item_id'], json_list)
     nums = dict(zip(object_item_ids, _environment(request).number_of_answers_more_items(user=user, items=object_item_ids)))
     for obj in json_list:
@@ -215,27 +204,12 @@ def _pass_get_parameters(request, dest_url, ignore=None):
 
 
 def _environment(request):
-    environment = proso.util.instantiate(settings.PROSO_ENVIRONMENT)
-    if 'time' in request.GET:
-        time = _get_time(request)
+    environment = proso_models.models.get_environment()
+    if 'time' in request.GET and request.user.is_staff:
+        time = get_time(request)
         environment.shift_time(time)
     return environment
 
 
 def _predictive_model():
-    return proso.util.instantiate(settings.PROSO_PREDICTIVE_MODEL)
-
-
-def _get_user_id(request):
-    if 'user' in request.GET and request.user.is_staff():
-        return int(request.GET['user'])
-    else:
-        return request.user.id
-
-
-def _get_time(request):
-    if 'time' in request.GET and request.user.is_staff:
-        time = datetime.datetime.strptime(request.GET['time'], '%Y-%m-%d_%H:%M:%S')
-        return time
-    else:
-        datetime.datetime.now()
+    return proso_models.models.get_predictive_model()
