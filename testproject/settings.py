@@ -40,7 +40,8 @@ INSTALLED_APPS = (
     'lazysignup',
     'proso_common',
     'proso_models',
-    'proso_questions'
+    'proso_questions',
+    'proso_ab'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -50,6 +51,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'proso_ab.middleware.ABMiddleware'
 )
 
 ROOT_URLCONF = 'testproject.urls'

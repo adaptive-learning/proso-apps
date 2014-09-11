@@ -10,7 +10,7 @@ setup(
     author='Jan Papousek',
     author_email='jan.papousek@gmail.com',
     namespace_packages = ['proso', 'proso.django'],
-    packages=['proso_models', 'proso_questions', 'proso_common', 'proso', 'proso.django', 'proso.models'],
+    packages=['proso_models', 'proso_questions', 'proso_common', 'proso_ab', 'proso', 'proso.django', 'proso.models'],
     install_requires=[
         'Django>=1.6',
         'django-debug-toolbar>=1.1',

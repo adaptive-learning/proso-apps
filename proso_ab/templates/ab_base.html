@@ -1,0 +1,7 @@
+{% extends 'common_base.html' %}
+{% block menu_heading_block %}AB{% endblock %}
+{% block menu_list_block %}
+	<ul>
+		<li><a href="{% url 'show_experiments' %}?html=True">Experiments</a></li>
+	</ul>
+{% endblock %}
