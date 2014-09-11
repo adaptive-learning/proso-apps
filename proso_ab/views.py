@@ -1,5 +1,5 @@
-from proso.django.response import JsonResponse
 from django.shortcuts import render
+from proso.django.response import render_json
 
 
 def home(request):
@@ -19,9 +19,4 @@ def show_more(request, object_class):
     else:
         objs = object_class.objects.select_related(*select_related).all()
     json = map(lambda x: x.to_json(), objs)
-    if 'html' in request.GET:
-        return render(
-            request, 'ab_json.html',
-            {'json': json})
-    else:
-        return JsonResponse(json)
+    return render_json(request, json, template='ab_json.html')

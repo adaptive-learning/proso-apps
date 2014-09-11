@@ -35,7 +35,7 @@ class ExperimentManager(models.Manager):
             request.session['ab_experiment_values'][name] = value
         return request
 
-    def new_experiment(name, values, default_value, active=True):
+    def new_experiment(self, name, values, default_value, active=True):
         total_prob = sum([probability for (probability, value) in values])
         if total_prob != 100:
             raise Exception('Total probability has to be equal to 100, it was ' + str(total_prob))
@@ -44,7 +44,11 @@ class ExperimentManager(models.Manager):
         experiment = Experiment(name=name, active=active)
         experiment.save()
         for probability, value in values:
-            Value(name=value, probability=probability, is_default=(default_value==value)).save()
+            Value(
+                name=value,
+                probability=probability,
+                is_default=(default_value==value),
+                experiment=experiment).save()
 
     def get_experiment_value(self, request, experiment_name, reason, default=None):
         for exp, value in request.session['ab_experiment_values']:
@@ -71,10 +75,10 @@ class Experiment(models.Model):
         }
 
 
-class ValueManager(models.Model):
+class ValueManager(models.Manager):
 
     def choose_value(self, experiment):
-        values = self.objects.filter(experiment=experiment)
+        values = self.filter(experiment=experiment)
         choice = random.randint(0, 100)
         sum_prob = 0
         for value in values:
@@ -91,6 +95,8 @@ class Value(models.Model):
     probability = models.IntegerField(default=0)
     is_default = models.BooleanField()
 
+    objects = ValueManager()
+
     class Meta:
         app_label = 'proso_ab'
         unique_together = ('experiment', 'is_default')
@@ -100,7 +106,7 @@ class UserValueManager(models.Manager):
 
     def for_user(self, user):
         prepared = dict([
-            (user_value.name.experiment.name, user_value.name.name)
+            (user_value.value.experiment.name, user_value.value.name)
             for user_value in list(self.filter(user=user).select_related('value.experiment'))
         ])
         defaults = dict([
@@ -115,9 +121,9 @@ class UserValueManager(models.Manager):
                 value = Value.objects.choose_value(experiment)
                 UserValue(user=user, value=value).save()
                 prepared[experiment.name] = value.name
-        for default in defaults:
-            if default.experiment.name not in prepared:
-                prepared[default.experiment.name] = default.value
+        for experiment, default in defaults.iteritems():
+            if experiment not in prepared:
+                prepared[experiment] = default.name
         return prepared
 
     def should_be_initialized(self, user, experiment):
@@ -129,7 +135,7 @@ class UserValueManager(models.Manager):
 class UserValue(models.Model):
 
     user = models.ForeignKey(User)
-    value = models.ManyToManyField(Value)
+    value = models.ForeignKey(Value)
 
     objects = UserValueManager()
 
