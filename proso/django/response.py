@@ -7,9 +7,18 @@ from django.conf import settings
 
 def redirect_pass_get(request, view, *args, **kwargs):
     response = redirect(view, *args, **kwargs)
-    if len(request.GET.items()) > 0:
-        response['location'] += '?' + '&'.join(map(lambda (key, value): '%s=%s' % (key, value), request.GET.items()))
+    response['location'] = pass_get_parameters(request, response['location'])
     return response
+
+
+def pass_get_parameters(request, dest_url, ignore=None):
+    ignore = [] if ignore is None else ignore
+    to_pass = filter(lambda (k, v): k not in ignore, request.GET.items())
+    if len(to_pass) == 0:
+        return dest_url
+    else:
+        prefix = '&' if dest_url.find('?') != -1 else '?'
+        return dest_url + prefix + '&'.join(map(lambda (key, value): '%s=%s' % (key, value), to_pass))
 
 
 def render_json(request, json, template=None, status=None):

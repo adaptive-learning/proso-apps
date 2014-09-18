@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from models import Question, Option, DecoratedAnswer
+from models import Question, Option, DecoratedAnswer, Set, Category
 from proso_models.models import Answer
 from proso.django.response import render_json, redirect_pass_get
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -8,6 +8,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from ipware.ip import get_ip
 from django.db import transaction
 import json_enrich
+import proso_common.json_enrich as common_json_enrich
 
 
 def home(request):
@@ -23,20 +24,34 @@ def show_one(request, object_class, id):
 def show_more(request, object_class, all=False):
     limit = 100
     page = int(request.GET.get('page', 0))
-    related = {
-        Question: ['category', 'question_set'],
+    select_related_all = {
+        Question: ['resource'],
         DecoratedAnswer: ['general_answer']
     }
-    select_related = related.get(object_class, [])
+    prefetch_related_all = {
+        Set: ['questions'],
+        Category: ['questions'],
+        Question: [
+            'question_options', 'question_options__option_images',
+            'question_images', 'resource__resource_images', 'set_set', 'category_set'
+        ]
+    }
+    select_related = select_related_all.get(object_class, [])
+    prefetch_related = prefetch_related_all.get(object_class, [])
     if 'filter_column' in request.GET and 'filter_value' in request.GET:
         column = request.GET['filter_column']
         value = request.GET['filter_value']
         if value.isdigit():
             value = int(value)
-        objs = object_class.objects.select_related(*select_related).filter(
-            **{column: value})
+        if column == 'category_id':
+            objs = get_object_or_404(Category, pk=value).questions.all()
+        elif column == 'set_id':
+            objs = get_object_or_404(Set, pk=value).questions.all()
+        else:
+            objs = object_class.objects.filter(**{column: value})
     else:
-        objs = object_class.objects.select_related(*select_related).all()
+        objs = object_class.objects.all()
+    objs.select_related(*select_related).prefetch_related(*prefetch_related)
     if object_class == DecoratedAnswer:
         if 'user' in request.GET and request.user.is_staff():
             user_id = int(request.GET['user'])
@@ -107,14 +122,10 @@ def _to_json(request, value):
         json = map(lambda x: x.to_json(), value)
     else:
         json = value.to_json()
-    json_enrich.enrich_by_object_type(request, json, json_enrich.question, 'answer')
-    json_enrich.enrich_by_object_type(request, json, json_enrich.options, 'question')
-    for object_type in ['option', 'resource', 'question']:
-        json_enrich.enrich_by_object_type(request, json, json_enrich.images, object_type)
+    common_json_enrich.enrich_by_object_type(request, json, json_enrich.question, 'answer')
     if 'stats' in request.GET:
-        for object_type in ['question', 'set', 'category']:
-            json_enrich.enrich_by_object_type(request, json, json_enrich.prediction, object_type)
-
+        for object_type in ['question', 'category', 'set']:
+            common_json_enrich.enrich_by_object_type(request, json, json_enrich.prediction, object_type)
     for enricher in [json_enrich.url, json_enrich.html, json_enrich.questions]:
-        json = json_enrich.enrich(request, json, enricher)
+        json = common_json_enrich.enrich(request, json, enricher)
     return json

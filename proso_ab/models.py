@@ -71,7 +71,8 @@ class Experiment(models.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'active': self.active
+            'active': self.active,
+            'object_type': 'experiment'
         }
 
 
@@ -100,6 +101,16 @@ class Value(models.Model):
     class Meta:
         app_label = 'proso_ab'
         unique_together = ('experiment', 'is_default')
+
+    def to_json(self, nested=False):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'default': self.is_default,
+            'probability': self.probability,
+            'experiment': self.experiment_id if nested else self.experiment.to_json(nested=True),
+            'object_type': 'value'
+        }
 
 
 class UserValueManager(models.Manager):

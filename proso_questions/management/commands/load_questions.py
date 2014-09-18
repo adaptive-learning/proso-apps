@@ -74,14 +74,14 @@ class Command(BaseCommand):
                     "category": {
                         "type": "string"
                     },
-                    "set": {
-                        "type": "string"
+                    "sets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "text": {
                         "type": "string"
-                    },
-                    "number_in_set": {
-                        "type": "number"
                     },
                     "options": {
                         "type": "array",
@@ -131,28 +131,20 @@ class Command(BaseCommand):
             resource = question_data.get('resource', None)
             if resource is not None:
                 resource = resources[resource]
-            number_in_set = question_data.get('number_in_set', None)
-            if 'category' in question_data:
-                if question_data['category'] not in categories:
-                    categories[question_data['category']] = Category.objects.from_name(
-                        question_data['category'])
-                category = categories[question_data['category']]
-            else:
-                category = None
-            if 'set' in question_data:
-                if question_data['set'] not in sets:
-                    sets[question_data['set']] = Set.objects.from_name(
-                        question_data['set'])
-                question_set = sets[question_data['set']]
-            else:
-                question_set = None
             question = Question(
                 text=question_data['text'],
-                resource=resource,
-                category=category,
-                number_in_set=number_in_set,
-                question_set=question_set)
+                resource=resource)
             question.save()
+            if 'sets' in question_data:
+                for s in question_data['sets']:
+                    if s not in sets:
+                        sets[s] = Set.objects.from_name(s)
+                        sets[s].questions.add(question)
+            if 'categories' in question_data:
+                for c in question_data['categories']:
+                    if c not in categories:
+                        categories[c] = Category.objects.from_name(c)
+                        categories[c].questions.add(question)
             self._load_images(question_data, working_directory, question=question)
             one_option_correct = False
             for opt_data in question_data['options']:
@@ -171,6 +163,10 @@ class Command(BaseCommand):
                 self._load_images(opt_data, working_directory, option=option)
             if not one_option_correct:
                 raise CommandError('At least one of the options has to be correct!')
+        for s in sets.values():
+            s.save()
+        for c in categories.values():
+            c.save()
 
     def _load_resources(self, data, working_directory):
         resources = {}

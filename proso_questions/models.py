@@ -26,63 +26,6 @@ class DecoratedAnswer(models.Model):
         }
 
 
-class CategoryManager(models.Manager):
-
-    def from_name(self, name):
-        try:
-            category = self.get(name=name)
-        except Category.DoesNotExist:
-            category = Category(name=name)
-            category.save()
-        return category
-
-
-class Category(models.Model):
-
-    name = models.CharField(max_length=100, unique=True)
-    item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True)
-
-    objects = CategoryManager()
-
-    def to_json(self, nested=False):
-        result = {
-            'object_type': 'category',
-            'name': self.name,
-            'id': self.id,
-            'item_id': self.item_id
-        }
-        if not nested:
-            pass
-        return result
-
-
-class SetManager(models.Manager):
-
-    def from_name(self, name):
-        try:
-            question_set = self.get(name=name)
-        except Set.DoesNotExist:
-            question_set = Set(name=name)
-            question_set.save()
-        return question_set
-
-
-class Set(models.Model):
-
-    name = models.CharField(max_length=100, unique=True)
-    item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True)
-
-    objects = SetManager()
-
-    def to_json(self, nested=False):
-        return {
-            'name': self.name,
-            'object_type': 'set',
-            'id': self.id,
-            'item_id': self.item_id
-        }
-
-
 class Resource(models.Model):
 
     text = models.TextField()
@@ -93,7 +36,8 @@ class Resource(models.Model):
             'object_type': 'resource',
             'id': self.id,
             'item_id': self.item_id,
-            'text': self.text
+            'text': self.text,
+            'images': map(lambda i: i.to_json(nested=True), list(self.resource_images.all()))
         }
 
 
@@ -129,11 +73,6 @@ class Question(models.Model):
     text = models.TextField()
     resource = models.ForeignKey(
         Resource, null=True, blank=True, default=None, related_name='resource_questions')
-    category = models.ForeignKey(
-        Category, null=True, blank=True, default=None, related_name='category_questions')
-    question_set = models.ForeignKey(
-        Set, null=True, blank=True, default=None, related_name='set_questions')
-    number_in_set = models.IntegerField(null=True, blank=True, default=None)
     item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True)
 
     objects = QuestionManager()
@@ -143,16 +82,72 @@ class Question(models.Model):
             'id': self.pk,
             'item_id': self.item_id,
             'text': self.text,
-            'object_type': 'question'
+            'object_type': 'question',
+            'images': map(lambda i: i.to_json(nested=True), self.question_images.all()),
+            'resource': self.resource.to_json(nested=True) if self.resource else None
         }
         if not nested:
-            if self.number_in_set is not None:
-                result['number_in_set'] = self.number_in_set
-            if self.category is not None:
-                result['category'] = self.category.to_json(nested=True)
-            if self.question_set is not None:
-                result['set'] = self.question_set.to_json(nested=True)
+            result['sets'] = map(lambda s: s.to_json(nested=True), self.set_set.all())
+            result['categories'] = map(lambda c: c.to_json(nested=True), self.category_set.all())
+            result['options'] = map(lambda o: o.to_json(nested=True), self.question_options.all())
         return result
+
+
+class CategoryManager(models.Manager):
+
+    def from_name(self, name):
+        try:
+            category = self.get(name=name)
+        except Category.DoesNotExist:
+            category = Category(name=name)
+            category.save()
+        return category
+
+
+class Category(models.Model):
+
+    name = models.CharField(max_length=100, unique=True)
+    questions = models.ManyToManyField(Question)
+    item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True)
+
+    objects = CategoryManager()
+
+    def to_json(self, nested=False):
+        result = {
+            'object_type': 'category',
+            'name': self.name,
+            'id': self.id,
+            'item_id': self.item_id
+        }
+        return result
+
+
+class SetManager(models.Manager):
+
+    def from_name(self, name):
+        try:
+            question_set = self.get(name=name)
+        except Set.DoesNotExist:
+            question_set = Set(name=name)
+            question_set.save()
+        return question_set
+
+
+class Set(models.Model):
+
+    name = models.CharField(max_length=100, unique=True)
+    questions = models.ManyToManyField(Question)
+    item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True)
+
+    objects = SetManager()
+
+    def to_json(self, nested=False):
+        return {
+            'name': self.name,
+            'object_type': 'set',
+            'id': self.id,
+            'item_id': self.item_id,
+        }
 
 
 class OptionManager(models.Manager):
@@ -169,7 +164,7 @@ class OptionManager(models.Manager):
 class Option(models.Model):
 
     text = models.TextField()
-    question = models.ForeignKey(Question, null=False, blank=False)
+    question = models.ForeignKey(Question, null=False, blank=False, related_name='question_options')
     order = models.IntegerField(null=True, blank=True, default=None)
     correct = models.BooleanField(default=False)
     item = models.ForeignKey(Item, null=True, blank=False, default=None, unique=True)
@@ -184,7 +179,8 @@ class Option(models.Model):
             'question': self.question_id if nested else self.question.to_json(nested=True),
             'id': self.pk,
             'item_id': self.item_id,
-            'object_type': 'option'
+            'object_type': 'option',
+            'images': map(lambda i: i.to_json(nested=True), self.option_images.all())
         }
 
 
@@ -192,14 +188,14 @@ class Image(models.Model):
 
     file = models.ImageField(upload_to='image/')
     name = models.CharField(max_length=50)
-    resource = models.ForeignKey(Resource, null=True, blank=True, default=None)
-    question = models.ForeignKey(Question, null=True, blank=True, default=None)
-    option = models.ForeignKey(Option, null=True, blank=True, default=None)
+    resource = models.ForeignKey(Resource, null=True, blank=True, default=None, related_name='resource_images')
+    question = models.ForeignKey(Question, null=True, blank=True, default=None, related_name='question_images')
+    option = models.ForeignKey(Option, null=True, blank=True, default=None, related_name='option_images')
 
     def __str__(self):
         return str(self.to_json())
 
-    def to_json(self):
+    def to_json(self, nested=False):
         return {'name': self.name, 'url': self.file.url}
 
 
