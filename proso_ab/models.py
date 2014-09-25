@@ -9,26 +9,31 @@ class ExperimentManager(models.Manager):
 
     def init_request(self, request):
         if request.user.id is None:
-            request.session['ab_experiment_values'] = {}
-            return
+            del request.session['ab_experiment_values']
+        if request.user.id != request.session.get('ab_experiment_values_user', None):
+            del request.session['ab_experiment_values']
+            del request.session['ab_experiment_values_modified']
+            del request.session['ab_experiment_values_user']
         override = {}
         if request.user.is_staff:
             if 'ab_experiment_reset' in request.GET:
-                request.session['ab_experiment_values'] = {}
+                del request.session['ab_experiment_values']
+                del request.session['ab_experiment_values_modified']
+                del request.session['ab_experiment_values_user']
             for key, value in request.GET.items():
                 if key.startswith('ab_value_'):
                     override[key.replace('ab_value_', '')] = value
+        if 'ab_experiment_values_modified' in request.session:
+            saved_time = datetime.datetime.strptime(
+                request.session['ab_experiment_values_modified'], '%Y-%m-%d %H:%M:%S')
+            if (datetime.datetime.now() - saved_time).total_seconds() < 15 * 60:
+                return
         if 'ab_experiment_values' not in request.session:
             request.session['ab_experiment_values'] = {}
-            request.session['ab_experiment_values_modified'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             request.session['ab_experiment_values_user'] = request.user.id
+        request.session['ab_experiment_values_modified'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         for k, v in override.iteritems():
             request.session['ab_experiment_values'][k] = v
-        if request.user.id != request.session['ab_experiment_values_user']:
-            return
-        saved_time = datetime.datetime.strptime(request.session['ab_experiment_values_modified'], '%Y-%m-%d %H:%M:%S')
-        if (datetime.datetime.now() - saved_time).total_seconds() < 15 * 60:
-            return
         for name, value in UserValue.objects.for_user(request.user).iteritems():
             if name in override:
                 continue
@@ -50,11 +55,14 @@ class ExperimentManager(models.Manager):
                 is_default=(default_value==value),
                 experiment=experiment).save()
 
-    def get_experiment_value(self, request, experiment_name, reason, default=None):
-        for exp, value in request.session['ab_experiment_values']:
+    def get_experiment_value(self, request, experiment_name, default=None):
+        for exp, value in request.session.get('ab_experiment_values', {}):
             if exp == experiment_name:
-                return value
+                return value['name']
         return default
+
+    def get_values(self, request):
+        return request.session.get('ab_experiment_values', {}).values()
 
 
 class Experiment(models.Model):
@@ -117,8 +125,8 @@ class UserValueManager(models.Manager):
 
     def for_user(self, user):
         prepared = dict([
-            (user_value.value.experiment.name, user_value.value.name)
-            for user_value in list(self.filter(user=user).select_related('value.experiment'))
+            (user_value.value.experiment.name, user_value.value.to_json())
+            for user_value in list(self.filter(user=user).select_related('value__experiment'))
         ])
         defaults = dict([
             (value.experiment.name, value)
@@ -131,10 +139,10 @@ class UserValueManager(models.Manager):
             if self.should_be_initialized(user, experiment):
                 value = Value.objects.choose_value(experiment)
                 UserValue(user=user, value=value).save()
-                prepared[experiment.name] = value.name
+                prepared[experiment.name] = value.to_json()
         for experiment, default in defaults.iteritems():
             if experiment not in prepared:
-                prepared[experiment] = default.name
+                prepared[experiment] = default.to_json()
         return prepared
 
     def should_be_initialized(self, user, experiment):
