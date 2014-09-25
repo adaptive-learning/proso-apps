@@ -44,14 +44,21 @@ def show_more(request, object_class, all=False):
         if value.isdigit():
             value = int(value)
         if column == 'category_id':
-            objs = get_object_or_404(Category, pk=value).questions.all()
+            objs = (get_object_or_404(Category, pk=value).
+                    questions.
+                    select_related(*select_related).
+                    prefetch_related(*prefetch_related).all())
         elif column == 'set_id':
-            objs = get_object_or_404(Set, pk=value).questions.all()
+            objs = (get_object_or_404(Set, pk=value).
+                    questions.
+                    select_related(*select_related).
+                    prefetch_related(*prefetch_related).all())
         else:
-            objs = object_class.objects.filter(**{column: value})
+            objs = (object_class.objects.
+                    select_related(*select_related).
+                    prefetch_related(*prefetch_related).filter(**{column: value}))
     else:
-        objs = object_class.objects.all()
-    objs.select_related(*select_related).prefetch_related(*prefetch_related)
+        objs = object_class.objects.select_related(*select_related).prefetch_related(*prefetch_related).all()
     if object_class == DecoratedAnswer:
         if 'user' in request.GET and request.user.is_staff():
             user_id = int(request.GET['user'])

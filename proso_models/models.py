@@ -280,13 +280,13 @@ class DatabaseEnvironment(CommonEnvironment):
             elif force_null:
                 return column + ' IS NULL', []
             else:
-                return '1', []
+                return 'TRUE', []
         elif value is not None:
             return column + ' = %s', [value]
         elif force_null:
             return column + ' IS NULL', []
         else:
-            return '1', []
+            return 'TRUE', []
 
     def _ensure_is_datetime(self, value):
         if isinstance(value, datetime):

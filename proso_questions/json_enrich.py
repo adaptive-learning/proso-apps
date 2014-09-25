@@ -1,9 +1,10 @@
-from models import Question
+from models import Question, Set, Category
 from django.core.urlresolvers import reverse
 import markdown
 from proso.django.request import get_time, get_user_id
 from proso.django.response import pass_get_parameters
 import proso_models.models
+import numpy
 
 
 def question(request, json_list, nested):
@@ -63,6 +64,8 @@ def prediction(request, json_list, nested):
     object_type = json_list[0]['object_type']
     if object_type == 'question':
         return prediction_question(request, json_list, nested)
+    elif object_type in ['set', 'category']:
+        return prediction_group(request, json_list, nested)
     else:
         return json_list
 
@@ -83,6 +86,29 @@ def prediction_question(request, json_list, nested):
         time)
     for question_json, prediction in zip(json_list, predictions):
         question_json['prediction'] = float("{0:.2f}".format(prediction))
+    return json_list
+
+
+def prediction_group(request, json_list, nested):
+    objects = {'set': Set, 'category': Category}
+    if json_list[0]['object_type'] not in objects:
+        return json_list
+    ids = map(lambda o: o['id'], json_list)
+    objs = objects[json_list[0]['object_type']].objects.prefetch_related('questions').filter(id__in=ids)
+    questions_dict = {}
+    for obj in objs:
+        questions_dict[obj.id] = map(lambda q: q.item_id, obj.questions.all())
+    all_questions = list(set([j for js in questions_dict.values() for j in js]))
+    user = get_user_id(request)
+    time = get_time(request)
+    predictions = dict(zip(all_questions, _predictive_model().predict_more_items(
+        _environment(request),
+        user,
+        all_questions,
+        time)))
+    for json in json_list:
+        obj_qs = questions_dict[json['id']]
+        json['prediction'] = float("{0:.2f}".format(numpy.mean(map(lambda q: predictions[q], obj_qs))))
     return json_list
 
 
