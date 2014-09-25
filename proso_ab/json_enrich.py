@@ -4,6 +4,8 @@ from django.core.urlresolvers import reverse
 
 
 def values(request, json_list, nested):
+    if nested:
+        return json_list
     object_ids = map(lambda x: x['id'], json_list)
     values = Value.objects.filter(experiment_id__in=object_ids)
     values_dict = {}
