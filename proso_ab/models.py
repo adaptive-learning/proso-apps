@@ -8,12 +8,13 @@ from django.contrib.auth.models import User
 class ExperimentManager(models.Manager):
 
     def init_request(self, request):
-        if request.user.id is None:
-            del request.session['ab_experiment_values']
-        if request.user.id != request.session.get('ab_experiment_values_user', None):
-            del request.session['ab_experiment_values']
-            del request.session['ab_experiment_values_modified']
-            del request.session['ab_experiment_values_user']
+        if 'ab_experiment_values' in request.session:
+            if request.user.id is None:
+                del request.session['ab_experiment_values']
+            if request.user.id != request.session.get('ab_experiment_values_user'):
+                del request.session['ab_experiment_values']
+                del request.session['ab_experiment_values_modified']
+                del request.session['ab_experiment_values_user']
         override = {}
         if request.user.is_staff:
             if 'ab_experiment_reset' in request.GET:
@@ -126,7 +127,7 @@ class UserValueManager(models.Manager):
     def for_user(self, user):
         prepared = dict([
             (user_value.value.experiment.name, user_value.value.to_json())
-            for user_value in list(self.filter(user=user).select_related('value__experiment'))
+            for user_value in list(self.filter(user_id=user.id).select_related('value__experiment'))
         ])
         defaults = dict([
             (value.experiment.name, value)
