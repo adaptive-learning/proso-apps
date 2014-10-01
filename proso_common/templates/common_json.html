@@ -1,0 +1,9 @@
+{% extends 'common_base.html' %}
+
+{% load jsonify %}
+
+{% block header_block %}<h1>JSON Object</h1>{% endblock %}
+
+{% block content_block %}
+    {{ json|obj2richjson }}
+{% endblock %}
