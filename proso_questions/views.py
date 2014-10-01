@@ -9,6 +9,8 @@ from ipware.ip import get_ip
 from django.db import transaction
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
+from proso.django.request import get_time, get_user_id
+from proso_models.models import get_environment
 
 
 def home(request):
@@ -71,7 +73,12 @@ def show_more(request, object_class, all=False):
     return render_json(request, json, template='questions_json.html')
 
 
-def candidates(request, user, n):
+def practice(request, n):
+    user = get_user_id(request)
+    time = get_time(request)
+    environment = get_environment()
+    if request.user.is_staff and 'time' in request.GET:
+        environment.shift_time(time)
     category = request.GET.get('category', None)
     question_set = request.GET.get('question_set', None)
     questions = None
@@ -81,7 +88,7 @@ def candidates(request, user, n):
         if questions is None:
             questions = Question.objects
         questions = questions.filter(question_set_id=question_set)
-    candidates = Question.objects.candidates(int(user), int(n), questions=questions)
+    candidates = Question.objects.candidates(environment, user, time, int(n), questions=questions)
     json = _to_json(request, candidates)
     return render_json(request, json, template='questions_json.html')
 
