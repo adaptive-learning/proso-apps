@@ -17,6 +17,23 @@ class Environment:
     __metaclass__ = abc.ABCMeta
 
     def process_answer(self, user, item, asked, answered, time, response_time=None, **kwargs):
+        """
+        This method is used during the answer streaming and is called after the
+        predictive model for each answer.
+
+        Args:
+            user (int):
+                identifier of ther user answering the question
+            asked (int):
+                identifier of the asked item
+            answered (int):
+                identifier of the answered item or None if the user answered
+                "I don't know"
+            response_time (int)
+                time the answer took in milliseconds
+            time (datetime.datetime)
+                time when the user answered the question
+        """
         pass
 
     @abc.abstractmethod
@@ -79,7 +96,11 @@ class CommonEnvironment(Environment):
         pass
 
     @abc.abstractmethod
-    def rolling_success(self, user, window_size=10):
+    def confusing_factor(self, item, item_secondary, user=None):
+        pass
+
+    @abc.abstractmethod
+    def confusing_factor_more_items(self, item, items, user=None):
         pass
 
 
@@ -93,6 +114,7 @@ class InMemoryEnvironment(CommonEnvironment):
     NUMBER_OF_FIRST_ANSWERS = 'number_of_first_answers'
     LAST_ANSWER_TIME = 'last_answer_time'
     LAST_CORRECTNESS = 'last_correctness'
+    CONFUSING_FACTOR = 'confusing_factor'
 
     def __init__(self):
         self._audit = {}
@@ -113,6 +135,9 @@ class InMemoryEnvironment(CommonEnvironment):
         update_all(self.NUMBER_OF_ANSWERS, 0, increment)
         update_all(self.LAST_ANSWER_TIME, time, lambda x: time)
         self.write(self.LAST_CORRECTNESS, asked == answered, user=user)
+        if asked != answered and answered is not None:
+            self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered)
+            self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered, user=user)
 
     def audit(self, key, user=None, item=None, item_secondary=None, limit=None):
         audit = self._audit.get(self._key(key, user, item, item_secondary), [])
@@ -163,6 +188,12 @@ class InMemoryEnvironment(CommonEnvironment):
             return 1.0
         else:
             return sum(audit) / float(len(audit))
+
+    def confusing_factor(self, item, item_secondary, user=None):
+        return self.read(self.CONFUSING_FACTOR, item=item, item_secondary=item_secondary, user=user, default=0)
+
+    def confusing_factor_more_items(self, item, items, user=None):
+        return self.read_more_items(self.CONFUSING_FACTOR, item=item, items=items, user=user, default=0)
 
     def _key(self, key, user, item, item_secondary):
         items = sorted([item, item_secondary])
@@ -309,3 +340,19 @@ class TestCommonEnvironment(TestEnvironment):
             diff += 1
         self.assertEqual(1.0, env.rolling_success(user_1))
         self.assertEqual(0.0, env.rolling_success(user_2))
+
+    def test_confusing_factor(self):
+        env = self.generate_environment()
+        user_1 = self.generate_user()
+        user_2 = self.generate_user()
+        items = [self.generate_item() for i in range(10)]
+        self.assertEqual(0, env.confusing_factor(item=items[0], item_secondary=items[1]))
+        self.assertEqual(0, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1))
+        for i in items:
+            env.process_answer(user_1, items[0], items[0], i, datetime.datetime.now())
+        for i in items:
+            env.process_answer(user_2, i, i, i, datetime.datetime.now())
+        self.assertEqual(1, env.confusing_factor(item=items[0], item_secondary=items[1]))
+        self.assertEqual(1, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1))
+        self.assertEqual(0, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_2))
+        self.assertEqual(0, env.confusing_factor(item=items[2], item_secondary=items[3]))

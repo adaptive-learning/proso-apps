@@ -87,7 +87,7 @@ class PredictiveModel:
         pass
 
     @abc.abstractmethod
-    def predict_phase_more_items(self, data, user, item, time, **kwargs):
+    def predict_phase_more_items(self, data, user, items, time, **kwargs):
         pass
 
     @abc.abstractmethod
@@ -108,6 +108,36 @@ class PredictiveModel:
             correct (bool):
                 corretness of the answer
         """
+        pass
+
+
+class SimplePredictiveModel(PredictiveModel):
+
+    """
+    Predictive model which doesn't force you to use environment.
+    """
+
+    def prepare_phase(self, environment, user, item, time, **kwargs):
+        return None
+
+    def prepare_phase_more_items(self, environment, user, items, time, **kwargs):
+        return None
+
+    def predict_phase(self, data, user, item, time, **kwargs):
+        return self.simple_predict(user, item, time, **kwargs)
+
+    def predict_phase_more_items(self, data, user, items, time, **kwargs):
+        return [self.simple_predict(user, item, time, **kwargs) for item in items]
+
+    def update_phase(self, environment, data, prediction, user, item, correct, time, **kwargs):
+        self.simple_update(prediction, user, item, correct, time, **kwargs)
+
+    @abc.abstractmethod
+    def simple_predict(self, user, item, time, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def simple_update(self, prediction, user, item, correct, time, **kwargs):
         pass
 
 
@@ -135,7 +165,7 @@ class AveragePredictiveModel(PredictiveModel):
 
 class PriorCurrentPredictiveModel(PredictiveModel):
 
-    def __init__(self, time_shift=80.0, pfae_good=3.4, pfae_bad=0.3, elo_alpha=1.0, elo_dynamic_alpha=0.05):
+    def __init__(self, time_shift=80.0, pfae_good=3.4, pfae_bad=0.3, elo_alpha=0.8, elo_dynamic_alpha=0.05):
         self._time_shift = time_shift
         self._pfae_good = pfae_good
         self._pfae_bad = pfae_bad
@@ -169,7 +199,7 @@ class PriorCurrentPredictiveModel(PredictiveModel):
         else:
             seconds_ago = (time - data['last_time']).total_seconds() if data['last_time'] else 315460000
             skill = data['current_skill'] + self._time_shift / max(seconds_ago, 0.001)
-        return _predict_simple(skill, len(kwargs['options']) if 'options' in kwargs else 0)[0]
+        return predict_simple(skill, len(kwargs['options']) if 'options' in kwargs else 0)[0]
 
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
         preds = []
@@ -206,14 +236,48 @@ class PriorCurrentPredictiveModel(PredictiveModel):
                 'difficulty', data['difficulty'] - difficulty_alpha * (result - prediction), item=item, time=time)
 
 
-def _predict_simple(skill_asked, number_of_options):
+class ShiftedPredictiveModel(PredictiveModel):
+
+    def __init__(self, predictive_model, prediction_shift):
+        self._predictive_model = predictive_model
+        self._prediction_shift = prediction_shift
+
+    def predict_phase_more_items(self, data, user, items, time, **kwargs):
+        return super(ShiftedPredictiveModel, self).predict_phase_more_items(data, user, items, time, **kwargs)
+
+    def prepare_phase(self, environment, user, item, time, **kwargs):
+        return super(ShiftedPredictiveModel, self).prepare_phase(environment, user, item, time, **kwargs)
+
+    def prepare_phase_more_items(self, environment, user, items, time, **kwargs):
+        return super(ShiftedPredictiveModel, self).prepare_phase_more_items(environment, user, items, time, **kwargs)
+
+    def predict(self, environment, user, item, time, **kwargs):
+        return super(ShiftedPredictiveModel, self).predict(environment, user, item, time, **kwargs) + self._prediction_shift
+
+    def predict_phase(self, data, user, item, time, **kwargs):
+        return super(ShiftedPredictiveModel, self).predict_phase(data, user, item, time, **kwargs)
+
+    def update_phase(self, environment, data, prediction, user, item, correct, time, **kwargs):
+        return super(ShiftedPredictiveModel, self).update_phase(
+            environment, data, prediction, user, item, correct, time, **kwargs)
+
+    def predict_and_update(self, environment, user, item, correct, time, **kwargs):
+        return super(ShiftedPredictiveModel, self).predict_and_update(environment, user, item, correct, time, **kwargs)
+
+    def predict_more_items(self, environment, user, items, time, **kwargs):
+        return map(
+            lambda p: min(1.0, max(0.0, p + self._prediction_shift)),
+            super(ShiftedPredictiveModel, self).predict_more_items(environment, user, items, time, **kwargs))
+
+
+def predict_simple(skill_asked, number_of_options):
     guess = 0.0
     if number_of_options:
         guess = 1.0 / number_of_options
     return (guess + (1 - guess) * _sigmoid(skill_asked), [])
 
 
-def _predict(skill_asked, option_skills):
+def predict(skill_asked, option_skills):
     """
     Returns the probability of correct answer.
 

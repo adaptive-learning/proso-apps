@@ -221,6 +221,12 @@ class DatabaseEnvironment(CommonEnvironment):
             else:
                 return sum(fetched) / float(len(fetched))
 
+    def confusing_factor(self, item, item_secondary, user=None):
+        pass
+
+    def confusing_factor_more_items(self, item, items, user=None):
+        pass
+
     def _where_single(self, key, user=None, item=None, item_secondary=None):
         if key is None:
             raise Exception('Key has to be specified')
