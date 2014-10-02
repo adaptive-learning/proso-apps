@@ -11,6 +11,7 @@ import json_enrich
 import proso_common.json_enrich as common_json_enrich
 from proso.django.request import get_time, get_user_id
 from proso_models.models import get_environment, get_recommendation
+from proso_ab.models import Experiment, Value
 
 
 def home(request):
@@ -117,6 +118,7 @@ def answer(request):
             request.POST.getlist('answered'),
             map(int, request.POST.getlist('response_time'))
         )
+        ab_values = Value.objects.filter(id__in=map(lambda d: d['id'], Experiment.objects.get_values(request)))
         saved_answers = []
         for question_id, option_answered_id, response_time in all_data:
             question = get_object_or_404(Question, pk=question_id)
@@ -133,6 +135,9 @@ def answer(request):
             decorated_answer = DecoratedAnswer(
                 general_answer=answer,
                 ip_address=get_ip(request))
+            decorated_answer.save()
+            for value in ab_values:
+                decorated_answer.ab_values.add(value)
             decorated_answer.save()
             saved_answers.append(decorated_answer)
 

@@ -5,12 +5,14 @@ from django.dispatch import receiver
 from contextlib import closing
 from django.db import connection
 from django.db.models import Count
+from proso_ab.models import Value
 
 
 class DecoratedAnswer(models.Model):
 
     general_answer = models.ForeignKey(Answer, blank=False, null=False, unique=True)
     ip_address = models.CharField(max_length=39, null=True, blank=True, default=None)
+    ab_values = models.ManyToManyField(Value)
 
     def to_json(self, nested=False):
         return {
