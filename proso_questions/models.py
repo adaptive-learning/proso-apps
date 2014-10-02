@@ -43,7 +43,7 @@ class Resource(models.Model):
 
 class QuestionManager(models.Manager):
 
-    def candidates(self, environment, user_id, time, n, questions=None):
+    def practice(self, recommendation, environment, user_id, time, n, questions=None):
         if questions is not None:
             all_ids = map(lambda x: x.item_id, questions)
         else:
@@ -57,12 +57,16 @@ class QuestionManager(models.Manager):
                     """, [n * 100])
                 all_ids = map(lambda x: x[0], cursor.fetchall())
         n = min(n, len(all_ids))
-        recommendation = RandomRecommendation()
         recommended = recommendation.recommend(environment, user_id, all_ids, time, n)
         if questions is not None:
             questions_dict = dict(zip(all_ids, questions))
         else:
-            questions = self.filter(item_id__in=recommended)
+            questions = (self.filter(item_id__in=recommended).
+                    select_related('resource').
+                    prefetch_related(
+                        'question_options', 'question_options__option_images',
+                        'question_images', 'resource__resource_images', 'set_set', 'category_set'
+                    ))
             questions_dict = dict([(q.item_id, q) for q in questions])
         return map(lambda i: questions_dict[i], recommended)
 

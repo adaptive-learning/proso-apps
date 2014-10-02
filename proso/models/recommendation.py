@@ -14,6 +14,9 @@ class Recommendation:
 
 class RandomRecommendation(Recommendation):
 
+    def __init__(self, predictive_model):
+        self._predictive_model = predictive_model
+
     def recommend(self, environment, user, items, time, n, **kwargs):
         candidates = random.sample(items, n)
         if kwargs.get('options'):

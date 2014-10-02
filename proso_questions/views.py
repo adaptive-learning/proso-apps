@@ -10,7 +10,7 @@ from django.db import transaction
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
 from proso.django.request import get_time, get_user_id
-from proso_models.models import get_environment
+from proso_models.models import get_environment, get_recommendation
 
 
 def home(request):
@@ -77,18 +77,14 @@ def practice(request, n):
     user = get_user_id(request)
     time = get_time(request)
     environment = get_environment()
+    recommendation = get_recommendation()
     if request.user.is_staff and 'time' in request.GET:
         environment.shift_time(time)
     category = request.GET.get('category', None)
-    question_set = request.GET.get('question_set', None)
     questions = None
     if category is not None:
-        questions = Question.objects.filter(category_id=category)
-    if question_set is not None:
-        if questions is None:
-            questions = Question.objects
-        questions = questions.filter(question_set_id=question_set)
-    candidates = Question.objects.candidates(environment, user, time, int(n), questions=questions)
+        questions = get_object_or_404(Category, pk=category).questions.all()
+    candidates = Question.objects.practice(recommendation, environment, user, time, int(n), questions=questions)
     json = _to_json(request, candidates)
     return render_json(request, json, template='questions_json.html')
 

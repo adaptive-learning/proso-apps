@@ -24,10 +24,13 @@ def get_predictive_model():
     return proso.util.instantiate(settings.PROSO_PREDICTIVE_MODEL)
 
 
+def get_recommendation():
+    return proso.util.instantiate(settings.PROSO_RECOMMENDATION, [get_predictive_model()])
+
+
 ################################################################################
 # Environment
 ################################################################################
-
 
 class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
 
