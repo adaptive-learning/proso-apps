@@ -199,7 +199,7 @@ class Option(models.Model):
 
 class Image(models.Model):
 
-    file = models.ImageField(upload_to='image/')
+    file = models.ImageField(upload_to='image/', max_length=255)
     name = models.CharField(max_length=50)
     resource = models.ForeignKey(Resource, null=True, blank=True, default=None, related_name='resource_images')
     question = models.ForeignKey(Question, null=True, blank=True, default=None, related_name='question_images')
