@@ -18,7 +18,6 @@ class Evaluator:
         if stdout:
             iterator = progress.bar(iterator, every=len(self._answers) / 100)
         for answer in iterator:
-            print 'HERE'
             pred = self._predictive_model.predict_and_update(
                 self._environment,
                 answer['user'],
@@ -102,8 +101,6 @@ class Evaluator:
         count = np.zeros(bins)  # number of answers in the given bin
         for pred, answer in zip(self._prediction, self._correctness):
             b = min(bins - 1, int(pred * bins))  # find bin
-            if b >= bins:
-                print pred, b, bins
             sum_answer[b] += answer
             sum_pred[b] += pred
             count[b] += 1
