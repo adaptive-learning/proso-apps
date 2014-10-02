@@ -27,7 +27,7 @@ def model(request):
         lambda (i, p): {'item_id': i, 'prediction': "{0:.2f}".format(p)},
         zip(items, preds))
     result['group_prediction'] = "{0:.2f}".format(numpy.mean(preds))
-    return render_json(request, result, template='common_json.html')
+    return render_json(request, result, template='models_json.html')
 
 
 def audit(request, key):
@@ -54,7 +54,7 @@ def audit(request, key):
             'value': value,
             'time': time.strftime('%Y-%m-%d %H:%M:%S')
         }
-    return render_json(request, map(_to_json, values), template='common_json.html')
+    return render_json(request, map(_to_json, values), template='models_json.html')
 
 
 def read(request, key):
@@ -67,7 +67,7 @@ def read(request, key):
         environment.shift_time(time)
     value = environment.read(key, user=user, item=item, item_secondary=item_secondary)
     if value is None:
-        return render_json(request, {'error': 'value not found'}, template='common_json.html', status=404)
+        return render_json(request, {'error': 'value not found'}, template='models_json.html', status=404)
     else:
         return render_json(
             request,
@@ -79,5 +79,5 @@ def read(request, key):
                 'user_id': user,
                 'value': value
             },
-            template='common_json.html'
+            template='models_json.html'
         )
