@@ -73,6 +73,7 @@ def show_more(request, object_class, all=False):
     return render_json(request, json, template='questions_json.html')
 
 
+@allow_lazy_user
 def practice(request, n):
     user = get_user_id(request)
     time = get_time(request)
@@ -89,6 +90,7 @@ def practice(request, n):
     return render_json(request, json, template='questions_json.html')
 
 
+@allow_lazy_user
 def test(request):
     user = get_user_id(request)
     time = get_time(request)

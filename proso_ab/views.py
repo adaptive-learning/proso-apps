@@ -4,6 +4,7 @@ import json_enrich
 import proso_common.json_enrich as common_json_enrich
 from django.shortcuts import get_object_or_404
 from models import Experiment
+from lazysignup.decorators import allow_lazy_user
 
 
 def home(request):
@@ -32,6 +33,7 @@ def show_more(request, object_class):
     return render_json(request, json, template='ab_json.html')
 
 
+@allow_lazy_user
 def profile(request):
     objs = Experiment.objects.get_values(request)
     json = _to_json(request, objs)
