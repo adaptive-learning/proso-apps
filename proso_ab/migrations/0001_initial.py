@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
 
 
 class Migration(SchemaMigration):
@@ -37,7 +35,6 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('proso_ab', ['UserValue'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'Value', fields ['experiment', 'is_default']
         db.delete_unique(u'proso_ab_value', ['experiment_id', 'is_default'])
@@ -50,7 +47,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'UserValue'
         db.delete_table(u'proso_ab_uservalue')
-
 
     models = {
         u'auth.group': {

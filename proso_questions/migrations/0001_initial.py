@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
@@ -89,7 +88,6 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'proso_questions', ['Image'])
 
-
     def backwards(self, orm):
         # Deleting model 'DecoratedAnswer'
         db.delete_table(u'proso_questions_decoratedanswer')
@@ -117,7 +115,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'Image'
         db.delete_table(u'proso_questions_image')
-
 
     models = {
         u'auth.group': {

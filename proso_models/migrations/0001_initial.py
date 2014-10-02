@@ -2,7 +2,6 @@
 from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
 
 
 class Migration(SchemaMigration):
@@ -81,7 +80,6 @@ class Migration(SchemaMigration):
         # Adding index on 'Audit', fields ['key', 'user', 'item_primary', 'item_secondary']
         db.create_index(u'proso_models_audit', ['key', 'user_id', 'item_primary_id', 'item_secondary_id'])
 
-
     def backwards(self, orm):
         # Removing index on 'Audit', fields ['key', 'user', 'item_primary', 'item_secondary']
         db.delete_index(u'proso_models_audit', ['key', 'user_id', 'item_primary_id', 'item_secondary_id'])
@@ -124,7 +122,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'Audit'
         db.delete_table(u'proso_models_audit')
-
 
     models = {
         u'auth.group': {
