@@ -46,14 +46,17 @@ class Resource(models.Model):
 class QuestionManager(models.Manager):
 
     def test(self, user_id, time):
-        return list(Set.objects.
-                annotate(answers_num=Count('item__item_answers__id')).
-                order_by('answers_num', '?').
-                select_related('questions').
-                prefetch_related(
-                    'questions__question_options',
-                    'questions__question_options__option_images',
-                    'questions__question_images', 'questions__resource__resource_images')[0].questions.all())
+        try:
+            return list(Set.objects.
+                    annotate(answers_num=Count('item__item_answers__id')).
+                    order_by('answers_num', '?').
+                    select_related('questions').
+                    prefetch_related(
+                        'questions__question_options',
+                        'questions__question_options__option_images',
+                        'questions__question_images', 'questions__resource__resource_images')[0].questions.all())
+        except IndexError:
+            return []
 
     def practice(self, recommendation, environment, user_id, time, n, questions=None):
         if questions is not None:
