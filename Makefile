@@ -1,7 +1,7 @@
 TEST_DIR=$(CURDIR)/test
 RESOURCES_DIR=$(CURDIR)/resources
 
-PEP8=pep8 --ignore=E501,E225,E123
+PEP8=pep8 --ignore=E501,E225,E123,E128
 
 ################################################################################
 
