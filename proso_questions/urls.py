@@ -3,7 +3,7 @@ from models import Question, Category, Set, Resource, Option, DecoratedAnswer
 
 urlpatterns = patterns(
     'proso_questions.views',
-    url(r'^/', 'home', name='home'),
+    url(r'^home', 'home', name='home'),
     url(r'^question/(?P<id>\d+)', 'show_one', {'object_class': Question}, name='show_question'),
     url(r'^questions', 'show_more', {'object_class': Question}, name='show_questions'),
     url(r'^answer$', 'answer', name='answer'),
