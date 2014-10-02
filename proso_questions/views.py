@@ -104,31 +104,38 @@ def answer(request):
     if request.method == 'GET':
         return render(request, 'questions_answer.html', {})
     elif request.method == 'POST':
-        if 'question' not in request.POST or not request.POST['question']:
+        if len(request.POST.getlist('question', [])) == 0:
             return HttpResponseBadRequest('"question" is not defined')
-        if 'answered' not in request.POST or not request.POST['answered']:
+        if len(request.POST.getlist('answered', [])) == 0:
             return HttpResponseBadRequest('"answered" is not defined')
-        if 'response_time' not in request.POST or not request.POST['response_time']:
+        if len(request.POST.getlist('response_time', [])) == 0:
             return HttpResponseBadRequest('"response_time" is not defined')
-        question = get_object_or_404(Question, pk=request.POST['question'])
-        option_answered = get_object_or_404(Option, pk=request.POST['answered'])
-        option_asked = Option.objects.get_correct_option(question)
-        response_time = int(request.POST['response_time'])
+        all_data = zip(
+            request.POST.getlist('question'),
+            request.POST.getlist('answered'),
+            map(int, request.POST.getlist('response_time'))
+        )
+        saved_answers = []
+        for question_id, option_answered_id, response_time in all_data:
+            question = get_object_or_404(Question, pk=question_id)
+            option_answered = get_object_or_404(Option, pk=option_answered_id)
+            option_asked = Option.objects.get_correct_option(question)
 
-        answer = Answer(
-            user_id=request.user.id,
-            item_id=question.item_id,
-            item_asked_id=option_asked.item_id,
-            item_answered_id=option_answered.item_id,
-            response_time=response_time)
-        answer.save()
-        decorated_answer = DecoratedAnswer(
-            general_answer=answer,
-            ip_address=get_ip(request))
-        decorated_answer.save()
+            answer = Answer(
+                user_id=request.user.id,
+                item_id=question.item_id,
+                item_asked_id=option_asked.item_id,
+                item_answered_id=option_answered.item_id,
+                response_time=response_time)
+            answer.save()
+            decorated_answer = DecoratedAnswer(
+                general_answer=answer,
+                ip_address=get_ip(request))
+            decorated_answer.save()
+            saved_answers.append(decorated_answer)
 
-        if 'html' in request.GET:
-            return redirect_pass_get(request, 'show_answer', id=decorated_answer.id)
+        if 'html' in request.GET and len(saved_answers) == 1:
+            return redirect_pass_get(request, 'show_answer', id=saved_answers[0].id)
         else:
             return HttpResponse('ok', status=201)
     else:
