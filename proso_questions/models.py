@@ -1,10 +1,10 @@
 from django.db import models
-from proso.models.recommendation import RandomRecommendation
-from proso_models.models import Item, DatabaseEnvironment, Answer
+from proso_models.models import Item, Answer
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from contextlib import closing
 from django.db import connection
+from django.db.models import Count
 
 
 class DecoratedAnswer(models.Model):
@@ -42,6 +42,16 @@ class Resource(models.Model):
 
 
 class QuestionManager(models.Manager):
+
+    def test(self, user_id, time):
+        return list(Set.objects.
+                annotate(answers_num=Count('item__item_answers__id')).
+                order_by('answers_num', '?').
+                select_related('questions').
+                prefetch_related(
+                    'questions__question_options',
+                    'questions__question_options__option_images',
+                    'questions__question_images', 'questions__resource__resource_images')[0].questions.all())
 
     def practice(self, recommendation, environment, user_id, time, n, questions=None):
         if questions is not None:

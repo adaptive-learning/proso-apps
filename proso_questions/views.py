@@ -89,6 +89,14 @@ def practice(request, n):
     return render_json(request, json, template='questions_json.html')
 
 
+def test(request):
+    user = get_user_id(request)
+    time = get_time(request)
+    candidates = Question.objects.test(user, time)
+    json = _to_json(request, candidates)
+    return render_json(request, json, template='questions_json.html')
+
+
 @ensure_csrf_cookie
 @allow_lazy_user
 @transaction.atomic
