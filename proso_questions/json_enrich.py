@@ -6,6 +6,8 @@ from proso.django.response import pass_get_parameters
 import proso_models.models
 import numpy
 
+IGNORE_GET = ['category']
+
 
 def question(request, json_list, nested):
     if nested:
@@ -24,7 +26,7 @@ def question(request, json_list, nested):
 def questions(request, json, nested):
     if nested or 'object_type' not in json:
         return json
-    ignored_get = ['filter_column', 'filter_value']
+    ignored_get = ['filter_column', 'filter_value'] + IGNORE_GET
     url_options = '?filter_column={}&filter_value=' + str(json['id'])
     url = reverse('show_questions') + url_options
     if json['object_type'] == 'set':
@@ -55,7 +57,7 @@ def url(request, json, nested):
         json['url'] = pass_get_parameters(
             request,
             reverse('show_' + json['object_type'], kwargs={'id': json['id']}),
-            ['filter_column', 'filter_value']
+            ['filter_column', 'filter_value'] + IGNORE_GET
         )
     return json
 
