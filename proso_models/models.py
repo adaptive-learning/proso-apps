@@ -353,7 +353,7 @@ class Variable(models.Model):
         related_name='item_secondary_variables')
     key = models.CharField(max_length=50)
     value = models.FloatField()
-    audit = models.BooleanField()
+    audit = models.BooleanField(default=True)
     updated = models.DateTimeField(default=datetime.now)
 
     def __str__(self):

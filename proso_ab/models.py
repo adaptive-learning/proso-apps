@@ -103,7 +103,7 @@ class Value(models.Model):
     experiment = models.ForeignKey(Experiment)
     name = models.CharField(max_length=100, unique=True)
     probability = models.IntegerField(default=0)
-    is_default = models.BooleanField()
+    is_default = models.BooleanField(default=False)
 
     objects = ValueManager()
 
