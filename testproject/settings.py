@@ -101,4 +101,4 @@ AUTHENTICATION_BACKENDS = (
 
 PROSO_PREDICTIVE_MODEL = 'proso.models.prediction.PriorCurrentPredictiveModel'
 PROSO_ENVIRONMENT = 'proso_models.models.DatabaseEnvironment'
-PROSO_RECOMMENDATION = 'proso.models.recommendation.RandomRecommendation'
+PROSO_RECOMMENDATION = 'proso.models.recommendation.ScoreRecommendation'
