@@ -12,14 +12,14 @@ setup(
     namespace_packages = ['proso', 'proso.django'],
     packages=['proso_models', 'proso_questions', 'proso_common', 'proso_ab', 'proso', 'proso.django', 'proso.models'],
     install_requires=[
-        'Django>=1.6',
+        'Django>=1.6,<1.7',
         'django-debug-toolbar>=1.1',
         'django-ipware>=0.0.8',
         'django-lazysignup>=0.12.2',
         'django-social-auth>=0.7.28',
         'Markdown>=2.4.1',
         'numpy>=1.8.2',
-        'PIL>=1.1.7',
+        'Pillow>=2.6.0',
         'psycopg2>=2.5.4',
         'South>=0.8'
     ],
