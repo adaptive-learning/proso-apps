@@ -6,6 +6,7 @@ from contextlib import closing
 from django.db import connection
 from django.db.models import Count
 from proso_ab.models import Value
+from django.utils.text import slugify
 
 
 class DecoratedAnswer(models.Model):
@@ -117,7 +118,7 @@ class CategoryManager(models.Manager):
         try:
             category = self.get(name=name)
         except Category.DoesNotExist:
-            category = Category(name=name)
+            category = Category(name=name, url_name=slugify(name))
             category.save()
         return category
 
@@ -127,6 +128,7 @@ class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     questions = models.ManyToManyField(Question)
     item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True)
+    url_name = models.SlugField(unique=True)
 
     objects = CategoryManager()
 
@@ -134,6 +136,7 @@ class Category(models.Model):
         result = {
             'object_type': 'category',
             'name': self.name,
+            'url_name': self.url_name,
             'id': self.id,
             'item_id': self.item_id
         }
