@@ -10,6 +10,7 @@ from django.conf import settings
 import re
 import os.path
 import proso.util
+from decorator import cache_environment_for_item
 
 
 ################################################################################
@@ -103,6 +104,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 else:
                     return audit[0][1]
 
+    @cache_environment_for_item()
     def read_more_items(self, key, items, user=None, item=None, default=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(key, items, user, item)
@@ -173,6 +175,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 + where, where_params)
             return self._ensure_is_datetime(cursor.fetchone()[0])
 
+    @cache_environment_for_item(default=0)
     def number_of_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False)
@@ -183,6 +186,7 @@ class DatabaseEnvironment(CommonEnvironment):
             fetched = dict(cursor.fetchall())
             return map(lambda i: fetched.get(i, 0), items)
 
+    @cache_environment_for_item(default=0)
     def number_of_first_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False)
@@ -194,6 +198,7 @@ class DatabaseEnvironment(CommonEnvironment):
             return map(lambda i: fetched.get(i, 0), items)
         return 0
 
+    @cache_environment_for_item()
     def last_answer_time_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False)

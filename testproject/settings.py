@@ -51,7 +51,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'proso_ab.middleware.ABMiddleware'
+    'proso_ab.middleware.ABMiddleware',
+    'proso_models.cache.RequestCacheMiddleware',
 )
 
 ROOT_URLCONF = 'testproject.urls'
