@@ -139,12 +139,12 @@ class Command(BaseCommand):
                 for s in question_data['sets']:
                     if s not in sets:
                         sets[s] = Set.objects.from_name(s)
-                        sets[s].questions.add(question)
+                    sets[s].questions.add(question)
             if 'categories' in question_data:
                 for c in question_data['categories']:
                     if c not in categories:
                         categories[c] = Category.objects.from_name(c)
-                        categories[c].questions.add(question)
+                    categories[c].questions.add(question)
             self._load_images(question_data, working_directory, question=question)
             one_option_correct = False
             for opt_data in question_data['options']:
