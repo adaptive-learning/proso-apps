@@ -3,24 +3,28 @@ from django.db import models
 import datetime
 import random
 from django.contrib.auth.models import User
+from django.dispatch import receiver
+from django.contrib.auth.signals import user_logged_in
+import logging
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ExperimentManager(models.Manager):
 
     def init_request(self, request):
-        if 'ab_experiment_values' in request.session:
+        if request.user.is_anonymous():
+            self.clear_session(request.session)
+            return
+        if 'ab_experiment_values_modified' in request.session:
             if request.user.id is None:
-                del request.session['ab_experiment_values']
+                self.clear_session(request.session)
             if request.user.id != request.session.get('ab_experiment_values_user'):
-                del request.session['ab_experiment_values']
-                del request.session['ab_experiment_values_modified']
-                del request.session['ab_experiment_values_user']
+                self.clear_session(request.session)
+            if 'ab_experiment_reset' in request.GET:
+                self.clear_session(request.session)
         override = {}
         if request.user.is_staff:
-            if 'ab_experiment_reset' in request.GET:
-                del request.session['ab_experiment_values']
-                del request.session['ab_experiment_values_modified']
-                del request.session['ab_experiment_values_user']
             for key, value in request.GET.items():
                 if key.startswith('ab_value_'):
                     override[key.replace('ab_value_', '')] = value
@@ -39,7 +43,16 @@ class ExperimentManager(models.Manager):
             if name in override:
                 continue
             request.session['ab_experiment_values'][name] = value
+        LOGGER.debug('initialized AB experiments for user %s: %s' % (str(request.user.id), str(request.session.get('ab_experiment_values', []))))
         return request
+
+    def clear_session(self, session):
+        if 'ab_experiment_values' in session:
+            del session['ab_experiment_values']
+        if 'ab_experiment_values_modified' in session:
+            del session['ab_experiment_values_modified']
+        if 'ab_experiment_values_user' in session:
+            del session['ab_experiment_values_user']
 
     def new_experiment(self, name, values, default_value, active=True):
         total_prob = sum([probability for (probability, value) in values])
@@ -125,6 +138,8 @@ class Value(models.Model):
 class UserValueManager(models.Manager):
 
     def for_user(self, user):
+        if user is None or user.id is None:
+            raise Exception('user or user.id is None')
         prepared = dict([
             (user_value.value.experiment.name, user_value.value.to_json())
             for user_value in list(self.filter(user_id=user.id).select_related('value__experiment'))
@@ -139,7 +154,7 @@ class UserValueManager(models.Manager):
                 continue
             if self.should_be_initialized(user, experiment):
                 value = Value.objects.choose_value(experiment)
-                UserValue(user=user, value=value).save()
+                UserValue(user_id=user.id, value=value).save()
                 prepared[experiment.name] = value.to_json()
         for experiment, default in defaults.iteritems():
             if experiment not in prepared:
@@ -161,3 +176,8 @@ class UserValue(models.Model):
 
     class Meta:
         app_label = 'proso_ab'
+
+
+@receiver(user_logged_in)
+def initialize_request(sender, **kwargs):
+    Experiment.objects.init_request(kwargs['request'])
