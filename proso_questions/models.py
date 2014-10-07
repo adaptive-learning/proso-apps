@@ -81,8 +81,7 @@ class QuestionManager(models.Manager):
                     select_related('resource').
                     prefetch_related(
                         'question_options', 'question_options__option_images',
-                        'question_images', 'resource__resource_images', 'set_set', 'category_set'
-                    ))
+                        'question_images', 'resource__resource_images', 'set_set', 'category_set'))
             questions_dict = dict([(q.item_id, q) for q in questions])
         return map(lambda i: questions_dict[i], recommended)
 
