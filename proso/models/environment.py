@@ -2,6 +2,7 @@
 import abc
 import unittest
 import datetime
+from collections import defaultdict
 
 
 ################################################################################
@@ -37,27 +38,31 @@ class Environment:
         pass
 
     @abc.abstractmethod
-    def audit(self, key, user=None, item=None, item_secondary=None, limit=None):
+    def audit(self, key, user=None, item=None, item_secondary=None, limit=None, symmetric=True):
         pass
 
     @abc.abstractmethod
-    def read(self, key, user=None, item=None, item_secondary=None, default=None):
+    def get_items_with_values(self, key, item, user=None):
         pass
 
     @abc.abstractmethod
-    def read_more_items(self, key, items, user=None, item=None, default=None):
+    def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         pass
 
     @abc.abstractmethod
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True):
+    def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
         pass
 
-    def update(self, key, init_value, update_fun, user=None, item=None, item_secondary=None, time=None, audit=True):
+    @abc.abstractmethod
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True):
+        pass
+
+    def update(self, key, init_value, update_fun, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True):
         value = self.read(
-            key, user=user, item=item, item_secondary=item_secondary, default=init_value)
+            key, user=user, item=item, item_secondary=item_secondary, default=init_value, symmetric=symmetric)
         self.write(
             key, update_fun(value), user=user,
-            item=item, item_secondary=item_secondary, time=time, audit=audit)
+            item=item, item_secondary=item_secondary, time=time, audit=audit, symmetric=symmetric)
 
     def flush(self):
         """
@@ -117,8 +122,8 @@ class InMemoryEnvironment(CommonEnvironment):
     CONFUSING_FACTOR = 'confusing_factor'
 
     def __init__(self):
-        self._audit = {}
-        self._state = {}
+        # key -> user -> item_primary -> item_secondary -> [(time, value)]
+        self._data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
 
     def process_answer(self, user, item, asked, answered, time, response_time, **kwargs):
         if time is None:
@@ -139,30 +144,42 @@ class InMemoryEnvironment(CommonEnvironment):
             self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered)
             self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered, user=user)
 
-    def audit(self, key, user=None, item=None, item_secondary=None, limit=None):
-        audit = self._audit.get(self._key(key, user, item, item_secondary), [])
+    def audit(self, key, user=None, item=None, item_secondary=None, limit=None, symmetric=True):
+        items = [item_secondary, item]
+        if symmetric:
+            items = sorted(items)
+        found = list(self._data[key][user][items[1]][items[0]])
         if limit is not None:
-            audit = audit[-limit:]
-        audit.reverse()
-        return audit
+            found = found[-limit:]
+        found.reverse()
+        return found
 
-    def read(self, key, user=None, item=None, item_secondary=None, default=None):
-        return self._state.get(self._key(key, user, item, item_secondary), default)
+    def get_items_with_values(self, key, item, user=None):
+        return map(lambda (i, l): (i, l[-1][1]), self._data[key][user][item].items())
 
-    def read_more_items(self, key, items, user=None, item=None, default=None):
+    def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
+        found = self.audit(key, user, item, item_secondary, limit=1, symmetric=symmetric)
+        if found:
+            return found[-1][1]
+        else:
+            return default
+
+    def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
         return map(
-            lambda i: self.read(key, user, i, item, default),
+            lambda i: self.read(key, user, i, item, default, symmetric),
             items)
 
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True):
-        _key = self._key(key, user, item, item_secondary)
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True):
+        items = [item_secondary, item]
+        if symmetric:
+            items = sorted(items)
         if time is None:
             time = datetime.datetime.now()
-        if audit:
-            previous_audit = self._audit.get(_key, [])
-            previous_audit.append((time, value))
-            self._audit[_key] = previous_audit
-        self._state[_key] = value
+        found = self._data[key][user][items[1]][items[0]]
+        if audit or not found:
+            found.append((time, value))
+        else:
+            found[-1] = (time, value)
 
     def number_of_answers(self, user=None, item=None):
         return self.read(self.NUMBER_OF_ANSWERS, user=user, item=item, default=0)
@@ -195,10 +212,6 @@ class InMemoryEnvironment(CommonEnvironment):
 
     def confusing_factor_more_items(self, item, items, user=None):
         return self.read_more_items(self.CONFUSING_FACTOR, item=item, items=items, user=user, default=0)
-
-    def _key(self, key, user, item, item_secondary):
-        items = sorted([item, item_secondary])
-        return (key, user, items[1], items[0])
 
 
 ################################################################################
@@ -309,6 +322,18 @@ class TestCommonEnvironment(TestEnvironment):
         self.assertEqual(2, env.number_of_first_answers(item=items[0]))
         self.assertEqual([2 for i in items], env.number_of_first_answers_more_items(items))
 
+    def test_symmetry(self):
+        env = self.generate_environment()
+        items = [self.generate_item() for i in range(2)]
+        env.write(key='test_symmetric', value=1, item=items[0], item_secondary=items[1])
+        env.write(
+            key='test_assymetric', value=1, item=items[0],
+            item_secondary=items[1], symmetric=False)
+        self.assertEqual(
+            1, env.read(key='test_symmetric', item=items[1], item_secondary=items[0]))
+        self.assertEqual(
+            None, env.read(key='test_assymetric', item=items[1], item_secondary=items[0]))
+
     def test_last_answer_time(self):
         env = self.generate_environment()
         user_1 = self.generate_user()
@@ -360,3 +385,15 @@ class TestCommonEnvironment(TestEnvironment):
         self.assertEqual(1, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1))
         self.assertEqual(0, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_2))
         self.assertEqual(0, env.confusing_factor(item=items[2], item_secondary=items[3]))
+
+    def test_get_items_with_values(self):
+        env = self.generate_environment()
+        users = [self.generate_user() for i in range(2)]
+        items = [self.generate_item() for i in range(2)]
+        env.write('parent', 10, user=users[0], item=items[0], item_secondary=items[1], symmetric=False)
+        env.write('parent', 20, item=items[1], item_secondary=items[0], symmetric=False)
+        self.assertEqual([(items[1], 10)], env.get_items_with_values('parent', user=users[0], item=items[0]))
+        self.assertEqual([], env.get_items_with_values('parent', user=users[0], item=items[1]))
+        self.assertEqual([], env.get_items_with_values('parent', user=users[1], item=items[0]))
+        self.assertEqual([(items[0], 20)], env.get_items_with_values('parent', item=items[1]))
+        self.assertEqual([], env.get_items_with_values('parent', user=users[0], item=items[1]))
