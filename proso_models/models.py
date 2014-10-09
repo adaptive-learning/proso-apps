@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from proso.models.environment import CommonEnvironment, InMemoryEnvironment
 from datetime import datetime
@@ -80,9 +80,9 @@ class DatabaseEnvironment(CommonEnvironment):
             response_time=response_time)
         answer.save()
 
-    def audit(self, key, user=None, item=None, item_secondary=None, limit=100000):
+    def audit(self, key, user=None, item=None, item_secondary=None, limit=100000, symmetric=True):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where_single(key, user, item, item_secondary)
+            where, where_params = self._where_single(key, user, item, item_secondary, symmetric)
             cursor.execute(
                 'SELECT time, value FROM proso_models_audit WHERE '
                 + where +
@@ -92,9 +92,24 @@ class DatabaseEnvironment(CommonEnvironment):
             map(lambda (d, v): (self._ensure_is_datetime(d), v), result)
             return result
 
-    def read(self, key, user=None, item=None, item_secondary=None, default=None):
+    def get_items_with_values(self, key, item, user=None):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where_single(key, user, item, item_secondary)
+            where, where_params = self._where_single(
+                key, user, item, None, force_null=False, symmetric=False)
+            cursor.execute(
+                '''
+                SELECT
+                    item_secondary_id,
+                    value
+                FROM
+                    proso_models_variable
+                WHERE
+                ''' + where, where_params)
+            return cursor.fetchall()
+
+    def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
+        with closing(connection.cursor()) as cursor:
+            where, where_params = self._where_single(key, user, item, item_secondary, symmetric=symmetric)
             if self.time is None:
                 cursor.execute(
                     'SELECT value FROM proso_models_variable WHERE ' + where,
@@ -109,9 +124,9 @@ class DatabaseEnvironment(CommonEnvironment):
                     return audit[0][1]
 
     @cache_environment_for_item()
-    def read_more_items(self, key, items, user=None, item=None, default=None):
+    def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where_more_items(key, items, user, item)
+            where, where_params = self._where_more_items(key, items, user, item, symmetric=symmetric)
             if self.time is None:
                 cursor.execute(
                     'SELECT item_primary_id, item_secondary_id, value FROM proso_models_variable WHERE '
@@ -134,12 +149,14 @@ class DatabaseEnvironment(CommonEnvironment):
             result = dict(result)
             return map(lambda key: result.get(key, default), items)
 
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True):
         if key is None:
             raise Exception('Key has to be specified')
         if value is None:
             raise Exception('Value has to be specified')
-        items = sorted([item, item_secondary])
+        items = [item_secondary, item]
+        if symmetric:
+            items = sorted(items)
         data = {
             'user_id': user,
             'item_primary_id': items[1],
@@ -269,17 +286,19 @@ class DatabaseEnvironment(CommonEnvironment):
             wrongs = dict(cursor.fetchall())
             return map(lambda i: wrongs.get(i, 0), items)
 
-    def _where_single(self, key, user=None, item=None, item_secondary=None):
+    def _where_single(self, key, user=None, item=None, item_secondary=None, force_null=True, symmetric=True):
         if key is None:
             raise Exception('Key has to be specified')
-        items = sorted([item, item_secondary])
+        items = [item_secondary, item]
+        if symmetric:
+            items = sorted(items)
         return self._where({
             'user_id': user,
             'item_primary_id': items[1],
             'item_secondary_id': items[0],
-            'key': key})
+            'key': key}, force_null=force_null)
 
-    def _where_more_items(self, key, items, user=None, item=None, default=None):
+    def _where_more_items(self, key, items, user=None, item=None, default=None, force_null=True, symmetric=True):
         if key is None:
             raise Exception('Key has to be specified')
         cond_secondary = {
@@ -288,8 +307,8 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_primary_id': items,
             'item_secondary_id': item
         }
-        if item is None or all(map(lambda x: item <= x, items)):
-            return self._where(cond_secondary)
+        if item is None or all(map(lambda x: item <= x, items)) or not symmetric:
+            return self._where(cond_secondary, force_null=force_null)
         cond_primary = {
             'key': key,
             'user_id': user,
@@ -297,17 +316,19 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_secondary_id': items
         }
         if all(map(lambda x: item >= x, items)):
-            return self._where(cond_primary)
+            return self._where(cond_primary, force_null=force_null)
         return self._where({
             'item is primary': cond_primary,
             'item is secondary': cond_secondary
-        })
+        }, force_null=force_null)
 
     def _where(self, condition, force_null=True, top_most=True):
         if isinstance(condition, tuple):
-            result_cond, result_params = self._column_comparison(condition[0], condition[1], force_null=force_null)
+            result_cond, result_params = self._column_comparison(
+                condition[0], condition[1], force_null=force_null)
         elif isinstance(condition, dict):
-            conds, params = zip(*map(lambda x: self._where(x, force_null, top_most=False), condition.items()))
+            conds, params = zip(*map(
+                lambda x: self._where(x, force_null, top_most=False), condition.items()))
             params = [p for ps in params for p in ps]
             operator = ' AND '
             if any(map(lambda x: isinstance(x, dict), condition)):
@@ -447,18 +468,6 @@ class Audit(models.Model):
 ################################################################################
 # Signals
 ################################################################################
-
-@receiver(pre_save, sender=Variable)
-def sort_items(sender, instance, **kwargs):
-    if instance.item_primary is None:
-        instance.item_primary = instance.item_secondary
-        instance.item_secondary = None
-    elif instance.item_secondary is not None:
-        if instance.item_primary.pk < instance.item_secondary.pk:
-            backup = instance.item_primary
-            instance.item_primary = instance.item_secondary
-            instance.item_secondary = backup
-
 
 @receiver(post_save, sender=Answer)
 def update_predictive_model(sender, instance, **kwargs):
