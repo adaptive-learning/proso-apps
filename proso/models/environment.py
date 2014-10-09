@@ -262,6 +262,8 @@ class TestEnvironment(unittest.TestCase):
         expected.reverse()
         found = list(zip(*env.audit('key'))[1])
         self.assertEqual(expected, found)
+        found = list(zip(*env.audit('key', limit=10))[1])
+        self.assertEqual(expected[:10], found)
 
 
 class TestCommonEnvironment(TestEnvironment):
