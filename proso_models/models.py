@@ -66,7 +66,7 @@ class DatabaseEnvironment(CommonEnvironment):
 
     time = None
 
-    def process_answer(self, user, item, asked, answered, time, response_time=None, **kwargs):
+    def process_answer(self, user, item, asked, answered, time, response_time, **kwargs):
         answer = Answer(
             user_id=user,
             item_id=item,
@@ -335,7 +335,7 @@ class Answer(models.Model):
         default=None,
         related_name='item_answered_answers')
     time = models.DateTimeField(default=datetime.now)
-    response_time = models.IntegerField(default=0)
+    response_time = models.IntegerField(null=False, blank=False)
 
     class Meta:
         app_label = 'proso_models'

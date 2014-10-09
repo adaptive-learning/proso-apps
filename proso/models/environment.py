@@ -16,7 +16,7 @@ class Environment:
 
     __metaclass__ = abc.ABCMeta
 
-    def process_answer(self, user, item, asked, answered, time, response_time=None, **kwargs):
+    def process_answer(self, user, item, asked, answered, time, response_time, **kwargs):
         """
         This method is used during the answer streaming and is called after the
         predictive model for each answer.
@@ -120,7 +120,7 @@ class InMemoryEnvironment(CommonEnvironment):
         self._audit = {}
         self._state = {}
 
-    def process_answer(self, user, item, asked, answered, time, response_time=None, **kwargs):
+    def process_answer(self, user, item, asked, answered, time, response_time, **kwargs):
         if time is None:
             time = datetime.datetime.now()
 
@@ -318,7 +318,7 @@ class TestCommonEnvironment(TestEnvironment):
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
-                    env.process_answer(u, i, i, i, datetime.datetime.now())
+                    env.process_answer(u, i, i, i, datetime.datetime.now(), 1000)
         self.assertIsNotNone(env.number_of_first_answers())
         self.assertIsNotNone(env.number_of_first_answers(user=user_1))
         self.assertIsNotNone(env.number_of_first_answers(user=user_1, item=items[0]))
@@ -336,7 +336,7 @@ class TestCommonEnvironment(TestEnvironment):
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
-                    env.process_answer(u, i, i, i + diff, datetime.datetime.now())
+                    env.process_answer(u, i, i, i + diff, datetime.datetime.now(), 1000)
             diff += 1
         self.assertEqual(1.0, env.rolling_success(user_1))
         self.assertEqual(0.0, env.rolling_success(user_2))
@@ -349,9 +349,9 @@ class TestCommonEnvironment(TestEnvironment):
         self.assertEqual(0, env.confusing_factor(item=items[0], item_secondary=items[1]))
         self.assertEqual(0, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1))
         for i in items:
-            env.process_answer(user_1, items[0], items[0], i, datetime.datetime.now())
+            env.process_answer(user_1, items[0], items[0], i, datetime.datetime.now(), 1000)
         for i in items:
-            env.process_answer(user_2, i, i, i, datetime.datetime.now())
+            env.process_answer(user_2, i, i, i, datetime.datetime.now(), 1000)
         self.assertEqual(1, env.confusing_factor(item=items[0], item_secondary=items[1]))
         self.assertEqual(1, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1))
         self.assertEqual(0, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_2))
