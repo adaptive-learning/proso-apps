@@ -1,0 +1,3 @@
+recursive-include proso_*/static *
+recursive-include proso_*/templates *
+recursive-include proso_*/templatetags *
