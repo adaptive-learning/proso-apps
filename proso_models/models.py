@@ -13,6 +13,10 @@ import proso.util
 from decorator import cache_environment_for_item
 
 
+# This is hack to emulate TRUE value on both psql and sqlite
+DATABASE_TRUE = '1 == 1'
+
+
 ################################################################################
 # getters
 ################################################################################
@@ -294,16 +298,16 @@ class DatabaseEnvironment(CommonEnvironment):
             elif force_null:
                 return column + ' IS NULL', []
             else:
-                return 'TRUE', []
+                return DATABASE_TRUE, []
         elif value is not None:
             return column + ' = %s', [value]
         elif force_null:
             return column + ' IS NULL', []
         else:
-            return 'TRUE', []
+            return DATABASE_TRUE, []
 
     def _ensure_is_datetime(self, value):
-        if isinstance(value, datetime):
+        if isinstance(value, datetime) or value is None:
             return value
         else:
             matched = re.match(r'([\d -\:]*)\.\d+', value)
