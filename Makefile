@@ -20,7 +20,7 @@ test: reinstall
 	python manage.py test proso_models --traceback
 	python manage.py test proso_questions --traceback
 
-reinstall: uninstall install
+reinstall: check uninstall install
 
 develop: check
 	python setup.py develop
