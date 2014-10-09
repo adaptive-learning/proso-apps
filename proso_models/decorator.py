@@ -1,6 +1,6 @@
 import inspect
 from functools import wraps
-from cache import get_request_cache
+from cache import get_request_cache, is_cache_prepared
 
 
 class cache_environment_for_item:
@@ -13,7 +13,7 @@ class cache_environment_for_item:
 
         @wraps(func)
         def _wrapper(self, *args, **kwargs):
-            if not func.__name__.endswith('_more_items'):
+            if not func.__name__.endswith('_more_items') or _should_skip():
                 return func(self, *args, **kwargs)
             args_dict = dict(zip(inspect.getargspec(func).args[1:], args) + kwargs.items())
             default = decorator_self._default
@@ -41,6 +41,10 @@ class cache_environment_for_item:
                 inner_result = {}
             return map(lambda item: cached_items.get(item, inner_result.get(item)), items)
         return _wrapper
+
+
+def _should_skip():
+    return not is_cache_prepared()
 
 
 def _cache_has_key(key):

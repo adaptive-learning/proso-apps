@@ -5,6 +5,10 @@ _request_cache = {}
 _installed_middleware = False
 
 
+def is_cache_prepared():
+    return _installed_middleware
+
+
 def get_request_cache():
     assert _installed_middleware, 'RequestCacheMiddleware not loaded'
     return _request_cache[currentThread()]

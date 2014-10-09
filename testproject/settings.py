@@ -59,22 +59,24 @@ ROOT_URLCONF = 'testproject.urls'
 
 
 # Database
-
-# DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': os.path.join(BASE_DIR, 'testproject.sqlite3')
-#    }
-#}
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'proso_apps',
-        'USER': 'proso_apps',
-        'PASSWORD': 'proso_apps',
-        'HOST': 'localhost'
+import sys
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'testproject.sqlite3')
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'proso_apps',
+            'USER': 'proso_apps',
+            'PASSWORD': 'proso_apps',
+            'HOST': 'localhost'
+        }
+    }
 
 # Internationalization
 
