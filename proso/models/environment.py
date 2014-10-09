@@ -143,6 +143,7 @@ class InMemoryEnvironment(CommonEnvironment):
         audit = self._audit.get(self._key(key, user, item, item_secondary), [])
         if limit is not None:
             audit = audit[-limit:]
+        audit.reverse()
         return audit
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None):
@@ -258,6 +259,7 @@ class TestEnvironment(unittest.TestCase):
         for value in range(100):
             env.write('key', value)
         expected = map(float, range(100))
+        expected.reverse()
         found = list(zip(*env.audit('key'))[1])
         self.assertEqual(expected, found)
 
