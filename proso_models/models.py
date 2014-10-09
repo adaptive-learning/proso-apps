@@ -234,10 +234,40 @@ class DatabaseEnvironment(CommonEnvironment):
                 return sum(fetched) / float(len(fetched))
 
     def confusing_factor(self, item, item_secondary, user=None):
-        pass
+        with closing(connection.cursor()) as cursor:
+            where, where_params = self._where({
+                'item_asked_id': item,
+                'item_answered_id': item_secondary,
+                'user_id': user
+            }, force_null=False)
+            cursor.execute(
+                '''
+                SELECT
+                    COUNT(proso_models_answer.id) AS confusing_factor
+                FROM
+                    proso_models_answer
+                WHERE
+                ''' + where, where_params)
+            return cursor.fetchone()[0]
 
     def confusing_factor_more_items(self, item, items, user=None):
-        pass
+        with closing(connection.cursor()) as cursor:
+            where, where_params = self._where({
+                'item_asked_id': item,
+                'item_answered_id': items,
+                'user_id': user
+            }, force_null=False)
+            cursor.execute(
+                '''
+                SELECT
+                    item_answered_id,
+                    COUNT(id) AS confusing_factor
+                FROM
+                    proso_models_answer
+                WHERE
+                ''' + where + ' GROUP BY item_answered_id', where_params)
+            wrongs = dict(cursor.fetchall())
+            return map(lambda i: wrongs.get(i, 0), items)
 
     def _where_single(self, key, user=None, item=None, item_secondary=None):
         if key is None:
