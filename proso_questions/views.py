@@ -77,7 +77,8 @@ def show_more(request, object_class, all=False):
 @ensure_csrf_cookie
 @allow_lazy_user
 @transaction.atomic
-def practice(request, n):
+def practice(request):
+    limit = min(int(request.GET.get('limit', 10)), 100)
     # prepare
     user = get_user_id(request)
     time = get_time(request)
@@ -95,7 +96,7 @@ def practice(request, n):
         _save_answers(request)
         status = 201
     # recommend
-    candidates = Question.objects.practice(recommendation, environment, user, time, int(n), questions=questions)
+    candidates = Question.objects.practice(recommendation, environment, user, time, limit, questions=questions)
     json = _to_json(request, candidates)
     return render_json(request, json, template='questions_json.html', status=status)
 
