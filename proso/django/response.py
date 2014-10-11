@@ -22,6 +22,7 @@ def pass_get_parameters(request, dest_url, ignore=None):
 
 
 def render_json(request, json, template=None, status=None):
+    json = {'data': json}
     if 'html' in request.GET:
         return render(request, template, {'json': json}, status=status)
     else:
