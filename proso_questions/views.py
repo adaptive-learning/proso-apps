@@ -25,7 +25,7 @@ def show_one(request, object_class, id):
 
 
 def show_more(request, object_class, all=False):
-    limit = 100
+    limit = min(int(request.GET.get('limit', 10)), 100)
     page = int(request.GET.get('page', 0))
     select_related_all = {
         Question: ['resource'],
