@@ -1,12 +1,13 @@
 from django.db import models
 from proso_models.models import Item, Answer
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from contextlib import closing
 from django.db import connection
 from django.db.models import Count
 from proso_ab.models import Value
 from django.utils.text import slugify
+from proso_models.models import get_environment
 
 
 class DecoratedAnswer(models.Model):
@@ -229,3 +230,17 @@ def sort_items(sender, instance, **kwargs):
         item = Item()
         item.save()
         instance.item = item
+
+
+@receiver(post_save, sender=Category)
+def question_parents(sender, **kwargs):
+    environment = get_environment()
+    category = kwargs['instance']
+    for question in category.questions.all():
+        environment.write(
+            'parent',
+            1,
+            item=category.item_id,
+            item_secondary=question.item_id,
+            symmetric=False,
+            audit=False)
