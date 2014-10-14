@@ -1,7 +1,7 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from models import Question, Option, DecoratedAnswer, Set, Category
 from proso_models.models import Answer
-from proso.django.response import render_json, redirect_pass_get
+from proso.django.response import render, render_json, redirect_pass_get
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -19,12 +19,42 @@ def home(request):
 
 
 def show_one(request, object_class, id):
+    """
+    Return object of the given type with the specified identifier.
+
+    GET parameters:
+      user:
+        identifier of the current user
+      stats:
+        turn on the enrichment of the objects by some statistics
+      html
+        turn on the HTML version of the API
+    """
     obj = get_object_or_404(object_class, pk=id)
     json = _to_json(request, obj)
-    return render_json(request, json, template='questions_json.html')
+    return render_json(request, json, template='questions_json.html', help_text=show_one.__doc__)
 
 
 def show_more(request, object_class, all=False):
+    """
+    Return list of objects of the given type.
+
+    GET parameters:
+      limit:
+        number of returned questions (default 10, maximum 100)
+      page:
+        current page number
+      filter_column:
+        column name used to filter the results
+      filter_value:
+        value for the specified column used to filter the results
+      user:
+        identifier of the current user
+      stats:
+        turn on the enrichment of the objects by some statistics
+      html
+        turn on the HTML version of the API
+    """
     limit = min(int(request.GET.get('limit', 10)), 100)
     page = int(request.GET.get('page', 0))
     select_related_all = {
@@ -71,13 +101,39 @@ def show_more(request, object_class, all=False):
     if not all:
         objs = objs[page * limit:(page + 1) * limit]
     json = _to_json(request, list(objs))
-    return render_json(request, json, template='questions_json.html')
+    return render_json(request, json, template='questions_json.html', help_text=show_more.__doc__)
 
 
 @ensure_csrf_cookie
 @allow_lazy_user
 @transaction.atomic
 def practice(request):
+    """
+    Return the given number of questions to practice adaptively. In case of
+    POST request, try to save the answer.
+
+    GET parameters:
+      limit:
+        number of returned questions (default 10, maximum 100)
+      category:
+        identifier for the category which is meant to be practiced
+      time:
+        time in format '%Y-%m-%d_%H:%M:%S' used for practicing
+      user:
+        identifier for the practicing user (only for stuff users)
+      stats:
+        turn on the enrichment of the objects by some statistics
+      html
+        turn on the HTML version of the API
+
+    POST parameters:
+      question:
+        identifer for the asked question
+      answered:
+        identifier for the answered option
+      response_time:
+        number of milliseconds the given user spent by answering the question
+    """
     limit = min(int(request.GET.get('limit', 10)), 100)
     # prepare
     user = get_user_id(request)
@@ -98,24 +154,52 @@ def practice(request):
     # recommend
     candidates = Question.objects.practice(recommendation, environment, user, time, limit, questions=questions)
     json = _to_json(request, candidates)
-    return render_json(request, json, template='questions_json.html', status=status)
+    return render_json(request, json, template='questions_json.html', status=status, help_text=practice.__doc__)
 
 
 @allow_lazy_user
 def test(request):
+    """
+    Return questions to perform a test.
+
+    GET parameters:
+      time:
+        time in format '%Y-%m-%d_%H:%M:%S' used for practicing
+      user:
+        identifier for the practicing user (only for stuff users)
+      stats:
+        turn on the enrichment of the objects by some statistics
+      html
+        turn on the HTML version of the API
+    """
     user = get_user_id(request)
     time = get_time(request)
     candidates = Question.objects.test(user, time)
     json = _to_json(request, candidates)
-    return render_json(request, json, template='questions_json.html')
+    return render_json(request, json, template='questions_json.html', help_text=test.__doc__)
 
 
 @ensure_csrf_cookie
 @allow_lazy_user
 @transaction.atomic
 def answer(request):
+    """
+    Save the answer.
+
+    GET parameters:
+      html
+        turn on the HTML version of the API
+
+    POST parameters:
+      question:
+        identifer for the asked question
+      answered:
+        identifier for the answered option
+      response_time:
+        number of milliseconds the given user spent by answering the question
+    """
     if request.method == 'GET':
-        return render(request, 'questions_answer.html', {})
+        return render(request, 'questions_answer.html', {}, help_text=answer.__doc__)
     elif request.method == 'POST':
         saved_answers = _save_answers(request)
         if 'html' in request.GET and len(saved_answers) == 1:
