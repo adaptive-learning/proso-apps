@@ -58,10 +58,13 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                     continue
                 file_variable.write(
                     ('%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t)).replace('None', ''))
+        print 'BEGIN;'
+        print 'SET CONSTRAINTS ALL DEFERRED;'
         print 'DELETE FROM proso_models_audit;'
         print 'DELETE FROM proso_models_variable;'
         print "\copy proso_models_audit (key, user_id, item_primary_id, item_secondary_id, time, value) FROM '%s' WITH (FORMAT csv);" % filename_audit
         print "\copy proso_models_variable (key, user_id, item_primary_id, item_secondary_id, value, audit, updated) FROM '%s' WITH (FORMAT csv);" % filename_variable
+        print 'COMMIT;'
 
 
 class DatabaseEnvironment(CommonEnvironment):
