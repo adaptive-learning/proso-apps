@@ -2,8 +2,13 @@
 
 {% load jsonify %}
 
-{% block header_block %}<h1>JSON Object</h1>{% endblock %}
+{% block header_block %}{% endblock %}
 
 {% block content_block %}
-    {{ json|obj2richjson }}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <h2>JSON object</h2>
+    <code>{{ json|obj2richjson }}</code>
 {% endblock %}

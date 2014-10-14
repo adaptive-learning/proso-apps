@@ -1,5 +1,9 @@
 {% extends 'questions_base.html' %}
 
 {% block content_block %}
-    <p>Welcome in API for PROSO Questions</p>
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <h2>Welcome in API for PROSO Questions</h2>
 {% endblock %}

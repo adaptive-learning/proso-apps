@@ -1,6 +1,11 @@
 {% extends 'questions_base.html' %}
 
 {% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <h2>Emulate POST request</h2>
     <form class="pure-form" action="" method="post">
         <fieldset>
             <legend>Answer</legend>
