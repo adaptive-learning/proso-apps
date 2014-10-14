@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from django.shortcuts import render, redirect
+from django.shortcuts import render as original_render, redirect
 from django.http import HttpResponse
 import json as simplejson
 from django.conf import settings
+import markdown
 
 
 def redirect_pass_get(request, view, *args, **kwargs):
@@ -21,10 +22,24 @@ def pass_get_parameters(request, dest_url, ignore=None):
         return dest_url + prefix + '&'.join(map(lambda (key, value): '%s=%s' % (key, value), to_pass))
 
 
-def render_json(request, json, template=None, status=None):
+def render(request, template, data, *args, **kwargs):
+    help_text = None
+    if 'help_text' in kwargs:
+        help_text = kwargs['help_text']
+        del kwargs['help_text']
+    if help_text is not None:
+        help_text = markdown.markdown(help_text)
+    if help_text is not None or 'help_text' not in data:
+        data['help_text'] = help_text
+    return original_render(request, template, data, *args, **kwargs)
+
+
+def render_json(request, json, template=None, status=None, help_text=None):
     json = {'data': json}
     if 'html' in request.GET:
-        return render(request, template, {'json': json}, status=status)
+        if help_text is not None:
+            help_text = markdown.markdown(help_text)
+        return render(request, template, {'json': json, 'help_text': help_text}, status=status)
     else:
         return JsonResponse(json, status=status)
 
