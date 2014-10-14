@@ -47,19 +47,17 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
         filename_audit = os.path.join(settings.DATA_DIR, 'environment_flush_audit.csv')
         filename_variable = os.path.join(settings.DATA_DIR, 'environment_flush_variable.csv')
         with open(filename_audit, 'w') as file_audit:
-            for (key, u, i_p, i_s), values in self._audit.iteritems():
+            for (key, u, i_p, i_s, t, v) in self.export_audit():
                 if key in to_skip:
                     continue
-                for (t, v) in values:
-                    file_audit.write(
-                        ('%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, t.strftime('%Y-%m-%d %H:%M:%S'), v)).replace('None', ''))
+                file_audit.write(
+                    ('%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, t.strftime('%Y-%m-%d %H:%M:%S'), v)).replace('None', ''))
         with open(filename_variable, 'w') as file_variable:
-            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            for (key, u, i_p, i_s), v in self._state.iteritems():
+            for (key, u, i_p, i_s, t, v) in self.export_values():
                 if key in to_skip:
                     continue
                 file_variable.write(
-                    ('%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, current_time)).replace('None', ''))
+                    ('%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t)).replace('None', ''))
         print 'DELETE FROM proso_models_audit;'
         print 'DELETE FROM proso_models_variable;'
         print "\copy proso_models_audit (key, user_id, item_primary_id, item_secondary_id, time, value) FROM '%s' WITH (FORMAT csv);" % filename_audit
@@ -285,6 +283,12 @@ class DatabaseEnvironment(CommonEnvironment):
                 ''' + where + ' GROUP BY item_answered_id', where_params)
             wrongs = dict(cursor.fetchall())
             return map(lambda i: wrongs.get(i, 0), items)
+
+    def export_values():
+        pass
+
+    def export_audit():
+        pass
 
     def _where_single(self, key, user=None, item=None, item_secondary=None, force_null=True, symmetric=True):
         if key is None:

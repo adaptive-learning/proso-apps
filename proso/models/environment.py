@@ -64,6 +64,14 @@ class Environment:
             key, update_fun(value), user=user,
             item=item, item_secondary=item_secondary, time=time, audit=audit, symmetric=symmetric)
 
+    @abc.abstractmethod
+    def export_values(self):
+        pass
+
+    @abc.abstractmethod
+    def export_audit(self):
+        pass
+
     def flush(self):
         """
         This method is called to enforce persistence of the data. This is
@@ -212,6 +220,23 @@ class InMemoryEnvironment(CommonEnvironment):
 
     def confusing_factor_more_items(self, item, items, user=None):
         return self.read_more_items(self.CONFUSING_FACTOR, item=item, items=items, user=user, default=0)
+
+    def export_values(self):
+        # key -> user -> item_primary -> item_secondary -> [(time, value)]
+        for key, users in self._data.iteritems():
+            for user, primaries in users.iteritems():
+                for item_primary, secondaries in primaries.iteritems():
+                    for item_secondary, values in secondaries.iteritems():
+                        time, value = values[-1]
+                        yield (key, user, item_primary, item_secondary, time, value)
+
+    def export_audit(self):
+        for key, users in self._data.iteritems():
+            for user, primaries in users.iteritems():
+                for item_primary, secondaries in primaries.iteritems():
+                    for item_secondary, values in secondaries.iteritems():
+                        for time, value in values:
+                            yield (key, user, item_primary, item_secondary, time, value)
 
 
 ################################################################################
