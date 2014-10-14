@@ -142,6 +142,7 @@ class Command(BaseCommand):
                     sets[s].questions.add(question)
             if 'categories' in question_data:
                 for c in question_data['categories']:
+                    c = unicode(str(c), "utf-8")
                     if c not in categories:
                         categories[c] = Category.objects.from_name(c)
                     categories[c].questions.add(question)
