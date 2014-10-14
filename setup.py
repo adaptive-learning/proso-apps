@@ -34,6 +34,7 @@ setup(
         'django-ipware>=0.0.8',
         'django-lazysignup>=0.12.2',
         'django-social-auth>=0.7.28',
+        'jsonschema>=2.4.0',
         'Markdown>=2.4.1',
         'numpy>=1.8.2',
         'Pillow>=2.6.0',
