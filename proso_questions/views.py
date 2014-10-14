@@ -239,8 +239,8 @@ def _save_answers(request):
     ab_values = Value.objects.filter(id__in=map(lambda d: d['id'], Experiment.objects.get_values(request)))
     saved_answers = []
     for question_id, option_answered_id, response_time in all_data:
-        question = get_object_or_404(Question, pk=question_id)
-        option_answered = get_object_or_404(Option, pk=option_answered_id)
+        question = Question.objects.get(pk=question_id)
+        option_answered = Option.objects.get(pk=option_answered_id)
         option_asked = Option.objects.get_correct_option(question)
 
         answer = Answer(
