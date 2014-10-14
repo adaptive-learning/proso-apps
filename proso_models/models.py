@@ -14,7 +14,7 @@ from decorator import cache_environment_for_item
 
 
 # This is hack to emulate TRUE value on both psql and sqlite
-DATABASE_TRUE = '1 == 1'
+DATABASE_TRUE = '1 = 1'
 
 
 ################################################################################
