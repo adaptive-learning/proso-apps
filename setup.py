@@ -14,9 +14,11 @@ setup(
     packages=[
         'proso_models',
         'proso_models.management',
+        'proso_models.management.commands',
         'proso_models.migrations',
         'proso_questions',
         'proso_questions.management',
+        'proso_questions.management.commands',
         'proso_questions.migrations',
         'proso_common',
         'proso_ab',
