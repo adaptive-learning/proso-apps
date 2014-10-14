@@ -222,7 +222,6 @@ class InMemoryEnvironment(CommonEnvironment):
         return self.read_more_items(self.CONFUSING_FACTOR, item=item, items=items, user=user, default=0)
 
     def export_values(self):
-        # key -> user -> item_primary -> item_secondary -> [(time, value)]
         for key, users in self._data.iteritems():
             for user, primaries in users.iteritems():
                 for item_primary, secondaries in primaries.iteritems():
