@@ -233,8 +233,9 @@ class InMemoryEnvironment(CommonEnvironment):
             for user, primaries in users.iteritems():
                 for item_primary, secondaries in primaries.iteritems():
                     for item_secondary, values in secondaries.iteritems():
-                        time, value = values[-1]
-                        yield (key, user, item_primary, item_secondary, time, value)
+                        if len(values) > 0:
+                            time, value = values[-1]
+                            yield (key, user, item_primary, item_secondary, time, value)
 
     def export_audit(self):
         for key, users in self._data.iteritems():
