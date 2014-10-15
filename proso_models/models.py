@@ -168,10 +168,11 @@ class DatabaseEnvironment(CommonEnvironment):
             variable = Variable.objects.get(**data)
         except Variable.DoesNotExist:
             variable = Variable(**data)
-        variable.value = value
-        variable.audit = audit
-        variable.updated = datetime.now() if time is None else time
-        variable.save()
+        if variable.value != value:
+            variable.value = value
+            variable.audit = audit
+            variable.updated = datetime.now() if time is None else time
+            variable.save()
 
     def number_of_answers(self, user=None, item=None):
         with closing(connection.cursor()) as cursor:
