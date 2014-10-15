@@ -242,5 +242,4 @@ def question_parents(sender, **kwargs):
             1,
             item=category.item_id,
             item_secondary=question.item_id,
-            symmetric=False,
-            audit=False)
+            symmetric=False)
