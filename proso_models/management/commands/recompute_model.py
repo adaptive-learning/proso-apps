@@ -5,6 +5,7 @@ from contextlib import closing
 from django.db import connection
 import re
 import datetime
+from proso_models.models import get_predictive_model
 
 
 class Command(BaseCommand):
@@ -15,7 +16,7 @@ class Command(BaseCommand):
         else:
             env_class = 'proso_models.models.InMemoryDatabaseFlushEnvironment'
         environment = proso.util.instantiate(env_class)
-        predictive_model = proso.util.instantiate(settings.PROSO_PREDICTIVE_MODEL)
+        predictive_model = get_predictive_model()
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
