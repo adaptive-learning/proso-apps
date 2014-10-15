@@ -16,6 +16,7 @@ register:
 
 
 test: reinstall
+	python -m unittest discover -p test_*.py -s proso
 	python manage.py test proso_common --traceback
 	python manage.py test proso_models --traceback
 	python manage.py test proso_questions --traceback
