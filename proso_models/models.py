@@ -11,6 +11,7 @@ import re
 import os.path
 import proso.util
 from decorator import cache_environment_for_item
+from collections import defaultdict
 
 
 # This is hack to emulate TRUE value on both psql and sqlite
@@ -107,6 +108,25 @@ class DatabaseEnvironment(CommonEnvironment):
                 WHERE
                 ''' + where, where_params)
             return cursor.fetchall()
+
+    def get_items_with_values_more_items(self, key, items, user=None):
+        with closing(connection.cursor()) as cursor:
+            where, where_params = self._where_more_items(
+                key, items, user, None, force_null=['user_id'], symmetric=False)
+            cursor.execute(
+                '''
+                SELECT
+                    item_primary_id,
+                    item_secondary_id,
+                    value
+                FROM
+                    proso_models_variable
+                WHERE
+                ''' + where, where_params)
+            result = defaultdict(list)
+            for p_id, s_id, val in cursor:
+                result[p_id].append((s_id, val))
+            return map(lambda i: result[i], items)
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:

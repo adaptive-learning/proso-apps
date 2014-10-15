@@ -46,6 +46,10 @@ class Environment:
         pass
 
     @abc.abstractmethod
+    def get_items_with_values_more_items(self, key, items, user=None):
+        pass
+
+    @abc.abstractmethod
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         pass
 
@@ -164,6 +168,9 @@ class InMemoryEnvironment(CommonEnvironment):
 
     def get_items_with_values(self, key, item, user=None):
         return map(lambda (i, l): (i, l[-1][1]), self._data[key][user][item].items())
+
+    def get_items_with_values_more_items(self, key, items, user=None):
+        return map(lambda i: self.get_items_with_values(key, i, user), items)
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         found = self.audit(key, user, item, item_secondary, limit=1, symmetric=symmetric)
@@ -421,3 +428,16 @@ class TestCommonEnvironment(TestEnvironment):
         self.assertEqual([], env.get_items_with_values('parent', user=users[1], item=items[0]))
         self.assertEqual([(items[0], 20)], env.get_items_with_values('parent', item=items[1]))
         self.assertEqual([], env.get_items_with_values('parent', user=users[0], item=items[1]))
+
+    def test_get_items_with_values_more_items(self):
+        env = self.generate_environment()
+        users = [self.generate_user() for i in range(2)]
+        items = [self.generate_item() for i in range(2)]
+        env.write('parent', 10, user=users[0], item=items[0], item_secondary=items[1], symmetric=False)
+        env.write('parent', 20, item=items[1], item_secondary=items[0], symmetric=False)
+        self.assertEqual(
+            [[(items[1], 10)], []],
+            env.get_items_with_values_more_items('parent', user=users[0], items=items))
+        self.assertEqual(
+            [[], [(items[0], 20)]],
+            env.get_items_with_values_more_items('parent', items=items))
