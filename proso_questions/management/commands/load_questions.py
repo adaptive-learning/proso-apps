@@ -187,6 +187,8 @@ class Command(BaseCommand):
         if 'images' not in data:
             return
         for image_data in data['images']:
+            if image_data['name'].rfind(' ') != -1:
+                raise CommandError('The space in image name found: %s' % image_data['name'])
             image = Image(
                 resource=resource,
                 question=question,
