@@ -236,6 +236,88 @@ class PriorCurrentPredictiveModel(PredictiveModel):
                 'difficulty', data['difficulty'] - difficulty_alpha * (result - prediction), item=item, time=time)
 
 
+class AlwaysLearningPredictiveModel(PredictiveModel):
+
+    def __init__(self, pfae_good=3.4, pfae_bad=0.3, elo_alpha=0.8, elo_dynamic_alpha=0.05):
+        self._pfae_good = pfae_good
+        self._pfae_bad = pfae_bad
+        self._elo_alpha = elo_alpha
+        self._elo_dynamic_alpha = elo_dynamic_alpha
+
+    def prepare_phase(self, environment, user, item, time, **kwargs):
+        return self.prepare_phase_more_items(environment, user, [item], time, **kwargs)
+
+    def prepare_phase_more_items(self, environment, user, items, time, **kwargs):
+        parents = self._load_parents(environment, items, user)
+        all_items = list(set(items + [i for ps in parents.values() for (i, v) in ps]))
+        return {
+            'skills': dict(zip(
+                all_items, environment.read_more_items('skill', items=all_items, user=user, default=0))),
+            'first_answers': dict(zip(
+                items, environment.number_of_first_answers_more_items(items=items))),
+            'difficulties': dict(zip(
+                items, environment.read_more_items('difficulty', items=items, default=0))),
+            'last_times': dict(zip(
+                items, environment.last_answer_time_more_items(items=items, user=user))),
+            'parents': parents
+        }
+
+    def predict_phase(self, data, user, item, time, **kwargs):
+        skill = self._load_skill(item, data)
+        difficulty = data['difficulties'][item]
+        return predict_simple(skill - difficulty, len(kwargs['options']) if 'options' in kwargs else 0)[0]
+
+    def predict_phase_more_items(self, data, user, items, time, **kwargs):
+        return map(lambda i: self.predict_phase(data, user, i, time, **kwargs), items)
+
+    def update_phase(self, environment, data, prediction, user, item, correct, time, **kwargs):
+        if data['last_times'][item] is None:
+            alpha_fun = lambda n: self._elo_alpha / (1 + self._elo_dynamic_alpha * n)
+            difficulty_alpha = alpha_fun(data['first_answers'][item])
+            data['difficulties'][item] -= difficulty_alpha * (correct - prediction)
+            environment.write('difficulty', data['difficulties'][item], item=item, time=time)
+        parents_per_level = [
+            list(set(map(lambda (i, w): i, parents))) for parents in self._iterate_parents_per_level(item, data)]
+        parents_per_level = zip(range(len(parents_per_level)), parents_per_level)
+        parents_per_level.reverse()
+        level_decay = lambda level: 1.0 / 3 ** level
+        update_const = self._pfae_good if correct else self._pfae_bad
+        difficulty = data['difficulties'][item]
+        for level, parents in parents_per_level:
+            for parent in parents:
+                parent_prediction = predict_simple(
+                    self._load_skill(parent, data) - difficulty,
+                    len(kwargs['options']) if 'options' in kwargs else 0)[0]
+                data['skills'][parent] += level_decay(level) * update_const * (correct - parent_prediction)
+                environment.write('skill', data['skills'][parent], item=parent, user=user, time=time)
+
+    def _load_parents(self, environment, items, user):
+        parents = {}
+        while len(items) > 0:
+            found = environment.get_items_with_values_more_items('parent', items)
+            new_items = set()
+            for i, ps in zip(items, found):
+                new_items = new_items.union(map(lambda x: x[0], ps))
+                if len(ps) == 0:
+                    ps.append((None, 1))
+                parents[i] = ps
+            items = list(new_items)
+        return parents
+
+    def _load_skill(self, item, data):
+        skill = 0
+        for skill_items in self._iterate_parents_per_level(item, data):
+            weights = float(sum(map(lambda (i, w): w, skill_items)))
+            skill += sum(map(lambda (i, w): data['skills'][i] * w / weights, skill_items))
+        return skill
+
+    def _iterate_parents_per_level(self, item, data):
+        to_find = [(item, 1)]
+        while len(to_find) > 0:
+            yield to_find
+            to_find = [iw for ps in map(lambda (i, w): [] if i is None else data['parents'][i], to_find) for iw in ps]
+
+
 class ShiftedPredictiveModel(PredictiveModel):
 
     def __init__(self, predictive_model, prediction_shift):
