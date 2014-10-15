@@ -238,7 +238,7 @@ class PriorCurrentPredictiveModel(PredictiveModel):
 
 class AlwaysLearningPredictiveModel(PredictiveModel):
 
-    def __init__(self, pfae_good=3.4, pfae_bad=0.3, elo_alpha=0.8, elo_dynamic_alpha=0.05):
+    def __init__(self, pfae_good=1.0, pfae_bad=0.5, elo_alpha=0.8, elo_dynamic_alpha=0.05):
         self._pfae_good = pfae_good
         self._pfae_bad = pfae_bad
         self._elo_alpha = elo_alpha
