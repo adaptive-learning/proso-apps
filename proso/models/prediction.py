@@ -169,7 +169,7 @@ class PriorCurrentPredictiveModel(PredictiveModel):
         self._time_shift = time_shift
         self._pfae_good = pfae_good
         self._pfae_bad = pfae_bad
-        self._elo_alpha = 1.0
+        self._elo_alpha = elo_alpha
         self._elo_dynamic_alpha = elo_dynamic_alpha
 
     def prepare_phase(self, environment, user, item, time, **kwargs):
