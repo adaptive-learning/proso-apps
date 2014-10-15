@@ -371,13 +371,14 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def _column_comparison(self, column, value, force_null=True):
         if isinstance(value, list):
-            value = filter(lambda x: x is not None, value)
+            contains_null = any(map(lambda x: x is None, value))
+            if contains_null:
+                value = filter(lambda x: x is not None, value)
+            null_contains_return = (column + ' IS NULL OR ') if contains_null else ''
             if len(value) > 0:
-                return column + ' IN (' + ','.join(['%s' for i in value]) + ')', value
-            elif force_null:
-                return column + ' IS NULL', []
+                return '(' + null_contains_return + column + ' IN (' + ','.join(['%s' for i in value]) + '))', value
             else:
-                return DATABASE_TRUE, []
+                return '(' + null_contains_return + DATABASE_TRUE + ')', []
         elif value is not None:
             return column + ' = %s', [value]
         elif (isinstance(force_null, bool) and force_null) or (isinstance(force_null, list) and column in force_null):
