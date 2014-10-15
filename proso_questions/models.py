@@ -238,8 +238,14 @@ def question_parents(sender, **kwargs):
     category = kwargs['instance']
     for question in category.questions.all():
         environment.write(
-            'parent',
+            'child',
             1,
             item=category.item_id,
             item_secondary=question.item_id,
+            symmetric=False)
+        environment.write(
+            'parent',
+            1,
+            item=question.item_id,
+            item_secondary=category.item_id,
             symmetric=False)
