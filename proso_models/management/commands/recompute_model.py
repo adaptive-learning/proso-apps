@@ -22,6 +22,23 @@ class Command(BaseCommand):
                 '''
                 SELECT
                     user_id,
+                    item_primary_id,
+                    item_secondary_id,
+                    value,
+                    updated
+                FROM proso_models_variable
+                WHERE
+                    key = 'parent'
+                ''')
+            for row in cursor:
+                environment.write(
+                    'parent', row[3], user=row[0], item=row[1],
+                    item_secondary=row[2], time=self._ensure_is_datetime(row[4]))
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(
+                '''
+                SELECT
+                    user_id,
                     item_id,
                     item_asked_id,
                     item_answered_id,
@@ -32,13 +49,7 @@ class Command(BaseCommand):
                 LIMIT 10000
                 ''')
             for (user, item, asked, answered, time, response_time) in cursor:
-                if not isinstance(time, datetime.datetime):
-                    matched = re.match(r'([\d -\:]*)\.\d+', time)
-                    if matched is not None:
-                        time_string = matched.groups()[0]
-                    else:
-                        time_string = time
-                    time = datetime.strptime(time_string, '%Y-%m-%d %H:%M:%S')
+                time = self._ensure_is_datetime(time)
                 predictive_model.predict_and_update(
                     environment,
                     user,
@@ -49,3 +60,12 @@ class Command(BaseCommand):
                     item_asked=asked)
                 environment.process_answer(user, item, asked, answered, time, response_time)
         environment.flush()
+
+    def _ensure_is_datetime(self, value):
+        if isinstance(value, datetime.datetime) or value is None:
+            return value
+        else:
+            matched = re.match(r'([\d -\:]*)\.\d+', value)
+            if matched is not None:
+                value = matched.groups()[0]
+            return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
