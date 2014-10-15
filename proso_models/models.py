@@ -360,7 +360,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 return DATABASE_TRUE, []
         elif value is not None:
             return column + ' = %s', [value]
-        elif force_null:
+        elif (isinstance(force_null, bool) and force_null) or (isinstance(force_null, list) and column in force_null):
             return column + ' IS NULL', []
         else:
             return DATABASE_TRUE, []
