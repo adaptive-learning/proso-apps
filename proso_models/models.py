@@ -306,7 +306,7 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_secondary_id': items[0],
             'key': key}, force_null=force_null)
 
-    def _where_more_items(self, key, items, user=None, item=None, default=None, force_null=True, symmetric=True):
+    def _where_more_items(self, key, items, user=None, item=None, force_null=True, symmetric=True):
         if key is None:
             raise Exception('Key has to be specified')
         cond_secondary = {
