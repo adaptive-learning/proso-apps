@@ -109,6 +109,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 ''' + where, where_params)
             return cursor.fetchall()
 
+    @cache_environment_for_item()
     def get_items_with_values_more_items(self, key, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(
