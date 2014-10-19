@@ -71,8 +71,11 @@ class Command(BaseCommand):
                     "resource": {
                         "type": "string"
                     },
-                    "category": {
-                        "type": "string"
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "sets": {
                         "type": "array",
