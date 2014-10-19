@@ -50,7 +50,7 @@ class Command(BaseCommand):
             "resource": {
                 "type": "object",
                 "properties": {
-                    "id": {
+                    "identifier": {
                         "type": "string"
                     },
                     "text": {
@@ -63,7 +63,7 @@ class Command(BaseCommand):
                         }
                     }
                 },
-                "required": ["id", "text"]
+                "required": ["identifier", "text"]
             },
             "question": {
                 "type": "object",
@@ -82,6 +82,9 @@ class Command(BaseCommand):
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "identifier": {
+                        "type": "string"
                     },
                     "text": {
                         "type": "string"
@@ -134,40 +137,28 @@ class Command(BaseCommand):
             resource = question_data.get('resource', None)
             if resource is not None:
                 resource = resources[resource]
-            question = Question(
-                text=question_data['text'],
-                resource=resource)
+            if 'identifier' in question_data:
+                question = Question.objects.from_identifier(
+                    question_data['identifier'], reset=True)
+            else:
+                question = Question()
+            question.text = question_data['text']
+            question.resource = resource
             question.save()
             if 'sets' in question_data:
                 for s in question_data['sets']:
+                    s = self._ensure_string(s)
                     if s not in sets:
                         sets[s] = Set.objects.from_name(s)
                     sets[s].questions.add(question)
             if 'categories' in question_data:
                 for c in question_data['categories']:
-                    if isinstance(c, int):
-                        c = unicode(str(c), "utf-8")
+                    c = self._ensure_string(c)
                     if c not in categories:
                         categories[c] = Category.objects.from_name(c)
                     categories[c].questions.add(question)
             self._load_images(question_data, working_directory, question=question)
-            one_option_correct = False
-            for opt_data in question_data['options']:
-                correct = bool(opt_data.get('correct', False))
-                if correct:
-                    if one_option_correct:
-                        raise CommandError('At most one of the options has to be correct!')
-                    one_option_correct = correct
-                option = Option(
-                    text=opt_data['text'],
-                    question=question,
-                    order=int(opt_data['order']) if 'order' in opt_data else None,
-                    correct=correct
-                    )
-                option.save()
-                self._load_images(opt_data, working_directory, option=option)
-            if not one_option_correct:
-                raise CommandError('At least one of the options has to be correct!')
+            self._load_options(working_directory, question_data['options'], question)
         for s in sets.values():
             s.save()
         for c in categories.values():
@@ -176,16 +167,43 @@ class Command(BaseCommand):
     def _load_resources(self, data, working_directory):
         resources = {}
         for resource_data in data['resources']:
-            resource_id = resource_data['id'].strip()
+            resource_id = resource_data['identifier'].strip()
             if resource_id in resources:
                 raise CommandError(
                     "Resource id has to be unique, '" + resource_id + "' defined twice.")
-            resource = Resource(
-                text=resource_data['text'])
+            resource = Resource.objects.from_identifier(resource_id, reset=True)
+            resource.text = resource_data['text']
             resource.save()
             resources[resource_id] = resource
             self._load_images(resource_data, working_directory, resource=resource)
         return resources
+
+    def _load_options(self, working_directory, options_data, question):
+        if question.identifier:
+            options = Option.objects.from_question(question, reset=True)
+            if len(options) > 0 and len(options) != len(options_data):
+                raise CommandError(
+                    "Can't change the number of options for the question %s" % question.identifier)
+            options = [Option() for i in options_data]
+        else:
+            options = [Option() for i in options_data]
+        options = sorted(options, key=lambda o: o.order)
+        options_data = sorted(options_data, key=lambda o: o.get('order', None))
+        one_option_correct = False
+        for opt, opt_data in zip(options, options_data):
+            correct = bool(opt_data.get('correct', False))
+            if correct:
+                if one_option_correct:
+                    raise CommandError('At most one of the options has to be correct!')
+                one_option_correct = correct
+            opt.text=opt_data['text']
+            opt.question=question
+            opt.order=int(opt_data['order']) if 'order' in opt_data else None
+            opt.correct=correct
+            opt.save()
+            self._load_images(opt_data, working_directory, option=opt)
+        if not one_option_correct:
+            raise CommandError('At least one of the options has to be correct!')
 
     def _load_images(self, data, working_directory, resource=None, question=None, option=None):
         if 'images' not in data:
@@ -204,3 +222,8 @@ class Command(BaseCommand):
                     image_data['name'],
                     File(image_file))
                 image.save()
+
+    def _ensure_string(self, value):
+        if isinstance(value, int):
+            value = unicode(str(value), "utf-8")
+        return value
