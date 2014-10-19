@@ -32,6 +32,7 @@ class DecoratedAnswer(models.Model):
 
 class Resource(models.Model):
 
+    identifier = models.SlugField(unique=True, null=True, blank=True, default=None)
     text = models.TextField()
     item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True)
 
@@ -89,6 +90,7 @@ class QuestionManager(models.Manager):
 
 class Question(models.Model):
 
+    identifier = models.SlugField(unique=True, null=True, blank=True, default=None)
     text = models.TextField()
     resource = models.ForeignKey(
         Resource, null=True, blank=True, default=None, related_name='resource_questions')
