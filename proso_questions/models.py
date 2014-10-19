@@ -1,6 +1,6 @@
 from django.db import models
 from proso_models.models import Item, Answer
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 from contextlib import closing
 from django.db import connection
@@ -251,3 +251,9 @@ def question_parents(sender, **kwargs):
             item=question.item_id,
             item_secondary=category.item_id,
             symmetric=False)
+
+
+@receiver(post_delete, sender=Image)
+def image_delete(sender, instance, **kwargs):
+    if instance.file:
+        instance.file.delete(False)
