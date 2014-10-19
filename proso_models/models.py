@@ -372,6 +372,7 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def _column_comparison(self, column, value, force_null=True):
         if isinstance(value, list):
+            value = list(set(value))
             contains_null = any(map(lambda x: x is None, value))
             if contains_null:
                 value = filter(lambda x: x is not None, value)
