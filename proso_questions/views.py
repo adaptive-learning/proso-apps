@@ -217,8 +217,8 @@ def _to_json(request, value):
         json = value.to_json()
     common_json_enrich.enrich_by_object_type(request, json, json_enrich.question, 'answer')
     if 'stats' in request.GET:
-        for object_type in ['question', 'category', 'set']:
-            common_json_enrich.enrich_by_object_type(request, json, json_enrich.prediction, object_type)
+        common_json_enrich.enrich_by_object_type(
+            request, json, json_enrich.prediction, ['question', 'set', 'category'])
     for enricher in [json_enrich.url, json_enrich.html, json_enrich.questions]:
         json = common_json_enrich.enrich(request, json, enricher)
     return json
