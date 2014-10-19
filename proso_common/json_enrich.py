@@ -28,7 +28,8 @@ def enrich_by_predicate(request, json, fun, predicate):
 
 
 def enrich_by_object_type(request, json, fun, object_type):
-    return enrich_by_predicate(
-        request, json, fun,
-        lambda x: 'object_type' in x and x['object_type'] == object_type
-    )
+    if isinstance(object_type, list):
+        f = lambda x: 'object_type' in x and x['object_type'] in object_type
+    else:
+        f = lambda x: 'object_type' in x and x['object_type'] == object_type
+    return enrich_by_predicate(request, json, fun, f)
