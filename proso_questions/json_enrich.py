@@ -75,19 +75,6 @@ def prediction(request, json_list, nested):
     return json_list
 
 
-def number_of_answers(request, json_list, nested):
-    if nested:
-        return False
-    object_type = json_list[0]['object_type']
-    if object_type != 'question':
-        raise Exception('object type "%s" is not supported' % object_type)
-    user = get_user_id(request)
-    object_item_ids = map(lambda x: x['item_id'], json_list)
-    nums = dict(zip(object_item_ids, _environment(request).number_of_answers_more_items(user=user, items=object_item_ids)))
-    for obj in json_list:
-        obj['number_of_answers'] = nums[obj['item_id']]
-
-
 def _environment(request):
     environment = proso_models.models.get_environment()
     if 'time' in request.GET and request.user.is_staff:
