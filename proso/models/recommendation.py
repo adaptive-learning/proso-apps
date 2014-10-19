@@ -51,7 +51,8 @@ class ScoreRecommendation(Recommendation):
             return (
                 self._weight_probability * self._score_probability(probability[item]) +
                 self._weight_time_ago * self._score_last_answer_time(last_answer_time[item], time) +
-                self._weight_number_of_answers * self._score_answers_num(answers_num[item])
+                self._weight_number_of_answers * self._score_answers_num(answers_num[item]),
+                random.random()
             )
         candidates = map(
             lambda (s, i): i,
