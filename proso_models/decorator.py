@@ -27,7 +27,7 @@ class cache_environment_for_item:
             cache_keys = dict(zip(items, map(lambda x: _cache_key(func, x, args, kwargs), items)))
             for item in items:
                 cache_key = cache_keys[item]
-                if _cache_has_key(cache_key):
+                if not _cache_has_key(cache_key):
                     other_items.append(item)
                 else:
                     cached_items[item] = _cache_get(cache_key, default)
