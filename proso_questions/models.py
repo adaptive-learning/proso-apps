@@ -30,6 +30,22 @@ class DecoratedAnswer(models.Model):
         }
 
 
+class ResourceManager(models.Manager):
+
+    def reset(self, resource):
+        for image in resource.resource_images.all():
+            image.delete()
+
+    def from_identifier(self, identifier, reset=False):
+        try:
+            resource = self.get(identifier=identifier)
+            if reset:
+                self.reset(resource)
+        except Resource.DoesNotExist:
+            resource = Resource(identifier=identifier)
+        return resource
+
+
 class Resource(models.Model):
 
     identifier = models.SlugField(unique=True, null=True, blank=True, default=None)
@@ -47,6 +63,24 @@ class Resource(models.Model):
 
 
 class QuestionManager(models.Manager):
+
+    def reset(self, question):
+        for category in question.category_set.all():
+            category.questions.remove(question)
+            category.save()
+        for question_set in question.set_set.all():
+            question_set.question.remove(question)
+        for image in question.question_images.all():
+            image.delete()
+
+    def from_identifier(self, identifier, reset=False):
+        try:
+            question = self.get(identifier=identifier)
+            if reset:
+                self.reset(question)
+        except Question.DoesNotExist:
+            question = Question(identifier=identifier)
+        return question
 
     def test(self, user_id, time):
         try:
@@ -174,6 +208,17 @@ class Set(models.Model):
 
 
 class OptionManager(models.Manager):
+
+    def reset(self, option):
+        for image in option.option_images.all():
+            image.delete()
+
+    def from_question(self, question, reset=False):
+        options = list(question.question_options.all())
+        if reset:
+            for option in options:
+                self.reset(option)
+        return options
 
     def get_correct_options(self, questions):
         opts = self.filter(question__in=questions, correct=True)
