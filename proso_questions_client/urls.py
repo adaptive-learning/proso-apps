@@ -15,16 +15,6 @@ urlpatterns = patterns(
     url(r'^(how-it-works|about|view/\w*|u/\w+|practice/\w*|test/)',
         'proso_questions_client.views.home', name='home'),
 
-    url(r'^media/(?P<path>image/.*)$', 'django.views.static.serve', {
-        'document_root': settings.MEDIA_ROOT}),
-    url(r'^questions/', include('proso_questions.urls')),
-    url(r'^models/', include('proso_models.urls')),
-    url(r'^ab/', include('proso_ab.urls')),
-
-    url(r'', include('social_auth.urls')),
-    url(r'^admin/', include(admin.site.urls)),
-    url(r'^convert/', include('lazysignup.urls')),
-
     url(r'^favicon\.ico$', RedirectView.as_view(url='static/img/favicon.png')),
     url(r'^sitemap\.xml$', 'django.contrib.sitemaps.views.sitemap', {'sitemaps': sitemaps}),
     url(r'^robots\.txt$', lambda r: HttpResponse("User-agent: *\nDisallow: ", mimetype="text/plain")),

@@ -21,6 +21,8 @@ MEDIA_URL = 'media/'
 
 
 DEBUG = True
+ON_PRODUCTION = False
+ON_STAGING = not ON_PRODUCTION
 
 TEMPLATE_DEBUG = DEBUG
 
@@ -35,12 +37,14 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'flatblocks',
     'social_auth',
     'south',
     'lazysignup',
     'proso_common',
     'proso_models',
     'proso_questions',
+    'proso_questions_client',
     'proso_ab'
 )
 
@@ -101,6 +105,13 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'lazysignup.backends.LazySignupBackend',
 )
+
+try:
+    from hashes import HASHES
+except ImportError:
+    HASHES = {}
+except SyntaxError:
+    HASHES = {}
 
 PROSO_PREDICTIVE_MODEL = 'proso.models.prediction.AlwaysLearningPredictiveModel'
 PROSO_ENVIRONMENT = 'proso_models.models.DatabaseEnvironment'
