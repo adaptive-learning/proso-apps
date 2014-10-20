@@ -7,8 +7,8 @@ setup(
     name='proso-apps',
     version=version,
     description='General library for applications in PROSO projects',
-    author='Jan Papousek',
-    author_email='jan.papousek@gmail.com',
+    author='Jan Papousek, Vit Stanislav',
+    author_email='jan.papousek@gmail.com, slaweet@seznam.cz',
     namespace_packages = ['proso', 'proso.django'],
     include_package_data = True,
     packages=[
@@ -31,6 +31,7 @@ setup(
     install_requires=[
         'Django>=1.6,<1.7',
         'django-debug-toolbar>=1.1',
+        'django-flatblocks>=0.8',
         'django-ipware>=0.0.8',
         'django-lazysignup>=0.12.2',
         'django-social-auth>=0.7.28',
