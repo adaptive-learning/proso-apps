@@ -2,7 +2,7 @@
 from django.conf import settings
 from django.core.context_processors import csrf
 from django.shortcuts import render_to_response
-from proso_client.utils import StaticFiles, get_user, get_page_title, get_flatblock
+from proso_questions_client.utils import StaticFiles, get_user, get_page_title, get_flatblock
 from proso_questions.models import Category
 from django.contrib.auth import logout
 from django.http import HttpResponse

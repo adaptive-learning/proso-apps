@@ -123,11 +123,11 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'proso_client.middleware.SqldumpMiddleware',
-    'proso_client.middleware.AuthAlreadyAssociatedMiddleware',
+    'proso_questions_client.middleware.SqldumpMiddleware',
+    'proso_questions_client.middleware.AuthAlreadyAssociatedMiddleware',
 )
 
-ROOT_URLCONF = 'proso_client.urls'
+ROOT_URLCONF = 'proso_questions_client.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -155,7 +155,7 @@ INSTALLED_APPS = (
     'proso_models',
     'proso_questions',
     'proso_ab',
-    'proso_client',
+    'proso_questions_client',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -190,10 +190,10 @@ LOGGING = {
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
         },
-        'proso_client_file': {
+        'proso_questions_client_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(MEDIA_ROOT, 'proso_client.log'),
+            'filename': os.path.join(MEDIA_ROOT, 'proso_questions_client.log'),
             'formatter': 'simple'
         },
         'proso_file': {
@@ -206,7 +206,7 @@ LOGGING = {
         'queries_file': {
             'level': ('DEBUG' if DEBUG else 'INFO'),
             'class': 'logging.FileHandler',
-            'filename': os.path.join(MEDIA_ROOT, 'proso_client_sql.log')
+            'filename': os.path.join(MEDIA_ROOT, 'proso_questions_client_sql.log')
         }
     },
     'loggers': {
@@ -215,8 +215,8 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
-        'proso_client': {
-            'handlers': ['proso_client_file'],
+        'proso_questions_client': {
+            'handlers': ['proso_questions_client_file'],
             'level': 'DEBUG',
             'propagate': True,
         },

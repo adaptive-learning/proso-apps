@@ -11,9 +11,9 @@ from sitemap import sitemaps
 
 urlpatterns = patterns(
     '',
-    url(r'^$', 'proso_client.views.home', name='home'),
+    url(r'^$', 'proso_questions_client.views.home', name='home'),
     url(r'^(how-it-works|about|view/\w*|u/\w+|practice/\w*|test/)',
-        'proso_client.views.home', name='home'),
+        'proso_questions_client.views.home', name='home'),
 
     url(r'^media/(?P<path>image/.*)$', 'django.views.static.serve', {
         'document_root': settings.MEDIA_ROOT}),
@@ -28,5 +28,5 @@ urlpatterns = patterns(
     url(r'^favicon\.ico$', RedirectView.as_view(url='static/img/favicon.png')),
     url(r'^sitemap\.xml$', 'django.contrib.sitemaps.views.sitemap', {'sitemaps': sitemaps}),
     url(r'^robots\.txt$', lambda r: HttpResponse("User-agent: *\nDisallow: ", mimetype="text/plain")),
-    url(r'^user/logout/$', 'proso_client.views.logout_view', name='logout'),
+    url(r'^user/logout/$', 'proso_questions_client.views.logout_view', name='logout'),
 )

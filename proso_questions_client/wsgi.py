@@ -3,7 +3,7 @@ import sys
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(DIRNAME)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'proso_client.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'proso_questions_client.settings'
 
 from django.core.handlers.wsgi import WSGIHandler
 
