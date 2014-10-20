@@ -6,11 +6,13 @@ import proso_questions_client.urls
 
 admin.autodiscover()
 
-
 urlpatterns = patterns(
     '',
-    url(r'^media/(?P<path>image/.*)$', 'django.views.static.serve', {
-    'document_root': settings.MEDIA_ROOT}),
+    url(r'^media/(?P<path>image/.*)$', 'django.views.static.serve',
+        {
+        'document_root': settings.MEDIA_ROOT
+        }
+    ),
     url(r'^questions/', include('proso_questions.urls')),
     url(r'^models/', include('proso_models.urls')),
     url(r'^ab/', include('proso_ab.urls')),
