@@ -283,6 +283,25 @@ def sort_items(sender, instance, **kwargs):
 def question_parents(sender, **kwargs):
     environment = get_environment()
     category = kwargs['instance']
+    # FIXME: temporary fix, remove once the environment has the delete()
+    # method.
+    with closing(connection.cursor()) as cursor:
+        cursor.execute(
+            """
+            DELETE FROM proso_models_variable
+            WHERE
+                (key = 'parent' AND item_secondary_id = %s)
+                OR
+                (key = 'child' AND item_primary_id = %s)
+            """, [category.item_id, category.item_id])
+        cursor.execute(
+            """
+            DELETE FROM proso_models_audit
+            WHERE
+                (key = 'parent' AND item_secondary_id = %s)
+                OR
+                (key = 'child' AND item_primary_id = %s)
+            """, [category.item_id, category.item_id])
     for question in category.questions.all():
         environment.write(
             'child',
