@@ -1,0 +1,234 @@
+@if not variable-exists(main-color) 
+  $main-color: #009688 !global
+$main-color-darken: darken($main-color, 15) 
+$correct-color: #0f9d58
+$wrong-color: #d9534f
+.welcome-page.jumbotron
+  background-color: $main-color
+  color: white
+  padding-left: 20px
+  padding-right: 20px
+  h1
+    font-size: 3em
+    text-align: center
+    position: relative
+    left: 0
+    margin-top: 0px
+  [class*="col-"]
+    float: none
+  .block-welcome_page
+    font-size: 1.25em
+    line-height: 120%
+    padding: 0
+    .flatblock-content
+      text-align: center
+      padding-bottom: 10px
+      padding-top: 10px
+
+.material-theme-dark
+  background-color: $main-color-darken !important
+  
+.material-theme-dark h1 a:hover
+  color: #ddd
+
+.btn-menu
+  width: 43%
+  margin-left: 4%
+  margin-top: 10px
+
+$anim-time: 0.5s
+
+.how-it-works
+  -webkit-transition: all linear $anim-time
+  -moz-transition: all linear $anim-time
+  -o-transition: all linear $anim-time
+  transition: all linear $anim-time
+  align: center
+  h2
+    text-align: center
+  margin-top: -30px
+  padding: 20px
+  h3
+    margin-bottom: 0px
+  li
+    list-style-type: circle
+    margin: 5px 0 5px 0px
+  .works-div
+    font-size: 1.2em
+    text-align: justify
+    margin-bottom: 60px
+    i.glyphicon
+      font-size: 2em
+      float: left
+      margin-right: 15px
+      margin-left: -10px
+
+.navbar 
+  margin-bottom: 0px
+  border-radius: 0px
+
+h1, h2, h3
+  font-weight: bold
+
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak
+  display: none
+
+.plugins-social
+  text-align: center
+  margin-top: 20px
+
+.btn-huge
+  margin: 5px
+  text-shadow: none
+  color: $main-color
+.btn-huge:hover
+  color: darken($main-color, 2) 
+
+.col-centered
+  text-align: center
+
+html
+  min-height: 100%
+body, .row
+  height: 100%
+
+html
+  background: #eee
+
+.row
+  margin-right: 0
+
+#wrap 
+  height: 100%
+  padding-right: 0px
+  padding-left: 15px
+
+
+.homepage
+  margin-left: 300px
+
+#ng-view
+  position: absolute 
+  min-height: 80%
+  min-height: calc(100% - 75px)
+  min-width: calc(100% - 340px)
+  height: auto
+  top: 45px
+  z-index: 100
+  -webkit-animation: slideInRight .5s ease-out
+  -moz-animation: slideInRight .5s ease-out
+  animation: slideInRight .5s ease-out
+  .welcome-page
+    display: none
+
+#ng-view.ng-leave
+  -webkit-animation: slideOutRight .5s ease-out
+  -moz-animation: slideOutRight .5s ease-out
+  animation: slideOutRight .5s ease-out
+
+.left-bar
+  background-color: #fff
+  position: relative
+  min-height: 100%
+  height: auto
+
+.main-nav
+  margin-top: 20px
+  padding-bottom: 50px
+  margin-bottom: 20px
+
+.menu-item, .questions-item
+  background-color: #fff
+  border-width: 0
+  cursor: pointer
+  display: block
+  color: #333
+  font-size: inherit
+  font-weight: bold
+  margin: 0
+  outline: 0
+  padding: 0 15px
+  position: relative
+  text-align: left
+  text-decoration: none
+  width: 100%
+  &:hover
+    color: #999
+    text-decoration: none
+
+.submenu-item
+  padding: 0 25px
+
+.menu-item
+  line-height: 40px
+  max-height: 40px
+
+.menu-item.active 
+  background-color: #eee
+  font-weight: 700
+  color: $main-color
+
+.btn-default, .btn-primary, .btn-danger
+  box-shadow: 0 2px 5px 0 rgba(0,0,0,.26)
+  transition: .2s linear transform
+  transition-property: box-shadow,transform,background-color
+  -webkit-transform: translate3d(0,0,0)
+  transform: translate3d(0,0,0)
+  &:hover:not([disabled]) 
+    -webkit-transform: translate3d(0,-1px,0)
+    transform: translate3d(0,-1px,0)
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,.4)
+
+#___plusone_0 iframe
+  position: relative !important
+  top: 6px !important
+
+
+@media (min-width: 767px)
+  #wrap
+    position: fixed
+    width: 300px
+  #ng-view
+    margin-left: 310px
+    margin-right: 20px
+    margin-bottom: 30px
+  $huge-radius: 9px
+  .btn-huge
+    margin: 1.3%
+    font-size: 27.5px
+    -webkit-border-radius: $huge-radius
+    -moz-border-radius: $huge-radius
+    border-radius: $huge-radius
+  .visible-xs-block
+    display: none
+    
+@media (min-width: 1170px)
+  .btn-huge
+    margin: 1%
+
+
+@media (max-width: 767px)
+  #ng-view
+    width: 100%
+  .welcome-page
+    p
+      padding: 10px
+    
+  .welcome-page.jumbotron
+    font-size: 1em
+    h1
+      font-size: 3em
+      padding-top: 10px
+    p
+      font-size: 0.65em
+      padding: 5px
+    .main-paragraph
+      font-size: 1em
+  .jumbotron 
+    padding: 0 0 20px 0
+  #wrap 
+    position: relative
+    width: 100%
+    padding: 0
+  .row
+    margin: 0

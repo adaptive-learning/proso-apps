@@ -1,0 +1,149 @@
+$practiced: #ffeb3b
+
+body
+  overflow-y: scroll
+  font-size: 1.5em
+  background-color: #EFEFEF
+  li
+    list-style-type: none
+
+ul
+  padding: 0px
+  margin: 0px
+
+ul.dropdown-menu.login
+  padding-top: 10px
+  li
+    margin: 0 10px 10px 10px
+    width: 200px
+  a.btn
+    color: white
+    i
+      float: left
+      margin: -5px 0 -10px -10px
+  a.btn.btn-danger:hover
+    background: #d43f3a
+  a.btn.btn-primary:hover
+    background-color: #3276b1
+
+.card
+  display: block
+  background-color: #fff
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26)
+  border-radius: 2px
+  overflow: hidden
+
+.dropdown
+  i.icon-user
+    opacity: 0.5
+  a:hover i.icon-user, a:focus i.icon-user, &.open i.icon-user
+    opacity: 1
+
+.version
+  border: 0px none currentColor
+  right: 0px
+  top: 0px
+  position: absolute
+
+.vip
+  .map-container
+    background: url(../img/flower_bg.jpg) bottom right
+
+.view-places
+  margin: 10px
+
+#container
+  margin-left: auto
+  margin-right: auto
+  float: none
+  position: relative
+
+.label
+  margin-right: 10px
+  margin-top: 5px
+  padding-bottom: 5px
+  cursor: default
+
+#footer
+  background-color: #34495e
+  color: #eee
+  text-align: center
+  clear: both
+  position: relative
+  z-index: 10
+  margin-top: -90px
+  padding: 20px
+  min-height: 30px
+  a
+    color: rgb(82, 186, 255) 
+  .contact
+    margin: 0 5px 0 5px
+  #imgVPS
+    margin-right: 30px
+
+.old-browser
+  margin: 0
+  text-align: center
+
+.inline
+  display: inline
+
+.progress-bar-learned
+  background-color: $correct-color
+
+.progress-bar-practiced
+  background-color: $practiced
+
+.color-indicator.learned
+  background-color: $correct-color
+
+.color-indicator.practiced
+  background-color: $practiced
+
+img
+  max-width: 100%
+
+.btn-primary
+  background-color: $main-color
+  border-color: darken($main-color, 3)
+  &:hover
+    background-color: darken($main-color, 5) 
+    border-color: darken($main-color, 8)
+
+.progress-bar-success
+  background-color: $correct-color
+
+pre
+  .string
+    color: green
+  .number
+    color: darkorange
+  .boolean
+    color: blue
+  .null
+    color: magenta
+  .key
+    color: red
+
+.loading-indicator
+  text-align: center
+  min-height: 60px
+  width: 100%
+  height: 100%
+  margin-top: 20px
+  margin-bottom: 20px
+
+
+.spinner
+  -webkit-animation: rotator $duration linear infinite
+  animation: rotator $duration linear infinite
+
+.path
+  stroke-dasharray: $offset
+  stroke-dashoffset: 0
+  -webkit-transform-origin: center
+  -ms-transform-origin: center
+  transform-origin: center
+  -webkit-animation: dash $duration ease-in-out infinite
+  animation: dash $duration ease-in-out infinite
+  stroke: $main-color

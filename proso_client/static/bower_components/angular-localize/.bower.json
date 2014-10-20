@@ -1,0 +1,67 @@
+{
+  "name": "angular-localize",
+  "version": "2.0.0",
+  "title": "angular-localize",
+  "description": "A localization module for AngularJS.",
+  "keywords": [
+    "angular",
+    "AngularJS",
+    "translation",
+    "localization",
+    "localisation",
+    "internationalization",
+    "internationalisation",
+    "i18n",
+    "L10n"
+  ],
+  "homepage": "https://github.com/blueimp/angular-localize",
+  "author": {
+    "name": "Sebastian Tschan",
+    "url": "https://blueimp.net"
+  },
+  "maintainers": [
+    {
+      "name": "Sebastian Tschan",
+      "url": "https://blueimp.net"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/blueimp/angular-localize.git"
+  },
+  "bugs": "https://github.com/blueimp/angular-localize/issues",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://www.opensource.org/licenses/MIT"
+    }
+  ],
+  "main": [
+    "angular-localize.js"
+  ],
+  "ignore": [
+    "/*.*",
+    "!angular-localize.js",
+    "!angular-localize.min.js",
+    "!angular-localize.min.js.map"
+  ],
+  "dependencies": {
+    "angular": "~1.2.15",
+    "angular-sanitize": "~1.2.15"
+  },
+  "devDependencies": {
+    "angular": "~1.2.15",
+    "angular-sanitize": "~1.2.15",
+    "angular-mocks": "~1.2.15"
+  },
+  "_release": "2.0.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "2.0.0",
+    "commit": "29083c20d5a564ef497c22b969e3394b3aa416f9"
+  },
+  "_source": "git://github.com/blueimp/angular-localize.git",
+  "_target": "~2.0.0",
+  "_originalSource": "angular-localize",
+  "_direct": true
+}

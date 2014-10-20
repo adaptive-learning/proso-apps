@@ -1,0 +1,110 @@
+.practice-container
+  .btn
+    margin-left: 10px
+    margin-bottom: 10px
+.practice
+  paper-radio-button
+    margin-bottom: 5px
+  .wrong, .correct
+    padding-left: 45px
+    padding-right: 45px
+    margin-left: -35px
+    margin-right: -35px
+    -webkit-transition: all linear $anim-time
+    -moz-transition: all linear $anim-time
+    -o-transition: all linear $anim-time
+    transition: all linear $anim-time
+  .wrong
+    background-color: rgba(217, 83, 79, 0.5)
+  .correct
+    background-color: rgba(15, 157, 88, 0.5)
+  .btn
+    margin-left: 10px
+    margin-bottom: 10px
+  .btn.option
+    white-space: normal
+    text-align: left
+  .btn.option.block
+    margin-left: 0
+    width: 100%
+  .btn.option.block, .block
+    display: block
+  .btn.option.selected
+    background-color: #ddd
+  .well
+    background-color: white
+    margin-bottom: 10px
+  .prev
+    margin-left: 0px
+  img
+    max-width: 100%
+    max-height: 50%
+    display: block
+    margin: auto
+    border-radius: 4px
+  .question
+    font-size: 25px
+    font-weight: bold
+    padding-left: 10px
+    padding-bottom: 10px
+    .label
+      font-size: 20px
+      line-height: 25px
+      font-weight: bold
+      padding-bottom: 5px
+    span
+      float: left
+      margin-right: 20px
+
+timer
+  margin-left: 10px
+  font-size: 1.3em 
+  .glyphicon
+    font-size: 0.8em 
+
+.quesions-progress
+  border-radius: 0
+  height: 5px
+  margin-bottom: 15px
+
+.progress-bar-practice
+  background-color: $main-color
+
+.progress-indicator
+  margin: 5px
+  text-align: center
+  li
+    display: inline-block
+    cursor: pointer
+    margin: 5px
+    text-indent: -9999px
+    border: 2px solid #aaa
+  li.question-switcher
+    width: 15px
+    height: 15px
+    border-radius: 50%
+    -webkit-transition: all linear $anim-time
+    -moz-transition: all linear $anim-time
+    -o-transition: all linear $anim-time
+    transition: all linear $anim-time
+    &:hover
+      background-color: #ccc
+    &.answered
+      background-color: #ccc
+    &.wrong
+      background-color: $wrong-color
+    &.correct
+      background-color: $correct-color
+    &.active
+      background-color: $main-color
+  li.prev, li.next
+    width: 12px
+    height: 12px
+    transform: rotate(45deg)
+    &:hover
+      border-color: #999
+  li.prev
+    border-width: 0 0 2px 2px
+  li.next
+    border-width: 2px 2px 0 0
+

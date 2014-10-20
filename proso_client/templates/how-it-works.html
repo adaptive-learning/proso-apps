@@ -1,0 +1,14 @@
+{% load flatblock_tags %}
+
+<div class="how-it-works">
+  <h2>Jak to funguje?</h2>
+  <div class="col-md-offset-1 col-md-10 col-lg-offset-3 col-lg-6">
+    {% flatblock "how_it_works_1" using "how-it-works-div.html" %}
+    {% flatblock "how_it_works_2" using "how-it-works-div.html" %}
+    {% flatblock "how_it_works_3" using "how-it-works-div.html" %}
+    {% flatblock "how_it_works_4" using "how-it-works-div.html" %}
+    {% flatblock "how_it_works_5" using "how-it-works-div.html" %}
+  </div>
+
+  <div class="clearfix"></div>
+</div>

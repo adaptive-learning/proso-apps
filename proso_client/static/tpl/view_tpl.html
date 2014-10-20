@@ -1,0 +1,122 @@
+<div id="container" infinite-scroll="onBottomReached()" threshold="100"
+  can-load="hasMoreQuestions">
+  <div ng-show="error" ng-bind="error" class="alert alert-danger">
+  </div>
+  <ul ng-show="questions.length"
+      class="thumbnails fade-show-hide">
+    <div class="collapse-control"
+        ng-show="filteredTypes.length > 0 && questions.length > 1">
+      <div class="clearfix"></div>
+      <div class="test-composition well" ng-show="showInfo">
+        <button type="button" class="close" ng-click="showInfo=false;"><span
+        aria-hidden="true">&times;</span><span
+        class="sr-only">Close</span></button>
+        <p> 
+          Test tvoří <strong>25</strong> otázek za celkem <strong>50</strong> bodů. 
+        </p>
+        <p>
+          Minimum pro úspěšné složení testu je <strong>43</strong> bodů.
+        </p>
+       <h4>Složení testu</h4>
+        <ul>
+          <li ng-repeat="type in filteredTypes">
+            <strong>{{type.countInTest}}</strong>
+            <ng-pluralize count="type.countInTest"
+              when="{'0': '',
+                     'one': ' otázka ', 
+                     'few': ' otázky ', 
+                     'other': ' otázek '}">
+            </ng-pluralize>
+            z kategorie
+            <strong>{{type.name}}</strong> po
+            <strong>{{type.pointsInTest}} </strong>
+            <ng-pluralize count="type.pointsInTest"
+              when="{ 'one': ' bodu', 
+                     'few': ' bodech', 
+                     'other': ' bodech'}">
+            </ng-pluralize>.
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+
+      <div class="prediction" ng-show="false && questions.length">
+        <div class="progress atooltip" title="">
+          <div class="progress-bar atooltip"
+            ng-class="{
+              'progress-bar-danger': expectedPoints < 43,
+              'progress-bar-success': expectedPoints >= 43
+            }"
+            title="Předpověď počtu bodů v testu"
+            style="width: {{expectedPoints/50 * 100}}%">
+            {{expectedPoints}}
+          </div>
+          <div class="goal atooltip"
+            title="43 bodů - minimum pro složení testu"
+            style="margin-left: {{(43-expectedPoints) * 2}}%">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div ng-hide="typeCat.hidden">
+      <li class="type-cat-li"
+          ng-class="{'collapsed': type.hidden}">
+        <div class="collapse-control collapse-control-inner"
+            data-target="#collapse-{{type.slug}}">
+          <h3> {{type.name}} </h3>
+          <a href="#/practice/{{category}}" 
+             class="btn btn-primary pull-right"  >
+            <i class="glyphicon glyphicon-check"></i> Procvičovat
+          </a>
+          <div class="clearfix"></div>
+        </div>
+        <div class="map-progress" count="{{type.places.length}}"  
+             skills="{{ {
+               practiced:(type.places|filter:{practiced:true}).length,
+               learned:(type.places|filter:{learned:true}).length
+             } }}"></div>
+        <div class="view-places collapse in question-buttons" id="collapse-{{type.slug}}">
+          <div ng-hide="questions.length" class="alert alert-info">
+            Zde zatím nebylo nic procvičováno.
+          </div>
+          <div ng-repeat="question in questions" >
+              <div class="questions-item" ng-click="selectQuestion(question)">
+                <span class="badge badge-default" title="Odhad znalosti">
+                  <i class="color-indicator" 
+                  style="background-color: {{question.prediction|probColor}};" ></i>
+                  {{(10 * question.prediction) | number : 0 }} / 10
+                </span>
+                <span class="inline-question" ng-bind="question.html|stripHtml"></span>
+             </div>
+             <div class="question-details" ng-if="question == selected"
+                 ng-class="{'ng-leave' : question != selected}">
+                <img style="display: block" ng-src="{{question | imgSrc}}"/>
+                <paper-radio-group ng-model="question.correct">
+                  <paper-radio-button name="{{option.order}}" 
+                    label="{{(option | stripImg) || '\''}}"
+                    disabled
+                    ng-class="{'img-option': option.images.length}"
+                    ng-repeat="option in question.options"
+                    ng-show="option">
+                      <img ng-src="{{option | imgSrc}}"/>
+                  </paper-radio-button>
+                </paper-radio-group>
+               <div debug="question" ></div>
+             </div>
+             <material-divider></material-divider>
+          </div>
+          <br>
+          <div ng-click="onBottomReached()"
+            ng-show="hasMoreQuestions && !loading"
+            class="btn btn-default btn-block">
+            Další otázky
+          </div>
+          <div class="clearfix"></div>
+        </div>
+      </li>
+    </div>
+  </ul>
+  <div ng-show="loading" class="loading-indicator">
+  </div>
+  <div class="clearfix"></div>
+</div>

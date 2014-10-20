@@ -1,0 +1,219 @@
+{% load flatblock_tags %}
+<!DOCTYPE html>
+<html data-ng-app="addaptivePractice" data-ng-controller="AppCtrl" lang="cs">
+  <head>
+    <meta charset="utf-8">
+    <title ng-bind="title" ng-init="initTitle('{{ title }}')">{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% flatblock "meta_description" using "inline.html" %}"/>
+    <meta name="keywords" content="{% flatblock "meta_keywords" using "inline.html" %}" />
+    <link rel="shortcut icon" type="image/png" href="/favicon.ico"/>
+
+    <!-- Le styles -->
+    <style>
+        {% include "above-fold-bootstrap.css" %}
+        {% include above_fold_styles %}
+    </style>
+
+    <base href="/">
+  </head>
+
+  <body data-spy="scroll" data-target=".bs-docs-sidebar">
+  <div class="row">
+  <div id="wrap" class="material-whiteframe-z5">
+    <!-- Navbar
+    ================================================== -->
+    <div class="left-bar">
+      <paper-button label="button"></paper-button>
+      <material-toolbar class="material-theme-dark material-whiteframe-z1">
+        <h1 class="material-toolbar-tools">
+          <span ng-show="isHomepage" class="dropdown">
+            <i class="glyphicon glyphicon-th-list dropdown-toggle" 
+                id="dropdownMenu1" data-toggle="dropdown">
+              </i>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+              <li class="visible-xs-block">
+                <a href="#/how-it-works" >Jak to funguje</a>
+              </li>
+            </ul>
+          </span>
+          <i onclick="history.back()" ng-hide="isHomepage"
+            class="glyphicon glyphicon-chevron-left ng-cloak"></i>
+          <a class="navbar-brand" href="#"> {% flatblock "title" %}</a>
+            <i class="dropdown pull-right ng-cloak" ng-show="user.username === ''" >
+              <a href="" 
+                 role="button" 
+                 class="dropdown-toggle atooltip drop-login"
+                 title="Přihlašte se jednoduše přes Google nebo Facebook, aby si systém váše znalosti pamatoval i příště."
+                 data-toggle="dropdown">
+                 <i class="glyphicon glyphicon-log-in"></i>
+              </a>
+              <ul class="dropdown-menu login" role="menu" aria-labelledby="drop-login">
+                <li class="dropdown-header">
+                  <span>Přihlásit se</span>
+                </li>
+                <li>
+                  <a class="btn btn-danger btn-lg btn-block" href="/login/google-oauth2/">
+                    <i class="social-google"></i> přes Google
+                  </a>
+                </li>
+                <li>
+                  <a class="btn btn-primary btn-lg btn-block" href="/login/facebook/">
+                    <i class="social-facebook"></i> přes Facebook
+                  </a>
+                </li>
+              </ul>
+            </i>
+            <i class="dropdown pull-right ng-cloak" ng-show="user.username !== ''"
+                ng-init="initUser('{{user.username}}',0)">
+              <a id="drop1" href="" role="button" class="dropdown-toggle" data-toggle="dropdown">
+                 <i class="glyphicon glyphicon-user"></i>
+               </a>
+              <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
+                <li class="dropdown-header">
+                  <span ng-bind="user.username"></span>
+                </li>
+                <li class="forgot-pwd"><a href="#/" ng-click="logout()"><i class="glyphicon glyphicon-log-out"></i> Odhlásit se</a></li>
+              </ul>
+            </i>
+        </h1>
+      </material-toolbar>
+        <div>
+          <a href="#/practice/" class="btn btn-default btn-menu" >
+            <i class="glyphicon glyphicon-check"></i> Procvičovat
+          </a>
+          <a href="#/test/" 
+             class="btn btn-default btn-menu">
+            <i class="glyphicon glyphicon-pencil"></i> Test
+          </a>
+        </div>
+      <ul class="main-nav">
+        <li>
+          <a class="menu-item"
+            href="#/view/">
+           {% flatblock "main_category" %}
+          </a> 
+        </li>
+        {% for category in categories %}
+        <li>
+          <a class="menu-item submenu-item"
+            ng-class="{{category.id}}|isActive"
+            href="#/view/{{category.id}}">
+              {{category.name}}
+          </a> 
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div id="footer">
+      <a href="https://vpsfree.cz/" title="vpsFree hostuje tento web">
+        <img id="imgVPS" src="/static/img/vpsfree-logo.png" style="height: 30px">
+      </a>
+<!--
+      <a href="#/about">O projektu</a> &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+      <span class="email contact">autoskolachytre{zavinac}googlegroups.com</span>
+    -->
+      <a class="contact-google" href="{% flatblock "google_plus_page_url" using "inline.html" %}">Google+</a>
+      <a class="contact-facebook" href="{% flatblock "facebook_page_url" using "inline.html" %}">Facebook</a>
+    </div>
+  </div>
+    
+    <div class="homepage hidden-xs">
+      <!--[if lte IE 8]>
+      <div class="alert alert-danger old-browser">
+        Používáte <b>zastaralou verzi prohlížeče</b>, ve které aplikace
+        <b>nemusí fungovat správně</b>. 
+        Pro optimální fungování aplikace doporučujeme nainstalovat 
+        aktuální verzi některého z běžně používaných prohlížečů. 
+        Například:
+        <a href="https://www.google.com/intl/cs/chrome/browser/">Google Chrome</a>,
+        <a href="http://www.mozilla.org/cs/firefox/new/">Firefox</a>,
+        <a href="http://windows.microsoft.com/cs-CZ/internet-explorer/download-ie">
+            Internet explorer
+        </a>
+      </div>
+      <![endif]-->
+      <div class="welcome-page jumbotron">
+          <h1 > {% flatblock "title" %} </h1>
+          <div class="flatblock block-welcome_page col-md-offset-1 col-md-10 col-lg-offset-3 col-lg-6">
+           {% flatblock "subtitle" %}
+            <div class="col-centered">
+              <a href="#/practice/" class="btn btn-default btn-lg btn-huge" >
+                <i class="glyphicon glyphicon-check"></i> Procvičovat
+              </a>
+            </div>
+            <!--
+            <div class="plugins-social">
+              <div class="g-plusone" data-size="medium"></div>
+              <div class="fb-like" data-href="https://www.facebook.com/slepemapy" data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>
+            </div>
+        -->
+          </div>
+      </div>
+      <div  ng-show="isHomepage">
+        {% include "how-it-works.html" %}
+      </div>
+    </div>
+  </div>
+
+    <div data-ng-view id="ng-view" class="card ng-cloak {{pageClass}}">
+    </div>
+
+    <script type="text/ng-template" id="loading.html">
+      <div class="loading-indicator"></div>
+    </script>
+    <script type="text/ng-template" id="how-it-works.html">
+        {% include "how-it-works.html" %}
+    </script>
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    {% for file in js_files %}
+    <script src="{{ file }}"></script>
+    {% endfor %}
+
+    {% for file in css_files %}
+    <link href="{{ file }}" rel="stylesheet">
+    {% endfor %}
+
+    <link rel="import" href="/static/bower_components/paper-radio-group/paper-radio-group.html">
+    <link rel="import" href="/static/bower_components/paper-radio-button/paper-radio-button.html">
+    <link rel="import" href="/static/bower_components/paper-radio-button/paper-radio-button.css">
+    <!-- Place this tag after the last +1 button tag. -->
+    <script type="text/javascript">
+      window.___gcfg = {lang: 'cs'};
+
+      (function() {
+        var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+        po.src = 'https://apis.google.com/js/platform.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+      })();
+    </script>
+
+    <div id="fb-root"></div>
+    <script>(function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/cs_CZ/all.js#xfbml=1&appId=543575712384201";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));</script>
+    {% if isProduction  %}
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+          ga('create', '{%spaceless %}
+            {% flatblock "google_analytics_id" using "inline.html" %}
+            {% endspaceless %}', 'auto');
+      
+
+        </script>
+    {% endif %}
+  </body>
+</html>
+
