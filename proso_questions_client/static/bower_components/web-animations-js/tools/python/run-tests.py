@@ -11,13 +11,13 @@ import httplib
 import json as simplejson
 import os
 import platform
-import pprint
 import re
 import socket
 import sys
 import time
 import urllib2
 import zipfile
+import tarfile
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -148,9 +148,9 @@ if not args.sauce:
                 datafile = StringIO.StringIO(
                     urllib2.urlopen(phantomjs_url).read())
                 contents = tarfile.TarFile.open(fileobj=datafile, mode='r:bz2')
-                file("tools/"+phantomjs_bin, "w").write(
+                file("tools/" + phantomjs_bin, "w").write(
                     contents.extractfile(
-                        "phantomjs-1.9.0-linux-x86_64/bin/"+phantomjs_bin
+                        "phantomjs-1.9.0-linux-x86_64/bin/" + phantomjs_bin
                     ).read())
 
             phantomjs = os.path.realpath(phantomjs_local)
@@ -206,7 +206,7 @@ else:
                 else:
                     sauce_tunnel.kill()
 
-    readyfile = "."+tunnel_id
+    readyfile = "." + tunnel_id
     sauce_tunnel = None
     try:
         sauce_log = file("sauce_tunnel.log", "w")
@@ -302,7 +302,7 @@ if args.list:
     sys.exit(-1)
 
 if args.load_list:
-    tests = list(set(x.split(':')[0].strip()+'.html'
+    tests = list(set(x.split(':')[0].strip() + '.html'
                  for x in args.load_list.readlines()))
 else:
     tests = []
@@ -593,7 +593,7 @@ if args.browser == "Chrome":
     def directory_cleanup(directory, shutil=shutil):
         try:
             shutil.rmtree(directory)
-        except OSError, e:
+        except OSError:
             pass
 
     try:
