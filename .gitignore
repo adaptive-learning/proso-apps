@@ -2,3 +2,10 @@ dist
 *.pyc
 *.egg-info
 *.sqlite3
+.ropeproject
+*.sw[pon]
+.sass-cache
+proso_questions_client/node_modules/
+proso_questions_client/templates/generated
+proso_questions_client/static/css
+build
