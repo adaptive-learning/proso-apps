@@ -16,7 +16,7 @@ def home(request, hack=None):
     JS_FILES = (
         "static/dist/js/fallbacks.min.js",
         "static/dist/js/libs.min.js",
-        "static/dist/js/proso-apps-client.min.js",
+        "static/dist/js/proso-apps-questions-client.min.js",
         "static/lib/angular-1.2.9/i18n/angular-locale_cs.js",
     )
     CSS_FILES = (

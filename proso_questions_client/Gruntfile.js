@@ -38,7 +38,6 @@ module.exports = function(grunt) {
     },
     ngtemplates:    {
       addaptivePractice:          {
-        cwd: 'proso_client',
         src: [
           'static/tpl/*.html',
         ],
