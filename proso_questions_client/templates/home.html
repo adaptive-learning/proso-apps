@@ -28,17 +28,18 @@
       <material-toolbar class="material-theme-dark material-whiteframe-z1">
         <h1 class="material-toolbar-tools">
           <span ng-show="isHomepage" class="dropdown">
-            <i class="glyphicon glyphicon-th-list dropdown-toggle" 
-                id="dropdownMenu1" data-toggle="dropdown">
-              </i>
+            <a href="" id="dropdownMenu1" data-toggle="dropdown">
+              <i class="glyphicon glyphicon-th-list dropdown-toggle"> </i>
+            </a>
             <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
               <li class="visible-xs-block">
                 <a href="#/how-it-works" >Jak to funguje</a>
               </li>
             </ul>
           </span>
-          <i onclick="history.back()" ng-hide="isHomepage"
-            class="glyphicon glyphicon-chevron-left ng-cloak"></i>
+          <a href="" onclick="history.back()" ng-hide="isHomepage">
+            <i class="glyphicon glyphicon-chevron-left ng-cloak"></i>
+          </a>
           <a class="navbar-brand" href="#"> {% flatblock "title" %}</a>
             <i class="dropdown pull-right ng-cloak" ng-show="user.username === ''" >
               <a href="" 
