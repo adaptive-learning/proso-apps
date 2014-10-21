@@ -6,7 +6,7 @@
   </div>
   <div ng-show="error" ng-bind="error" class="alert alert-danger">
   </div>
-  <div ng-show="question != undefined && !showSummary" class="practice">
+  <div ng-repeat="question in questions" class="practice">
     <div class="well" ng-if="question|imgSrc">
       <img ng-src="{{question|imgSrc}}"/>
     </div>

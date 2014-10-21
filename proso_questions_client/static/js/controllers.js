@@ -105,8 +105,7 @@
     };
 
     function setupSummary() {
-      $scope.layer = undefined;
-      // prevents additional points gain. issue #38
+      $scope.questions = [];
       $scope.summary = question.summary();
       $scope.showSummary = true;
       events.emit('questionSetFinished', user.getUser().points);
@@ -114,6 +113,7 @@
 
     function setQuestion(active) {
       $scope.question = active;
+      $scope.questions = [active];
       $scope.canNext = false;
     }
 
