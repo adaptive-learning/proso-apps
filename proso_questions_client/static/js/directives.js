@@ -157,15 +157,13 @@
     };
   }])
 
-  .directive('debug', ["$filter", "$routeParams",
-      function ($filter, $routeParams) {
+  .directive('debug', ["debugParam", function (debugParam) {
     return {
       restrict : 'A',
       template : '<pre ng-show="debug" ng-bind-html="debug | prettify"></pre>',
       link:function ($scope, element, attrs) {
         $scope.$watch(attrs.debug, function() {
-          $scope.debug = $routeParams.debug ? $scope[attrs.debug] : undefined;
-            //element.thml($filter('prettify')($scope[attrs.debug]));
+          $scope.debug = debugParam() ? $scope[attrs.debug] : undefined;
         });
       }
     };

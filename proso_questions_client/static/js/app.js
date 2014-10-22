@@ -30,12 +30,14 @@
       templateUrl : 'static/tpl/about.html'
     }).when('/view/:category?', {
       controller : 'AppView',
-      templateUrl : 'static/tpl/view_tpl.html'
+      templateUrl : 'static/tpl/view_tpl.html',
+      reloadOnSearch : false,
     }).when('/refreshpractice/:category?', {
       redirectTo : '/practice/:category'
     }).when('/practice/:category?', {
       controller : 'AppPractice',
-      templateUrl : 'static/tpl/practice_tpl.html'
+      templateUrl : 'static/tpl/practice_tpl.html',
+      reloadOnSearch : false,
     }).when('/test/', {
       controller : 'AppTest',
       templateUrl : 'static/tpl/test_tpl.html'

@@ -269,5 +269,17 @@
       var title = route.templateUrl ? titles[route.templateUrl] : '';
       return title;
     };
+  }])
+
+  .factory('debugParam', ["$routeParams", "$location",
+      function ($routeParams, $location) {
+    var debug = false;
+    return function () {
+      if (debug && ! $routeParams.debug) {
+        $location.search('debug', 'true');
+      }
+      debug = debug || $routeParams.debug;
+      return debug;
+    };
   }]);
 }());
