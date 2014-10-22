@@ -15,7 +15,7 @@
     </div>
     <paper-radio-group ng-model="question.correct" style="display:block">
       <paper-radio-button name="{{$index}}" 
-        label="{{option.text}}"
+        label="{{option.text || '\''}}"
         ng-click="checkAnswer(option)"
         ng-repeat="option in question.options"
         ng-class="{
@@ -24,7 +24,7 @@
           'block': !option.images.length
         }"
         ng-disabled="option.disabled">
-          <img ng-src="{{option.name|imgSrc}}" ng-if="option.name|imgSrc"/>
+          <img ng-src="{{option|imgSrc}}" />
       </paper-radio-button>
     </paper-radio-group>
     <div class="pull-right" >
