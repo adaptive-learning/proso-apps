@@ -10,11 +10,10 @@
   .value('chroma', chroma)
 
   .value('colors', {
-    'GOOD': '#0d0',
-    'BAD': '#ff0000',
+    'GOOD': '#0f9d58',
+    'BAD': 'd9534f',
     'NEUTRAL': '#bbb',
     'BRIGHT_GRAY' : '#ddd',
-    'WATER_COLOR' : '#73c5ef'
   })
 
   .factory('colorScale', ['colors', 'chroma', function(colors, chroma) {
