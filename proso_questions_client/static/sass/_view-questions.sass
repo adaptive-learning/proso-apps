@@ -1,4 +1,4 @@
-.thumbnails
+.view-questions
   .prediction
     padding: 10px 0 5px 0
     .progress
@@ -8,16 +8,19 @@
       display: inline-block
       height: 20px
       position: absolute
-  .map-progress .progress
-    margin: 0 -15px 0 -15px
+  .category-progress .progress
+    margin: 0px
     border-radius: 0
     height: 5px
     background: none
   overflow: hidden
-  .collapse-control
+  .view-questions-header
     background: #eee
     padding: 10px
     padding-left: 20px
+    .btn
+      font-size: 12px
+      margin-right: 15px
     .btn
       font-size: 16px
       margin: 0
@@ -26,11 +29,6 @@
         visibility: visible
     .btn-group
       margin-right: 10px
-  .collapse-control-inner
-    margin: 0px -15px 0px -15px
-    .btn
-      font-size: 12px
-      margin-right: 15px
     
   h2, h3
     margin: 0px
@@ -38,18 +36,12 @@
     font-size: 25px
     color: $main-color-darken
 
-.question-buttons
+.questions-list
+  padding: 15px
   paper-radio-button
     display: block
   paper-radio-button.img-option
     display: inline-block
-
-.test-composition
-  margin: 10px 0 0 0
-  cursor: default
-  li 
-    list-style-type: disc
-    margin-left: 17px
 
 .questions-item
   padding: 10px 0

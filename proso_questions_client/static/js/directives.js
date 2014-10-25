@@ -54,7 +54,7 @@
     };
   }])
 
-  .directive('mapProgress', [function() {
+  .directive('categoryProgress', [function() {
     return {
       restrict : 'C',
       template : '<div class="progress overview-progress">' +
