@@ -20,7 +20,10 @@
     return {
       restrict : 'C',
       link : function($scope, elem, attrs) {
-        elem.tooltip({ 'placement' : attrs.placement || 'bottom' });
+        elem.tooltip({ 
+          'placement' : attrs.placement || 'bottom',
+          'container' : attrs.container,
+        });
       }
     };
   })
@@ -31,7 +34,6 @@
       compile : function(elem) {
         elem.bind('click', function() {
           elem.tooltip('destroy');
-          elem.parent().find('.tooltip').remove();
         });
       }
     };
