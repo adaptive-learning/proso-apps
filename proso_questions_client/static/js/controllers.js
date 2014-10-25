@@ -77,14 +77,14 @@
       'question', 'user', 'events',
       function($scope, $routeParams, $timeout, $filter,
       question, user, events) {
-    $scope.category = $routeParams.category;
+    $scope.categoryId = $routeParams.category;
 
     $scope.checkAnswer = function(selected) {
       highlightOptions(selected);
       if (selected) {
         $scope.question.answered = selected;
       }
-      $scope.progress = question.answer($scope.question);
+      $scope.progress = question.answer($scope.question, $scope.categoryId);
       if (selected &&  selected.correct) {
         user.addPoint();
         $timeout(function() {
@@ -97,7 +97,7 @@
 
     $scope.next = function() {
       if ($scope.progress < 100) {
-        question.next($scope.category, setQuestion);
+        question.next($scope.categoryId, setQuestion);
       } else {
         setupSummary();
       }

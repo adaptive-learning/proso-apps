@@ -129,7 +129,7 @@
     }
     function hasNoTwoSameInARow(array) {
       for (var i = 0, j = array.length; i + 1 < j; i++) {
-        if (array[i].asked_code == array[i + 1].asked_code) {
+        if (array[i].id == array[i + 1].id) {
           return false;
         }
       }
@@ -137,6 +137,7 @@
     }
     var questions = [];
     var summary = [];
+    var requestOptions = {};
     return {
       test : function(fn) {
         url = 'questions/test';
@@ -146,16 +147,14 @@
         return promise;
       },
       first : function(part, fn) {
-        var options = {
-          params : {
-            limit : $routeParams.limit,
-            user : $routeParams.user,
-            category : part,
-          }
+        requestOptions.params = {
+          limit : $routeParams.limit,
+          user : $routeParams.user,
+          category : part,
         };
         url = 'questions/practice';
         summary = [];
-        var promise = $http.get(url, options).success(function(data) {
+        var promise = $http.get(url, requestOptions).success(function(data) {
           qIndex = 0;
           questions = data.data;
           returnQuestion(fn);
@@ -165,7 +164,7 @@
       next : function(part, fn) {
         returnQuestion(fn);
       },
-      answer : function(question) {
+      answer : function(question, category) {
         question.response_time += new Date().valueOf();
         question.index = qIndex - 1;
         question.prediction = question.answered.correct + 0;
@@ -174,22 +173,25 @@
           answered : question.answered.id,
           response_time : question.response_time,
         });
+        var limit = (requestOptions.params.limit || 10) - question.index - 1;
         summary.push(question);
         $http({
           method: 'POST',
-          url : 'questions/answer',
+          url : 'questions/practice?limit=' + limit + 
+            (category ?  '&category=' + category : ''),
           data: postParams,
           headers: {
             'Content-Type' : 'application/x-www-form-urlencoded',
             'X-CSRFToken' : $cookies.csrftoken,
           }
         }).success(function(data) {
-          var futureLength = qIndex + data.length;
+          var futureLength = qIndex + data.data.length;
+          console.log(futureLength, data);
           // questions array should be always the same size
           // if data sent by server is longer, it means the server is delayed
           if (questions.length == futureLength) {
             // try to handle interleaving
-            var questionsCandidate = questions.slice(0, qIndex).concat(data);
+            var questionsCandidate = questions.slice(0, qIndex).concat(data.data);
             if (hasNoTwoSameInARow(questionsCandidate)) {
               questions = questionsCandidate;
               $log.log('questions updated, question index', qIndex);
