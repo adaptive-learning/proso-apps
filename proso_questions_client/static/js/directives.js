@@ -180,5 +180,35 @@
                      'stroke-linecap="round" cx="33" cy="33" r="30"></circle>' +
                  '</svg>'
     };
+  }])
+
+  .directive('questionsList', [function () {
+    return {
+      restrict : 'A',
+      templateUrl : 'static/tpl/questions_list_tpl.html',
+      scope : false,
+      link:function ($scope, element, attrs) {
+        $scope.$watch(attrs.questionsList, function(questionsList) {
+          $scope.questionsList = questionsList;
+        });
+        $scope.selectQuestion = function(q) {
+          $scope.selected = q != $scope.selected ? q : undefined;
+        };
+      }
+    };
+  }])
+
+  .directive('options', [function () {
+    return {
+      restrict : 'A',
+      templateUrl : 'static/tpl/options_tpl.html',
+      scope : false,
+      link:function ($scope, element, attrs) {
+        $scope.$watch(attrs.options, function(question) {
+          $scope.question = question;
+          $scope.disabled = attrs.ngDisabled;
+        });
+      }
+    };
   }]);
 }());

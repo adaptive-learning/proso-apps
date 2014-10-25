@@ -1,0 +1,14 @@
+<paper-radio-group class="options" ng-model="question.correct">
+  <paper-radio-button name="{{option.order}}" 
+    ng-repeat="option in question.options"
+    label="{{(option | stripImg) || '\''}}"
+    ng-disabled="option.disabled || disabled"
+    ng-click="checkAnswer(option)"
+    ng-class="{
+      'correct': question.answered && option.correct,
+      'wrong': question.answered == option && !option.correct,
+      'block': !option.images.length
+    }" >
+      <img ng-src="{{option | imgSrc}}"/>
+  </paper-radio-button>
+</paper-radio-group>

@@ -169,6 +169,7 @@
       answer : function(question) {
         question.response_time += new Date().valueOf();
         question.index = qIndex - 1;
+        question.prediction = question.answered.correct + 0;
         var postParams = $.param({
           question : question.id,
           answered : question.answered.id,

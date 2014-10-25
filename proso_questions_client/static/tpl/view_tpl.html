@@ -4,8 +4,8 @@
   </div>
   <div class="view-questions">
     <div class="view-questions-header">
-      <h3> {{type.name}} </h3>
-      <a href="#/practice/{{category}}" 
+      <h3> {{category.name}} </h3>
+      <a href="#/practice/{{categoryId}}" 
          class="btn btn-primary pull-right"  >
         <i class="glyphicon glyphicon-check"></i> Procvičovat
       </a>
@@ -16,41 +16,7 @@
            practiced:(type.places|filter:{practiced:true}).length,
            learned:(type.places|filter:{learned:true}).length
          } }}"></div>
-    <div class="questions-list">
-      <div ng-repeat="question in questions" >
-          <div class="questions-item" ng-click="selectQuestion(question)">
-            <span class="badge badge-default" title="Odhad znalosti">
-              <i class="color-indicator" 
-              style="background-color: {{question.prediction|probColor}};" ></i>
-              {{question.prediction | percent}}
-            </span>
-            <span class="inline-question" ng-bind="question.html|stripHtml"></span>
-         </div>
-         <div class="question-details" ng-if="question == selected"
-             ng-class="{'ng-leave' : question != selected}">
-            <img style="display: block" ng-src="{{question | imgSrc}}"/>
-            <paper-radio-group ng-model="question.correct">
-              <paper-radio-button name="{{option.order}}" 
-                label="{{(option | stripImg) || '\''}}"
-                disabled
-                ng-class="{'img-option': option.images.length}"
-                ng-repeat="option in question.options"
-                ng-show="option">
-                  <img ng-src="{{option | imgSrc}}"/>
-              </paper-radio-button>
-            </paper-radio-group>
-           <div debug="question" ></div>
-         </div>
-         <material-divider></material-divider>
-      </div>
-      <br>
-      <div ng-click="onBottomReached()"
-        ng-show="hasMoreQuestions && !loading"
-        class="btn btn-default btn-block">
-        Další otázky
-      </div>
-      <div class="clearfix"></div>
-    </div>
+    <div questions-list="questions"> </div>
   </div>
   <div ng-show="loading" class="loading-indicator">
   </div>

@@ -32,7 +32,7 @@
 
   .controller('AppView', ['$scope', '$routeParams', '$filter', 'places',
       function($scope, $routeParams, $filter, places) {
-    $scope.category = $routeParams.category;
+    $scope.categoryId = $routeParams.category;
     $scope.page = 0;
     $scope.questions = [];
     
@@ -45,7 +45,7 @@
         return;
       }
       $scope.loading = true;
-      places.get($scope.category, $scope.page).
+      places.get($scope.categoryId, $scope.page).
         error(function(){
           $scope.error = "V aplikaci bohužel nastala chyba.";
           $scope.loading = false;
@@ -63,15 +63,14 @@
           $scope.questions = $scope.questions.concat(questions);
           $scope.loading = false;
           $scope.hasMoreQuestions = questions.length > 0;
+          if ($scope.categoryId && questions.length > 0) {
+            $scope.category = questions[0].categories[0];
+          }
         });
       $scope.page++;
     }
     loadQuestions();
 
-    $scope.selectQuestion = function(q) {
-      $scope.selected = q != $scope.selected ? q : undefined;
-    };
-    
   }])
 
   .controller('AppPractice', ['$scope', '$routeParams', '$timeout', '$filter',
@@ -125,7 +124,7 @@
       });
     }
 
-    question.first($scope.category, function(q) {
+    question.first($scope.categoryId, function(q) {
       setQuestion(q);
     }).error(function(){
       $scope.error = "V aplikaci bohužel nastala chyba.";

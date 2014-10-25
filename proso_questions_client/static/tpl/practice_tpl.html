@@ -13,20 +13,7 @@
     <div class="question">
       <div ng-bind="question | stripImg"></div>
     </div>
-    <paper-radio-group ng-model="question.correct" style="display:block">
-      <paper-radio-button name="{{$index}}" 
-        label="{{option.text || '\''}}"
-        ng-click="checkAnswer(option)"
-        ng-repeat="option in question.options"
-        ng-class="{
-          'correct': question.answered && option.correct,
-          'wrong': question.answered == option && !option.correct,
-          'block': !option.images.length
-        }"
-        ng-disabled="option.disabled">
-          <img ng-src="{{option|imgSrc}}" />
-      </paper-radio-button>
-    </paper-radio-group>
+    <div options="question"></div>
     <div class="pull-right" >
       <button class="btn btn-lg btn-default next {{!canNext || 'btn-primary'}}" 
               ng-click="next()" 
@@ -49,11 +36,7 @@
         </div>
       </div>
       <h2 ng-show="errorMessage != undefined" ng-bind="errorMessage"></h2>
-      <div class="question-buttons">
-        <button ng-repeat="question in summary.questions" place-label
-              class="label {{!question.options[question.answered].isCorrect && 'label-danger' || 'label-success' }} ">
-        </button>
-      </div>
+      <div questions-list="summary.questions"> </div>
     </div>
     <br>
     <span class="pull-right" >
@@ -66,6 +49,8 @@
         Přehled znalostí
       </a>
     </span>
+    <div class="clearfix"></div>
+    <div debug="summary"></div>
   </div>
   <div class="clearfix"></div>
 </div>

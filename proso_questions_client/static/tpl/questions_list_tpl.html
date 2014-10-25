@@ -1,0 +1,26 @@
+<div class="questions-list">
+  <div ng-repeat="question in questionsList" >
+      <div class="questions-item" ng-click="selectQuestion(question)">
+        <span class="badge badge-default" title="Odhad znalosti">
+          <i class="color-indicator" 
+          style="background-color: {{question.prediction|probColor}};" ></i>
+          {{question.answered && ' ' || (question.prediction | percent)}}
+        </span>
+        <span class="inline-question" ng-bind="question.html|stripHtml"></span>
+     </div>
+     <div class="question-details" ng-if="question == selected"
+         ng-class="{'ng-leave' : question != selected}">
+       <img style="display: block" ng-src="{{question | imgSrc}}"/>
+       <div options="question" ng-disabled="true"></div>
+       <div debug="question" ></div>
+     </div>
+     <material-divider></material-divider>
+  </div>
+  <br>
+  <div ng-click="onBottomReached()"
+    ng-show="hasMoreQuestions && !loading"
+    class="btn btn-default btn-block">
+    Další otázky
+  </div>
+  <div class="clearfix"></div>
+</div>
