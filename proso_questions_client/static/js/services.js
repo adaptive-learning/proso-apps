@@ -142,7 +142,7 @@
       test : function(fn) {
         url = 'questions/test';
         var promise = $http.get(url).success(function(data) {
-          fn(data);
+          fn(data.data);
         });
         return promise;
       },

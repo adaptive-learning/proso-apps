@@ -4,7 +4,7 @@
         <span class="badge badge-default" title="Odhad znalosti">
           <i class="color-indicator" 
           style="background-color: {{question.prediction|probColor}};" ></i>
-          {{question.answered && ' ' || (question.prediction | percent)}}
+          {{question.points || question.answered && ' ' || (question.prediction | percent)}}
         </span>
         <span class="inline-question" ng-bind="question.html|stripHtml"></span>
      </div>

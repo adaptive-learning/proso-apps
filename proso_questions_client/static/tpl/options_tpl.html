@@ -5,8 +5,8 @@
     ng-disabled="option.disabled || disabled"
     ng-click="checkAnswer(option)"
     ng-class="{
-      'correct': question.answered && option.correct,
-      'wrong': question.answered == option && !option.correct,
+      'correct': !noAnswers && (question.answered || question.points) && option.correct,
+      'wrong': !noAnswers && question.answered == option && !option.correct,
       'block': !option.images.length
     }" >
       <img ng-src="{{option | imgSrc}}"/>

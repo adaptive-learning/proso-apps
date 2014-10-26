@@ -207,6 +207,7 @@
         $scope.$watch(attrs.options, function(question) {
           $scope.question = question;
           $scope.disabled = attrs.ngDisabled;
+          $scope.noAnswers = attrs.noAnswers;
         });
       }
     };

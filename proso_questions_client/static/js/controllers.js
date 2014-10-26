@@ -169,8 +169,10 @@
       $scope.activeQuestionIndex = undefined;
       $scope.showSummary = true;
       $scope.questions.map(function(q) {
-        q.isCorrect = q.options[q.answered.order] && q.options[q.answered.order].correct;
+        q.isCorrect = q.answered && q.answered.correct;
         q.isWrong = !q.isCorrect;
+        q.prediction = (q.answered ? q.answered.correct : 0) + 0;
+        q.points = q.prediction + 'b';
       });
       $scope.summary = {
         questions : $scope.questions,

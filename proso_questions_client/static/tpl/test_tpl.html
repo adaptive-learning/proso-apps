@@ -1,54 +1,43 @@
 <div id="container" class="practice-container col-lg-12">
-  <timer countdown="30 * 60" 
-    max-time-unit="'minute'" 
-    interval="1000" 
-    finish-callback="evaluate(true);"
-    title="Zývá do konce"
-    class="pull-right">
-    <i class="glyphicon glyphicon-time"></i>
-     {{minutes}}:{{sseconds}}
-  </timer>
-  <ul class="progress-indicator">
-    <li class="prev" ng-click="prev()" >&lt;</li>
-    <li ng-repeat="question in questions"
-      class="question-switcher"
-      ng-class="{ 
-        'active': ($index == activeQuestionIndex),
-        'answered': question.answered !== undefined, 
-        'correct': question.isCorrect,
-        'wrong': question.isWrong
-      }"
-      ng-click="activateQuestion($index)">
-    {{$index}}
-    </li>
-    <li class="next" ng-click="next()">&gt;</li>
-  </ul>
+  <div ng-hide="showSummary || error">
+    <timer countdown="30 * 60" 
+      max-time-unit="'minute'" 
+      interval="1000" 
+      finish-callback="evaluate(true);"
+      title="Zývá do konce"
+      class="pull-right">
+      <i class="glyphicon glyphicon-time"></i>
+       {{minutes}}:{{sseconds}}
+    </timer>
+    <ul class="progress-indicator">
+      <li class="prev" ng-click="prev()" >&lt;</li>
+      <li ng-repeat="question in questions"
+        class="question-switcher"
+        ng-class="{ 
+          'active': ($index == activeQuestionIndex),
+          'answered': question.answered !== undefined, 
+          'correct': question.isCorrect,
+          'wrong': question.isWrong
+        }"
+        ng-click="activateQuestion($index)">
+      {{$index}}
+      </li>
+      <li class="next" ng-click="next()">&gt;</li>
+    </ul>
+  </div>
   <div ng-hide="questions || showSummary || error" class="loading-indicator">
   </div>
   <div ng-show="error" ng-bind="error" class="alert alert-danger">
   </div>
   <div ng-repeat="question in questions"
       ng-if="$index == activeQuestionIndex" class="practice">
-    <div class="well" ng-if="question.text|imgSrc">
-      <img ng-src="{{question.text|imgSrc}}"/>
+    <div class="well" ng-if="question|imgSrc">
+      <img ng-src="{{question|imgSrc}}"/>
     </div>
     <div class="question">
-      <div ng-bind="question.text|stripImg"></div>
+      <div ng-bind="question | stripImg"></div>
     </div>
-    <paper-radio-group ng-model="question.correct" style="display:block">
-      <paper-radio-button name="{{$index}}" 
-        label="{{option.name | stripImg}}"
-        ng-click="checkAnswer(option)"
-        ng-repeat="option in question.options"
-        ng-class="{
-          'correct': (question.isWrong !== undefined && option.isCorrect),
-          'wrong': (option.index == question.answered && question.isWrong),
-          'block': !(option.name|imgSrc)
-        }"
-        ng-disabled="option.disabled">
-          <img ng-src="{{option.name | imgSrc}}"/>
-      </paper-radio-button>
-    </paper-radio-group>
+    <div options="question" no-answers="true"></div>
       <button class="btn btn-lg btn-default prev" 
           ng-click="prev()" 
           ng-disabled="$index == 0" >
@@ -66,6 +55,7 @@
         <i class="glyphicon glyphicon-arrow-right"></i> Další
       </button>
     </div>
+    <div debug="question"></div>
   </div>
   <div ng-show="showSummary" class="summary">
     <div>
@@ -80,18 +70,14 @@
         </div>
       </div>
       -->
-      <h2>TODO</h2>
+      <h2> Výsledky testu </h2>
       <h2 ng-show="errorMessage != undefined" ng-bind="errorMessage"></h2>
-      <div class="question-buttons">
-        <button ng-repeat="question in summary.questions" place-label
-              class="label {{!question.options[question.answered].isCorrect && 'label-danger' || 'label-success' }} ">
-        </button>
-      </div>
+      <div questions-list="summary.questions"> </div>
     </div>
     <br>
     <span class="pull-right" >
       <a class="btn-continue btn btn-lg btn-default {{!showSummary || 'btn-primary'}}" 
-         href="#/view/{{part}}/" >
+         href="#/view/" >
         Přehled znalostí
       </a>
     </span>
