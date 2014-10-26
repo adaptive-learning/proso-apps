@@ -28,16 +28,21 @@
     };
   })
 
-  .directive('dropLogin', function() {
+  .directive('dropLogin', ['$', function($) {
     return {
       restrict : 'C',
       compile : function(elem) {
         elem.bind('click', function() {
           elem.tooltip('destroy');
+          $('.tooltip').each(function() {
+            if ($(this).text().indexOf("Přihlašte se") != -1) {
+              $(this).remove();
+            }
+          });
         });
       }
     };
-  })
+  }])
 
   .directive('dropLogin',['$timeout', 'events', function($timeout, events) {
     return {
