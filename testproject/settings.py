@@ -7,9 +7,6 @@ https://docs.djangoproject.com/en/1.6/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'really secret key'
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
@@ -20,13 +17,26 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = 'media/'
 
 
-DEBUG = True
 ON_PRODUCTION = False
-ON_STAGING = not ON_PRODUCTION
+ON_STAGING = False
+
+if 'PROSO_ON_PRODUCTION' in os.environ:
+    ON_PRODUCTION = True
+if 'PROSO_ON_STAGING' in os.environ:
+    ON_STAGING = True
+    DEBUG_TOOLBAR_PATCH_SETTINGS = False
+
+if ON_PRODUCTION:
+    DEBUG = False
+else:
+    DEBUG = True
 
 TEMPLATE_DEBUG = DEBUG
 
-ALLOWED_HOSTS = []
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'really secret key'
+if ON_PRODUCTION or ON_STAGING:
+    SECRET_KEY = os.environ['PROSO_SECRET_KEY']
 
 # Application definition
 
@@ -41,6 +51,7 @@ INSTALLED_APPS = (
     'social_auth',
     'south',
     'lazysignup',
+    'debug_toolbar',
     'proso_common',
     'proso_models',
     'proso_questions',
@@ -57,12 +68,22 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'proso_ab.middleware.ABMiddleware',
     'proso_models.cache.RequestCacheMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'proso_questions_client.middleware.AuthAlreadyAssociatedMiddleware',
 )
 
 ROOT_URLCONF = 'testproject.urls'
 
 
-# Database
+TEMPLATE_DIRS = (
+    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
+    # Always use forward slashes, even on Windows.
+    # Don't forget to use absolute paths, not relative paths.
+    os.path.join(BASE_DIR, '..', 'proso_questions', 'templates'),
+    os.path.join(BASE_DIR, '..', 'proso_questions_client', 'templates'),
+)
+
+# Da
 import sys
 if 'test' in sys.argv:
     DATABASES = {
@@ -74,11 +95,12 @@ if 'test' in sys.argv:
 else:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': 'proso_apps',
-            'USER': 'proso_apps',
-            'PASSWORD': 'proso_apps',
-            'HOST': 'localhost'
+            'ENGINE': os.getenv('PROSO_DATABASE_ENGINE', 'django.db.backends.postgresql_psycopg2'),
+            'NAME': os.getenv('PROSO_DATABASE_NAME', 'proso_apps'),
+            'USER': os.getenv('PROSO_DATABASE_USER', 'proso_apps'),
+            'PASSWORD': os.getenv('PROSO_DATABASE_PASSWORD', 'proso_apps'),
+            'HOST': os.getenv('PROSO_DATABASE_HOST', 'localhost'),
+            'PORT': os.getenv('PROSO_DATABASE_PORT', None)
         }
     }
 
@@ -93,18 +115,52 @@ USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, '..', '..', 'static')
 STATIC_URL = '/static/'
 
-# Debugging
-if DEBUG:
-    INSTALLED_APPS += ('debug_toolbar',)
-    MIDDLEWARE_CLASSES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+)
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'lazysignup.backends.LazySignupBackend',
+    'social_auth.backends.facebook.FacebookBackend',
+    'social_auth.backends.google.GoogleOAuth2Backend',
 )
+
+FACEBOOK_APP_ID = os.getenv('PROSO_FACEBOOK_APP_ID', '')
+FACEBOOK_API_SECRET = os.getenv('PROSO_FACEBOOK_API_SECRET', '')
+SOCIAL_AUTH_CREATE_USERS = True
+SOCIAL_AUTH_FORCE_RANDOM_USERNAME = False
+SOCIAL_AUTH_DEFAULT_USERNAME = 'socialauth_user'
+LOGIN_ERROR_URL = '/login/error/'
+SOCIAL_AUTH_ERROR_KEY = 'socialauth_error'
+SOCIAL_AUTH_RAISE_EXCEPTIONS = False
+GOOGLE_OAUTH2_CLIENT_ID = os.getenv('PROSO_GOOGLE_OAUTH2_CLIENT_ID', '')
+GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('PROSO_GOOGLE_OAUTH2_CLIENT_SECRET', '')
+
+# http://stackoverflow.com/questions/22005841/is-not-json-serializable-django-social-auth-facebook-login
+SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
+
+
+ALLOWED_HOSTS = [
+    '.autoskolachytre.cz',
+]
+
+LOGIN_REDIRECT_URL = '/'
+
+SOCIAL_AUTH_DEFAULT_USERNAME = 'new_social_auth_user'
+
+SOCIAL_AUTH_UID_LENGTH = 222
+SOCIAL_AUTH_NONCE_SERVER_URL_LENGTH = 200
+SOCIAL_AUTH_ASSOCIATION_SERVER_URL_LENGTH = 135
+SOCIAL_AUTH_ASSOCIATION_HANDLE_LENGTH = 125
+
+
+# http://stackoverflow.com/questions/4882377/django-manage-py-test-fails-table-already-exists
+SOUTH_TESTS_MIGRATE = False
 
 try:
     from hashes import HASHES

@@ -1,5 +1,7 @@
 {
-  "name": "proso-apps-questions-client",
+  "name": "proso-questions-client",
+  "description": "An intelligent application for practicing test questions",
+  "repository": "https://github.com/proso/proso-apps",
   "version": "0.9.3",
   "devDependencies": {
     "grunt": "~0.4.4",

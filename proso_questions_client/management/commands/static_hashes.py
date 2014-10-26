@@ -24,7 +24,7 @@ class Command(NoArgsCommand):
 
     def get_static_files(self, filter_):
         files = []
-        root = str(os.path.join(settings.PROJECT_DIR, 'static'))
+        root = str(os.path.join(settings.BASE_DIR, 'static'))
         for path, subdirs, filenames in os.walk(root):
             for filename in filenames:
                 f = os.path.join(path, filename)
@@ -35,7 +35,7 @@ class Command(NoArgsCommand):
         return [(p, self.get_static_file_content(p)) for p in files]
 
     def get_static_file_content(self, filename):
-        filename = os.path.join(settings.PROJECT_DIR, filename)
+        filename = os.path.join(settings.BASE_DIR, filename)
         with file(filename) as f:
             content = f.read()
         return content
