@@ -3,6 +3,7 @@ from jsonschema import validate
 import json
 from django.db import transaction
 from flatblocks.models import FlatBlock
+import os
 
 
 class Command(BaseCommand):
@@ -21,6 +22,9 @@ class Command(BaseCommand):
                         "type": "string"
                     },
                     "content": {
+                        "type": "string"
+                    },
+                    "contentfilename": {
                         "type": "string"
                     }
                 },
@@ -42,9 +46,10 @@ class Command(BaseCommand):
             with transaction.atomic():
                 data = json.load(json_data, 'utf-8')
                 validate(data, self.SCHEMA)
-                self._load_flatblocks(data)
+                folder_path = os.path.abspath(os.path.join(json_data.name, ".."))
+                self._load_flatblocks(data, folder_path)
 
-    def _load_flatblocks(self, data):
+    def _load_flatblocks(self, data, folder_path):
         for d in data:
             try:
                 flatblock = FlatBlock.objects.get(slug=d['slug'])
@@ -54,4 +59,12 @@ class Command(BaseCommand):
                 )
             flatblock.header = d.get('header', None)
             flatblock.content = d.get('content', None)
+            if 'contentfilename' in d:
+                flatblock.content = file_get_contents(
+                    os.path.join(folder_path, d['contentfilename']))
             flatblock.save()
+
+
+def file_get_contents(filename):
+    with open(filename) as f:
+        return f.read()
