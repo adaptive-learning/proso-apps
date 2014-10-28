@@ -1,4 +1,10 @@
 <div class="progress quesions-progress">
+  <div class="progress-bar progress-bar-learned" 
+       style="width: {{summary.correctlyAnsweredRatio * 100  }}%;">
+  </div>
+  <div class="progress-bar progress-bar-danger" 
+       style="width: {{showSummary && (1 - summary.correctlyAnsweredRatio) * 100 }}%;">
+  </div>
   <div class="progress-bar progress-bar-practice" style="width: {{progress}}%;"></div>
 </div>
 <div id="container" class="practice-container col-lg-12">
@@ -26,14 +32,8 @@
   </div>
   <div ng-show="showSummary" class="summary col-lg-12">
     <div>
-      <div class="progress" ng-show="summary != undefined">
-        <div class="progress-bar progress-bar-learned" 
-             style="width: {{summary.correctlyAnsweredRatio | percent }};">
+      <div class="progress-label">
           Úspěšnost: {{summary.correctlyAnsweredRatio | percent }}
-        </div>
-        <div class="progress-bar progress-bar-danger" 
-             style="width: {{(1 - summary.correctlyAnsweredRatio) | percent }};">
-        </div>
       </div>
       <h2 ng-show="errorMessage != undefined" ng-bind="errorMessage"></h2>
       <div questions-list="summary.questions"> </div>
