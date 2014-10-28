@@ -6,6 +6,12 @@
           style="background-color: {{question.prediction|probColor}};" ></i>
           {{question.points || question.answered && ' ' || (question.prediction | percent)}}
         </span>
+        <span ng-repeat="cat in question.categories"
+          ng-if="!categoryId"
+          class="badge badge-default pull-right" 
+          title="Kategorie">
+         {{cat.name}}
+        </span>
         <span class="inline-question" ng-bind="question.html|stripHtml"></span>
      </div>
      <div class="question-details" ng-if="question == selected"

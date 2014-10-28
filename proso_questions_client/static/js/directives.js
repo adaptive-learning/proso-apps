@@ -199,6 +199,7 @@
         $scope.selectQuestion = function(q) {
           $scope.selected = q != $scope.selected ? q : undefined;
         };
+        $scope.showCategories = attrs.showCategories == 'true';
       }
     };
   }])
