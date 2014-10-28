@@ -104,6 +104,7 @@
     };
 
     function setupSummary() {
+      $scope.progress = 0;
       $scope.questions = [];
       $scope.summary = question.summary();
       $scope.showSummary = true;
@@ -196,12 +197,15 @@
       });
     }
 
-    question.test(function(data) {
-      $scope.questions = data;
-      $scope.activateQuestion(0);
-    }).error(function(){
-      $scope.error = "V aplikaci bohužel nastala chyba.";
-    });
+    $scope.start = function() {
+      $scope.started = true;
+      question.test(function(data) {
+        $scope.questions = data;
+        $scope.activateQuestion(0);
+      }).error(function(){
+        $scope.error = "V aplikaci bohužel nastala chyba.";
+      });
+    };
   }])
 
   .controller('ReloadController', ['$window', function($window){

@@ -1,87 +1,104 @@
-<div id="container" class="practice-container col-lg-12">
-  <div ng-hide="showSummary || error">
-    <timer countdown="30 * 60" 
-      max-time-unit="'minute'" 
-      interval="1000" 
-      finish-callback="evaluate(true);"
-      title="Zývá do konce"
-      class="pull-right">
-      <i class="glyphicon glyphicon-time"></i>
-       {{minutes}}:{{sseconds}}
-    </timer>
-    <ul class="progress-indicator">
-      <li class="prev" ng-click="prev()" >&lt;</li>
-      <li ng-repeat="question in questions"
-        class="question-switcher"
-        ng-class="{ 
-          'active': ($index == activeQuestionIndex),
-          'answered': question.answered !== undefined, 
-          'correct': question.isCorrect,
-          'wrong': question.isWrong
-        }"
-        ng-click="activateQuestion($index)">
-      {{$index}}
-      </li>
-      <li class="next" ng-click="next()">&gt;</li>
-    </ul>
-  </div>
-  <div ng-hide="questions || showSummary || error" class="loading-indicator">
-  </div>
-  <div ng-show="error" ng-bind="error" class="alert alert-danger">
-  </div>
-  <div ng-repeat="question in questions"
-      ng-if="$index == activeQuestionIndex" class="practice">
-    <div class="well" ng-if="question|imgSrc">
-      <img ng-src="{{question|imgSrc}}"/>
-    </div>
-    <div class="question">
-      <div ng-bind="question | stripImg"></div>
-    </div>
-    <div options="question" no-answers="true"></div>
-      <button class="btn btn-lg btn-default prev" 
-          ng-click="prev()" 
-          ng-disabled="$index == 0" >
-        <i class="glyphicon glyphicon-arrow-left"></i> Předchozí 
-      </button>
-      <button class="btn btn-lg btn-default" 
-          ng-show="!showSummary"
-          ng-click="evaluate()">
-        <i class="glyphicon glyphicon-saved"></i> Vyhodnotit
-      </button>
-    <div class="pull-right" >
-      <button class="btn btn-lg btn-default next {{!canNext || 'btn-primary'}}" 
-          ng-click="next()" 
-          ng-disabled="questions.length == $index + 1" >
-        <i class="glyphicon glyphicon-arrow-right"></i> Další
-      </button>
-    </div>
-    <div debug="question"></div>
-  </div>
-  <div ng-show="showSummary" class="summary">
-    <div>
-     <!--
-      <div class="progress" ng-show="summary != undefined">
-        <div class="progress-bar progress-bar-success" 
-             style="width: {{summary.correctlyAnsweredRatio | percent }};">
-          Úspěšnost: {{summary.correctlyAnsweredRatio | percent }}
-        </div>
-        <div class="progress-bar progress-bar-danger" 
-             style="width: {{(1 - summary.correctlyAnsweredRatio) | percent }};">
-        </div>
-      </div>
-      -->
-      <h2> Výsledky testu </h2>
-      <h2 ng-show="errorMessage != undefined" ng-bind="errorMessage"></h2>
-      <div questions-list="summary.questions"> </div>
+<div id="container" class="practice-container">
+  <div ng-if="!started">
+    <div class="ng-view-header">
+      <h2>Test</h2>
     </div>
     <br>
-    <span class="pull-right" >
-      <a class="btn-continue btn btn-lg btn-default {{!showSummary || 'btn-primary'}}" 
-         href="#/view/" >
-        Přehled znalostí
+    <div ng-include="'test_description.html'" class="col-lg-12"></div>
+    <br>
+    <div class="text-center">
+      <a href=""
+        class="btn btn-primary btn-lg"
+        ng-click="start()">
+        Spustit test
       </a>
-    </span>
+    </div>
   </div>
-  <div class="clearfix"></div>
+  <div ng-if="started" class="col-lg-12">
+    <div ng-if="questions" ng-hide="showSummary || error">
+      <timer countdown="30 * 60" 
+        max-time-unit="'minute'" 
+        interval="1000" 
+        finish-callback="evaluate(true);"
+        title="Zývá do konce"
+        class="pull-right">
+        <i class="glyphicon glyphicon-time"></i>
+         {{minutes}}:{{sseconds}}
+      </timer>
+      <ul class="progress-indicator">
+        <li class="prev" ng-click="prev()" >&lt;</li>
+        <li ng-repeat="question in questions"
+          class="question-switcher"
+          ng-class="{ 
+            'active': ($index == activeQuestionIndex),
+            'answered': question.answered !== undefined, 
+            'correct': question.isCorrect,
+            'wrong': question.isWrong
+          }"
+          ng-click="activateQuestion($index)">
+        {{$index}}
+        </li>
+        <li class="next" ng-click="next()">&gt;</li>
+      </ul>
+    </div>
+    <div ng-hide="questions || showSummary || error" class="loading-indicator">
+    </div>
+    <div ng-show="error" ng-bind="error" class="alert alert-danger">
+    </div>
+    <div ng-repeat="question in questions"
+        ng-if="$index == activeQuestionIndex" class="practice">
+      <div class="well" ng-if="question|imgSrc">
+        <img ng-src="{{question|imgSrc}}"/>
+      </div>
+      <div class="question">
+        <div ng-bind="question | stripImg"></div>
+      </div>
+      <div options="question" no-answers="true"></div>
+        <button class="btn btn-lg btn-default prev" 
+            ng-click="prev()" 
+            ng-disabled="$index == 0" >
+          <i class="glyphicon glyphicon-arrow-left"></i> Předchozí 
+        </button>
+        <button class="btn btn-lg btn-default" 
+            ng-show="!showSummary"
+            ng-click="evaluate()">
+          <i class="glyphicon glyphicon-saved"></i> Vyhodnotit
+        </button>
+      <div class="pull-right" >
+        <button class="btn btn-lg btn-default next {{!canNext || 'btn-primary'}}" 
+            ng-click="next()" 
+            ng-disabled="questions.length == $index + 1" >
+          <i class="glyphicon glyphicon-arrow-right"></i> Další
+        </button>
+      </div>
+      <div debug="question"></div>
+    </div>
+    <div ng-show="showSummary" class="summary">
+      <div>
+       <!--
+        <div class="progress" ng-show="summary != undefined">
+          <div class="progress-bar progress-bar-success" 
+               style="width: {{summary.correctlyAnsweredRatio | percent }};">
+            Úspěšnost: {{summary.correctlyAnsweredRatio | percent }}
+          </div>
+          <div class="progress-bar progress-bar-danger" 
+               style="width: {{(1 - summary.correctlyAnsweredRatio) | percent }};">
+          </div>
+        </div>
+        -->
+        <h2> Výsledky testu </h2>
+        <h2 ng-show="errorMessage != undefined" ng-bind="errorMessage"></h2>
+        <div questions-list="summary.questions"> </div>
+      </div>
+      <br>
+      <span class="pull-right" >
+        <a class="btn-continue btn btn-lg btn-default {{!showSummary || 'btn-primary'}}" 
+           href="#/view/" >
+          Přehled znalostí
+        </a>
+      </span>
+    </div>
+    <div class="clearfix"></div>
+  </div>
 </div>
 
