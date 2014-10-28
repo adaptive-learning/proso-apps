@@ -15,7 +15,7 @@ class UserKnowledgeProvider:
         pass
 
     @abc.abstractmethod
-    def process_answer(user, item, correct, time, options=None):
+    def process_answer(user, item, correct, time, response_time, options=None):
         pass
 
     def user_type(self, user):
@@ -57,7 +57,7 @@ class ConstantUserKnowledgeProvider(UserKnowledgeProvider):
         else:
             return 'Medium difficulty'
 
-    def process_answer(self, user, item, correct, time, options=None):
+    def process_answer(self, user, item, correct, time, response_time, options=None):
         pass
 
 
@@ -82,7 +82,7 @@ class ImprovingUserKnowledgeProvider(ConstantUserKnowledgeProvider):
         options_skill = map(lambda opt: self._current_skill.get((user, opt), self._skill[user] - self._difficulty[item]), options)
         return prediction.predict(skill, options_skill)[0]
 
-    def process_answer(self, user, item, correct, time, options=None):
+    def process_answer(self, user, item, correct, time, response_time, options=None):
         prediction = self.prediction(user, item, time, options)
         diff = self._learning_good if correct else self._learning_bad
         self._current_skill[user, item] += diff * (correct - prediction)
@@ -147,13 +147,14 @@ class Simulator:
                 correct = True
             else:
                 correct = False
-            knowledge_provider.process_answer(user, item, correct, time, options=options)
+            response_time = random.gauss(1000, 100)
+            knowledge_provider.process_answer(user, item, correct, time, response_time, options=options)
             estimated = predictive_model.predict_and_update(environment, user, item, correct, time)
             estimated_with_options = predictive_model.predict_and_update(environment, user, item, correct, time, options=options)
             answered = item if correct else (random.choice(options) if options else None)
             if answered == item:
                 correct = True
-            environment.process_answer(user, item, item, answered, time)
+            environment.process_answer(user, item, item, answered, time, response_time)
             answers.append({
                 'user': user,
                 'time': time,
@@ -296,7 +297,13 @@ class Evaluator:
         gaps = self._answers.groupby('user').apply(_user_time_gap)
         if len(gaps) == 0:
             return float('inf'), float('inf'), float('inf')
-        return gaps.mean().item() / 10.0 ** 9, gaps.std().item() / 10.0 ** 9, gaps.min().item() / 10.0 ** 9
+        stats =  map(
+            lambda x: x.item()if isinstance(x, pandas.Series) else x,
+            [gaps.mean(), gaps.std(), gaps.min()])
+        [time_mean, time_std, time_min] = map(
+            lambda x: x.total_seconds() if isinstance(x, pandas.Timedelta) else x / (10.0 ** 9),
+            stats)
+        return time_mean, time_std, time_min
 
     def rmse(self):
         return proso.models.metric.rmse(self._answers['correct'], self._answers['estimated'])
