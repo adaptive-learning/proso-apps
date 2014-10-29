@@ -297,7 +297,7 @@ class Evaluator:
         gaps = self._answers.groupby('user').apply(_user_time_gap)
         if len(gaps) == 0:
             return float('inf'), float('inf'), float('inf')
-        stats =  map(
+        stats = map(
             lambda x: x.item()if isinstance(x, pandas.Series) else x,
             [gaps.mean(), gaps.std(), gaps.min()])
         [time_mean, time_std, time_min] = map(
