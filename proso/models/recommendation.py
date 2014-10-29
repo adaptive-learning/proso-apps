@@ -39,7 +39,7 @@ class ScoreRecommendation(Recommendation):
     def __init__(
             self, predictive_model, weight_probability=10.0, weight_number_of_answers=5.0,
             weight_time_ago=120, weight_parent_time_ago=120, weight_parent_number_of_answers=2.5,
-            target_probability=80.0):
+            target_probability=80.0, recompute_parent_score=True):
         self._predictive_model = predictive_model
         self._weight_probability = weight_probability
         self._weight_number_of_answers = weight_number_of_answers
@@ -47,6 +47,7 @@ class ScoreRecommendation(Recommendation):
         self._target_probability = target_probability
         self._weight_parent_time_ago = weight_parent_time_ago
         self._weight_parent_number_of_answers = weight_parent_number_of_answers
+        self._recompute_parent_score = recompute_parent_score
 
     def recommend(self, environment, user, items, time, n, **kwargs):
         answers_num = dict(zip(items, environment.number_of_answers_more_items(user=user, items=items)))
@@ -81,14 +82,17 @@ class ScoreRecommendation(Recommendation):
             return (score, r), i
 
         scored = zip(map(_score, items), items)
-        candidates = []
-        while len(candidates) < n and len(scored) > 0:
-            finished = map(_finish_score, scored)
-            score, chosen = max(finished)
-            candidates.append(chosen)
-            for p, v in parents[chosen]:
-                last_answer_time_parents[p] = time
-            scored = filter(lambda (score, i): i != chosen, scored)
+        if self._recompute_parent_score:
+            candidates = []
+            while len(candidates) < n and len(scored) > 0:
+                finished = map(_finish_score, scored)
+                score, chosen = max(finished)
+                candidates.append(chosen)
+                for p, v in parents[chosen]:
+                    last_answer_time_parents[p] = time
+                scored = filter(lambda (score, i): i != chosen, scored)
+        else:
+            candidates = map(lambda ((score, r), i): i, sorted(scored, reverse=True)[:min(len(scored), n)])
 
         if kwargs.get('options', False):
             rolling_success = environment.rolling_success(user=user)

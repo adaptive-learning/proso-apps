@@ -14,7 +14,7 @@ simulator = proso.models.simulator.MoreImprovingUsersSimulator(range(100), range
 evaluator = proso.models.simulator.Evaluator(simulator, 10000)
 
 for prob in [0.8]:
-    recommendations.append(proso.models.recommendation.ScoreRecommendation(model_pfae, target_probability=prob))
+    recommendations.append(proso.models.recommendation.ScoreRecommendation(model_pfae, target_probability=prob, recompute_parent_score=False))
 
 for recommendation in recommendations:
     environment = proso.models.environment.InMemoryEnvironment()
