@@ -15,7 +15,11 @@ GIT_COMMAND="git --git-dir=$GIT_DIR --work-tree=$WORK_TREE"
 # install requirements
 ###############################################################################
 
-python $APP_DIR/setup.py install
+
+	echo " * python $APP_DIR/setup.py install"
+  cd $WORKSPACE_DIR
+
+  python $APP_DIR/setup.py install
 
 ###############################################################################
 # reset the application
@@ -41,16 +45,16 @@ python $APP_DIR/setup.py install
 	echo "./manage.py migrate"
 	$APP_DIR/manage.py migrate 
 
-  echo "rm -rf /tmp/data_repo"
-  rm -rf /tmp/data_repo
+  echo "rm -rf $APP_DIR/../data_repo"
+  rm -rf $APP_DIR/../data_repo
 
-  echo "git clone $PROSO_DATA_REPO /tmp/data_repo"
-  git clone $PROSO_DATA_REPO /tmp/data_repo
+  echo "git clone $PROSO_DATA_REPO $APP_DIR/../data_repo"
+  git clone $PROSO_DATA_REPO $APP_DIR/../data_repo
 
 	echo "./manage.py load_texts"
-	$APP_DIR/manage.py load_texts /tmp/data_repo/texts.json
+	$APP_DIR/manage.py load_texts $APP_DIR/../data_repo/texts.json
 
 	echo "./manage.py load_questions"
-	$APP_DIR/manage.py load_questions /tmp/data_repo/questions.json
+	$APP_DIR/manage.py load_questions $APP_DIR/../data_repo/questions.json
 
 
