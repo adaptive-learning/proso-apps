@@ -193,7 +193,8 @@ class Command(BaseCommand):
             if len(options) > 0 and len(options) != len(options_data):
                 raise CommandError(
                     "Can't change the number of options for the question %s" % question.identifier)
-            options = [Option() for i in options_data]
+            if len(options) == 0:
+                options = [Option() for i in options_data]
         else:
             options = [Option() for i in options_data]
         options = sorted(options, key=lambda o: o.order)
@@ -212,7 +213,7 @@ class Command(BaseCommand):
             opt.save()
             self._load_images(opt_data, working_directory, option=opt)
         if not one_option_correct:
-            raise CommandError('At least one of the options has to be correct!')
+            raise CommandError('At least one of the options has to be correct for question %s!' % question.identifier)
 
     def _load_images(self, data, working_directory, resource=None, question=None, option=None):
         if 'images' not in data:
