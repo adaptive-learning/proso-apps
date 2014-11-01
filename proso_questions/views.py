@@ -12,6 +12,11 @@ import proso_common.json_enrich as common_json_enrich
 from proso.django.request import get_time, get_user_id
 from proso_models.models import get_environment, get_recommendation
 from proso_ab.models import Experiment, Value
+import logging
+from time import time as time_lib
+
+
+LOGGER = logging.getLogger('django.request')
 
 
 def home(request):
@@ -152,7 +157,9 @@ def practice(request):
         _save_answers(request)
         status = 201
     # recommend
+    time_before_practice = time_lib()
     candidates = Question.objects.practice(recommendation, environment, user, time, limit, questions=questions)
+    LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))
     json = _to_json(request, candidates)
     return render_json(request, json, template='questions_json.html', status=status, help_text=practice.__doc__)
 
@@ -211,6 +218,7 @@ def answer(request):
 
 
 def _to_json(request, value):
+    time_start = time_lib()
     if isinstance(value, list):
         json = map(lambda x: x.to_json(), value)
     else:
@@ -221,6 +229,7 @@ def _to_json(request, value):
             request, json, json_enrich.prediction, ['question', 'set', 'category'])
     for enricher in [json_enrich.url, json_enrich.html, json_enrich.questions]:
         json = common_json_enrich.enrich(request, json, enricher)
+    LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
     return json
 
 

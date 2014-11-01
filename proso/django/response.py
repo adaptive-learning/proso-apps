@@ -4,6 +4,11 @@ from django.http import HttpResponse
 import json as simplejson
 from django.conf import settings
 import markdown
+import logging
+from time import time
+
+
+LOGGER = logging.getLogger('django.request')
 
 
 def redirect_pass_get(request, view, *args, **kwargs):
@@ -35,13 +40,16 @@ def render(request, template, data, *args, **kwargs):
 
 
 def render_json(request, json, template=None, status=None, help_text=None):
+    time_start = time()
     json = {'data': json}
     if 'html' in request.GET:
         if help_text is not None:
             help_text = markdown.markdown(help_text)
-        return render(request, template, {'json': json, 'help_text': help_text}, status=status)
+        result = render(request, template, {'json': json, 'help_text': help_text}, status=status)
     else:
-        return JsonResponse(json, status=status)
+        result = JsonResponse(json, status=status)
+    LOGGER.debug("rendering JSON response in %s seconds", (time() - time_start))
+    return result
 
 
 class JsonResponse(HttpResponse):

@@ -1,14 +1,26 @@
-def enrich(request, json, fun, nested=False):
+import logging
+from time import time
+
+
+LOGGER = logging.getLogger('django.request')
+
+
+def enrich(request, json, fun, nested=False, top_level=True):
+    time_start = time()
     if isinstance(json, list):
-        return map(lambda x: enrich(request, x, fun), json)
+        result = map(lambda x: enrich(request, x, fun, top_level=False), json)
     elif isinstance(json, dict):
         json = fun(request, json, nested=nested)
-        return {k: enrich(request, v, fun, nested=True) for k, v in json.items()}
+        result = {k: enrich(request, v, fun, nested=True, top_level=False) for k, v in json.items()}
     else:
-        return json
+        result = json
+    if top_level:
+        LOGGER.debug("enrichment of JSON by '%s' function took %s seconds", fun.__name__, (time() - time_start))
+    return result
 
 
 def enrich_by_predicate(request, json, fun, predicate):
+    time_start = time()
     collected = []
     memory = {'nested': False}
 
@@ -24,6 +36,7 @@ def enrich_by_predicate(request, json, fun, predicate):
     _collect(json, False)
     if len(collected) > 0:
         fun(request, collected, memory['nested'])
+    LOGGER.debug("enrichment of JSON by predicate by '%s' function took %s seconds", fun.__name__, (time() - time_start))
     return json
 
 
