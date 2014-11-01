@@ -14,6 +14,7 @@ from proso_models.models import get_environment, get_recommendation
 from proso_ab.models import Experiment, Value
 import logging
 from time import time as time_lib
+from proso.django.cache import cache_page_conditional
 
 
 LOGGER = logging.getLogger('django.request')
@@ -23,6 +24,7 @@ def home(request):
     return render(request, 'questions_home.html', {})
 
 
+@cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
 def show_one(request, object_class, id):
     """
     Return object of the given type with the specified identifier.
@@ -40,6 +42,7 @@ def show_one(request, object_class, id):
     return render_json(request, json, template='questions_json.html', help_text=show_one.__doc__)
 
 
+@cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
 def show_more(request, object_class):
     """
     Return list of objects of the given type.
