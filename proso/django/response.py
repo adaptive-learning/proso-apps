@@ -16,15 +16,19 @@ def redirect_pass_get(request, view, *args, **kwargs):
     response['location'] = pass_get_parameters(request, response['location'])
     return response
 
-
-def pass_get_parameters(request, dest_url, ignore=None):
+def pass_get_parameters_string(request, ignore=None):
     ignore = [] if ignore is None else ignore
     to_pass = filter(lambda (k, v): k not in ignore, request.GET.items())
-    if len(to_pass) == 0:
-        return dest_url
-    else:
-        prefix = '&' if dest_url.find('?') != -1 else '?'
-        return dest_url + prefix + '&'.join(map(lambda (key, value): '%s=%s' % (key, value), to_pass))
+    return '&'.join(map(lambda (key, value): '%s=%s' % (key, value), to_pass))
+
+
+def append_get_parameters(dest_url, get_parameters_string):
+    prefix = '&' if dest_url.find('?') != -1 else '?'
+    return dest_url + prefix + get_parameters_string
+
+
+def pass_get_parameters(request, dest_url, ignore=None):
+    return append_get_parameters(dest_url, pass_get_parameters_string(request, ignore))
 
 
 def render(request, template, data, *args, **kwargs):

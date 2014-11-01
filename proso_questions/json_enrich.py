@@ -2,10 +2,16 @@ from models import Question
 from django.core.urlresolvers import reverse
 import markdown
 from proso.django.request import get_time, get_user_id
-from proso.django.response import pass_get_parameters
+from proso.django.response import pass_get_parameters_string, append_get_parameters, pass_get_parameters
 import proso_models.models
+from django.core.cache import cache
+import json as json_lib
+
 
 IGNORE_GET = ['category']
+
+
+CACHE_EXPIRATION = 60 * 60 * 24 * 30
 
 
 def question(request, json_list, nested):
@@ -22,24 +28,39 @@ def question(request, json_list, nested):
         answer['question'] = qs[answer['question_item_id']]
 
 
-def questions(request, json, nested):
-    if nested or 'object_type' not in json:
-        return json
-    ignored_get = ['filter_column', 'filter_value'] + IGNORE_GET
-    url_options = '?filter_column={}&filter_value=' + str(json['id'])
-    url = reverse('show_questions') + url_options
-    if json['object_type'] == 'set':
-        json['questions_url'] = pass_get_parameters(
-            request, url.format('set_id'), ignored_get)
-    elif json['object_type'] == 'category':
-        json['questions_url'] = pass_get_parameters(
-            request, url.format('category_id'), ignored_get)
-    return json
+def questions(request, json_list, nested):
+    show_questions_url = reverse('show_questions')
+    for json in json_list:
+        if nested or 'object_type' not in json:
+            continue
+        ignored_get = ['filter_column', 'filter_value'] + IGNORE_GET
+        url_options = '?filter_column={}&filter_value=' + str(json['id'])
+        url = show_questions_url + url_options
+        if json['object_type'] == 'set':
+            json['questions_url'] = pass_get_parameters(
+                request, url.format('set_id'), ignored_get)
+        elif json['object_type'] == 'category':
+            json['questions_url'] = pass_get_parameters(
+                request, url.format('category_id'), ignored_get)
 
 
-def html(request, json, nested):
-    if 'text' in json:
-        json['html'] = markdown.markdown(json['text'])
+def html(request, json_list, nested):
+    htmls = cache.get('proso_questions_html')
+    if htmls is None:
+        htmls = {}
+    else:
+        htmls = json_lib.loads(htmls)
+    cache_updated = False
+    for json in json_list:
+        if 'text' not in json or 'item_id' not in json:
+            continue
+        if str(json['item_id']) in htmls:
+            json['html'] = htmls[str(json['item_id'])]
+        else:
+            cache_updated = True
+            new_html = markdown.markdown(json['text'])
+            json['html'] = new_html
+            htmls[json['item_id']] = new_html
         if 'html' in request.GET:
             json['html'] = json['html'].replace('<', '&lt').replace('>', '&gt')
         if 'images' in json:
@@ -48,17 +69,31 @@ def html(request, json, nested):
                     'src="' + image['name'] + '"',
                     'src="' + image['url'] + '"'
                 )
-    return json
+    if cache_updated:
+        cache.set('proso_questions_html', json_lib.dumps(htmls), CACHE_EXPIRATION)
 
 
-def url(request, json, nested):
-    if 'object_type' in json and 'id' in json:
-        json['url'] = pass_get_parameters(
-            request,
-            reverse('show_' + json['object_type'], kwargs={'id': json['id']}),
-            ['filter_column', 'filter_value'] + IGNORE_GET
-        )
-    return json
+def url(request, json_list, nested):
+    urls = cache.get('proso_urls')
+    if urls is None:
+        urls = {}
+    else:
+        urls = json_lib.loads(urls)
+    cache_updated = False
+    pass_string = pass_get_parameters_string(request, ['filter_column', 'filter_value'] + IGNORE_GET)
+    for json in json_list:
+        if 'object_type' not in json or 'id' not in json:
+            continue
+        key = 'show_%s_%s' % (json['object_type'], json['id'])
+        if key in urls:
+            json['url'] = urls[key]
+        else:
+            cache_updated = True
+            json['url'] = reverse('show_' + json['object_type'], kwargs={'id': json['id']})
+            urls[key] = json['url']
+        json['url'] = append_get_parameters(json['url'], pass_string)
+    if cache_updated:
+        cache.set('proso_urls', json_lib.dumps(urls), CACHE_EXPIRATION)
 
 
 def prediction(request, json_list, nested):

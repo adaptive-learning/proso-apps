@@ -40,7 +40,7 @@ def show_one(request, object_class, id):
     return render_json(request, json, template='questions_json.html', help_text=show_one.__doc__)
 
 
-def show_more(request, object_class, all=False):
+def show_more(request, object_class):
     """
     Return list of objects of the given type.
 
@@ -55,6 +55,8 @@ def show_more(request, object_class, all=False):
         value for the specified column used to filter the results
       user:
         identifier of the current user
+      all:
+        return all objects available instead of paging
       stats:
         turn on the enrichment of the objects by some statistics
       html
@@ -103,7 +105,7 @@ def show_more(request, object_class, all=False):
         else:
             user_id = request.user.id
         objs = objs.filter(general_answer__user_id=user_id).order_by('-general_answer__time')
-    if not all:
+    if not 'all' in request.GET:
         objs = objs[page * limit:(page + 1) * limit]
     json = _to_json(request, list(objs))
     return render_json(request, json, template='questions_json.html', help_text=show_more.__doc__)
@@ -227,8 +229,9 @@ def _to_json(request, value):
     if 'stats' in request.GET:
         common_json_enrich.enrich_by_object_type(
             request, json, json_enrich.prediction, ['question', 'set', 'category'])
-    for enricher in [json_enrich.url, json_enrich.html, json_enrich.questions]:
-        json = common_json_enrich.enrich(request, json, enricher)
+    common_json_enrich.enrich_by_object_type(request, json, json_enrich.html, ['question', 'resource', 'option'])
+    common_json_enrich.enrich_by_predicate(request, json, json_enrich.url, lambda x: True)
+    common_json_enrich.enrich_by_object_type(request, json, json_enrich.questions, ['set', 'category'])
     LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
     return json
 

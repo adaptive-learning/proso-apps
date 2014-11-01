@@ -16,7 +16,7 @@ urlpatterns = patterns(
     url(r'^set/(?P<id>\d+)', 'show_one', {'object_class': Set}, name='show_set'),
     url(r'^sets', 'show_more', {'object_class': Set}, name='show_sets'),
     url(r'^category/(?P<id>\d+)', 'show_one', {'object_class': Category}, name='show_category'),
-    url(r'^categories', 'show_more', {'object_class': Category, 'all': True}, name='show_categories'),
+    url(r'^categories', 'show_more', {'object_class': Category}, name='show_categories'),
     url(r'^practice$', 'practice', name='practice'),
     url(r'^test', 'test', name='test')
 )
