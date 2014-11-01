@@ -5,6 +5,7 @@ from django.core.files import File
 import os.path
 import json
 from django.db import transaction
+from clint.textui import progress
 
 
 class Command(BaseCommand):
@@ -133,13 +134,20 @@ class Command(BaseCommand):
     def _load_questions(self, data, working_directory, resources):
         categories = {}
         sets = {}
+        print ' -- reset questions with identifier'
+        identifiers_to_reset = []
         for question_data in data['questions']:
+            if 'identifier' in question_data:
+                identifiers_to_reset.append(question_data['identifier'])
+        questions_with_identifiers = Question.objects.from_identifiers(identifiers_to_reset, reset=True)
+        print ' -- load questions'
+        for question_data in progress.bar(data['questions'], every=len(data['questions']) / 100):
             resource = question_data.get('resource', None)
             if resource is not None:
                 resource = resources[resource]
             if 'identifier' in question_data:
-                question = Question.objects.from_identifier(
-                    question_data['identifier'], reset=True)
+                question = questions_with_identifiers[question_data['identifier']]
+                question.identifier = question_data['identifier']
             else:
                 question = Question()
             question.text = question_data['text']
@@ -165,8 +173,9 @@ class Command(BaseCommand):
             c.save()
 
     def _load_resources(self, data, working_directory):
+        print ' -- load resources'
         resources = {}
-        for resource_data in data['resources']:
+        for resource_data in progress.bar(data['resources'], every=len(data['resources']) / 100):
             resource_id = resource_data['identifier'].strip()
             if resource_id in resources:
                 raise CommandError(

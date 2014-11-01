@@ -33,6 +33,7 @@ setup(
     ],
     install_requires=[
         'Django>=1.6,<1.7',
+        'clint>=0.4.1',
         'django-debug-toolbar>=1.1',
         'django-flatblocks>=0.8',
         'django-ipware>=0.0.8',

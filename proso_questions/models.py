@@ -8,6 +8,7 @@ from django.db.models import Count
 from proso_ab.models import Value
 from django.utils.text import slugify
 from proso_models.models import get_environment
+from collections import defaultdict
 
 
 class DecoratedAnswer(models.Model):
@@ -64,23 +65,43 @@ class Resource(models.Model):
 
 class QuestionManager(models.Manager):
 
-    def reset(self, question):
-        for category in question.category_set.all():
-            category.questions.remove(question)
-            category.save()
-        for question_set in question.set_set.all():
-            question_set.question.remove(question)
-        for image in question.question_images.all():
-            image.delete()
+    def reset(self, questions):
+        categories_to_reset = {}
+        sets_to_reset = {}
+        for question in questions:
+            for category in question.category_set.all():
+                if category.id in categories_to_reset:
+                    category_to_reset = categories_to_reset[category.id]
+                else:
+                    categories_to_reset[category.id] = category
+                    category_to_reset = category
+                category.questions.remove(question)
+            for question_set in question.set_set.all():
+                if question_set.id in sets_to_reset:
+                    set_to_reset = sets_to_reset[question_set.id]
+                else:
+                    sets_to_reset[question_set.id] = question_set
+                    set_to_reset = question_set
+                set_to_reset.questions.remove(question)
+            for image in question.question_images.all():
+                image.delete()
+        for category_to_reset in categories_to_reset.itervalues():
+            category_to_reset.save()
+        for set_to_reset in sets_to_reset.itervalues():
+            set_to_reset.save()
 
-    def from_identifier(self, identifier, reset=False):
-        try:
-            question = self.get(identifier=identifier)
-            if reset:
-                self.reset(question)
-        except Question.DoesNotExist:
-            question = Question(identifier=identifier)
-        return question
+    def from_identifiers(self, identifiers, reset=False):
+        if reset:
+            objects = self.prefetch_related('category_set', 'set_set', 'question_images')
+        else:
+            objects = self
+        questions = objects.filter(identifier__in=identifiers)
+        if reset:
+            self.reset(questions)
+        result = defaultdict(Question)
+        for q in questions:
+            result[q.identifier] = q
+        return result
 
     def test(self, user_id, time):
         try:
