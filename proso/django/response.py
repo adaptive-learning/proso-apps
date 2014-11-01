@@ -45,7 +45,8 @@ def render(request, template, data, *args, **kwargs):
 
 def render_json(request, json, template=None, status=None, help_text=None):
     time_start = time()
-    json = {'data': json}
+    if status is None or status == 200:
+        json = {'data': json}
     if 'html' in request.GET:
         if help_text is not None:
             help_text = markdown.markdown(help_text)
