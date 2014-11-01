@@ -62,12 +62,31 @@ def show_more(request, object_class, should_cache=True):
       user:
         identifier of the current user
       all:
-        return all objects available instead of paging
+        return all objects available instead of paging; be aware this parameter
+        can be used only for objects for wich the caching is turned on
+      db_orderby:
+        database column which the result should be ordered by
+      json_orderby:
+        field of the JSON object which the result should be ordered by, it is
+        less effective than the ordering via db_orderby; be aware this parameter
+        can be used only for objects for which the caching is turned on
+      desc
+        turn on the descending order
       stats:
         turn on the enrichment of the objects by some statistics
       html
         turn on the HTML version of the API
     """
+    if not should_cache and 'json_orderby' in request.GET:
+        return render_json(request, {
+            'error': "Can't order the result according to the JSON field, because the caching for this type of object is turned off. See the documentation."
+            },
+            template='questions_json.html', help_text=show_more.__doc__, status=501)
+    if not should_cache and 'all' in request.GET:
+        return render_json(request, {
+            'error': "Can't get all objects, because the caching for this type of object is turned off. See the documentation."
+            },
+            template='questions_json.html', help_text=show_more.__doc__, status=501)
     time_start = time_lib()
     limit = min(int(request.GET.get('limit', 10)), 100)
     page = int(request.GET.get('page', 0))
@@ -112,7 +131,9 @@ def show_more(request, object_class, should_cache=True):
         else:
             user_id = request.user.id
         objs = objs.filter(general_answer__user_id=user_id).order_by('-general_answer__time')
-    if not 'all' in request.GET:
+    if 'db_orderby' in request.GET:
+        objs = objs.order_by(('-' if 'desc' in request.GET else '') + request.GET['db_orderby'])
+    if 'all' not in request.GET and 'json_orderby' not in request.GET:
         objs = objs[page * limit:(page + 1) * limit]
     cache_key = 'proso_questions_sql_json_%s' % hashlib.sha1(str(objs.query).decode('utf-8')).hexdigest()
     cached = cache.get(cache_key)
@@ -123,6 +144,12 @@ def show_more(request, object_class, should_cache=True):
         cache.set(cache_key, json_lib.dumps(list_objs), 60 * 60 * 24 * 30)
     LOGGER.debug('loading objects in show_more view took %s seconds', (time_lib() - time_start))
     json = _to_json(request, list_objs)
+    if 'json_orderby' in request.GET:
+        time_before_json_sort = time_lib()
+        json.sort(key=lambda x: (-1 if 'desc' in request.GET else 1) * x[request.GET['json_orderby']])
+        if 'all' not in request.GET:
+            json = json[page * limit:(page + 1) * limit]
+        LOGGER.debug('sorting objects according to JSON field took %s seconds', (time_lib() - time_before_json_sort))
     return render_json(request, json, template='questions_json.html', help_text=show_more.__doc__)
 
 
