@@ -15,6 +15,9 @@ from proso_ab.models import Experiment, Value
 import logging
 from time import time as time_lib
 from proso.django.cache import cache_page_conditional
+import hashlib
+from django.core.cache import cache
+import json as json_lib
 
 
 LOGGER = logging.getLogger('django.request')
@@ -43,7 +46,7 @@ def show_one(request, object_class, id):
 
 
 @cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
-def show_more(request, object_class):
+def show_more(request, object_class, should_cache=True):
     """
     Return list of objects of the given type.
 
@@ -65,6 +68,7 @@ def show_more(request, object_class):
       html
         turn on the HTML version of the API
     """
+    time_start = time_lib()
     limit = min(int(request.GET.get('limit', 10)), 100)
     page = int(request.GET.get('page', 0))
     select_related_all = {
@@ -110,7 +114,15 @@ def show_more(request, object_class):
         objs = objs.filter(general_answer__user_id=user_id).order_by('-general_answer__time')
     if not 'all' in request.GET:
         objs = objs[page * limit:(page + 1) * limit]
-    json = _to_json(request, list(objs))
+    cache_key = 'proso_questions_sql_json_%s' % hashlib.sha1(str(objs.query).decode('utf-8')).hexdigest()
+    cached = cache.get(cache_key)
+    if cached:
+        list_objs = json_lib.loads(cached)
+    else:
+        list_objs = map(lambda x: x.to_json(), list(objs))
+        cache.set(cache_key, json_lib.dumps(list_objs), 60 * 60 * 24 * 30)
+    LOGGER.debug('loading objects in show_more view took %s seconds', (time_lib() - time_start))
+    json = _to_json(request, list_objs)
     return render_json(request, json, template='questions_json.html', help_text=show_more.__doc__)
 
 
@@ -225,9 +237,12 @@ def answer(request):
 def _to_json(request, value):
     time_start = time_lib()
     if isinstance(value, list):
-        json = map(lambda x: x.to_json(), value)
-    else:
+        json = map(lambda x: x if isinstance(x, dict) else x.to_json(), value)
+    elif not isinstance(value, dict):
         json = value.to_json()
+    else:
+        json = value
+    LOGGER.debug("converting value to simple JSON took %s seconds", (time_lib() - time_start))
     common_json_enrich.enrich_by_object_type(request, json, json_enrich.question, 'answer')
     if 'stats' in request.GET:
         common_json_enrich.enrich_by_object_type(
