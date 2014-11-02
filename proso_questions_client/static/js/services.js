@@ -62,6 +62,7 @@
           options.params.filter_column = 'category_id';
           options.params.filter_value = category;
         }
+        options.params.json_orderby = 'prediction'
         var promise = $http.get(url, options);
         return promise;
       },
