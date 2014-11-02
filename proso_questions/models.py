@@ -150,7 +150,8 @@ class Question(models.Model):
             'text': self.text,
             'object_type': 'question',
             'images': map(lambda i: i.to_json(nested=True), self.question_images.all()),
-            'resource': self.resource.to_json(nested=True) if self.resource else None
+            'resource': self.resource.to_json(nested=True) if self.resource else None,
+            'identifier': self.identifier
         }
         if not nested:
             result['sets'] = map(lambda s: s.to_json(nested=True), self.set_set.all())
