@@ -19,5 +19,5 @@ urlpatterns = patterns(
     url(r'^categories', 'show_more', {'object_class': Category}, name='show_categories'),
     url(r'^practice$', 'practice', name='practice'),
     url(r'^test$', 'test', name='test'),
-    url(r'^test/evaluate/(?P<question_set_id>\d+)', 'test_evaluate', name='test_evaluate')
+    url(r'^test/evaluate/(?P<question_set_id>\d+)', 'test_evaluate', name='test_evaluate'),
 )
