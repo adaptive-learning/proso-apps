@@ -9,8 +9,16 @@ from proso_ab.models import Value
 from django.utils.text import slugify
 from proso_models.models import get_environment
 from collections import defaultdict
+import abc
+from django.conf import settings
+import proso.util
 
 
+def get_test_evaluator():
+    args = []
+    if settings.PROSO_TEST_EVALUATOR == 'proso_questions.models.CategoryTestEvaluator':
+        args = settings.PROSO_TEST_EVALUATOR_ARGS
+    return proso.util.instantiate(settings.PROSO_TEST_EVALUATOR, *args)
 
 
 class ResourceManager(models.Manager):
@@ -290,6 +298,68 @@ class Image(models.Model):
 
     def to_json(self, nested=False):
         return {'name': self.name, 'url': self.file.url}
+
+
+class TestEvaluator:
+
+    @abc.abstractmethod
+    def evaluate(self, answers):
+        """
+        Args:
+            answers ([proso_models.model.Answer]):
+                user's answers
+        Return:
+            [(proso_models.model.Answer, int)]:
+                score earned by each answer
+        """
+        pass
+
+    @abc.abstractmethod
+    def score_to_pass(self):
+        pass
+
+
+class CategoryTestEvaluator:
+
+    def __init__(self, score_by_categories, score_to_pass):
+        """
+        category name:
+            'correct': score,
+            'unknown': score,
+            'wrong': score,
+            'answers': expected number of answers
+        """
+        self._score_by_categories = score_by_categories
+        self._score_to_pass = score_to_pass
+
+    def evaluate(self, answers):
+        q_item_ids = map(lambda a: a.general_answer.item_id, answers)
+        questions = dict(map(lambda q: (q.item_id, q), list(Question.objects.prefetch_related('category_set').filter(item_id__in=q_item_ids))))
+        result = []
+        found_answers = {}
+        for answer in answers:
+            question = questions[answer.general_answer.item_id]
+            [category] = list(question.category_set.all())
+            score_rule = self._score_by_categories[category.name]
+            score = 0
+            if answer.general_answer.item_answered_id is None:
+                score = score_rule.get('unknown', 0)
+            elif answer.general_answer.item_answered_id == answer.general_answer.item_asked_id:
+                score = score_rule.get('correct', 0)
+            else:
+                score = score_rule.get('wrong', 0)
+            found_answers[category.name] = found_answers.get(category.name, 0) + 1
+            result.append((answer, score))
+        for category_name, number_of_answers in found_answers.iteritems():
+            if number_of_answers != self._score_by_categories[category_name]['answers']:
+                raise Exception('The test expects %s answers in category "%s", found %s.' % (
+                    self._score_by_categories[category_name]['answers'],
+                    category_name,
+                    number_of_answers))
+        return result
+
+    def score_to_pass(self):
+        return self._score_to_pass
 
 
 @receiver(pre_save, sender=Option)
