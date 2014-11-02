@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Django settings for testproject project.
 
@@ -172,6 +174,37 @@ except SyntaxError:
 PROSO_PREDICTIVE_MODEL = 'proso.models.prediction.AlwaysLearningPredictiveModel'
 PROSO_ENVIRONMENT = 'proso_models.models.DatabaseEnvironment'
 PROSO_RECOMMENDATION = 'proso.models.recommendation.ScoreRecommendation'
+PROSO_TEST_EVALUATOR = 'proso_questions.models.CategoryTestEvaluator'
+PROSO_TEST_EVALUATOR_ARGS = [{
+    u'Pravidla provozu na pozemních komunikacích': {
+        'correct': 2,
+        'answers': 10
+    },
+    u'Dopravní značky': {
+        'correct': 1,
+        'answers': 3
+    },
+    u'Zásady bezpečné jízdy': {
+        'correct': 2,
+        'answers': 4
+    },
+    u'Dopravní situace': {
+        'correct': 4,
+        'answers': 3
+    },
+    u'Předpisy o podmínkách provozu vozidel': {
+        'correct': 1,
+        'answers': 2
+    },
+    u'Předpisy související s provozem': {
+        'correct': 2,
+        'answers': 2
+    },
+    u'Zdravotnická příprava': {
+        'correct': 1,
+        'answers': 1
+    }
+}, 43]
 
 LOGGING = {
     'version': 1,
