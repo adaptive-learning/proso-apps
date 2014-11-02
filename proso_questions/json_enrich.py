@@ -44,6 +44,29 @@ def questions(request, json_list, nested):
                 request, url.format('category_id'), ignored_get)
 
 
+def test_evaluate(request, json_list, nested):
+    urls = cache.get('proso_urls')
+    if urls is None:
+        urls = {}
+    else:
+        urls = json_lib.loads(urls)
+    cache_updated = False
+    pass_string = pass_get_parameters_string(request, ['filter_column', 'filter_value', 'stats'] + IGNORE_GET)
+    for json in json_list:
+        if 'object_type' not in json or json['object_type'] != 'set':
+            continue
+        key = 'test_evaluate_%s' % json['id']
+        if key in urls:
+            json['test_evaluate_url'] = urls[key]
+        else:
+            cache_updated = True
+            json['test_evaluate_url'] = reverse('test_evaluate', kwargs={'question_set_id': json['id']})
+            urls[key] = json['test_evaluate_url']
+        json['test_evaluate_url'] = append_get_parameters(json['test_evaluate_url'], pass_string)
+    if cache_updated:
+        cache.set('proso_urls', json_lib.dumps(urls), CACHE_EXPIRATION)
+
+
 def html(request, json_list, nested):
     htmls = cache.get('proso_questions_html')
     if htmls is None:

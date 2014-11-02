@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from models import Question, Option, DecoratedAnswer, Set, Category
+from models import Question, Option, DecoratedAnswer, Set, Category, get_test_evaluator
 from proso_models.models import Answer
 from proso.django.response import render, render_json, redirect_pass_get
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -239,6 +239,51 @@ def test(request):
         'questions': map(lambda x: x.to_json(), candidates)
     })
     return render_json(request, json, template='questions_json.html', help_text=test.__doc__)
+
+
+@allow_lazy_user
+def test_evaluate(request, question_set_id):
+    """
+    Evaluate test answers:
+
+    POST parameters:
+      question:
+        identifer for the asked question
+      answered:
+        identifier for the answered option
+      response_time:
+        number of milliseconds the given user spent by answering the question
+    """
+    question_set = get_object_or_404(Set, pk=question_set_id)
+    if request.method == 'GET':
+        questions = _to_json(request,
+            list(question_set.
+                questions.select_related('resource').
+                prefetch_related(
+                    'question_options', 'question_options__option_images',
+                    'question_images', 'resource__resource_images', 'set_set', 'category_set'
+                ).all()))
+        return render(request, 'questions_test_evaluate.html', {'questions': questions}, help_text=test_evaluate.__doc__)
+    elif request.method == 'POST':
+        saved_answers = _save_answers(request, question_set=question_set)
+        test_evaluator = get_test_evaluator()
+        answers_evaluated = test_evaluator.evaluate(saved_answers)
+        questions = dict(map(
+            lambda q: (q.item_id, q.id),
+            list(Question.objects.filter(item_id__in=map(lambda a: a.general_answer.item_id, saved_answers)))))
+        questions_evaluated = map(
+            lambda (a, score): {'question_id': questions[a.general_answer.item_id], 'score': score},
+            answers_evaluated)
+        return render_json(
+            request,
+            {
+                'score_to_pass': test_evaluator.score_to_pass(),
+                'questions': questions_evaluated,
+                'score_total': sum(map(lambda x: x['score'], questions_evaluated))
+            },
+            template='questions_json.html', help_text=test_evaluate.__doc__)
+    else:
+        return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 
 
 @ensure_csrf_cookie
