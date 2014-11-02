@@ -16,7 +16,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 MEDIA_DIR = os.path.join(BASE_DIR, 'media')
 DATA_DIR = os.path.join(BASE_DIR, 'data')
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 
 
 ON_PRODUCTION = False
