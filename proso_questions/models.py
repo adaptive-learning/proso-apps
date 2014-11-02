@@ -11,24 +11,6 @@ from proso_models.models import get_environment
 from collections import defaultdict
 
 
-class DecoratedAnswer(models.Model):
-
-    general_answer = models.ForeignKey(Answer, blank=False, null=False, unique=True)
-    ip_address = models.CharField(max_length=39, null=True, blank=True, default=None)
-    ab_values = models.ManyToManyField(Value)
-
-    def to_json(self, nested=False):
-        return {
-            'id': self.id,
-            'object_type': 'answer',
-            'question_item_id': self.general_answer.item_id,
-            'item_asked_id': self.general_answer.item_asked_id,
-            'item_answered_id': self.general_answer.item_answered_id,
-            'ip_address': self.ip_address,
-            'user_id': self.general_answer.user_id,
-            'time': self.general_answer.time.strftime('%Y-%m-%d %H:%M:%S'),
-            'response_time': self.general_answer.response_time
-        }
 
 
 class ResourceManager(models.Manager):
@@ -225,6 +207,28 @@ class Set(models.Model):
             'object_type': 'set',
             'id': self.id,
             'item_id': self.item_id,
+        }
+
+
+class DecoratedAnswer(models.Model):
+
+    general_answer = models.ForeignKey(Answer, blank=False, null=False, unique=True)
+    ip_address = models.CharField(max_length=39, null=True, blank=True, default=None)
+    ab_values = models.ManyToManyField(Value)
+    from_test = models.ForeignKey(Set, null=True, blank=True, default=None)
+
+    def to_json(self, nested=False):
+        return {
+            'id': self.id,
+            'object_type': 'answer',
+            'question_item_id': self.general_answer.item_id,
+            'item_asked_id': self.general_answer.item_asked_id,
+            'item_answered_id': self.general_answer.item_answered_id,
+            'ip_address': self.ip_address,
+            'user_id': self.general_answer.user_id,
+            'time': self.general_answer.time.strftime('%Y-%m-%d %H:%M:%S'),
+            'response_time': self.general_answer.response_time,
+            'from_test': self.from_test.to_json(nested=True) if self.from_test else None
         }
 
 
