@@ -1,0 +1,27 @@
+{% extends 'questions_base.html' %}
+
+{% load jsonify %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <h2>Emulate POST request</h2>
+    <form class="pure-form" action="" method="post">
+        {% for question in questions %}
+            {{ question.html|drop_html_escape|safe }}
+            <fieldset>
+                <input type="hidden" value="{{ question.id }}" name="question" placeholder="Question Id">
+                <input type="text" name="response_time" placeholder="Response Time" value="1000">
+                <select name="answered">
+                    {% for option in question.options %}
+                        <option value="{{ option.id }}">{{ option.html|drop_html_escape|safe }}</option>
+                    {% endfor %}
+                </select>
+            </fieldset>
+        {% endfor %}
+        {% csrf_token %}
+        <button type="submit" class="pure-button pure-button-primary">Save</button>
+    </form>
+{% endblock %}
