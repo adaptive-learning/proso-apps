@@ -18,7 +18,11 @@ def url2link(value):
 def space2nbsp(value):
     return mark_safe("&nbsp;".join(value.split(' ')))
 
+def drop_html_escape(value):
+    return value.replace('&gt', '>').replace('&lt', '<')
+
 register.filter('url2link', url2link)
 register.filter('space2nbsp', space2nbsp)
 register.filter('obj2json', obj2json)
 register.filter('obj2richjson', obj2richjson)
+register.filter('drop_html_escape', drop_html_escape)
