@@ -506,7 +506,7 @@ def update_predictive_model(sender, instance, **kwargs):
     predictive_model = get_predictive_model()
     predictive_model.predict_and_update(
         environment,
-        instance.user.id,
+        instance.user_id,
         instance.item_id,
         instance.item_asked_id == instance.item_answered_id,
         instance.time,
@@ -518,7 +518,7 @@ def update_predictive_model(sender, instance, **kwargs):
 def log_audit(sender, instance, **kwargs):
     if instance.audit:
         audit = Audit(
-            user=instance.user,
+            user_id=instance.user_id,
             item_primary=instance.item_primary,
             key=instance.key,
             value=instance.value,
