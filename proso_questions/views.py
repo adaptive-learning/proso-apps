@@ -204,7 +204,9 @@ def practice(request):
     time_before_practice = time_lib()
     candidates = Question.objects.practice(recommendation, environment, user, time, limit, questions=questions)
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))
-    json = _to_json(request, candidates)
+    json = _to_json(request, {
+        'questions': map(lambda x: x.to_json(), candidates)
+    })
     return render_json(request, json, template='questions_json.html', status=status, help_text=practice.__doc__)
 
 
@@ -225,8 +227,17 @@ def test(request):
     """
     user = get_user_id(request)
     time = get_time(request)
-    candidates = Question.objects.test(user, time)
-    json = _to_json(request, candidates)
+    question_set = Question.objects.test(user, time)
+    candidates = (question_set.questions.
+        select_related('resource').
+        prefetch_related(
+            'question_options', 'question_options__option_images',
+            'question_images', 'resource__resource_images', 'set_set', 'category_set'
+        ).all())
+    json = _to_json(request, {
+        'test': question_set.to_json(),
+        'questions': map(lambda x: x.to_json(), candidates)
+    })
     return render_json(request, json, template='questions_json.html', help_text=test.__doc__)
 
 

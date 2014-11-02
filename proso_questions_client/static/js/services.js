@@ -142,7 +142,7 @@
       test : function(fn) {
         url = 'questions/test';
         var promise = $http.get(url).success(function(data) {
-          fn(data.data);
+          fn(data.data.questions);
         });
         return promise;
       },
@@ -156,7 +156,7 @@
         summary = [];
         var promise = $http.get(url, requestOptions).success(function(data) {
           qIndex = 0;
-          questions = data.data;
+          questions = data.data.questions;
           returnQuestion(fn);
         });
         return promise;
@@ -185,13 +185,13 @@
             'X-CSRFToken' : $cookies.csrftoken,
           }
         }).success(function(data) {
-          var futureLength = qIndex + data.data.length;
+          var futureLength = qIndex + data.data.questions.length;
           console.log(futureLength, data);
           // questions array should be always the same size
           // if data sent by server is longer, it means the server is delayed
           if (questions.length == futureLength) {
             // try to handle interleaving
-            var questionsCandidate = questions.slice(0, qIndex).concat(data.data);
+            var questionsCandidate = questions.slice(0, qIndex).concat(data.data.questions);
             if (hasNoTwoSameInARow(questionsCandidate)) {
               questions = questionsCandidate;
               $log.log('questions updated, question index', qIndex);
