@@ -47,7 +47,7 @@
         });
       });
     }
-    
+
     var that = {
       get : function(category, page) {
         var url = 'questions/questions/';
@@ -74,8 +74,8 @@
       _setActiveCategory : function (part, active) {
         that.getCategories(part, active);
         angular.forEach(categoriesCache[part], function(cat) {
-          cat.hidden = cat.slug != active &&  
-            0 === cat.types.filter(function(t){ 
+          cat.hidden = cat.slug != active &&
+            0 === cat.types.filter(function(t){
               return t == active;
             }).length;
         });
@@ -91,7 +91,7 @@
           process(cache[url]);
         } else {
           that.get(part, '', process);
-        } 
+        }
       },
       getOverview : function () {
         return $http.get('/placesoverview/', {cache: true});
@@ -120,7 +120,7 @@
     var qIndex = 0;
     var url;
     $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
-    
+
     function returnQuestion(fn) {
       var q = questions[qIndex++];
       if (q)
@@ -177,7 +177,7 @@
         summary.push(question);
         $http({
           method: 'POST',
-          url : 'questions/practice?limit=' + limit + 
+          url : 'questions/practice?limit=' + limit +
             (category ?  '&category=' + category : ''),
           data: postParams,
           headers: {
@@ -212,7 +212,7 @@
     };
   }])
 
-  .factory('user', ['$http', '$cookies', 'events', 
+  .factory('user', ['$http', '$cookies', 'events',
       function($http, $cookies, events) {
     var user;
     return {
@@ -257,7 +257,7 @@
   })
 
   .factory('pageTitle',[function() {
-    
+
     var titles = {
       '' : '',
       '../templates/home/how_it_works.html' : 'Jak to funguje? - ',
