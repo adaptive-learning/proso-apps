@@ -288,42 +288,57 @@ def _to_json(request, value):
     common_json_enrich.enrich_by_object_type(request, json, json_enrich.html, ['question', 'resource', 'option'])
     common_json_enrich.enrich_by_predicate(request, json, json_enrich.url, lambda x: True)
     common_json_enrich.enrich_by_object_type(request, json, json_enrich.questions, ['set', 'category'])
+    common_json_enrich.enrich_by_object_type(request, json, json_enrich.test_evaluate, 'set')
     LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
     return json
 
 
-def _save_answers(request):
+def _save_answers(request, question_set=None):
+    time_start = time_lib()
     if len(request.POST.getlist('question', [])) == 0:
         return HttpResponseBadRequest('"question" is not defined')
     if len(request.POST.getlist('answered', [])) == 0:
         return HttpResponseBadRequest('"answered" is not defined')
     if len(request.POST.getlist('response_time', [])) == 0:
         return HttpResponseBadRequest('"response_time" is not defined')
+    expected_question_ids = None
+    if question_set:
+        expected_question_ids = map(lambda q: q.id, question_set.questions.all())
     all_data = zip(
-        request.POST.getlist('question'),
-        request.POST.getlist('answered'),
+        map(lambda x: int(x) if x else None, request.POST.getlist('question')),
+        map(lambda x: int(x) if x else None, request.POST.getlist('answered')),
         map(int, request.POST.getlist('response_time'))
     )
     ab_values = Value.objects.filter(id__in=map(lambda d: d['id'], Experiment.objects.get_values(request)))
     saved_answers = []
+    answered_question_ids = []
+    questions = dict(map(lambda q: (q.id, q), Question.objects.filter(pk__in=zip(*all_data)[0])))
+    notnone_answered = filter(lambda x: x is not None, zip(*all_data)[1])
+    correct_options = dict(zip(zip(*all_data)[0], Option.objects.get_correct_options(zip(*all_data)[0])))
+    answered_options = dict(map(lambda o: (o.id, o), Option.objects.filter(pk__in=notnone_answered)))
     for question_id, option_answered_id, response_time in all_data:
-        question = Question.objects.get(pk=question_id)
-        option_answered = Option.objects.get(pk=option_answered_id)
-        option_asked = Option.objects.get_correct_option(question)
+        question = questions[question_id]
+        answered_question_ids.append(question.id)
+        option_answered = answered_options.get(option_answered_id, None)
+        option_asked = correct_options[question_id]
 
         answer = Answer(
             user_id=request.user.id,
             item_id=question.item_id,
             item_asked_id=option_asked.item_id,
-            item_answered_id=option_answered.item_id,
+            item_answered_id=option_answered.item_id if option_answered else None,
             response_time=response_time)
         answer.save()
         decorated_answer = DecoratedAnswer(
             general_answer=answer,
-            ip_address=get_ip(request))
+            ip_address=get_ip(request),
+            from_test=question_set)
         decorated_answer.save()
         for value in ab_values:
             decorated_answer.ab_values.add(value)
         decorated_answer.save()
         saved_answers.append(decorated_answer)
+    if expected_question_ids and sorted(expected_question_ids) != sorted(answered_question_ids):
+        raise Exception("Answered questions do not match to the expected answered questions.")
+    LOGGER.debug("saving of %s answers took %s seconds", len(all_data), (time_lib() - time_start))
     return saved_answers

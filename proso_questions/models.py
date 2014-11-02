@@ -248,7 +248,7 @@ class OptionManager(models.Manager):
     def get_correct_options(self, questions):
         opts = self.filter(question__in=questions, correct=True)
         opts_dict = dict([(opt.question_id, opt) for opt in opts])
-        return map(lambda q: opts_dict.get(q.id, None), questions)
+        return map(lambda q: opts_dict.get(q.id if isinstance(q, Question) else int(q), None), questions)
 
     def get_correct_option(self, question):
         return self.get(question=question, correct=True)
