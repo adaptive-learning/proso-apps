@@ -2,7 +2,6 @@
 from django.shortcuts import render as original_render, redirect
 from django.http import HttpResponse
 import json as simplejson
-from django.conf import settings
 import markdown
 import logging
 from time import time
@@ -15,6 +14,7 @@ def redirect_pass_get(request, view, *args, **kwargs):
     response = redirect(view, *args, **kwargs)
     response['location'] = pass_get_parameters(request, response['location'])
     return response
+
 
 def pass_get_parameters_string(request, ignore=None):
     ignore = [] if ignore is None else ignore
