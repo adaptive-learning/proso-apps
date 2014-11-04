@@ -32,6 +32,12 @@ GIT_COMMAND="git --git-dir=$GIT_DIR --work-tree=$WORK_TREE"
 	echo " * grunt deploy"
 	grunt deploy
 
+  echo "rm -rf $APP_DIR/../data_repo"
+  rm -rf $APP_DIR/../data_repo
+
+	echo "./manage.py load_img"
+	$APP_DIR/manage.py load_img $APP_DIR/../data_repo/img
+
 	echo " * collect static | tail"
 	$APP_DIR/manage.py collectstatic --noinput | tail
 	echo "HASHES = $( python $APP_DIR/manage.py static_hashes )" > $APP_DIR/hashes.py
@@ -44,9 +50,6 @@ GIT_COMMAND="git --git-dir=$GIT_DIR --work-tree=$WORK_TREE"
 
 	echo "./manage.py migrate"
 	$APP_DIR/manage.py migrate 
-
-  echo "rm -rf $APP_DIR/../data_repo"
-  rm -rf $APP_DIR/../data_repo
 
   echo "git clone $PROSO_DATA_REPO $APP_DIR/../data_repo"
   git clone $PROSO_DATA_REPO $APP_DIR/../data_repo
