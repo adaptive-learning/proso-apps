@@ -56,9 +56,9 @@ INSTALLED_APPS = (
     'debug_toolbar',
     'proso_common',
     'proso_models',
+    'proso_ab',
     'proso_questions',
     'proso_questions_client',
-    'proso_ab'
 )
 
 MIDDLEWARE_CLASSES = (
