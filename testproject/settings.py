@@ -208,6 +208,11 @@ PROSO_TEST_EVALUATOR_ARGS = [{
     }
 }, 43]
 
+FEEDBACK_TO = 'autoskolachytre@googlegroups.com'
+FEEDBACK_TO = 'slaweet@seznam.cz'
+FEEDBACK_FROM = 'feedback@autoskolachytre.cz'
+FEEDBACK_FROM_SPAM = 'spam@autoskolachytre.cz'
+
 LOGGING = {
     'version': 1,
     'handlers': {

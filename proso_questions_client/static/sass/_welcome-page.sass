@@ -186,6 +186,32 @@ html
 img
   max-width: 100%
 
+#feedback 
+  position: fixed 
+  top: 390px 
+  right: -50px
+  z-index: 999 
+  a 
+    transform: rotate(-90deg) 
+    -webkit-transform: rotate(-90deg) 
+    -moz-transform: rotate(-90deg) 
+    -o-transform: rotate(-90deg) 
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3) 
+    display: inline-block 
+    width: 140px
+    background: $main-color
+    padding: 8px 16px 
+    color: #fff 
+    text-decoration: none 
+    border: 1px solid transparent
+    border-radius: 4px 4px 0 0
+    border-color: darken($main-color, 10)
+    padding: 6px 12px
+    text-align: center
+    font-size: 1.3em
+    &:hover
+      background: darken($main-color, 5)
+      border-color: darken($main-color, 10)
 
 @media (min-width: 767px)
   #wrap
@@ -215,6 +241,8 @@ img
 
 
 @media (max-width: 767px)
+  #feedback
+    display: none
   #ng-view
     width: 100%
   .welcome-page
