@@ -100,6 +100,8 @@ module.exports = function(grunt) {
           'static/bower_components/platform/platform.js',
           'static/bower_components/ng-polymer-elements/ng-polymer-elements.js',
           'static/bower_components/angular-material/angular-material.js',
+          'static/bower_components/angular-bootstrap/ui-bootstrap.js',
+          'static/bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
         ],
         dest: 'static/dist/js/libs.min.js'
       }
