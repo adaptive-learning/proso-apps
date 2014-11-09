@@ -213,6 +213,9 @@ FEEDBACK_TO = 'slaweet@seznam.cz'
 FEEDBACK_FROM = 'feedback@autoskolachytre.cz'
 FEEDBACK_FROM_SPAM = 'spam@autoskolachytre.cz'
 
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
+
 LOGGING = {
     'version': 1,
     'handlers': {
