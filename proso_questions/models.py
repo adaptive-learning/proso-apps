@@ -159,6 +159,9 @@ class Question(models.Model):
             result['options'] = map(lambda o: o.to_json(nested=True), self.question_options.all())
         return result
 
+    def __unicode__(self):
+        return u'Question: {0}'.format(self.text[:100])
+
 
 class CategoryManager(models.Manager):
 
