@@ -82,11 +82,10 @@
       </material-toolbar>
         <div>
           <a href="#/practice/" class="btn btn-default btn-menu" >
-            <i class="glyphicon glyphicon-check"></i> Procvičovat
+            Procvičovat
           </a>
-          <a href="#/test/" 
-             class="btn btn-default btn-menu">
-            <i class="glyphicon glyphicon-pencil"></i> Test
+          <a href="#/test/" class="btn btn-default btn-menu">
+            Test
           </a>
         </div>
       <ul class="main-nav">
@@ -143,7 +142,7 @@
            {% flatblock "subtitle" %}
             <div class="col-centered">
               <a href="#/practice/" class="btn btn-default btn-lg btn-huge" >
-                <i class="glyphicon glyphicon-check"></i> Procvičovat
+                Začít procvičovat
               </a>
             </div>
             <!--
@@ -160,10 +159,11 @@
     </div>
   </div>
 
-    <div data-ng-view id="ng-view" class="card ng-cloak {{pageClass}}">
-    </div>
     <div id="feedback">
-      <a href="" ng-click="openFeedback()"> Napište nám </a>
+      <a href="" class="btn btn-primary" ng-click="openFeedback()"> Napište nám </a>
+    </div>
+
+    <div data-ng-view id="ng-view" class="card ng-cloak {{pageClass}}">
     </div>
 
     <script type="text/ng-template" id="loading.html">

@@ -92,7 +92,8 @@
       </div>
       <br>
       <span class="pull-right" >
-        <a class="btn-continue btn btn-lg btn-default {{!showSummary || 'btn-primary'}}" 
+        <a class="btn-continue btn btn-lg"
+          ng-class="(showSummary && 'btn-primary') || 'btn-default'" 
            href="#/view/" >
           Přehled znalostí
         </a>

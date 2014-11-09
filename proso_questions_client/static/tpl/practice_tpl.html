@@ -21,7 +21,8 @@
     </div>
     <div options="question"></div>
     <div class="pull-right" >
-      <button class="btn btn-lg btn-default next {{!canNext || 'btn-primary'}}" 
+      <button class="btn btn-lg next"
+              ng-class="(canNext && 'btn-primary') || 'btn-default'" 
               ng-click="next()" 
               ng-disabled="!canNext" >
           <i class="glyphicon glyphicon-arrow-right"></i> Další
