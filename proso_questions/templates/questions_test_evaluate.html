@@ -15,6 +15,7 @@
                 <input type="hidden" value="{{ question.id }}" name="question" placeholder="Question Id">
                 <input type="text" name="response_time" placeholder="Response Time" value="1000">
                 <select name="answered">
+                    <option value="">-- empty -- </option>
                     {% for option in question.options %}
                         <option value="{{ option.id }}">{{ option.html|drop_html_escape|safe }}</option>
                     {% endfor %}

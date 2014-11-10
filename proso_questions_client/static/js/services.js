@@ -148,11 +148,11 @@
         return promise;
       },
       evaluateTest : function(test, questions) {
-        var data = {
+        var data = $.param({
           question : questions.map(function(q){return q.id;}),
           answered : questions.map(function(q){return q.answered && q.answered.id;}),
           response_time : questions.map(function(q){return q.response_time;}),
-        };
+        });
         var promise = $http({
           method: 'POST',
           url : test.test_evaluate_url,

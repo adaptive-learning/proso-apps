@@ -198,7 +198,9 @@ def practice(request):
     # save answers
     status = 200
     if request.method == 'POST':
-        _save_answers(request)
+        saved_answers = _save_answers(request)
+        if not isinstance(saved_answers, list):
+            return saved_answers
         status = 201
     # recommend
     time_before_practice = time_lib()
@@ -266,6 +268,8 @@ def test_evaluate(request, question_set_id):
         return render(request, 'questions_test_evaluate.html', {'questions': questions}, help_text=test_evaluate.__doc__)
     elif request.method == 'POST':
         saved_answers = _save_answers(request, question_set=question_set)
+        if not isinstance(saved_answers, list):
+            return saved_answers
         test_evaluator = get_test_evaluator()
         answers_evaluated = test_evaluator.evaluate(saved_answers)
         questions = dict(map(
@@ -309,6 +313,8 @@ def answer(request):
         return render(request, 'questions_answer.html', {}, help_text=answer.__doc__)
     elif request.method == 'POST':
         saved_answers = _save_answers(request)
+        if not isinstance(saved_answers, list):
+            return saved_answers
         if 'html' in request.GET and len(saved_answers) == 1:
             return redirect_pass_get(request, 'show_answer', id=saved_answers[0].id)
         else:
@@ -340,19 +346,29 @@ def _to_json(request, value):
 
 def _save_answers(request, question_set=None):
     time_start = time_lib()
-    if len(request.POST.getlist('question', [])) == 0:
-        return HttpResponseBadRequest('"question" is not defined')
-    if len(request.POST.getlist('answered', [])) == 0:
-        return HttpResponseBadRequest('"answered" is not defined')
-    if len(request.POST.getlist('response_time', [])) == 0:
-        return HttpResponseBadRequest('"response_time" is not defined')
+    question_key = 'question'
+    answered_key = 'answered'
+    response_time_key = 'response_time'
+    print request.POST
+    if len(request.POST.getlist(question_key, [])) == 0:
+        question_key += '[]'
+        if len(request.POST.getlist(question_key, [])) == 0:
+            return HttpResponseBadRequest('"question" is not defined')
+    if len(request.POST.getlist(answered_key, [])) == 0:
+        answered_key += '[]'
+        if len(request.POST.getlist(answered_key, [])) == 0:
+            return HttpResponseBadRequest('"answered" is not defined')
+    if len(request.POST.getlist(response_time_key, [])) == 0:
+        response_time_key += '[]'
+        if len(request.POST.getlist(response_time_key, [])) == 0:
+            return HttpResponseBadRequest('"response_time" is not defined')
     expected_question_ids = None
     if question_set:
         expected_question_ids = map(lambda q: q.id, question_set.questions.all())
     all_data = zip(
-        map(lambda x: int(x) if x else None, request.POST.getlist('question')),
-        map(lambda x: int(x) if x else None, request.POST.getlist('answered')),
-        map(int, request.POST.getlist('response_time'))
+        map(lambda x: int(x) if x else None, request.POST.getlist(question_key)),
+        map(lambda x: int(x) if x else None, request.POST.getlist(answered_key)),
+        map(int, request.POST.getlist(response_time_key))
     )
     ab_values = Value.objects.filter(id__in=map(lambda d: d['id'], Experiment.objects.get_values(request)))
     saved_answers = []
