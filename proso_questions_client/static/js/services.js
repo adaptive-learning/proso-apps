@@ -263,7 +263,6 @@
       '' : '',
       '../templates/home/how_it_works.html' : 'Jak to funguje? - ',
       'static/tpl/about.html' : 'O prjektu - ',
-      'static/tpl/overview_tpl.html' : 'Přehled map - ',
       'static/tpl/view_tpl.html' : 'Prohlížení otázek - ',
       'static/tpl/practice_tpl.html' : 'Procvičování otázek - ',
       'static/tpl/test_tpl.html' : 'Test - ',
