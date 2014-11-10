@@ -21,6 +21,7 @@ test: reinstall
 	python manage.py test proso_models --traceback
 	python manage.py test proso_questions --traceback
 	python manage.py test proso_questions --traceback
+	python manage.py test proso_flashcards --traceback
 
 reinstall: check uninstall install
 
@@ -35,7 +36,7 @@ uninstall:
 	pip uninstall --yes proso-apps
 
 check:
-	flake8 --ignore=E501,E225,E123,E128 --exclude=*/migrations/*.py proso_models proso_questions proso_ab proso proso_questions_client
+	flake8 --ignore=E501,E225,E123,E128 --exclude=*/migrations/*.py proso_models proso_questions proso_ab proso proso_questions_client proso_flashcards
 
 grunt:
 	cd proso_questions_client; \
