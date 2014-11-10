@@ -224,8 +224,13 @@
     };
 
     $scope.evaluate = function(timeRunOut) {
+      addResponseTime();
       $scope.activeQuestionIndex = undefined;
       $scope.showSummary = true;
+      question.evaluateTest($scope.test, $scope.questions)
+      .success(function(data){
+
+      });
       $scope.questions.map(function(q) {
         q.isCorrect = q.answered && q.answered.correct;
         q.isWrong = !q.isCorrect;
@@ -244,7 +249,15 @@
     };
 
     function setQuestion() {
+      addResponseTime();
       $scope.question = $scope.questions[$scope.activeQuestionIndex];
+      $scope.question.start_time = new Date().valueOf();
+    }
+
+    function addResponseTime() {
+      if ($scope.question) {
+        $scope.question.response_time += new Date().valueOf() - $scope.question.start_time;
+      }
     }
 
     function highlightOptions(selected) {
@@ -257,7 +270,11 @@
     $scope.start = function() {
       $scope.started = true;
       question.test(function(data) {
-        $scope.questions = data;
+        $scope.questions = data.questions;
+        $scope.questions.map(function(q){
+          q.response_time = 0;
+        });
+        $scope.test = data.test;
         $scope.activateQuestion(0);
       }).error(function(){
         $scope.error = "V aplikaci bohužel nastala chyba.";

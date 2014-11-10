@@ -143,7 +143,23 @@
       test : function(fn) {
         url = 'questions/test';
         var promise = $http.get(url).success(function(data) {
-          fn(data.data.questions);
+          fn(data.data);
+        });
+        return promise;
+      },
+      evaluateTest : function(test, questions) {
+        var data = {
+          question : questions.map(function(q){return q.id;}),
+          answered : questions.map(function(q){return q.answered && q.answered.id;}),
+          response_time : questions.map(function(q){return q.response_time;}),
+        };
+        var promise = $http({
+          method: 'POST',
+          url : test.test_evaluate_url,
+          data: data,
+          headers: {
+            'X-CSRFToken' : $cookies.csrftoken,
+          }
         });
         return promise;
       },
@@ -186,13 +202,13 @@
             'X-CSRFToken' : $cookies.csrftoken,
           }
         }).success(function(data) {
-          var futureLength = qIndex + data.data.questions.length;
+          var futureLength = qIndex + data.questions.length;
           console.log(futureLength, data);
           // questions array should be always the same size
           // if data sent by server is longer, it means the server is delayed
           if (questions.length == futureLength) {
             // try to handle interleaving
-            var questionsCandidate = questions.slice(0, qIndex).concat(data.data.questions);
+            var questionsCandidate = questions.slice(0, qIndex).concat(data.questions);
             if (hasNoTwoSameInARow(questionsCandidate)) {
               questions = questionsCandidate;
               $log.log('questions updated, question index', qIndex);
