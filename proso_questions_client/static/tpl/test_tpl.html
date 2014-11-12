@@ -74,28 +74,59 @@
       <div debug="question"></div>
     </div>
     <div ng-show="showSummary" class="summary">
+      <div class="ng-view-header">
+        <h2> Výsledky testu </h2>
+      </div>
       <div>
-       <!--
+        <h2 ng-show="errorMessage != undefined" ng-bind="errorMessage"></h2>
+        
+        <div questions-list="summary.questions"> </div>
         <div class="progress" ng-show="summary != undefined">
           <div class="progress-bar progress-bar-success" 
-               style="width: {{summary.correctlyAnsweredRatio | percent }};">
-            Úspěšnost: {{summary.correctlyAnsweredRatio | percent }}
+               style="width: {{result.pointsRatio * 100 }}%;">
           </div>
           <div class="progress-bar progress-bar-danger" 
-               style="width: {{(1 - summary.correctlyAnsweredRatio) | percent }};">
+               style="width: {{result.pointsToPassPortion * 100 }}%;">
           </div>
         </div>
-        -->
-        <h2> Výsledky testu </h2>
-        <h2 ng-show="errorMessage != undefined" ng-bind="errorMessage"></h2>
-        <div questions-list="summary.questions"> </div>
+        <div ng-show="loading" class="loading-indicator">
+        </div>
+        <div ng-hide="loading" >
+          <div class="progress-label">
+            <strong>
+            Celkem získáno
+            </strong>
+            <span class="badge badge-default" >
+              <i class="color-indicator" style="background-color: {{1|probColor}};" ></i>
+              {{result.score_achieved}} b
+            </span>
+            <span class="col-offset-2" ng-hide="result.pointsMissingToPass == 0">
+              a do úspěšného složení testu chybí
+              <span class="badge badge-default" >
+                <i class="color-indicator" style="background-color: {{0|probColor}};" ></i>
+                {{result.pointsMissingToPass}} b
+              </span>
+            </span>
+          </div>
+          <br>
+          <div class="alert alert-success" ng-show="result.pointsMissingToPass == 0">
+            <h3> Gratulujeme k úspěšnému složení testu!</h3>
+          <div>
+        </div>
       </div>
       <br>
-      <span class="pull-right" >
-        <a class="btn-continue btn btn-lg"
-          ng-class="(showSummary && 'btn-primary') || 'btn-default'" 
+      <span class="pull-right" ng-if="showSummary">
+        <a class="btn-continue btn btn-lg btn-default"
            href="#/view/" >
           Přehled znalostí
+        </a>
+        <a class="btn-continue btn btn-lg btn-default"
+           href="#/refreshtest/" >
+          Další test 
+        </a>
+        <a class="btn-continue btn btn-lg btn-primary"
+           href="#/practice/" >
+          Procvičovat 
         </a>
       </span>
     </div>

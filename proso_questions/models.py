@@ -365,6 +365,13 @@ class CategoryTestEvaluator:
     def score_to_pass(self):
         return self._score_to_pass
 
+    def score_max(self):
+        score_sum = 0
+        for i in self._score_by_categories:
+            val = self._score_by_categories[i]
+            score_sum += val['correct'] * val['answers']
+        return score_sum
+
 
 @receiver(pre_save, sender=Option)
 @receiver(pre_save, sender=Resource)

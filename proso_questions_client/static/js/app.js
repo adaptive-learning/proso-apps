@@ -42,6 +42,8 @@
     }).when('/test/', {
       controller : 'AppTest',
       templateUrl : 'static/tpl/test_tpl.html'
+    }).when('/refreshtest/', {
+      redirectTo : '/test/'
     }).when('/overview/:user?', {
       controller : 'AppOverview',
       templateUrl : 'static/tpl/overview_tpl.html'

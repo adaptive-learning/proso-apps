@@ -227,15 +227,28 @@
       addResponseTime();
       $scope.activeQuestionIndex = undefined;
       $scope.showSummary = true;
+      $scope.loading = true;
       question.evaluateTest($scope.test, $scope.questions)
       .success(function(data){
-
+        var result = data.data;
+        $scope.result = result;
+        $scope.result.pointsRatio = result.score_achieved / result.score_max;
+        $scope.result.pointsMissingToPass = Math.max(0, result.score_to_pass - result.score_achieved);
+        $scope.result.pointsToPassPortion = $scope.result.pointsMissingToPass / result.score_max;
+        for (var i = 0; i < data.data.questions.length; i++) {
+          for (var j = 0; j < $scope.questions.length; j++) {
+            if ($scope.questions[j].id == data.data.questions[i].question_id ) {
+              $scope.questions[j].points = data.data.questions[i].score + ' b';
+            }
+          }
+        }
+        $scope.loading = false;
       });
       $scope.questions.map(function(q) {
         q.isCorrect = q.answered && q.answered.correct;
         q.isWrong = !q.isCorrect;
         q.prediction = (q.answered ? q.answered.correct : 0) + 0;
-        q.points = q.prediction + 'b';
+        q.points = ' ';
       });
       $scope.summary = {
         questions : $scope.questions,

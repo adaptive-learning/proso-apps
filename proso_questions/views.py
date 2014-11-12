@@ -283,7 +283,8 @@ def test_evaluate(request, question_set_id):
             {
                 'score_to_pass': test_evaluator.score_to_pass(),
                 'questions': questions_evaluated,
-                'score_total': sum(map(lambda x: x['score'], questions_evaluated))
+                'score_achieved': sum(map(lambda x: x['score'], questions_evaluated)),
+                'score_max': test_evaluator.score_max(),
             },
             template='questions_json.html', help_text=test_evaluate.__doc__)
     else:
