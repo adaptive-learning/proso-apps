@@ -3,7 +3,7 @@ import sys
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(DIRNAME)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'testproject.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'production.settings'
 
 from django.core.handlers.wsgi import WSGIHandler
 

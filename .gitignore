@@ -11,3 +11,4 @@ proso_questions_client/static/css
 build
 image
 .django_cache
+local_settings.py
