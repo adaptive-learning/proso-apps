@@ -1,7 +1,5 @@
 <div id="container" infinite-scroll="onBottomReached()" threshold="100"
   can-load="hasMoreQuestions">
-  <div ng-show="error" ng-bind="error" class="alert alert-danger">
-  </div>
   <div class="view-questions">
     <div class="ng-view-header">
       <h2> {{category.name}} </h2>
@@ -11,14 +9,17 @@
       </a>
       <div class="clearfix"></div>
     </div>
+    <!--
     <div class="category-progress" count="{{type.places.length}}"  
          skills="{{ {
            practiced:(type.places|filter:{practiced:true}).length,
            learned:(type.places|filter:{learned:true}).length
          } }}"></div>
     <div questions-list="questions"> </div>
+    -->
   </div>
   <div ng-show="loading" class="loading-indicator">
   </div>
-  <div class="clearfix"></div>
+  <div ng-show="error" ng-bind="error" class="alert alert-danger">
+  </div>
 </div>
