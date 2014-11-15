@@ -60,4 +60,5 @@ GIT_COMMAND="git --git-dir=$GIT_DIR --work-tree=$WORK_TREE"
 	echo "./manage.py load_questions"
 	$APP_DIR/manage.py load_questions $APP_DIR/../data_repo/questions.json
 
-
+	echo "cp local_settings.py"
+	cp $APP_DIR/../data_repo/local_settings.py $APP_DIR/production/
