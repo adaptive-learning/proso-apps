@@ -168,6 +168,7 @@
           limit : $routeParams.limit,
           user : $routeParams.user,
           category : part,
+          stats : true,
         };
         url = 'questions/practice';
         summary = [];
@@ -184,7 +185,6 @@
       answer : function(question, category) {
         question.response_time += new Date().valueOf();
         question.index = qIndex - 1;
-        question.prediction = question.answered.correct + 0;
         var postParams = $.param({
           question : question.id,
           answered : question.answered.id,
@@ -221,6 +221,19 @@
         var correctlyAnswered = summary.filter(function(q) {
             return q.answered.correct;
           });
+        var predictionsUrl = '/models/model/?items=';
+        predictionsUrl += summary.map(function(q) {
+          return q.item_id;
+        }).join(',');
+        $http.get(predictionsUrl).success(function(data) {
+          for (var i = 0; i < data.data.predictions.length; i++) {
+            for (var j = 0; j < summary.length; j++) {
+              if (summary[j].item_id == data.data.predictions[i].item_id ) {
+                summary[j].predictionAfter = data.data.predictions[i].prediction;
+              }
+            }
+          }
+        });
         return {
           correctlyAnsweredRatio : correctlyAnswered.length / summary.length,
           questions : summary

@@ -1,10 +1,20 @@
 <div class="questions-list">
   <div ng-repeat="question in questionsList" >
       <div class="questions-item" ng-click="selectQuestion(question)">
-        <span class="badge badge-default" title="Odhad znalosti">
+        <span class="badge badge-default"
+            title="Odhad znalosti {{question.predictionAfter && 'před' || ''}}">
           <i class="color-indicator" 
-          style="background-color: {{question.prediction|probColor}};" ></i>
-          {{question.points || question.answered && ' ' || (question.prediction | percent)}}
+            style="background-color: {{question.prediction|probColor}};" ></i>
+          {{question.points || (question.prediction | percent)}}
+        </span>
+        <i class="glyphicon glyphicon-circle-arrow-right prediction-shift"
+           ng-if="question.predictionAfter"
+           style="color: {{(question.answered.correct + 0) | probColor}};" ></i>
+        <span class="badge badge-default" title="Odhad znalosti po"
+          ng-if="question.predictionAfter">
+          <i class="color-indicator" 
+            style="background-color: {{question.predictionAfter|probColor}};" ></i>
+          {{(question.predictionAfter | percent)}}
         </span>
         <span ng-repeat="cat in question.categories"
           ng-if="!categoryId"
