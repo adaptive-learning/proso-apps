@@ -87,8 +87,8 @@
 
   }])
 
-  .controller('AppView', ['$scope', '$routeParams', '$filter', 'places',
-      function($scope, $routeParams, $filter, places) {
+  .controller('AppView', ['$scope', '$routeParams', '$filter', 'questions',
+      function($scope, $routeParams, $filter, questions) {
     $scope.categoryId = $routeParams.category;
     $scope.page = 0;
     $scope.questions = [];
@@ -102,7 +102,7 @@
         return;
       }
       $scope.loading = true;
-      places.get($scope.categoryId, $scope.page).
+      questions.get($scope.categoryId, $scope.page).
         error(function(){
           $scope.error = "V aplikaci bohužel nastala chyba.";
           $scope.loading = false;
@@ -131,9 +131,9 @@
   }])
 
   .controller('AppPractice', ['$scope', '$routeParams', '$timeout', '$filter',
-      'question', 'user', 'events',
+      'practice', 'user', 'events',
       function($scope, $routeParams, $timeout, $filter,
-      question, user, events) {
+      practice, user, events) {
     $scope.categoryId = $routeParams.category;
 
     $scope.checkAnswer = function(selected) {
@@ -141,7 +141,7 @@
       if (selected) {
         $scope.question.answered = selected;
       }
-      $scope.progress = question.answer($scope.question, $scope.categoryId);
+      $scope.progress = practice.answer($scope.question, $scope.categoryId);
       if (selected &&  selected.correct) {
         user.addPoint();
         $timeout(function() {
@@ -154,7 +154,7 @@
 
     $scope.next = function() {
       if ($scope.progress < 100) {
-        question.next($scope.categoryId, setQuestion);
+        practice.next($scope.categoryId, setQuestion);
       } else {
         setupSummary();
       }
@@ -163,7 +163,7 @@
     function setupSummary() {
       $scope.progress = 0;
       $scope.questions = [];
-      $scope.summary = question.summary();
+      $scope.summary = practice.summary();
       $scope.showSummary = true;
       events.emit('questionSetFinished', user.getUser().points);
     }
@@ -182,15 +182,15 @@
       });
     }
 
-    question.first($scope.categoryId, function(q) {
+    practice.first($scope.categoryId, function(q) {
       setQuestion(q);
     }).error(function(){
       $scope.error = "V aplikaci bohužel nastala chyba.";
     });
   }])
 
-  .controller('AppTest', ['$scope', '$timeout', 'question', '$',
-      function($scope, $timeout, question, $) {
+  .controller('AppTest', ['$scope', '$timeout', 'practice', '$',
+      function($scope, $timeout, practice, $) {
 
     $scope.checkAnswer = function(selected) {
       highlightOptions(selected);
@@ -228,7 +228,7 @@
       $scope.activeQuestionIndex = undefined;
       $scope.showSummary = true;
       $scope.loading = true;
-      question.evaluateTest($scope.test, $scope.questions)
+      practice.evaluateTest($scope.test, $scope.questions)
       .success(function(data){
         var result = data.data;
         $scope.result = result;
@@ -282,7 +282,7 @@
 
     $scope.start = function() {
       $scope.started = true;
-      question.test(function(data) {
+      practice.test(function(data) {
         $scope.questions = data.questions;
         $scope.questions.map(function(q){
           q.response_time = 0;

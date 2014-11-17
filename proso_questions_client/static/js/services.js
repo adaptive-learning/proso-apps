@@ -28,25 +28,8 @@
   }])
 
 
-  .factory('places', ['$http', '$routeParams', function($http, $routeParams) {
-    var cache = {};
-    var mapCache = {};
-    var categoriesCache = {};
+  .factory('questions', ['$http', '$routeParams', function($http, $routeParams) {
     var names = {};
-
-    function addOneToNames(code, name) {
-      if (!names[code]) {
-        names[code] = name;
-      }
-    }
-
-    function addToNames(code, placesTypes) {
-      angular.forEach(placesTypes, function(type) {
-        angular.forEach(type.places, function(place) {
-          addOneToNames(place.code, place.name);
-        });
-      });
-    }
 
     var that = {
       get : function(category, page) {
@@ -62,7 +45,7 @@
           options.params.filter_column = 'category_id';
           options.params.filter_value = category;
         }
-        options.params.json_orderby = 'prediction'
+        options.params.json_orderby = 'prediction';
         var promise = $http.get(url, options);
         return promise;
       },
@@ -72,58 +55,34 @@
       getName : function(code) {
         return names[code];
       },
-      _setActiveCategory : function (part, active) {
-        that.getCategories(part, active);
-        angular.forEach(categoriesCache[part], function(cat) {
-          cat.hidden = cat.slug != active &&
-            0 === cat.types.filter(function(t){
-              return t == active;
-            }).length;
+      fetchPredicitons : function(questions, predictionPropertyName) {
+        predictionPropertyName = predictionPropertyName || 'prediction';
+        var predictionsUrl = '/models/model/?items=';
+        predictionsUrl += questions.map(function(q) {
+          return q.item_id;
+        }).join(',');
+        $http.get(predictionsUrl).success(function(data) {
+          for (var i = 0; i < data.data.predictions.length; i++) {
+            for (var j = 0; j < questions.length; j++) {
+              if (questions[j].item_id == data.data.predictions[i].item_id ) {
+                questions[j][predictionPropertyName] = data.data.predictions[i].prediction;
+              }
+            }
+          }
         });
       },
-      practicing : function (part, type) {
-        that._setActiveCategory(part, type);
-        // To fetch names of all places on map and be able to show name of wrongly answered place
-        var process = function(placesTypes){
-          addToNames(part, placesTypes);
-        };
-        var url = 'usersplaces/' + part + '/';
-        if (cache[url]) {
-          process(cache[url]);
-        } else {
-          that.get(part, '', process);
-        }
-      },
-      getOverview : function () {
-        return $http.get('/placesoverview/', {cache: true});
-      },
-      getMapLayers : function(map) {
-        return mapCache[map].placesTypes.map(function(l){
-          return l.slug;
-        });
-      },
-      getMapLayerCount : function(map, layer) {
-        if (!mapCache[map]) {
-          return 0;
-        }
-        return mapCache[map].placesTypes.filter(function(l){
-          return l.slug == layer;
-        }).map(function(l){
-          return l.count;
-        })[0];
-      }
     };
     return that;
   }])
 
-  .service('question', ['$http', '$log', '$cookies', '$', '$routeParams',
-      function($http, $log, $cookies, $, $routeParams) {
+  .service('practice', ['$http', '$log', '$cookies', '$', '$routeParams', 'questions',
+      function($http, $log, $cookies, $, $routeParams, questions) {
     var qIndex = 0;
     var url;
     $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 
     function returnQuestion(fn) {
-      var q = questions[qIndex++];
+      var q = questionsList[qIndex++];
       if (q)
         q.response_time = -new Date().valueOf();
       fn(q);
@@ -136,7 +95,7 @@
       }
       return true;
     }
-    var questions = [];
+    var questionsList = [];
     var summary = [];
     var requestOptions = {};
     return {
@@ -174,7 +133,7 @@
         summary = [];
         var promise = $http.get(url, requestOptions).success(function(data) {
           qIndex = 0;
-          questions = data.data.questions;
+          questionsList = data.data.questions;
           returnQuestion(fn);
         });
         return promise;
@@ -194,8 +153,9 @@
         summary.push(question);
         $http({
           method: 'POST',
-          url : 'questions/practice?limit=' + limit +
-            (category ?  '&category=' + category : ''),
+          url : 'questions/practice?limit=' + limit + '&stats=true' +
+            (category ?  '&category=' + category : '') +
+            ($routeParams.user ?  '&user=' + $routeParams.user : ''),
           data: postParams,
           headers: {
             'Content-Type' : 'application/x-www-form-urlencoded',
@@ -206,34 +166,22 @@
           console.log(futureLength, data);
           // questions array should be always the same size
           // if data sent by server is longer, it means the server is delayed
-          if (questions.length == futureLength) {
+          if (questionsList.length == futureLength) {
             // try to handle interleaving
-            var questionsCandidate = questions.slice(0, qIndex).concat(data.questions);
+            var questionsCandidate = questionsList.slice(0, qIndex).concat(data.questions);
             if (hasNoTwoSameInARow(questionsCandidate)) {
-              questions = questionsCandidate;
+              questionsList = questionsCandidate;
               $log.log('questions updated, question index', qIndex);
             }
           }
         });
-        return 100 * qIndex / questions.length;
+        return 100 * qIndex / questionsList.length;
       },
       summary : function() {
         var correctlyAnswered = summary.filter(function(q) {
             return q.answered.correct;
           });
-        var predictionsUrl = '/models/model/?items=';
-        predictionsUrl += summary.map(function(q) {
-          return q.item_id;
-        }).join(',');
-        $http.get(predictionsUrl).success(function(data) {
-          for (var i = 0; i < data.data.predictions.length; i++) {
-            for (var j = 0; j < summary.length; j++) {
-              if (summary[j].item_id == data.data.predictions[i].item_id ) {
-                summary[j].predictionAfter = data.data.predictions[i].prediction;
-              }
-            }
-          }
-        });
+        questions.fetchPredicitons(summary, 'predictionAfter');
         return {
           correctlyAnsweredRatio : correctlyAnswered.length / summary.length,
           questions : summary
