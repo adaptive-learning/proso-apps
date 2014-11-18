@@ -29,8 +29,6 @@
 
 
   .factory('questions', ['$http', '$routeParams', function($http, $routeParams) {
-    var names = {};
-
     var that = {
       get : function(category, page) {
         var url = 'questions/questions/';
@@ -48,12 +46,6 @@
         options.params.json_orderby = 'prediction';
         var promise = $http.get(url, options);
         return promise;
-      },
-      setName : function(code, name) {
-        names[code] = names[code] || name;
-      },
-      getName : function(code) {
-        return names[code];
       },
       fetchPredicitons : function(questions, predictionPropertyName) {
         predictionPropertyName = predictionPropertyName || 'prediction';
