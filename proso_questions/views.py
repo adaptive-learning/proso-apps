@@ -350,7 +350,6 @@ def _save_answers(request, question_set=None):
     question_key = 'question'
     answered_key = 'answered'
     response_time_key = 'response_time'
-    print request.POST
     if len(request.POST.getlist(question_key, [])) == 0:
         question_key += '[]'
         if len(request.POST.getlist(question_key, [])) == 0:
