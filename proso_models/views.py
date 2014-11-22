@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponseBadRequest
-from proso.django.request import get_time, get_user_id
+from proso.django.request import is_time_overriden, get_time, get_user_id
 from proso.django.response import render_json
 from models import get_environment, get_predictive_model
 import numpy
@@ -19,7 +19,7 @@ def model(request):
     time = get_time(request)
     environment = get_environment()
     predictive_model = get_predictive_model()
-    if request.user.is_staff and 'time' in request.GET:
+    if is_time_overriden(request):
         environment.shift_time(time)
     items = map(int, request.GET['items'].split(','))
     preds = predictive_model.predict_more_items(environment, user, items, time)
@@ -44,7 +44,7 @@ def audit(request, key):
     item_secondary = int(request.GET['item_secondary']) if 'item_secondary' in request.GET else None
     time = get_time(request)
     environment = get_environment()
-    if request.user.is_staff and 'time' in request.GET:
+    if is_time_overriden(request):
         environment.shift_time(time)
     values = environment.audit(
         key, user=user, item=item, item_secondary=item_secondary, limit=limit)
@@ -71,7 +71,7 @@ def read(request, key):
     item_secondary = int(request.GET['item_secondary']) if 'item_secondary' in request.GET else None
     time = get_time(request)
     environment = get_environment()
-    if request.user.is_staff and 'time' in request.GET:
+    if is_time_overriden(request):
         environment.shift_time(time)
     value = environment.read(key, user=user, item=item, item_secondary=item_secondary)
     if value is None:

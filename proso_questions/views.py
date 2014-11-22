@@ -9,7 +9,7 @@ from ipware.ip import get_ip
 from django.db import transaction
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
-from proso.django.request import get_time, get_user_id
+from proso.django.request import is_time_overriden, is_user_id_overriden, get_time, get_user_id
 from proso_models.models import get_environment, get_recommendation
 from proso_ab.models import Experiment, Value
 import logging
@@ -126,7 +126,7 @@ def show_more(request, object_class, should_cache=True):
     else:
         objs = object_class.objects.select_related(*select_related).prefetch_related(*prefetch_related).all()
     if object_class == DecoratedAnswer:
-        if 'user' in request.GET and request.user.is_staff():
+        if is_user_id_overriden(request):
             user_id = int(request.GET['user'])
         else:
             user_id = request.user.id
@@ -189,7 +189,7 @@ def practice(request):
     time = get_time(request)
     environment = get_environment()
     recommendation = get_recommendation()
-    if request.user.is_staff and 'time' in request.GET:
+    if is_time_overriden(request):
         environment.shift_time(time)
     category = request.GET.get('category', None)
     questions = None

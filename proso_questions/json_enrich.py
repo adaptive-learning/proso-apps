@@ -1,7 +1,7 @@
 from models import Question
 from django.core.urlresolvers import reverse
 import markdown
-from proso.django.request import get_time, get_user_id
+from proso.django.request import is_time_overriden, get_time, get_user_id
 from proso.django.response import pass_get_parameters_string, append_get_parameters, pass_get_parameters
 import proso_models.models
 from django.core.cache import cache
@@ -135,7 +135,7 @@ def prediction(request, json_list, nested):
 
 def _environment(request):
     environment = proso_models.models.get_environment()
-    if 'time' in request.GET and request.user.is_staff:
+    if is_time_overriden(request):
         time = get_time(request)
         environment.shift_time(time)
     return environment
