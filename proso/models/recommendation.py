@@ -39,7 +39,7 @@ class ScoreRecommendation(Recommendation):
     def __init__(
             self, predictive_model, weight_probability=10.0, weight_number_of_answers=5.0,
             weight_time_ago=120, weight_parent_time_ago=120, weight_parent_number_of_answers=2.5,
-            target_probability=80.0, recompute_parent_score=True):
+            target_probability=0.8, recompute_parent_score=True):
         self._predictive_model = predictive_model
         self._weight_probability = weight_probability
         self._weight_number_of_answers = weight_number_of_answers
@@ -58,10 +58,12 @@ class ScoreRecommendation(Recommendation):
         # items provides only an under-approximation of the real state.
         last_answer_time_parents = self._last_answer_time_for_parents(environment, parents, last_answer_time)
         answers_num_parents = self._answers_num_for_parents(environment, parents, answers_num)
+        rolling_success = environment.rolling_success(user=user)
+        prob_target = self._adjust_target_probability(rolling_success)
 
         def _score(item):
             return (
-                self._weight_probability * self._score_probability(probability[item]) +
+                self._weight_probability * self._score_probability(prob_target, probability[item]) +
                 self._weight_time_ago * self._score_last_answer_time(last_answer_time[item], time) +
                 self._weight_number_of_answers * self._score_answers_num(answers_num[item]),
                 random.random()
@@ -74,6 +76,7 @@ class ScoreRecommendation(Recommendation):
             for p, v in parents[i]:
                 parent_time_score += v * self._score_last_answer_time(last_answer_time_parents[p], time)
                 parent_answers_num_score += v * self._score_answers_num(answers_num_parents[p])
+                total += 1
             if total > 0:
                 parent_time_score = parent_time_score / total
                 parent_answers_num_score = parent_answers_num_score / total
@@ -95,7 +98,6 @@ class ScoreRecommendation(Recommendation):
             candidates = map(lambda ((score, r), i): i, sorted(scored, reverse=True)[:min(len(scored), n)])
 
         if kwargs.get('options', False):
-            rolling_success = environment.rolling_success(user=user)
             return candidates, map(
                 lambda item: self._options(environment, item, probability, rolling_success), candidates)
         else:
@@ -104,10 +106,10 @@ class ScoreRecommendation(Recommendation):
     def _score_answers_num(self, answers_num):
         return 1.0 / max(math.sqrt(answers_num), 0.001)
 
-    def _score_probability(self, probability):
-        diff = self._target_probability - probability
+    def _score_probability(self, target_probability, probability):
+        diff = target_probability - probability
         sign = 1 if diff > 0 else -1
-        normed_diff = abs(diff) / max(0.001, abs(self._target_probability - 0.5 + sign * 0.5))
+        normed_diff = abs(diff) / max(0.001, abs(target_probability - 0.5 + sign * 0.5))
         return 1 - normed_diff
 
     def _score_last_answer_time(self, last_answer_time, time):
