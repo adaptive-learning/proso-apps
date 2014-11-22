@@ -379,7 +379,7 @@ class CategoryTestEvaluator:
 @receiver(pre_save, sender=Category)
 @receiver(pre_save, sender=Question)
 def sort_items(sender, instance, **kwargs):
-    if instance.item is None:
+    if instance.item_id is None and instance.item is None:
         item = Item()
         item.save()
         instance.item = item
