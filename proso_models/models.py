@@ -97,7 +97,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def get_items_with_values(self, key, item, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_single(
-                key, user, item, None, force_null=False, symmetric=False)
+                key, user, item, None, force_null=False, symmetric=False, time_shift=False)
             cursor.execute(
                 '''
                 SELECT
@@ -113,7 +113,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def get_items_with_values_more_items(self, key, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(
-                key, items, user, None, force_null=['user_id'], symmetric=False)
+                key, items, user, None, force_null=['user_id'], symmetric=False, time_shift=False)
             cursor.execute(
                 '''
                 SELECT
@@ -158,12 +158,12 @@ class DatabaseEnvironment(CommonEnvironment):
             else:
                 cursor.execute(
                     '''SELECT DISTINCT ON
-                        (key, item_primary_id, item_secondary_id, user_id, item_primary_id)
-                        item_secondary_id, value FROM proso_models_audit WHERE
+                        (key, item_primary_id, item_secondary_id, user_id)
+                        item_primary_id, item_secondary_id, value FROM proso_models_audit WHERE
                     ''' + where +
-                    ' ORDER BY time',
+                    ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time',
                     where_params)
-                result = map(lambda (w, x, y, z): (x, y, z), cursor.fetchall())
+                result = cursor.fetchall()
             if item is None:
                 result = map(lambda (x, y, z): (x, z), result)
             else:
@@ -315,7 +315,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def export_audit():
         pass
 
-    def _where_single(self, key, user=None, item=None, item_secondary=None, force_null=True, symmetric=True):
+    def _where_single(self, key, user=None, item=None, item_secondary=None, force_null=True, symmetric=True, time_shift=True):
         if key is None:
             raise Exception('Key has to be specified')
         items = [item_secondary, item]
@@ -325,9 +325,9 @@ class DatabaseEnvironment(CommonEnvironment):
             'user_id': user,
             'item_primary_id': items[1],
             'item_secondary_id': items[0],
-            'key': key}, force_null=force_null)
+            'key': key}, force_null=force_null, time_shift=time_shift)
 
-    def _where_more_items(self, key, items, user=None, item=None, force_null=True, symmetric=True):
+    def _where_more_items(self, key, items, user=None, item=None, force_null=True, symmetric=True, time_shift=True):
         if key is None:
             raise Exception('Key has to be specified')
         cond_secondary = {
@@ -337,7 +337,7 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_secondary_id': item
         }
         if item is None or all(map(lambda x: item <= x, items)) or not symmetric:
-            return self._where(cond_secondary, force_null=force_null)
+            return self._where(cond_secondary, force_null=force_null, time_shift=time_shift)
         cond_primary = {
             'key': key,
             'user_id': user,
@@ -345,13 +345,13 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_secondary_id': items
         }
         if all(map(lambda x: item >= x, items)):
-            return self._where(cond_primary, force_null=force_null)
+            return self._where(cond_primary, force_null=force_null, time_shift=time_shift)
         return self._where({
             'item is primary': cond_primary,
             'item is secondary': cond_secondary
-        }, force_null=force_null)
+        }, force_null=force_null, time_shift=time_shift)
 
-    def _where(self, condition, force_null=True, top_most=True):
+    def _where(self, condition, force_null=True, top_most=True, time_shift=True):
         if isinstance(condition, tuple):
             result_cond, result_params = self._column_comparison(
                 condition[0], condition[1], force_null=force_null)
@@ -365,7 +365,7 @@ class DatabaseEnvironment(CommonEnvironment):
             result_cond, result_params = operator.join(conds), params
         else:
             raise Exception("Unsupported type of condition:" + str(type(condition)))
-        if top_most and self.time is not None:
+        if top_most and self.time is not None and time_shift:
             result_cond = ('(%s) AND time < ?' % result_cond).replace('?', '%s')
             result_params = result_params + [self.time.strftime('%Y-%m-%d %H:%M:%S')]
         return result_cond, result_params
@@ -378,7 +378,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 value = filter(lambda x: x is not None, value)
             null_contains_return = (column + ' IS NULL OR ') if contains_null else ''
             if len(value) > 0:
-                return '(' + null_contains_return + column + ' IN (' + ','.join(['%s' for i in value]) + '))', value
+                return '(' + null_contains_return + column + ' IN (' + ','.join(['%s' for i in value]) + '))', sorted(value)
             else:
                 return '(' + null_contains_return + DATABASE_TRUE + ')', []
         elif value is not None:
