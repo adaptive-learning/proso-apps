@@ -156,7 +156,7 @@ class Question(models.Model):
         if not nested:
             result['sets'] = map(lambda s: s.to_json(nested=True), self.set_set.all())
             result['categories'] = map(lambda c: c.to_json(nested=True), self.category_set.all())
-            result['options'] = sorted(map(lambda o: o.to_json(nested=True), self.question_options.all()), lambda opt: opt.get('order', 0))
+            result['options'] = sorted(map(lambda o: o.to_json(nested=True), self.question_options.all()), key=lambda opt: opt.get('order', 0))
         return result
 
     def __unicode__(self):
