@@ -33,7 +33,10 @@ class Command(BaseCommand):
             for row in cursor:
                 environment.write(
                     'parent', row[3], user=row[0], item=row[1],
-                    item_secondary=row[2], time=self._ensure_is_datetime(row[4]))
+                    item_secondary=row[2], time=self._ensure_is_datetime(row[4]), symmetric=False)
+                environment.write(
+                    'child', row[3], user=row[0], item=row[2],
+                    item_secondary=row[1], time=self._ensure_is_datetime(row[4]), symmetric=False)
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
