@@ -71,6 +71,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'proso_ab.middleware.ABMiddleware',
     'proso_models.cache.RequestCacheMiddleware',
+    'proso.django.log.RequestLogMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'proso_questions_client.middleware.AuthAlreadyAssociatedMiddleware',
 )
@@ -225,6 +226,11 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
+        'request': {
+            'level': 'DEBUG',
+            'class': 'proso.django.log.RequestHandler',
+            'formatter': 'simple'
+        }
     },
     'formatters': {
         'simple': {
@@ -233,7 +239,7 @@ LOGGING = {
     },
     'loggers': {
         'django.request': {
-            'handlers': ['console'],
+            'handlers': ['console', 'request'],
             'propagate': True,
             'level': 'DEBUG'
         }

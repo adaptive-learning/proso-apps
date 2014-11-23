@@ -5,6 +5,7 @@ import json as simplejson
 import markdown
 import logging
 from time import time
+import proso.django.log
 
 
 LOGGER = logging.getLogger('django.request')
@@ -47,6 +48,8 @@ def render_json(request, json, template=None, status=None, help_text=None):
     time_start = time()
     if status is None or status == 200:
         json = {'data': json}
+    if 'debug' in request.GET and request.user.is_staff and proso.django.log.is_log_prepared():
+        json['debug_log'] = proso.django.log.get_request_log()
     if 'html' in request.GET:
         if help_text is not None:
             help_text = markdown.markdown(help_text)
