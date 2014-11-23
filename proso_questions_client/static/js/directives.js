@@ -164,13 +164,13 @@
     };
   }])
 
-  .directive('debug', ["debugParam", function (debugParam) {
+  .directive('debug', ["params", function (params) {
     return {
       restrict : 'A',
       template : '<pre ng-show="debug" ng-bind-html="debug | prettify"></pre>',
       link:function ($scope, element, attrs) {
         $scope.$watch(attrs.debug, function() {
-          $scope.debug = debugParam() ? $scope[attrs.debug] : undefined;
+          $scope.debug = params.get('debug') ? $scope[attrs.debug] : undefined;
         });
       }
     };

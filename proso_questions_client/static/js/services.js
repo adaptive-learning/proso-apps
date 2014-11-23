@@ -28,16 +28,17 @@
   }])
 
 
-  .factory('questions', ['$http', '$routeParams', function($http, $routeParams) {
+  .factory('questions', ['$http', '$routeParams', 'params',
+      function($http, $routeParams, params) {
     var that = {
       get : function(category, page) {
         var url = 'questions/questions/';
         var options = {
-          params : {
+          params : angular.extend({
             stats : true,
             page : page,
             limit : $routeParams.limit || 20,
-          }
+          }, params.all())
         };
         if (category) {
           options.params.filter_column = 'category_id';
@@ -53,7 +54,10 @@
         predictionsUrl += questions.map(function(q) {
           return q.item_id;
         }).join(',');
-        $http.get(predictionsUrl).success(function(data) {
+        var options = {
+          params : params.all(),
+        };
+        $http.get(predictionsUrl, options).success(function(data) {
           for (var i = 0; i < data.data.predictions.length; i++) {
             for (var j = 0; j < questions.length; j++) {
               if (questions[j].item_id == data.data.predictions[i].item_id ) {
@@ -67,8 +71,9 @@
     return that;
   }])
 
-  .service('practice', ['$http', '$log', '$cookies', '$', '$routeParams', 'questions',
-      function($http, $log, $cookies, $, $routeParams, questions) {
+  .service('practice', ['$http', '$log', '$cookies', '$', '$routeParams', 'questions', 
+        'params',
+      function($http, $log, $cookies, $, $routeParams, questions, params) {
     var qIndex = 0;
     var url;
     $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -93,7 +98,10 @@
     return {
       test : function(fn) {
         url = 'questions/test';
-        var promise = $http.get(url).success(function(data) {
+        var options = {
+          params : params.all(),
+        };
+        var promise = $http.get(url, options).success(function(data) {
           fn(data.data);
         });
         return promise;
@@ -104,9 +112,10 @@
           answered : questions.map(function(q){return q.answered && q.answered.id;}),
           response_time : questions.map(function(q){return q.response_time;}),
         });
+        var url = test.test_evaluate_url + '?hack' + params.queryString();
         var promise = $http({
           method: 'POST',
-          url : test.test_evaluate_url,
+          url : url,
           data: data,
           headers: {
             'X-CSRFToken' : $cookies.csrftoken,
@@ -115,12 +124,10 @@
         return promise;
       },
       first : function(part, fn) {
-        requestOptions.params = {
-          limit : $routeParams.limit,
-          user : $routeParams.user,
+        requestOptions.params = angular.extend({
           category : part,
           stats : true,
-        };
+        }, params.all());
         url = 'questions/practice';
         summary = [];
         var promise = $http.get(url, requestOptions).success(function(data) {
@@ -145,9 +152,9 @@
         summary.push(question);
         $http({
           method: 'POST',
-          url : 'questions/practice?limit=' + limit + '&stats=true' +
+          url : 'questions/practice?stats=true' +
             (category ?  '&category=' + category : '') +
-            ($routeParams.user ?  '&user=' + $routeParams.user : ''),
+            params.queryString() + '&limit=' + limit,
           data: postParams,
           headers: {
             'Content-Type' : 'application/x-www-form-urlencoded',
@@ -242,15 +249,32 @@
     };
   }])
 
-  .factory('debugParam', ["$routeParams", "$location",
+  .factory('params', ["$routeParams", "$location",
       function ($routeParams, $location) {
-    var debug = false;
-    return function () {
-      if (debug && ! $routeParams.debug) {
-        $location.search('debug', 'true');
+    var keys = ['user', 'debug', 'time', 'limit'];
+    var params = {};
+    var that =  {
+      get: function (key) {
+        if (params[key] && ! $routeParams[key]) {
+          $location.search(key, params[key]);
+        }
+        params[key] = params[key] || $routeParams[key];
+        return params[key];
+      },
+      all : function() {
+        for (var i = 0; i < keys.length; i++) {
+          that.get(keys[i]);
+        }
+        return params;
+      },
+      queryString : function() {
+        var all = that.all();
+        var string = keys.map(function(key) {
+            return that.get(key) ? '&' + key + '=' + that.get(key) : '';
+        }).join('');
+        return string;
       }
-      debug = debug || $routeParams.debug;
-      return debug;
     };
+    return that;
   }]);
 }());
