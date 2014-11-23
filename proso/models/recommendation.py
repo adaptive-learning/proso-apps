@@ -1,7 +1,12 @@
 import abc
 import random
 import math
+import logging
+import proso.django.log
 from collections import defaultdict
+
+
+LOGGER = logging.getLogger('django.request')
 
 
 class Recommendation:
@@ -61,6 +66,11 @@ class ScoreRecommendation(Recommendation):
         rolling_success = environment.rolling_success(user=user)
         prob_target = self._adjust_target_probability(rolling_success)
 
+        if proso.django.log.is_active():
+            for item in items:
+                if len(parents.get(item, [])) == 0:
+                    LOGGER.warn("The item %s has no parent" % item)
+
         def _score(item):
             return (
                 self._weight_probability * self._score_probability(prob_target, probability[item]) +
@@ -90,6 +100,16 @@ class ScoreRecommendation(Recommendation):
             while len(candidates) < n and len(scored) > 0:
                 finished = map(_finish_score, scored)
                 score, chosen = max(finished)
+                if proso.django.log:
+                    LOGGER.debug(
+                        'recommending %s (total_score %.2f, prob score %.2f, time_score %.2f, answers score %.2f, parents %s)' %
+                        (
+                            chosen, score[0],
+                            self._weight_probability * self._score_probability(prob_target, probability[chosen]),
+                            self._weight_time_ago * self._score_last_answer_time(last_answer_time[chosen], time),
+                            self._weight_number_of_answers * self._score_answers_num(answers_num[chosen]),
+                            map(lambda x: x[0], parents[chosen]))
+                        )
                 candidates.append(chosen)
                 for p, v in parents[chosen]:
                     last_answer_time_parents[p] = time
