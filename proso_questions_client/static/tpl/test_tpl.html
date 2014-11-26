@@ -54,6 +54,13 @@
         <div ng-bind="question | stripImg"></div>
       </div>
       <div options="question" no-answers="true"></div>
+      <div class="pull-right" >
+        <button class="btn btn-lg btn-default next {{!canNext || 'btn-primary'}}" 
+            ng-click="next()" 
+            ng-disabled="questions.length == $index + 1" >
+          <i class="glyphicon glyphicon-arrow-right"></i> Další
+        </button>
+      </div>
         <button class="btn btn-lg btn-default prev" 
             ng-click="prev()" 
             ng-disabled="$index == 0" >
@@ -64,13 +71,6 @@
             ng-click="evaluate()">
           <i class="glyphicon glyphicon-saved"></i> Vyhodnotit
         </button>
-      <div class="pull-right" >
-        <button class="btn btn-lg btn-default next {{!canNext || 'btn-primary'}}" 
-            ng-click="next()" 
-            ng-disabled="questions.length == $index + 1" >
-          <i class="glyphicon glyphicon-arrow-right"></i> Další
-        </button>
-      </div>
       <div debug="question"></div>
     </div>
     <div ng-show="showSummary" class="summary">

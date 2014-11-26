@@ -70,8 +70,8 @@ ul.dropdown-menu.login
   text-align: center
   clear: both
   position: relative
-  z-index: 10
-  margin-top: -90px
+  z-index: initial
+  margin-top: -70px
   padding: 20px
   min-height: 30px
   a
@@ -148,8 +148,11 @@ pre
 .progress-label
   text-align: center
   color: #999
-  margin-top: -10px
   margin-bottom: 10px
+
+@media (min-width: 767px)
+  .progress-label
+    margin-top: -10px
 
 .ng-view-header
   background: #eee
