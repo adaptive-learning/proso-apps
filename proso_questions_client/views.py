@@ -25,7 +25,7 @@ def home(request, hack=None):
     )
     CSS_FILES = (
         "static/bower_components/angular-material/angular-material.min.css",
-        "static/bower_components/bootstrap/dist/css/bootstrap.css",
+        "static/bower_components/bootstrap/dist/css/bootstrap.min.css",
         "static/css/" + color_scheme + "app.css",
     )
     request.META["CSRF_COOKIE_USED"] = True
