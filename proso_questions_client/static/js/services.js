@@ -258,7 +258,9 @@
         if (params[key] && ! $routeParams[key]) {
           $location.search(key, params[key]);
         }
-        params[key] = params[key] || $routeParams[key];
+        if ($routeParams[key]) {
+          params[key] = $routeParams[key];
+        }
         return params[key];
       },
       all : function() {
