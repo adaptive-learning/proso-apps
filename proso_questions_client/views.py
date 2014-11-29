@@ -22,7 +22,6 @@ def home(request, hack=None):
         "static/dist/js/fallbacks.min.js",
         "static/dist/js/libs.min.js",
         "static/dist/js/proso-questions-client.min.js",
-        "static/lib/angular-1.2.9/i18n/angular-locale_cs.js",
     )
     CSS_FILES = (
         "static/bower_components/angular-material/angular-material.min.css",
