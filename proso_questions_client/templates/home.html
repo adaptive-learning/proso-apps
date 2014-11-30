@@ -28,7 +28,7 @@
       <material-toolbar class="material-theme-dark">
         <h1 class="material-toolbar-tools">
           <span ng-show="isHomepage" class="dropdown">
-            <a href="" id="dropdownMenu1" data-toggle="dropdown">
+            <a href="" id="dropdownMenu1">
               <i class="glyphicon glyphicon-th-list dropdown-toggle"> </i>
             </a>
             <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
@@ -46,8 +46,7 @@
                  role="button" 
                  class="dropdown-toggle atooltip drop-login"
                  title="Přihlašte se jednoduše přes Google nebo Facebook, aby si systém váše znalosti pamatoval i příště."
-                 container="body"
-                 data-toggle="dropdown">
+                 container="body">
                  <i class="glyphicon glyphicon-log-in"></i>
               </a>
               <ul class="dropdown-menu login" role="menu" aria-labelledby="drop-login">
@@ -68,7 +67,7 @@
             </i>
             <i class="dropdown pull-right ng-cloak" ng-show="user.username !== ''"
                 ng-init="initUser('{{user.username}}',0)">
-              <a id="drop1" href="" role="button" class="dropdown-toggle" data-toggle="dropdown">
+              <a id="drop1" href="" role="button" class="dropdown-toggle" >
                  <i class="glyphicon glyphicon-user"></i>
                </a>
               <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
