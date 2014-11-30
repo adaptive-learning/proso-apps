@@ -20,6 +20,7 @@
     "node-raphael": "~0.2.0",
     "dom-js": "0.0.9",
     "grunt-protractor-runner": "~0.2.4",
-    "grunt-criticalcss": "~0.2.1"
+    "grunt-criticalcss": "~0.2.1",
+    "grunt-vulcanize": "~0.5.0"
   }
 }

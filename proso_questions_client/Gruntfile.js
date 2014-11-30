@@ -175,6 +175,17 @@ module.exports = function(grunt) {
         }
       },
     },
+    vulcanize: {
+      default: {
+        options: {},
+        files: {
+          'static/dist/vulcanized.html': [
+            'static/bower_components/paper-radio-group/paper-radio-group.html',
+            'static/bower_components/paper-radio-group/paper-radio-button.html',
+          ]
+        },
+      },
+    },
   });
 
   // Load plugins.
@@ -190,6 +201,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-string-replace');
   grunt.loadNpmTasks('grunt-shell');
   grunt.loadNpmTasks('grunt-protractor-runner');
+  grunt.loadNpmTasks('grunt-vulcanize');
 
   // Default task(s).
   grunt.registerTask('styles', ['sass','rename']);
@@ -197,5 +209,5 @@ module.exports = function(grunt) {
   grunt.registerTask('templates', ['newer:concat', 'ngtemplates']);
   grunt.registerTask('minifyjs', ['templates', 'uglify']);
   grunt.registerTask('default', ['styles', 'jshint', 'minifyjs']);
-  grunt.registerTask('deploy', ['styles', 'minifyjs']);
+  grunt.registerTask('deploy', ['styles', 'minifyjs', 'vulcanize']);
 };
