@@ -3,17 +3,17 @@
   /* global jQuery  */
   // Declare app level module which depends on filters, and services
   angular.module('addaptivePractice', [
+    'addaptivePractice.controllers',
+    'addaptivePractice.directives',
     'addaptivePractice.filters',
     'addaptivePractice.services',
-    'addaptivePractice.directives',
-    'addaptivePractice.controllers',
-    'ngRoute',
-    'ngAnimate',
-    'ngSanitize',
     'angulartics',
     'angulartics.google.analytics',
-    'timer',
     'ng-polymer-elements',
+    'ngAnimate',
+    'ngRoute',
+    'ngSanitize',
+    'timer',
     'ui.bootstrap',
   ])
 
