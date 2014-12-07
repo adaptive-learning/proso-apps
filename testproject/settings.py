@@ -43,23 +43,23 @@ if ON_PRODUCTION or ON_STAGING:
 # Application definition
 
 INSTALLED_APPS = (
+    'debug_toolbar',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.sessions',
     'django.contrib.staticfiles',
     'flatblocks',
-    'social_auth',
-    'south',
     'lazysignup',
-    'debug_toolbar',
-    'proso_common',
-    'proso_models',
     'proso_ab',
+    'proso_common',
     'proso_flashcards',
+    'proso_models',
     'proso_questions',
     'proso_questions_client',
+    'social_auth',
+    'south',
 )
 
 MIDDLEWARE_CLASSES = (
