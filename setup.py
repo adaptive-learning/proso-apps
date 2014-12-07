@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.9.0'
+VERSION = '0.9.0'
 
 setup(
     name='proso-apps',
-    version=version,
+    version=VERSION,
     description='General library for applications in PROSO projects',
     author='Jan Papousek, Vit Stanislav',
     author_email='jan.papousek@gmail.com, slaweet@seznam.cz',
