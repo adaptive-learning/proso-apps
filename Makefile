@@ -2,9 +2,12 @@ TEST_DIR=$(CURDIR)/test
 RESOURCES_DIR=$(CURDIR)/resources
 
 PEP8=pep8 --ignore=E501,E225,E123,E128
+APPS=proso_common proso_flashcards proso_models proso_questions proso_questions_client
+GRUNT_APPS=proso_questions_client
+
+
 
 ################################################################################
-
 
 upload: grunt test register
 	python setup.py sdist upload
@@ -12,16 +15,14 @@ upload: grunt test register
 register:
 	python setup.py register
 
-################################################################################
 
+################################################################################
 
 test: reinstall
 	python -m unittest discover -p test_*.py -s proso
-	python manage.py test proso_common --traceback
-	python manage.py test proso_models --traceback
-	python manage.py test proso_questions --traceback
-	python manage.py test proso_questions --traceback
-	python manage.py test proso_flashcards --traceback
+	for APP in $(APPS); do \
+		python manage.py test ${APP} --traceback; \
+	done;
 
 reinstall: check uninstall install
 
@@ -36,9 +37,12 @@ uninstall:
 	pip uninstall --yes proso-apps
 
 check:
-	flake8 --ignore=E501,E225,E123,E128 --exclude=*/migrations/*.py proso_models proso_questions proso_ab proso proso_questions_client proso_flashcards
+	flake8 --ignore=E501,E225,E123,E128 --exclude=*/migrations/*.py proso_models $(APPS)
 
 grunt:
-	cd proso_questions_client; \
-	npm install; \
-	grunt deploy;
+	for APP in $(GRUNT_APPS); do \
+		cd $${APP}; \
+		npm install; \
+		grunt deploy; \
+		cd -; \
+	done;
