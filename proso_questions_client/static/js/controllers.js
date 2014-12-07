@@ -6,21 +6,21 @@
   .controller('AppCtrl', ['$scope', '$rootScope', 'user', 'pageTitle', '$modal', '$window',
       function($scope, $rootScope, user, pageTitle, $modal, $window) {
     $rootScope.topScope = $rootScope;
-    
+
     $rootScope.initTitle = function (title) {
       $rootScope.initialTitle = title;
       $rootScope.title = title;
     };
-    
+
     $rootScope.$on("$routeChangeStart", function(event, next) {
       $rootScope.title = pageTitle(next) + $rootScope.initialTitle;
       $rootScope.isHomepage = !next.templateUrl;
     });
-    
+
     var updateUser = function(data) {
       $rootScope.user = data;
     };
-    
+
     $scope.initUser = function (username, points) {
       $rootScope.user = user.initUser(username, points);
     };
@@ -54,7 +54,7 @@
 
     var ModalFeedbackCtrl = ['$scope', '$modalInstance', '$http', '$cookies',
           '$location', 'feedback',
-        function ($scope, $modalInstance, $http, $cookies, 
+        function ($scope, $modalInstance, $http, $cookies,
           $location, feedback) {
 
       $scope.feedback = feedback;
@@ -92,7 +92,7 @@
     $scope.categoryId = $routeParams.category;
     $scope.page = 0;
     $scope.questions = [];
-    
+
     $scope.onBottomReached = function() {
       loadQuestions();
     };

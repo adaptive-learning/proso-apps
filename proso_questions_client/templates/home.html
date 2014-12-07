@@ -42,8 +42,8 @@
           </a>
           <a class="navbar-brand" href="#"> {% flatblock "title" %}</a>
             <i class="dropdown pull-right ng-cloak" ng-show="user.username === ''" >
-              <a href="" 
-                 role="button" 
+              <a href=""
+                 role="button"
                  class="dropdown-toggle atooltip drop-login"
                  title="Přihlašte se jednoduše přes Google nebo Facebook, aby si systém váše znalosti pamatoval i příště."
                  container="body">
@@ -92,7 +92,7 @@
           <a class="menu-item"
             href="#/view/">
            {% flatblock "main_category" %}
-          </a> 
+          </a>
         </li>
         {% for category in categories %}
         <li>
@@ -101,7 +101,7 @@
             title="{{category.name}}"
             href="#/view/{{category.id}}">
               {{category.name}}
-          </a> 
+          </a>
         </li>
         {% endfor %}
       </ul>
@@ -119,14 +119,14 @@
       <a class="contact-facebook" href="{% flatblock "facebook_page_url" using "inline.html" %}">Facebook</a>
     </div>
   </div>
-    
+
     <div class="homepage hidden-xs">
       <!--[if lte IE 8]>
       <div class="alert alert-danger old-browser">
         Používáte <b>zastaralou verzi prohlížeče</b>, ve které aplikace
-        <b>nemusí fungovat správně</b>. 
-        Pro optimální fungování aplikace doporučujeme nainstalovat 
-        aktuální verzi některého z běžně používaných prohlížečů. 
+        <b>nemusí fungovat správně</b>.
+        Pro optimální fungování aplikace doporučujeme nainstalovat
+        aktuální verzi některého z běžně používaných prohlížečů.
         Například:
         <a href="https://www.google.com/intl/cs/chrome/browser/">Google Chrome</a>,
         <a href="http://www.mozilla.org/cs/firefox/new/">Firefox</a>,
@@ -180,8 +180,8 @@
         </div>
         <div class="modal-body">
             <label>
-            Narazili jste na chybu v aplikaci? Máte nápad na vylepšení? 
-            Nebo jakýkoliv jiný postřeh či komentář? Zajímá nás všechno, 
+            Narazili jste na chybu v aplikaci? Máte nápad na vylepšení?
+            Nebo jakýkoliv jiný postřeh či komentář? Zajímá nás všechno,
             co nám chcete sdělit.
             </label>
             <textarea ng-model="feedback.text" class="form-control" rows="8" ></textarea>
@@ -246,7 +246,7 @@
           ga('create', '{%spaceless %}
             {% flatblock "google_analytics_id" using "inline.html" %}
             {% endspaceless %}', 'auto');
-      
+
 
         </script>
     {% endif %}
