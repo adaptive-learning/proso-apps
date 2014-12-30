@@ -270,9 +270,9 @@
         return params;
       },
       queryString : function() {
-        var all = that.all();
+        that.all();
         var string = keys.map(function(key) {
-            return that.get(key) ? '&' + key + '=' + that.get(key) : '';
+          return that.get(key) ? '&' + key + '=' + that.get(key) : '';
         }).join('');
         return string;
       }
