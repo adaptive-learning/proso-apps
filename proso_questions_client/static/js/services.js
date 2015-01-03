@@ -9,6 +9,8 @@
 
   .value('chroma', chroma)
 
+  .constant('domain', window.domain || '')
+
   .value('colors', {
     'GOOD': '#0f9d58',
     'BAD': 'd9534f',
@@ -28,11 +30,11 @@
   }])
 
 
-  .factory('questions', ['$http', '$routeParams', 'params',
-      function($http, $routeParams, params) {
+  .factory('questions', ['$http', '$routeParams', 'params', 'domain',
+      function($http, $routeParams, params, domain) {
     var that = {
       get : function(category, page) {
-        var url = 'questions/questions/';
+        var url = domain + '/questions/questions/';
         var options = {
           params : angular.extend({
             stats : true,
@@ -50,7 +52,7 @@
       },
       fetchPredicitons : function(questions, predictionPropertyName) {
         predictionPropertyName = predictionPropertyName || 'prediction';
-        var predictionsUrl = '/models/model/?items=';
+        var predictionsUrl = domain + '/models/model/?items=';
         predictionsUrl += questions.map(function(q) {
           return q.item_id;
         }).join(',');
@@ -72,8 +74,8 @@
   }])
 
   .service('practice', ['$http', '$log', '$cookies', '$', '$routeParams', 'questions', 
-        'params',
-      function($http, $log, $cookies, $, $routeParams, questions, params) {
+        'params', 'domain',
+      function($http, $log, $cookies, $, $routeParams, questions, params, domain) {
     var qIndex = 0;
     var url;
     $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -97,7 +99,7 @@
     var requestOptions = {};
     return {
       test : function(fn) {
-        url = 'questions/test';
+        url = domain + '/questions/test';
         var options = {
           params : params.all(),
         };
@@ -112,7 +114,7 @@
           answered : questions.map(function(q){return q.answered && q.answered.id;}),
           response_time : questions.map(function(q){return q.response_time;}),
         });
-        var url = test.test_evaluate_url + '?hack' + params.queryString();
+        var url = domain + test.test_evaluate_url + '?hack' + params.queryString();
         var promise = $http({
           method: 'POST',
           url : url,
@@ -128,7 +130,7 @@
           category : part,
           stats : true,
         }, params.all());
-        url = 'questions/practice';
+        url = domain + '/questions/practice';
         summary = [];
         var promise = $http.get(url, requestOptions).success(function(data) {
           qIndex = 0;
@@ -152,7 +154,7 @@
         summary.push(question);
         $http({
           method: 'POST',
-          url : 'questions/practice?stats=true' +
+          url : domain + '/questions/practice?stats=true' +
             (category ?  '&category=' + category : '') +
             params.queryString() + '&limit=' + limit,
           data: postParams,
@@ -189,8 +191,8 @@
     };
   }])
 
-  .factory('user', ['$http', '$cookies', 'events',
-      function($http, $cookies, events) {
+  .factory('user', ['$http', '$cookies', 'events', 'domain',
+      function($http, $cookies, events, domain) {
     var user;
     return {
       initUser : function(username, points) {
@@ -204,7 +206,7 @@
         return user;
       },
       logout : function(callback) {
-        $http.get('user/logout/').success(callback);
+        $http.get(domain + '/user/logout/').success(callback);
         this.initUser('', 0);
         events.emit('userUpdated', user);
         return user;

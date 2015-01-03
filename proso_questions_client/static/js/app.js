@@ -19,8 +19,8 @@
 
   .value('$', jQuery)
 
-  .config(['$routeProvider', '$locationProvider',
-      function($routeProvider, $locationProvider) {
+  .config(['$routeProvider', '$locationProvider', 'domain',
+      function($routeProvider, $locationProvider, domain) {
     $routeProvider.when('/', {
     }).when('/login/:somepath/', {
       controller : 'ReloadController',
