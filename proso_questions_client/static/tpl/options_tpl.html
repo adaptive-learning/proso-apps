@@ -1,7 +1,8 @@
-<paper-radio-group class="options" ng-model="question.correct">
-  <paper-radio-button name="{{option.order}}" 
+<md-radio-group class="options" ng-model="question.correct">
+  <md-radio-button 
     ng-repeat="option in question.options"
-    label="{{(option | stripImg) || '\''}}"
+    ng-value="option.order" 
+    aria-label="{{(option | stripImg) || '\''}}"
     ng-disabled="option.disabled || disabled"
     ng-click="checkAnswer(option)"
     ng-class="{
@@ -9,6 +10,7 @@
       'wrong': !noAnswers && question.answered == option && !option.correct,
       'block': !option.images.length
     }" >
+    {{(option | stripImg) || '\''}}
       <img ng-src="{{option | imgSrc}}"/>
-  </paper-radio-button>
-</paper-radio-group>
+  </md-radio-button>
+</md-radio-group>
