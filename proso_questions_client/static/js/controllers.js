@@ -143,10 +143,10 @@
       }
       $scope.progress = practice.answer($scope.question, $scope.categoryId);
       if (selected &&  selected.correct) {
-        user.addPoint();
         $timeout(function() {
           $scope.next();
         }, 700);
+        user.addPoint();
       } else {
         $scope.canNext = true;
       }

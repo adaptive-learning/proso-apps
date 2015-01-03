@@ -195,6 +195,10 @@ html
 img
   max-width: 100%
 
+.navbar-brand
+  white-space: nowrap
+  overflow: hidden
+
 #feedback 
   position: fixed 
   top: 390px 
@@ -238,7 +242,7 @@ img
     display: none
   #ng-view
     top: 64px
-      top: 65px
+    min-height: calc(100% - 64px)
     width: 100%
   .welcome-page
     p
