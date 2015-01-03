@@ -217,5 +217,21 @@
         });
       }
     };
+  }])
+
+  .directive('dynamicTitle', ['events', function (events) {
+    return {
+      restrict : 'A',
+      template : '{{dynamicTitle}}',
+      scope : false,
+      link:function ($scope, element, attrs) {
+        events.on('titleChaged', function(newTitle) {
+          $scope.dynamicTitle = newTitle;
+        });
+        if (attrs.dynamicTitle) {
+          events.emit('titleChaged', attrs.dynamicTitle);
+        }
+      }
+    };
   }]);
 }());

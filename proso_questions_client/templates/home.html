@@ -27,20 +27,26 @@
       <paper-button label="button"></paper-button>
       <material-toolbar class="material-theme-dark">
         <h1 class="material-toolbar-tools">
-          <span ng-show="isHomepage" class="dropdown">
-            <a href="" id="dropdownMenu1">
-              <i class="glyphicon glyphicon-th-list dropdown-toggle"> </i>
+          <span>
+            <span ng-if="isHomepage">
+              <span ng-show="false" dynamic-title='{% flatblock "title" using "inline.html" %}'></span>
+            </span>
+            <span ng-show="isHomepage" class="dropdown">
+              <a href="" id="dropdownMenu1">
+                <i class="glyphicon glyphicon-th-list dropdown-toggle"> </i>
+              </a>
+              <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                <li class="visible-xs-block">
+                  <a href="#/how-it-works" >Jak to funguje</a>
+                </li>
+              </ul>
+            </span>
+            <a href="" onclick="history.back()" ng-hide="isHomepage">
+              <i class="glyphicon glyphicon-chevron-left ng-cloak"></i>
             </a>
-            <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
-              <li class="visible-xs-block">
-                <a href="#/how-it-works" >Jak to funguje</a>
-              </li>
-            </ul>
           </span>
-          <a href="" onclick="history.back()" ng-hide="isHomepage">
-            <i class="glyphicon glyphicon-chevron-left ng-cloak"></i>
-          </a>
-          <a class="navbar-brand" href="#"> {% flatblock "title" %}</a>
+          <a class="navbar-brand visible-xs" href="#" dynamic-title ></a>
+          <a class="navbar-brand hidden-xs" href="#"> {% flatblock "title" using "inline.html" %}</a>
             <i class="dropdown pull-right ng-cloak" ng-show="user.username === ''" >
               <a href=""
                  role="button"

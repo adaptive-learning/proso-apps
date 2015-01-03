@@ -2,11 +2,13 @@
   can-load="hasMoreQuestions">
   <div class="view-questions">
     <div class="ng-view-header">
-      <h2> {{category.name}} </h2>
       <a href="#/practice/{{categoryId}}" 
          class="btn btn-primary pull-right"  >
         <i class="glyphicon glyphicon-check"></i> Procvičovat
       </a>
+      <h2 ng-if="category" class="hidden-xs"
+        dynamic-title="{{category.name}}"> {{category.name}}</h2>
+      <span ng-hide="true" dynamic-title="Přehled znalostí"></span>
       <div class="clearfix"></div>
     </div>
     <!--
