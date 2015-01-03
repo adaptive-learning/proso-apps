@@ -51,7 +51,10 @@
       //redirectTo : '/'
     });
 
-    $locationProvider.html5Mode(true);
+    if (!domain) {
+      // TODO: this desn't work in latest Angular
+      //$locationProvider.html5Mode(true);
+    }
   }])
 
   .run(['$analytics', function($analytics) {

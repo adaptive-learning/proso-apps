@@ -94,6 +94,8 @@ module.exports = function(grunt) {
           'static/bower_components/angular-cookies/angular-cookies.js',
           'static/bower_components/angular-animate/angular-animate.js',
           'static/bower_components/angular-sanitize/angular-sanitize.js',
+          'static/bower_components/angular-aria/angular-aria.js',
+          'static/bower_components/hammerjs/hammer.js',
           'static/bower_components/angulartics/dist/angulartics.min.js',
           'static/bower_components/angulartics/dist/angulartics-ga.min.js',
           'static/bower_components/angular-timer/dist/angular-timer.js',
