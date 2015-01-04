@@ -2,15 +2,15 @@
   <md-radio-button 
     ng-repeat="option in question.options"
     ng-value="option.order" 
-    aria-label="{{(option | stripImg) || '\''}}"
+    aria-label="{{(option | stripImg) || ''}}"
     ng-disabled="option.disabled || disabled"
     ng-click="checkAnswer(option)"
     ng-class="{
       'correct': !noAnswers && (question.answered || question.points) && option.correct,
       'wrong': !noAnswers && question.answered == option && !option.correct,
-      'block': !option.images.length
+      'inline-block': option.images.length
     }" >
-    {{(option | stripImg) || '\''}}
+    {{(option | stripImg) || ''}}
       <img ng-src="{{option | imgSrc}}"/>
   </md-radio-button>
 </md-radio-group>
