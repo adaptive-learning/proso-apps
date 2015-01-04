@@ -24,9 +24,8 @@
     <!-- Navbar
     ================================================== -->
     <div class="left-bar">
-      <material-toolbar class="material-theme-dark">
-        <h1 class="material-toolbar-tools">
-          <span>
+      <md-toolbar class="material-theme-dark">
+          <span class="pull-left ng-cloak">
             <span ng-if="isHomepage">
               <span ng-show="false" dynamic-title='{% flatblock "title" using "inline.html" %}'></span>
             </span>
@@ -44,9 +43,8 @@
               <i class="glyphicon glyphicon-chevron-left ng-cloak"></i>
             </a>
           </span>
-          <a class="navbar-brand visible-xs" href="#" dynamic-title ></a>
-          <a class="navbar-brand hidden-xs" href="#"> {% flatblock "title" using "inline.html" %}</a>
-            <i class="dropdown pull-right ng-cloak" ng-show="user.username === ''" >
+          <span class="pull-right ng-cloak">
+            <i class="dropdown pull-right" ng-show="user.username === ''" >
               <a href=""
                  role="button"
                  class="dropdown-toggle atooltip drop-login"
@@ -70,7 +68,7 @@
                 </li>
               </ul>
             </i>
-            <i class="dropdown pull-right ng-cloak" ng-show="user.username !== ''"
+            <i class="dropdown pull-right" ng-show="user.username !== ''"
                 ng-init="initUser('{{user.username}}',0)">
               <a id="drop1" href="" role="button" class="dropdown-toggle" >
                  <i class="glyphicon glyphicon-user"></i>
@@ -82,8 +80,10 @@
                 <li class="forgot-pwd"><a href="#/" ng-click="logout()"><i class="glyphicon glyphicon-log-out"></i> Odhlásit se</a></li>
               </ul>
             </i>
-        </h1>
-      </material-toolbar>
+          </span>
+          <a class="navbar-brand visible-xs ng-cloak" href="#" dynamic-title ></a>
+          <a class="navbar-brand hidden-xs ng-cloak" href="#"> {% flatblock "title" using "inline.html" %}</a>
+      </md-toolbar>
         <div>
           <a href="#/practice/" class="btn btn-default btn-menu" >
             Procvičovat
