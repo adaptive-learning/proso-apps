@@ -46,7 +46,7 @@ class Command(BaseCommand):
             cursor.execute('SELECT COUNT(*) FROM ' + table_name)
             count, = cursor.fetchone()
         sql = 'SELECT * FROM ' + table_name
-        dest_file = settings.MEDIA_DIR + '/' + table_name
+        dest_file = settings.DATA_DIR + '/' + table_name
         dest_file_csv = dest_file + '.csv'
         dest_file_zip = dest_file + '.zip'
         for offset in xrange(0, count, batch_size):

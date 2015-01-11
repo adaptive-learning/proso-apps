@@ -32,13 +32,12 @@ def _csv_table(request, table_name):
             "error": "the requested table '%s' is not valid" % table_name
         }
         return render_json(request, response, status=400, template='common_json.html')
-    zip_file = settings.MEDIA_DIR + '/' + table_name + ".zip"
+    zip_file = settings.DATA_DIR + '/' + table_name + ".zip"
     if not os.path.exists(zip_file):
         response = {
             "error": "there is no data for the given table"
         }
         return render_json(request, response, status=204, template='common_json.html')
-    logpath = os.path.join(settings.MEDIA_ROOT, zip_file)
-    response = HttpResponse(FileWrapper(open(logpath)), content_type='application/zip')
+    response = HttpResponse(FileWrapper(open(zip_file)), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename=' + table_name
     return response
