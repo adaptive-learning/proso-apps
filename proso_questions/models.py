@@ -427,3 +427,6 @@ def question_parents(sender, **kwargs):
 def image_delete(sender, instance, **kwargs):
     if instance.file:
         instance.file.delete(False)
+
+
+PROSO_MODELS_TO_EXPORT = [Category, DecoratedAnswer, Option, Question, Resource, Set]

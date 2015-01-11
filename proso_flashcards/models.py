@@ -180,3 +180,6 @@ def flashcard_parents(sender, **kwargs):
             item=flashcard.item_id,
             item_secondary=category.item_id,
             symmetric=False)
+
+
+PROSO_MODELS_TO_EXPORT = [Category, DecoratedAnswer, Flashcard]

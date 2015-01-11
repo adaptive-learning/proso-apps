@@ -524,3 +524,6 @@ def log_audit(sender, instance, **kwargs):
             value=instance.value,
             time=instance.updated)
         audit.save()
+
+
+PROSO_MODELS_TO_EXPORT = [Answer, Audit, Item, Variable]

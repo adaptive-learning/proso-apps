@@ -181,3 +181,6 @@ class UserValue(models.Model):
 @receiver(user_logged_in)
 def initialize_request(sender, **kwargs):
     Experiment.objects.init_request(kwargs['request'])
+
+
+PROSO_MODELS_TO_EXPORT = [Experiment, UserValue, Value]
