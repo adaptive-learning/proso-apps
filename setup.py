@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-VERSION = '0.9.0'
+VERSION = '0.9.1'
 
 setup(
     name='proso-apps',
