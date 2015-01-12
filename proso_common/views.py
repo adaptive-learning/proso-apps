@@ -39,5 +39,5 @@ def _csv_table(request, table_name):
         }
         return render_json(request, response, status=204, template='common_json.html')
     response = HttpResponse(FileWrapper(open(zip_file)), content_type='application/zip')
-    response['Content-Disposition'] = 'attachment; filename=' + table_name
+    response['Content-Disposition'] = 'attachment; filename=' + table_name + '.zip'
     return response
