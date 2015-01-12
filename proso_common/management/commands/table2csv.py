@@ -38,13 +38,13 @@ class Command(BaseCommand):
             self.handle_one_table(table_name, batch_size)
 
     def handle_one_table(self, table_name, batch_size):
-        print 'processing %s' % table_name
         if table_name not in get_tables_allowed_to_export():
             raise CommandError('table "%s" is not supported' % table_name)
         count = 0
         with closing(connection.cursor()) as cursor:
             cursor.execute('SELECT COUNT(*) FROM ' + table_name)
             count, = cursor.fetchone()
+        print 'processing %s' % table_name, ',', count, 'items'
         sql = 'SELECT * FROM ' + table_name
         dest_file = settings.DATA_DIR + '/' + table_name
         dest_file_csv = dest_file + '.csv'
@@ -72,4 +72,3 @@ class Command(BaseCommand):
             for row in cursor:
                 row = [val.encode('utf-8') if isinstance(val, unicode) else val for val in row]
                 writer.writerow(row)
-                row = cursor.fetchone()
