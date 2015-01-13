@@ -5,6 +5,7 @@ from django.core.management import call_command
 from contextlib import closing
 from django.db import transaction
 from proso_flashcards.models import DecoratedAnswer
+from collections import defaultdict
 
 
 class Command(BaseCommand):
@@ -61,7 +62,9 @@ class Command(BaseCommand):
     def migrate_answers(self):
         print ' -- delete answers'
         with closing(connection.cursor()) as cursor:
+            cursor.execute('DELETE FROM proso_flashcards_decoratedanswer_options CASCADE')
             cursor.execute('DELETE FROM proso_flashcards_decoratedanswer CASCADE')
+            cursor.execute('DELETE FROM proso_models_answer CASCADE')
         print ' -- prepare mapping to original places'
         with closing(connection.cursor()) as cursor:
             cursor.execute(
@@ -107,36 +110,47 @@ class Command(BaseCommand):
                     response_time,
                     place_map_id,
                     ip_address,
-                    language
+                    language,
+                    id
                 FROM geography_answer
-                LIMIT 100000
+                ORDER BY id
                 ''')
             count = 0
             print ' -- migrate answers'
+            options_retriever = GeographyOptions()
+            places_mask = lambda i, lang: places[original_places[i], lang] if i else None
             with closing(connection.cursor()) as cursor_dest:
                 for row in cursor_source:
                     count += 1
                     if count % 10000 == 0:
                         print count, 'answers processed'
                     lang = self.LANGUAGES[row[8]]
-                    item_asked = places[original_places[row[1]], lang] if row[1] else None
-                    item_answered = places[original_places[row[2]], lang] if row[2] else None
+                    item_asked = places_mask(row[1], lang)
+                    item_answered = places_mask(row[2], lang)
                     category = maps[original_places[row[6]], lang] if row[6] else None
+                    general_answer_id = row[9]
                     cursor_dest.execute(
                         '''
                         INSERT INTO proso_models_answer
-                            (user_id, item_id, item_asked_id, item_answered_id, time, response_time)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                        ''', [row[0], item_asked, item_asked, item_answered, row[4], row[5]])
-                    general_answer_id = cursor_dest.fetchone()[0]
+                            (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5]])
+                    options = options_retriever.get_options(general_answer_id)
                     decorated_answer = DecoratedAnswer(
+                        id=general_answer_id,
                         ip_address=row[7],
                         language=lang,
                         direction=row[3],
                         general_answer_id=general_answer_id,
                         category_id=category)
                     decorated_answer.save()
+                    for item_id in map(lambda i: places_mask(i, lang), options):
+                        cursor_dest.execute(
+                            '''
+                            INSERT INTO proso_flashcards_decoratedanswer_options
+                                (decoratedanswer_id, item_id)
+                            VALUES (%s, %s)
+                            ''', [general_answer_id, item_id])
 
     def migrate_places(self):
         maps = {}
@@ -255,3 +269,30 @@ class Command(BaseCommand):
         with open('geography-flashcards.json', 'w') as f:
             json.dump({'categories': maps.values(), 'flashcards': places.values()}, f, indent=2)
         call_command('load_flashcards', 'geography-flashcards.json')
+
+
+class GeographyOptions:
+
+    def __init__(self, batch_size=100000):
+        self._cache = None
+        self._max_answer_id = 0
+        self._batch_size = batch_size
+
+    def get_options(self, answer_id):
+        if answer_id > self._max_answer_id and (self._cache is None or len(self._cache) > 0):
+            self._load_batch()
+        return self._cache[answer_id]
+
+    def _load_batch(self):
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(
+                '''
+                SELECT answer_id, place_id
+                FROM geography_answer_options
+                WHERE answer_id > %s AND answer_id <= %s
+                ''', [self._max_answer_id, self._max_answer_id + self._batch_size])
+            result = defaultdict(list)
+            for row in cursor:
+                self._max_answer_id = max(self._max_answer_id, row[0])
+                result[row[0]].append(row[1])
+            self._cache = result
