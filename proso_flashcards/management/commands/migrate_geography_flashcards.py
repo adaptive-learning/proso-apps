@@ -63,6 +63,7 @@ class Command(BaseCommand):
         print ' -- delete answers'
         with closing(connection.cursor()) as cursor:
             cursor.execute('DELETE FROM proso_flashcards_decoratedanswer_options CASCADE')
+            cursor.execute('DELETE FROM proso_flashcards_decoratedanswer_ab_values CASCADE')
             cursor.execute('DELETE FROM proso_flashcards_decoratedanswer CASCADE')
             cursor.execute('DELETE FROM proso_models_answer CASCADE')
         print ' -- prepare mapping to original places'
@@ -118,6 +119,7 @@ class Command(BaseCommand):
             count = 0
             print ' -- migrate answers'
             options_retriever = GeographyOptions()
+            ab_values_retriever = GeographyABValues()
             places_mask = lambda i, lang: places[original_places[i], lang] if i else None
             with closing(connection.cursor()) as cursor_dest:
                 for row in cursor_source:
@@ -135,15 +137,14 @@ class Command(BaseCommand):
                             (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
                         ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5]])
-                    options = options_retriever.get_options(general_answer_id)
                     decorated_answer = DecoratedAnswer(
-                        id=general_answer_id,
                         ip_address=row[7],
                         language=lang,
                         direction=row[3],
                         general_answer_id=general_answer_id,
                         category_id=category)
                     decorated_answer.save()
+                    options = options_retriever.get_options(general_answer_id)
                     for item_id in map(lambda i: places_mask(i, lang), options):
                         cursor_dest.execute(
                             '''
@@ -151,6 +152,14 @@ class Command(BaseCommand):
                                 (decoratedanswer_id, item_id)
                             VALUES (%s, %s)
                             ''', [general_answer_id, item_id])
+                    ab_values = ab_values_retriever.get_values(general_answer_id)
+                    for value_id in ab_values:
+                        cursor_dest.execute(
+                            '''
+                            INSERT INTO proso_flashcards_decoratedanswer_ab_values
+                                (decoratedanswer_id, value_id)
+                            VALUES (%s, %s)
+                            ''', [general_answer_id, value_id])
 
     def migrate_places(self):
         maps = {}
@@ -279,18 +288,45 @@ class GeographyOptions:
         self._batch_size = batch_size
 
     def get_options(self, answer_id):
-        if answer_id > self._max_answer_id and (self._cache is None or len(self._cache) > 0):
-            self._load_batch()
+        if answer_id > self._max_answer_id:
+            self._load_batch(answer_id)
         return self._cache[answer_id]
 
-    def _load_batch(self):
+    def _load_batch(self, answer_id):
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
                 SELECT answer_id, place_id
                 FROM geography_answer_options
-                WHERE answer_id > %s AND answer_id <= %s
-                ''', [self._max_answer_id, self._max_answer_id + self._batch_size])
+                WHERE answer_id >= %s AND answer_id <= %s
+                ''', [answer_id, answer_id + self._batch_size])
+            result = defaultdict(list)
+            for row in cursor:
+                self._max_answer_id = max(self._max_answer_id, row[0])
+                result[row[0]].append(row[1])
+            self._cache = result
+
+
+class GeographyABValues:
+
+    def __init__(self, batch_size=100000):
+        self._cache = None
+        self._max_answer_id = 0
+        self._batch_size = batch_size
+
+    def get_values(self, answer_id):
+        if answer_id > self._max_answer_id:
+            self._load_batch(answer_id)
+        return self._cache[answer_id]
+
+    def _load_batch(self, answer_id):
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(
+                '''
+                SELECT answer_id, value_id
+                FROM geography_answer_ab_values
+                WHERE answer_id >= %s AND answer_id <= %s
+                ''', [answer_id, answer_id + self._batch_size])
             result = defaultdict(list)
             for row in cursor:
                 self._max_answer_id = max(self._max_answer_id, row[0])

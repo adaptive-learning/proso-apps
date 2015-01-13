@@ -182,4 +182,13 @@ def flashcard_parents(sender, **kwargs):
             symmetric=False)
 
 
+################################################################################
+# Signals
+################################################################################
+
+@receiver(pre_save, sender=DecoratedAnswer)
+def sync_id(sender, instance, **kwargs):
+    instance.id = instance.general_answer.id if instance.general_answer else instance.answer_id
+
+
 PROSO_MODELS_TO_EXPORT = [Category, DecoratedAnswer, Flashcard]
