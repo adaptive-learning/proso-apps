@@ -165,11 +165,10 @@ class Command(BaseCommand):
                     cursor_dest.execute(
                         '''
                         INSERT INTO proso_models_answer
-                            (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5], True])
+                            (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized, ip_address)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5], True, row[7]])
                     decorated_answer = DecoratedAnswer(
-                        ip_address=row[7],
                         language=lang,
                         direction=row[3],
                         general_answer_id=general_answer_id,

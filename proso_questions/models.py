@@ -224,7 +224,6 @@ class Set(models.Model):
 class DecoratedAnswer(models.Model):
 
     general_answer = models.ForeignKey(Answer, blank=False, null=False, unique=True)
-    ip_address = models.CharField(max_length=39, null=True, blank=True, default=None)
     from_test = models.ForeignKey(Set, null=True, blank=True, default=None)
 
     def to_json(self, nested=False):
@@ -234,7 +233,7 @@ class DecoratedAnswer(models.Model):
             'question_item_id': self.general_answer.item_id,
             'item_asked_id': self.general_answer.item_asked_id,
             'item_answered_id': self.general_answer.item_answered_id,
-            'ip_address': self.ip_address,
+            'ip_address': self.general_answer.ip_address,
             'user_id': self.general_answer.user_id,
             'time': self.general_answer.time.strftime('%Y-%m-%d %H:%M:%S'),
             'response_time': self.general_answer.response_time,

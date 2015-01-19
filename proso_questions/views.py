@@ -5,7 +5,6 @@ from proso.django.response import render, render_json, redirect_pass_get
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from django.http import HttpResponse, HttpResponseBadRequest
-from ipware.ip import get_ip
 from django.db import transaction
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
@@ -390,7 +389,6 @@ def _save_answers(request, question_set=None):
         answer.save()
         decorated_answer = DecoratedAnswer(
             general_answer=answer,
-            ip_address=get_ip(request),
             from_test=question_set)
         decorated_answer.save()
         saved_answers.append(decorated_answer)

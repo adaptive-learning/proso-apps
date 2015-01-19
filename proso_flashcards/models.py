@@ -107,7 +107,6 @@ class DecoratedAnswer(models.Model):
     }
 
     general_answer = models.ForeignKey(Answer, blank=False, null=False, unique=True, related_name='flashcard_decoratedanswer_set')
-    ip_address = models.CharField(max_length=39, null=True, blank=True, default=None)
     language = models.CharField(max_length=50)
     direction = models.IntegerField(choices=DIRECTIONS.items())
     options = models.ManyToManyField(Item, related_name='flashcard_decoratedanswer_set')

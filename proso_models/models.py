@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from proso.models.environment import CommonEnvironment, InMemoryEnvironment
 from datetime import datetime
@@ -8,11 +8,13 @@ from contextlib import closing
 from django.db import connection
 from django.conf import settings
 from proso_ab.models import Value as ABValue, Experiment as ABExperiment
+from proso_common.models import get_current_request
 import re
 import os.path
 import proso.util
 from decorator import cache_environment_for_item
 from collections import defaultdict
+from ipware.ip import get_ip
 
 
 # This is hack to emulate TRUE value on both psql and sqlite
@@ -425,6 +427,7 @@ class Answer(models.Model):
     response_time = models.IntegerField(null=False, blank=False)
     ab_values = models.ManyToManyField(ABValue)
     ab_values_initialized = models.BooleanField(default=False)
+    ip_address = models.CharField(max_length=39, null=True, blank=True, default=None)
 
     class Meta:
         app_label = 'proso_models'
@@ -515,6 +518,12 @@ def update_predictive_model(sender, instance, **kwargs):
         instance.time,
         item_answered=instance.item_answered_id,
         item_asked=instance.item_asked_id)
+
+
+@receiver(pre_save, sender=Answer)
+def init_ip_address(sender, instance, **kwargs):
+    if instance.ip_address is None:
+        instance.ip_address = get_ip(get_current_request())
 
 
 @receiver(post_save, sender=Answer)
