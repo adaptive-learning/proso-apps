@@ -7,6 +7,7 @@ from datetime import datetime
 from contextlib import closing
 from django.db import connection
 from django.conf import settings
+from proso_ab.models import Value as ABValue, Experiment as ABExperiment
 import re
 import os.path
 import proso.util
@@ -422,6 +423,8 @@ class Answer(models.Model):
         related_name='item_answered_answers')
     time = models.DateTimeField(default=datetime.now)
     response_time = models.IntegerField(null=False, blank=False)
+    ab_values = models.ManyToManyField(ABValue)
+    ab_values_initialized = models.BooleanField(default=False)
 
     class Meta:
         app_label = 'proso_models'
@@ -512,6 +515,15 @@ def update_predictive_model(sender, instance, **kwargs):
         instance.time,
         item_answered=instance.item_answered_id,
         item_asked=instance.item_asked_id)
+
+
+@receiver(post_save, sender=Answer)
+def insert_ab_values(sender, instance, **kwargs):
+    if not instance.ab_values_initialized:
+        instance.ab_values_initialized = True
+        for value in ABExperiment.objects.get_values():
+            instance.ab_values.add(value)
+        instance.save()
 
 
 @receiver(post_save, sender=Variable)

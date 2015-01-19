@@ -69,7 +69,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'proso_ab.middleware.ABMiddleware',
+    'proso_ab.models.ABMiddleware',
     'proso_models.cache.RequestCacheMiddleware',
     'proso.django.log.RequestLogMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',

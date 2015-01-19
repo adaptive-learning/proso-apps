@@ -53,7 +53,7 @@ def profile(request):
     """
     Return values for A/B experiments associated to the current user.
     """
-    objs = Experiment.objects.get_values(request)
+    objs = Experiment.objects.get_values()
     json = _to_json(request, objs)
     return render_json(request, json, template='ab_json.html', help_text=profile.__doc__)
 

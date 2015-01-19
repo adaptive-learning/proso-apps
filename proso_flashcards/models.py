@@ -4,7 +4,6 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from contextlib import closing
 from django.db import connection
-from proso_ab.models import Value
 from django.utils.text import slugify
 from proso_models.models import get_environment
 
@@ -109,7 +108,6 @@ class DecoratedAnswer(models.Model):
 
     general_answer = models.ForeignKey(Answer, blank=False, null=False, unique=True, related_name='flashcard_decoratedanswer_set')
     ip_address = models.CharField(max_length=39, null=True, blank=True, default=None)
-    ab_values = models.ManyToManyField(Value, related_name='flashcard_decoratedanswer_set')
     language = models.CharField(max_length=50)
     direction = models.IntegerField(choices=DIRECTIONS.items())
     options = models.ManyToManyField(Item, related_name='flashcard_decoratedanswer_set')

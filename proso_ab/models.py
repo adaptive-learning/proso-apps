@@ -6,8 +6,19 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.contrib.auth.signals import user_logged_in
 import logging
+from threading import currentThread
+
+_request_cache = {}
+_request_cache_initialized = False
+
 
 LOGGER = logging.getLogger(__name__)
+
+
+class ABMiddleware:
+
+    def process_request(self, request):
+        Experiment.objects.init_request(request)
 
 
 class ExperimentManager(models.Manager):
@@ -15,6 +26,7 @@ class ExperimentManager(models.Manager):
     def init_request(self, request):
         if request.user.is_anonymous():
             self.clear_session(request.session)
+            self._init_request_cache(request)
             return
         if 'ab_experiment_values_modified' in request.session:
             if request.user.id is None:
@@ -32,6 +44,7 @@ class ExperimentManager(models.Manager):
             saved_time = datetime.datetime.strptime(
                 request.session['ab_experiment_values_modified'], '%Y-%m-%d %H:%M:%S')
             if (datetime.datetime.now() - saved_time).total_seconds() < 15 * 60:
+                self._init_request_cache(request)
                 return
         if 'ab_experiment_values' not in request.session:
             request.session['ab_experiment_values'] = {}
@@ -44,6 +57,7 @@ class ExperimentManager(models.Manager):
                 continue
             request.session['ab_experiment_values'][name] = value
         LOGGER.debug('initialized AB experiments for user %s: %s' % (str(request.user.id), str(request.session.get('ab_experiment_values', []))))
+        self._init_request_cache(request)
         return request
 
     def clear_session(self, session):
@@ -75,8 +89,17 @@ class ExperimentManager(models.Manager):
                 return value['name']
         return default
 
-    def get_values(self, request):
-        return request.session.get('ab_experiment_values', {}).values()
+    def get_values(self):
+        assert _request_cache_initialized, 'ABMiddleware is not loaded'
+        return _request_cache.get(currentThread(), [])
+
+    def _init_request_cache(self, request):
+        global _request_cache_initialized
+        _request_cache_initialized = True
+        _request_cache[currentThread()] = list(Value.objects.filter(
+            id__in=map(lambda d: d['id'],
+            request.session.get('ab_experiment_values', {}).values())))
+        LOGGER.debug('initialized request cache for AB experiments, user %s' % (str(request.user.id)))
 
 
 class Experiment(models.Model):

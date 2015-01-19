@@ -88,8 +88,8 @@ class Command(BaseCommand):
             print ' -- delete answers'
             with closing(connection.cursor()) as cursor:
                 cursor.execute('DELETE FROM proso_flashcards_decoratedanswer_options CASCADE')
-                cursor.execute('DELETE FROM proso_flashcards_decoratedanswer_ab_values CASCADE')
                 cursor.execute('DELETE FROM proso_flashcards_decoratedanswer CASCADE')
+                cursor.execute('DELETE FROM proso_models_answer_ab_values CASCADE')
                 cursor.execute('DELETE FROM proso_models_answer CASCADE')
         else:
             with closing(connection.cursor()) as cursor:
@@ -165,9 +165,9 @@ class Command(BaseCommand):
                     cursor_dest.execute(
                         '''
                         INSERT INTO proso_models_answer
-                            (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5]])
+                            (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5], True])
                     decorated_answer = DecoratedAnswer(
                         ip_address=row[7],
                         language=lang,
@@ -187,8 +187,8 @@ class Command(BaseCommand):
                     for value_id in ab_values:
                         cursor_dest.execute(
                             '''
-                            INSERT INTO proso_flashcards_decoratedanswer_ab_values
-                                (decoratedanswer_id, value_id)
+                            INSERT INTO proso_models_answer_ab_values
+                                (answer_id, value_id)
                             VALUES (%s, %s)
                             ''', [general_answer_id, value_id])
 

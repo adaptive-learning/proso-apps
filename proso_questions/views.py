@@ -11,7 +11,6 @@ import json_enrich
 import proso_common.json_enrich as common_json_enrich
 from proso.django.request import is_time_overriden, is_user_id_overriden, get_time, get_user_id
 from proso_models.models import get_environment, get_recommendation
-from proso_ab.models import Experiment, Value
 import logging
 from time import time as time_lib
 from proso.django.cache import cache_page_conditional
@@ -370,7 +369,6 @@ def _save_answers(request, question_set=None):
         map(lambda x: int(x) if x else None, request.POST.getlist(answered_key)),
         map(int, request.POST.getlist(response_time_key))
     )
-    ab_values = Value.objects.filter(id__in=map(lambda d: d['id'], Experiment.objects.get_values(request)))
     saved_answers = []
     answered_question_ids = []
     questions = dict(map(lambda q: (q.id, q), Question.objects.filter(pk__in=zip(*all_data)[0])))
@@ -394,9 +392,6 @@ def _save_answers(request, question_set=None):
             general_answer=answer,
             ip_address=get_ip(request),
             from_test=question_set)
-        decorated_answer.save()
-        for value in ab_values:
-            decorated_answer.ab_values.add(value)
         decorated_answer.save()
         saved_answers.append(decorated_answer)
     if expected_question_ids and sorted(expected_question_ids) != sorted(answered_question_ids):

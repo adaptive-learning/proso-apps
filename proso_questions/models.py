@@ -5,7 +5,6 @@ from django.dispatch import receiver
 from contextlib import closing
 from django.db import connection
 from django.db.models import Count
-from proso_ab.models import Value
 from django.utils.text import slugify
 from proso_models.models import get_environment
 from collections import defaultdict
@@ -226,7 +225,6 @@ class DecoratedAnswer(models.Model):
 
     general_answer = models.ForeignKey(Answer, blank=False, null=False, unique=True)
     ip_address = models.CharField(max_length=39, null=True, blank=True, default=None)
-    ab_values = models.ManyToManyField(Value)
     from_test = models.ForeignKey(Set, null=True, blank=True, default=None)
 
     def to_json(self, nested=False):
