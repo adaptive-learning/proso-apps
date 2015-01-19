@@ -6,9 +6,31 @@ from contextlib import closing
 from django.db import transaction
 from proso_flashcards.models import DecoratedAnswer
 from collections import defaultdict
+from optparse import make_option
 
 
 class Command(BaseCommand):
+
+    option_list = BaseCommand.option_list + (
+        make_option(
+            '--clean',
+            action='store_true',
+            dest='clean',
+            default=False,
+            help='Delete all previously loaded data'),
+        make_option(
+            '--skip-places',
+            action='store_true',
+            dest='skip_places',
+            default=False,
+            help='Skip loading of places.'),
+        make_option(
+            '--limit',
+            dest='limit',
+            default=1000000,
+            type=int,
+            help='Maximum number of loaded answer'),
+        )
 
     LANGUAGES = {
         0: 'cs',
@@ -51,21 +73,28 @@ class Command(BaseCommand):
         with transaction.atomic():
             with closing(connection.cursor()) as cursor:
                 cursor.execute('SET CONSTRAINTS ALL DEFERRED;')
-            self.migrate_places()
-            self.migrate_answers()
+            if not options['skip_places']:
+                self.migrate_places()
+            self.migrate_answers(clean=options['clean'], limit=options['limit'])
 
     def clean_really_old(self):
         with closing(connection.cursor()) as cursor:
             for table in self.REALLY_OLD_TABLES:
                 cursor.execute('DROP TABLE IF EXISTS %s;' % table)
 
-    def migrate_answers(self):
-        print ' -- delete answers'
-        with closing(connection.cursor()) as cursor:
-            cursor.execute('DELETE FROM proso_flashcards_decoratedanswer_options CASCADE')
-            cursor.execute('DELETE FROM proso_flashcards_decoratedanswer_ab_values CASCADE')
-            cursor.execute('DELETE FROM proso_flashcards_decoratedanswer CASCADE')
-            cursor.execute('DELETE FROM proso_models_answer CASCADE')
+    def migrate_answers(self, clean=True, limit=1000000):
+        prev_max_answer = 0
+        if clean:
+            print ' -- delete answers'
+            with closing(connection.cursor()) as cursor:
+                cursor.execute('DELETE FROM proso_flashcards_decoratedanswer_options CASCADE')
+                cursor.execute('DELETE FROM proso_flashcards_decoratedanswer_ab_values CASCADE')
+                cursor.execute('DELETE FROM proso_flashcards_decoratedanswer CASCADE')
+                cursor.execute('DELETE FROM proso_models_answer CASCADE')
+        else:
+            with closing(connection.cursor()) as cursor:
+                cursor.execute('SELECT MAX(id) FROM proso_flashcards_decoratedanswer')
+                prev_max_answer, = cursor.fetchone()
         print ' -- prepare mapping to original places'
         with closing(connection.cursor()) as cursor:
             cursor.execute(
@@ -98,7 +127,7 @@ class Command(BaseCommand):
                 FROM proso_flashcards_category
                 ''')
             maps = dict(map(lambda (x, y, z): ((x, y), z), cursor.fetchall()))
-        print ' -- load answers'
+        print ' -- load answers where id >', prev_max_answer
         with closing(connection.cursor()) as cursor_source:
             cursor_source.execute(
                 '''
@@ -114,8 +143,10 @@ class Command(BaseCommand):
                     language,
                     id
                 FROM geography_answer
+                WHERE id > %s
                 ORDER BY id
-                ''')
+                LIMIT %s
+                ''', [prev_max_answer, limit])
             count = 0
             print ' -- migrate answers'
             options_retriever = GeographyOptions()
