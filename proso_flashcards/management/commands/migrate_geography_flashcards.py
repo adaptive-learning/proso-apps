@@ -168,12 +168,12 @@ class Command(BaseCommand):
                             (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized, ip_address)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5], True, row[7]])
-                    decorated_answer = DecoratedAnswer(
-                        language=lang,
-                        direction=row[3],
-                        general_answer_id=general_answer_id,
-                        category_id=category)
-                    decorated_answer.save()
+                    cursor_dest.execute(
+                        '''
+                        INSERT INTO proso_flashcards_decoratedanswer
+                            (id, language, direction, general_answer_id, category_id)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ''', [general_answer_id, lang, row[3], general_answer_id, category])
                     options = options_retriever.get_options(general_answer_id)
                     for item_id in map(lambda i: places_mask(i, lang), options):
                         cursor_dest.execute(
