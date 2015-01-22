@@ -13,9 +13,7 @@ from proso_models.models import get_environment, get_recommendation
 import logging
 from time import time as time_lib
 from proso.django.cache import cache_page_conditional
-import hashlib
-from django.core.cache import cache
-import json as json_lib
+import proso_common.views
 
 
 LOGGER = logging.getLogger('django.request')
@@ -27,128 +25,60 @@ def home(request):
 
 @cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
 def show_one(request, object_class, id):
-    """
-    Return object of the given type with the specified identifier.
-
-    GET parameters:
-      user:
-        identifier of the current user
-      stats:
-        turn on the enrichment of the objects by some statistics
-      html
-        turn on the HTML version of the API
-    """
-    obj = get_object_or_404(object_class, pk=id)
-    json = _to_json(request, obj)
-    return render_json(request, json, template='questions_json.html', help_text=show_one.__doc__)
+    return proso_common.views.show_one(
+        request, _to_json, object_class, id, template='questions_json.html')
 
 
 @cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
 def show_more(request, object_class, should_cache=True):
-    """
-    Return list of objects of the given type.
+    def _load_objects(request, object_class):
+        select_related_all = {
+            Question: ['resource'],
+            DecoratedAnswer: ['general_answer']
+        }
+        prefetch_related_all = {
+            Set: ['questions'],
+            Category: ['questions'],
+            Question: [
+                'question_options', 'question_options__option_images',
+                'question_images', 'resource__resource_images', 'set_set', 'category_set'
+            ]
+        }
+        select_related = select_related_all.get(object_class, [])
+        prefetch_related = prefetch_related_all.get(object_class, [])
+        if 'filter_column' in request.GET and 'filter_value' in request.GET:
+            column = request.GET['filter_column']
+            value = request.GET['filter_value']
+            if value.isdigit():
+                value = int(value)
+            if column == 'category_id':
+                objs = (get_object_or_404(Category, pk=value).
+                        questions.
+                        select_related(*select_related).
+                        prefetch_related(*prefetch_related).all())
+            elif column == 'set_id':
+                objs = (get_object_or_404(Set, pk=value).
+                        questions.
+                        select_related(*select_related).
+                        prefetch_related(*prefetch_related).all())
+            else:
+                objs = (object_class.objects.
+                        select_related(*select_related).
+                        prefetch_related(*prefetch_related).filter(**{column: value}))
+        else:
+            objs = object_class.objects.select_related(*select_related).\
+                prefetch_related(*prefetch_related).all()
+        if object_class == DecoratedAnswer:
+            if is_user_id_overriden(request):
+                user_id = int(request.GET['user'])
+            else:
+                user_id = request.user.id
+            objs = objs.filter(general_answer__user_id=user_id).order_by('-general_answer__time')
+        return objs
 
-    GET parameters:
-      limit:
-        number of returned questions (default 10, maximum 100)
-      page:
-        current page number
-      filter_column:
-        column name used to filter the results
-      filter_value:
-        value for the specified column used to filter the results
-      user:
-        identifier of the current user
-      all:
-        return all objects available instead of paging; be aware this parameter
-        can be used only for objects for wich the caching is turned on
-      db_orderby:
-        database column which the result should be ordered by
-      json_orderby:
-        field of the JSON object which the result should be ordered by, it is
-        less effective than the ordering via db_orderby; be aware this parameter
-        can be used only for objects for which the caching is turned on
-      desc
-        turn on the descending order
-      stats:
-        turn on the enrichment of the objects by some statistics
-      html
-        turn on the HTML version of the API
-    """
-    if not should_cache and 'json_orderby' in request.GET:
-        return render_json(request, {
-            'error': "Can't order the result according to the JSON field, because the caching for this type of object is turned off. See the documentation."
-            },
-            template='questions_json.html', help_text=show_more.__doc__, status=501)
-    if not should_cache and 'all' in request.GET:
-        return render_json(request, {
-            'error': "Can't get all objects, because the caching for this type of object is turned off. See the documentation."
-            },
-            template='questions_json.html', help_text=show_more.__doc__, status=501)
-    time_start = time_lib()
-    limit = min(int(request.GET.get('limit', 10)), 100)
-    page = int(request.GET.get('page', 0))
-    select_related_all = {
-        Question: ['resource'],
-        DecoratedAnswer: ['general_answer']
-    }
-    prefetch_related_all = {
-        Set: ['questions'],
-        Category: ['questions'],
-        Question: [
-            'question_options', 'question_options__option_images',
-            'question_images', 'resource__resource_images', 'set_set', 'category_set'
-        ]
-    }
-    select_related = select_related_all.get(object_class, [])
-    prefetch_related = prefetch_related_all.get(object_class, [])
-    if 'filter_column' in request.GET and 'filter_value' in request.GET:
-        column = request.GET['filter_column']
-        value = request.GET['filter_value']
-        if value.isdigit():
-            value = int(value)
-        if column == 'category_id':
-            objs = (get_object_or_404(Category, pk=value).
-                    questions.
-                    select_related(*select_related).
-                    prefetch_related(*prefetch_related).all())
-        elif column == 'set_id':
-            objs = (get_object_or_404(Set, pk=value).
-                    questions.
-                    select_related(*select_related).
-                    prefetch_related(*prefetch_related).all())
-        else:
-            objs = (object_class.objects.
-                    select_related(*select_related).
-                    prefetch_related(*prefetch_related).filter(**{column: value}))
-    else:
-        objs = object_class.objects.select_related(*select_related).prefetch_related(*prefetch_related).all()
-    if object_class == DecoratedAnswer:
-        if is_user_id_overriden(request):
-            user_id = int(request.GET['user'])
-        else:
-            user_id = request.user.id
-        objs = objs.filter(general_answer__user_id=user_id).order_by('-general_answer__time')
-    if 'db_orderby' in request.GET:
-        objs = objs.order_by(('-' if 'desc' in request.GET else '') + request.GET['db_orderby'])
-    if 'all' not in request.GET and 'json_orderby' not in request.GET:
-        objs = objs[page * limit:(page + 1) * limit]
-    cache_key = 'proso_questions_sql_json_%s' % hashlib.sha1(str(objs.query).decode('utf-8')).hexdigest()
-    cached = cache.get(cache_key)
-    if cached:
-        list_objs = json_lib.loads(cached)
-    else:
-        list_objs = map(lambda x: x.to_json(), list(objs))
-        cache.set(cache_key, json_lib.dumps(list_objs), 60 * 60 * 24 * 30)
-    LOGGER.debug('loading objects in show_more view took %s seconds', (time_lib() - time_start))
-    json = _to_json(request, list_objs)
-    if 'json_orderby' in request.GET:
-        time_before_json_sort = time_lib()
-        json.sort(key=lambda x: (-1 if 'desc' in request.GET else 1) * x[request.GET['json_orderby']])
-        if 'all' not in request.GET:
-            json = json[page * limit:(page + 1) * limit]
-        LOGGER.debug('sorting objects according to JSON field took %s seconds', (time_lib() - time_before_json_sort))
-    return render_json(request, json, template='questions_json.html', help_text=show_more.__doc__)
+    return proso_common.views.show_more(
+        request, _to_json, _load_objects, object_class,
+        should_cache=should_cache, template='questions_json.html')
 
 
 @ensure_csrf_cookie
