@@ -493,7 +493,6 @@ class Audit(models.Model):
 
     class Meta:
         app_label = 'proso_models'
-        unique_together = ('key', 'user', 'item_primary', 'item_secondary')
         index_together = [
             ['key', 'user'],
             ['key', 'item_primary'],
