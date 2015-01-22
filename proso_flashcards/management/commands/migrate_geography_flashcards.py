@@ -300,12 +300,18 @@ class Command(BaseCommand):
                     geography_placerelation.id = geography_placerelation_related_places.placerelation_id
                 WHERE type = 1
                 ''')
+            used_maps = set()
             for row in cursor:
                 places[row[1], 'cs']['categories'].append(maps[row[0], 'cs']['identifier'])
                 places[row[1], 'en']['categories'].append(maps[row[0], 'en']['identifier'])
                 places[row[1], 'es']['categories'].append(maps[row[0], 'es']['identifier'])
+                used_maps.add((row[0], 'cs'))
+                used_maps.add((row[0], 'en'))
+                used_maps.add((row[0], 'es'))
         with open('geography-flashcards.json', 'w') as f:
-            json.dump({'categories': maps.values(), 'flashcards': places.values()}, f, indent=2)
+            json.dump({
+                'categories': map(lambda used: maps[used], used_maps),
+                'flashcards': places.values()}, f, indent=2)
         call_command('load_flashcards', 'geography-flashcards.json')
 
 
