@@ -1,0 +1,8 @@
+{% extends 'common_base.html' %}
+{% block menu_heading_block %}Flashcards{% endblock %}
+{% block menu_list_block %}
+	<ul>
+		<li><a href="{% url 'proso_flashcards_show_categories' %}?html=True&stats=True">Categories</a></li>
+		<li><a href="{% url 'proso_flashcards_show_flashcards' %}?html=True&stats=True">Flashcards</a></li>
+	</ul>
+{% endblock %}
