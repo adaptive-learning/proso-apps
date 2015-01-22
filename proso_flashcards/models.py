@@ -77,6 +77,7 @@ class Category(models.Model):
     type = models.CharField(max_length=20, null=True, blank=True, default=None)
     language = models.CharField(max_length=50)
     flashcards = models.ManyToManyField(Flashcard)
+    subcategories = models.ManyToManyField('self')
     item = models.ForeignKey(Item, null=True, blank=True, default=None, related_name='flashcard_category_set')
     url_name = models.SlugField(unique=True)
 
@@ -85,15 +86,20 @@ class Category(models.Model):
     class Meta:
         unique_together = (('item', 'language'), ('identifier', 'language'))
 
-    def to_json(self, nested=True):
-        return {
+    def to_json(self, nested=False):
+        result = {
             'id': self.id,
             'item_id': self.item_id,
             'name': self.name,
+            'type': self.type,
             'url_name': self.url_name,
             'object_type': 'category',
             'language': self.language
         }
+        if not nested:
+            result['subcategories'] =  map(
+                lambda x: x.to_json(nested=True), self.subcategories.all())
+        return result
 
 
 class DecoratedAnswer(models.Model):
