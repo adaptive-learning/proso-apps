@@ -30,7 +30,8 @@ def show_one(request, object_class, id):
         request, _to_json, object_class, id, template='questions_json.html')
 
 
-@cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
+@cache_page_conditional(
+    condition=lambda request: 'stats' not in request.GET and '/answers/' not in request.path_info)
 def show_more(request, object_class, should_cache=True):
     def _load_objects(request, object_class):
         select_related_all = {
