@@ -94,7 +94,7 @@ class Command(BaseCommand):
     def _load_categories(self, categories_data):
         print ' -- load categories'
         categories = defaultdict(dict)
-        for category_data in progress.bar(categories_data, every=len(categories_data) / 100):
+        for category_data in progress.bar(categories_data, every=max(1, len(categories_data) / 100)):
             language = category_data['language']
             lang_categories = categories[language]
             category_id = category_data['identifier']
@@ -116,7 +116,7 @@ class Command(BaseCommand):
     def _reset_flashcards(self, flashcards_data):
         print ' -- reset flashcards'
         identifiers = defaultdict(list)
-        for flashcard_data in progress.bar(flashcards_data, every=len(flashcards_data) / 100):
+        for flashcard_data in progress.bar(flashcards_data, every=max(1, len(flashcards_data) / 100)):
             identifiers[flashcard_data['language']].append(flashcard_data['identifier'])
         for language, ids in identifiers.iteritems():
             Flashcard.objects.reset(
