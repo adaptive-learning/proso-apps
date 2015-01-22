@@ -49,7 +49,6 @@ class Command(BaseCommand):
                     response_time
                 FROM proso_models_answer
                 ORDER BY id
-                LIMIT 10000
                 ''')
             for (user, item, asked, answered, time, response_time) in cursor:
                 time = self._ensure_is_datetime(time)
