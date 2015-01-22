@@ -8,6 +8,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.db import transaction
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
+import proso_models.json_enrich as models_json_enrich
 from proso.django.request import is_time_overriden, is_user_id_overriden, get_time, get_user_id
 from proso_models.models import get_environment, get_recommendation
 import logging
@@ -264,7 +265,7 @@ def _to_json(request, value):
     common_json_enrich.enrich_by_object_type(request, json, json_enrich.question, 'answer')
     if 'stats' in request.GET:
         common_json_enrich.enrich_by_object_type(
-            request, json, json_enrich.prediction, ['question', 'set', 'category'])
+            request, json, models_json_enrich.prediction, ['question', 'set', 'category'])
     common_json_enrich.enrich_by_object_type(request, json, json_enrich.html, ['question', 'resource', 'option'])
     common_json_enrich.enrich_by_predicate(request, json, json_enrich.url, lambda x: True)
     common_json_enrich.enrich_by_object_type(request, json, json_enrich.questions, ['set', 'category'])
