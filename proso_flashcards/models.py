@@ -97,7 +97,7 @@ class Category(models.Model):
             'language': self.language
         }
         if not nested:
-            result['subcategories'] =  map(
+            result['subcategories'] = map(
                 lambda x: x.to_json(nested=True), self.subcategories.all())
         return result
 

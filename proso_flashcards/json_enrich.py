@@ -7,6 +7,7 @@ import json as json_lib
 IGNORE_GET = ['category']
 CACHE_EXPIRATION = 60 * 60 * 24 * 30
 
+
 def flashcards(request, json_list, nested):
     show_flashcards_url = reverse('proso_flashcards_show_flashcards')
     for json in json_list:
