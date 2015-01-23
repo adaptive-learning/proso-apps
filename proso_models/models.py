@@ -521,15 +521,16 @@ def update_predictive_model(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=Answer)
 def init_ip_address(sender, instance, **kwargs):
-    if instance.ip_address is None:
-        instance.ip_address = get_ip(get_current_request())
+    request = get_current_request(force=False)
+    if instance.ip_address is None and request is not None:
+        instance.ip_address = get_ip(request)
 
 
 @receiver(post_save, sender=Answer)
 def insert_ab_values(sender, instance, **kwargs):
     if not instance.ab_values_initialized:
         instance.ab_values_initialized = True
-        for value in ABExperiment.objects.get_values():
+        for value in ABExperiment.objects.get_values(force=False):
             instance.ab_values.add(value)
         instance.save()
 

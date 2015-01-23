@@ -14,7 +14,9 @@ class RequestMiddleware:
         _current_request[currentThread()] = request
 
 
-def get_current_request():
+def get_current_request(force=True):
+    if not force and not _request_initialized:
+        return None
     assert _request_initialized, 'RequestMiddleware is not loaded'
     return _current_request[currentThread()]
 

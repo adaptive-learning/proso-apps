@@ -89,7 +89,9 @@ class ExperimentManager(models.Manager):
                 return value['name']
         return default
 
-    def get_values(self):
+    def get_values(self, force=True):
+        if not force and not _request_cache_initialized:
+            return []
         assert _request_cache_initialized, 'ABMiddleware is not loaded'
         return _request_cache.get(currentThread(), [])
 
