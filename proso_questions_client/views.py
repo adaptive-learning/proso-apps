@@ -10,6 +10,10 @@ import json
 from django.utils import simplejson
 from logging import getLogger
 from django.core.mail import send_mail
+from django.middleware.csrf import get_token
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
+
 
 LOGGER = getLogger(__name__)
 
@@ -52,6 +56,28 @@ def home(request, hack=None):
 def logout_view(request):
     logout(request)
     return HttpResponse('{"username":""}')
+
+
+def initmobile_view(request):
+    if 'username' in request.GET and 'password' in request.GET:
+        username = request.GET['username']
+        password = request.GET['password']
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+    else:
+        user = request.user
+    response = {
+        'username': user.username,
+        'csrftoken': get_token(request),
+    }
+    if not user.has_usable_password():
+        password = User.objects.make_random_password()
+        user.set_password(password)
+        user.save()
+        response['password'] = password
+    return HttpResponse(json.dumps(response))
 
 
 def is_likely_worthless(feedback):

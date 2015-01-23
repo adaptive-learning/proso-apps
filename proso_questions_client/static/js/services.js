@@ -73,9 +73,9 @@
     return that;
   }])
 
-  .service('practice', ['$http', '$log', '$cookies', '$', '$routeParams', 'questions', 
+  .service('practice', ['$http', '$log', 'user', '$', '$routeParams', 'questions', 
         'params', 'domain',
-      function($http, $log, $cookies, $, $routeParams, questions, params, domain) {
+      function($http, $log, user, $, $routeParams, questions, params, domain) {
     var qIndex = 0;
     var url;
     $http.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -120,7 +120,7 @@
           url : url,
           data: data,
           headers: {
-            'X-CSRFToken' : $cookies.csrftoken,
+            'X-CSRFToken' : user.getCsrftoken(),
           }
         });
         return promise;
@@ -136,6 +136,7 @@
           qIndex = 0;
           questionsList = data.data.questions;
           returnQuestion(fn);
+          user.initCsfrtoken();
         });
         return promise;
       },
@@ -160,7 +161,7 @@
           data: postParams,
           headers: {
             'Content-Type' : 'application/x-www-form-urlencoded',
-            'X-CSRFToken' : $cookies.csrftoken,
+            'X-CSRFToken' : user.getCsrftoken(),
           }
         }).success(function(data) {
           var futureLength = qIndex + data.questions.length;
@@ -215,6 +216,27 @@
         user.points++;
         $cookies.points = user.points;
         events.emit('userUpdated', user);
+      },
+      getCsrftoken : function() {
+        return user.csrftoken || $cookies.csrftoken;
+      },
+      initCsfrtoken : function() {
+        if (!domain || that.getUser().csrftoken) {
+          return;
+        }
+        var url = domain + '/user/initmobile';
+        if (localStorage.username && localStorage.password) {
+          url += '?username=' + localStorage.username + 
+            '&password=' + localStorage.password;
+        }
+        $http.get(url).success(function(data) {
+          that.initUser(data.username, 0);
+          user.csrftoken = data.csrftoken;
+          if (data.password) {
+            localStorage.username = data.username;
+            localStorage.password = data.password;
+          }
+        });
       }
     };
   }])

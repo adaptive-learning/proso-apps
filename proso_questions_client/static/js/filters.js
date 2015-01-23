@@ -62,12 +62,12 @@
     };
   })
 
-  .filter('imgSrc', function() {
+  .filter('imgSrc', ['domain', function(domain) {
     return function(option) {
       var src = option && option.images && option.images[0] && option.images[0].url;
-      return src;
+      return domain ? (src && src.substr(1)) : src;
     };
-  })
+  }])
 
   .filter('stripImg', function() {
     return function(option) {

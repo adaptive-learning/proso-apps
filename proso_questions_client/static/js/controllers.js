@@ -52,9 +52,9 @@
       });
     };
 
-    var ModalFeedbackCtrl = ['$scope', '$modalInstance', '$http', '$cookies',
+    var ModalFeedbackCtrl = ['$scope', '$modalInstance', '$http', 'user',
           '$location', 'feedback',
-        function ($scope, $modalInstance, $http, $cookies,
+        function ($scope, $modalInstance, $http, user,
           $location, feedback) {
 
       $scope.feedback = feedback;
@@ -62,7 +62,7 @@
 
       $scope.send = function() {
         feedback.page = $location.absUrl();
-        $http.defaults.headers.post['X-CSRFToken'] = $cookies.csrftoken;
+        $http.defaults.headers.post['X-CSRFToken'] = user.getCsrftoken();
         $http.post('/feedback/', feedback).success(function(data){
           $scope.alerts.push(data);
           $scope.sending = false;
