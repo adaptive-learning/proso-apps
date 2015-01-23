@@ -173,7 +173,10 @@ class InMemoryEnvironment(CommonEnvironment):
         return map(lambda i: self.get_items_with_values(key, i, user), items)
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
-        found = self.audit(key, user, item, item_secondary, limit=1, symmetric=symmetric)
+        items = [item_secondary, item]
+        if symmetric:
+            items = sorted(items)
+        found = self._data[key][user][items[1]][items[0]]
         if found:
             return found[-1][1]
         else:
