@@ -105,6 +105,7 @@
         };
         var promise = $http.get(url, options).success(function(data) {
           fn(data.data);
+          user.initCsfrtoken();
         });
         return promise;
       },
