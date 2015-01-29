@@ -6,6 +6,7 @@ import markdown
 import logging
 from time import time
 import proso.django.log
+import proso.release
 
 
 LOGGER = logging.getLogger('django.request')
@@ -44,10 +45,10 @@ def render(request, template, data, *args, **kwargs):
     return original_render(request, template, data, *args, **kwargs)
 
 
-def render_json(request, json, template=None, status=None, help_text=None):
+def render_json(request, json, template=None, status=None, help_text=None, version=proso.release.VERSION):
     time_start = time()
     if status is None or status == 200:
-        json = {'data': json}
+        json = {'data': json, 'version': version}
     if 'debug' in request.GET and request.user.is_staff and proso.django.log.is_log_prepared():
         json['debug_log'] = proso.django.log.get_request_log()
     if 'html' in request.GET:
