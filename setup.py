@@ -34,7 +34,9 @@ setup(
         'proso_questions.migrations',
         'proso_questions_client',
         'proso_questions_client.management',
-        'proso_questions_client.management.commands'
+        'proso_questions_client.management.commands',
+        'proso_user',
+        'proso_user.migrations'
     ],
     install_requires=[
         'Django>=1.6,<1.7',
@@ -49,7 +51,10 @@ setup(
         'django-social-auth>=0.7.28',
         'jsonschema>=2.4.0',
         'numpy>=1.8.2',
-        'psycopg2>=2.5.4'
+        'psycopg2>=2.5.4',
+        'PyYAML==3.11',
+        'ua-parser==0.3.6',
+        'user-agents==0.3.1'
     ],
     license='Gnu GPL v3',
 )
