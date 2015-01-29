@@ -13,6 +13,7 @@ urlpatterns = patterns(
         'document_root': settings.MEDIA_ROOT
         }
     ),
+    url(r'^user/', include('proso_user.urls')),
     url(r'^flashcards/', include('proso_flashcards.urls')),
     url(r'^questions/', include('proso_questions.urls')),
     url(r'^models/', include('proso_models.urls')),

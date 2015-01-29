@@ -45,6 +45,18 @@ class HttpUserAgent(models.Model):
 
     objects = HttpUserAgentManager()
 
+    def to_json(self, nested=False):
+        return {
+            'id': self.id,
+            'object_type': 'http_user_agent',
+            'content': self.content,
+            'os_family': self.os_family,
+            'os_version': self.os_version,
+            'browser_family': self.browser_family,
+            'browser_version': self.browser_version,
+            'device_family': self.device_family
+        }
+
 
 class TimeZoneManager(models.Manager):
 
@@ -75,6 +87,13 @@ class Location(models.Model):
 
     objects = LocationManager()
 
+    def to_json(self, nested=False):
+        return {
+            'id': self.id,
+            'object_type': 'location',
+            'ip_address': self.ip_address
+        }
+
 
 class TimeZone(models.Model):
 
@@ -83,8 +102,21 @@ class TimeZone(models.Model):
 
     objects = TimeZoneManager()
 
+    def to_json(self, nested=False):
+        return {
+            'id': self.id,
+            'object_type': 'time_zone',
+            'content': self.content
+        }
+
 
 class SessionManager(models.Manager):
+
+    def get_current_session(self):
+        session_id = self.get_current_session_id()
+        if session_id is None:
+            return None
+        return self.get(id=session_id)
 
     def get_current_session_id(self):
         current_request = get_current_request(force=False)
@@ -121,6 +153,23 @@ class Session(models.Model):
     display_height = models.IntegerField(null=True, blank=True, default=None)
 
     objects = SessionManager()
+
+    def to_json(self, nested=False):
+        result = {
+            'object_type': 'session',
+            'id': self.id,
+            'user_id': self.user_id,
+            'locale': self.locale,
+            'display_width': self.display_width,
+            'display_height': self.display_height
+        }
+        if self.time_zone:
+            result['time_zone'] = self.time_zone.to_json(nested=True)
+        if self.location:
+            result['location'] = self.location.to_json(nested=True)
+        if self.http_user_agent:
+            result['http_user_agent'] = self.http_user_agent.to_json(nested=True)
+        return result
 
 
 ################################################################################
