@@ -233,7 +233,6 @@ class DecoratedAnswer(models.Model):
             'question_item_id': self.general_answer.item_id,
             'item_asked_id': self.general_answer.item_asked_id,
             'item_answered_id': self.general_answer.item_answered_id,
-            'ip_address': self.general_answer.ip_address,
             'user_id': self.general_answer.user_id,
             'time': self.general_answer.time.strftime('%Y-%m-%d %H:%M:%S'),
             'response_time': self.general_answer.response_time,
