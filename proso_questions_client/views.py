@@ -7,9 +7,7 @@ from proso_questions.models import Category
 from django.contrib.auth import logout
 from django.http import HttpResponse
 import json
-from django.utils import simplejson
 from logging import getLogger
-from django.core.mail import send_mail
 from django.middleware.csrf import get_token
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
