@@ -56,7 +56,10 @@
             feedback.page = $location.absUrl();
             $http.defaults.headers.post['X-CSRFToken'] = $cookies.csrftoken;
             $http.post('/feedback/', feedback).success(function(data){
-              $scope.alerts.push(data);
+              $scope.alerts.push({
+                type : 'success',
+                msg : gettext('Feedback jsme přijali. Děkujeme Vám za zaslané informace. Feedback od uživatelů je k nezaplacení.'),
+              });
               $scope.sending = false;
               feedback.text = '';
             }).error(function(){
@@ -99,7 +102,10 @@
             $scope.answer = answer;
             $http.defaults.headers.post['X-CSRFToken'] = $cookies.csrftoken;
             $http.post('/feedback/rating', {'value': answer}).success(function(data){
-              $scope.alerts.push(data);
+              $scope.alerts.push({
+                type : 'success',
+                msg : gettext('Děkujeme za hodnocení'),
+              });
               $scope.sending = false;
             }).error(function(){
               $scope.alerts.push({

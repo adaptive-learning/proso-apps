@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.utils.translation import ugettext as _
 from django.utils import simplejson
-from proso.django.response import JsonResponse
 from django.template.loader import render_to_string
+from django.http import HttpResponse
 from django.core.mail import EmailMultiAlternatives
 from logging import getLogger
 from django.conf import settings
@@ -42,11 +42,7 @@ def feedback(request):
     mail.attach_alternative(html_content, "text/html")
     mail.send()
     LOGGER.debug("email sent %s\n", text_content)
-    response = {
-        'type': 'success',
-        'msg': _('Feedback jsme přijali. Děkujeme Vám za zaslané informace. Feedback od uživatelů je k nezaplacení.'),
-    }
-    return JsonResponse(response)
+    return HttpResponse('ok', status=201)
 
 
 @require_POST
@@ -57,8 +53,4 @@ def rating(request):
         value=data['value'],
     )
     rating.save()
-    response = {
-        'type': 'success',
-        'msg': _(u'Děkujeme za hodnocení.'),
-    }
-    return JsonResponse(response)
+    return HttpResponse('ok', status=201)
