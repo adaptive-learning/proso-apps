@@ -23,6 +23,7 @@ setup(
         'proso_common',
         'proso_common.management',
         'proso_common.management.commands',
+        'proso_feedback',
         'proso_flashcards',
         'proso_flashcards.management',
         'proso_flashcards.management.commands',
