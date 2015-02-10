@@ -39,7 +39,7 @@ module.exports = function(grunt) {
         }
     },
     ngtemplates:    {
-      addaptivePractice:          {
+      adaptivePractice:          {
         src: [
           'static/tpl/*.html',
         ],

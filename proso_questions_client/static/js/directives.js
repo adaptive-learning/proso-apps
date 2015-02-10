@@ -1,7 +1,7 @@
 (function() {
   'use strict';
   /* Directives */
-  angular.module('addaptivePractice.directives', [])
+  angular.module('adaptivePractice.directives', [])
   .directive('email', function() {
     return {
       restrict : 'C',

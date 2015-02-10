@@ -2,11 +2,11 @@
   'use strict';
   /* global jQuery  */
   // Declare app level module which depends on filters, and services
-  angular.module('addaptivePractice', [
-    'addaptivePractice.controllers',
-    'addaptivePractice.directives',
-    'addaptivePractice.filters',
-    'addaptivePractice.services',
+  angular.module('adaptivePractice', [
+    'adaptivePractice.controllers',
+    'adaptivePractice.directives',
+    'adaptivePractice.filters',
+    'adaptivePractice.services',
     'angulartics',
     'angulartics.google.analytics',
     'ngAnimate',

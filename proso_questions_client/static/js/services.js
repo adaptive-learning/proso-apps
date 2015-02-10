@@ -3,7 +3,7 @@
   /* global chroma  */
 
   /* Services */
-  angular.module('addaptivePractice.services', [
+  angular.module('adaptivePractice.services', [
     'ngCookies'
   ])
 

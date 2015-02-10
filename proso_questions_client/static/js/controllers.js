@@ -1,7 +1,7 @@
 (function() {
   'use strict';
   /* Controllers */
-  angular.module('addaptivePractice.controllers', [])
+  angular.module('adaptivePractice.controllers', [])
 
   .controller('AppCtrl', ['$scope', '$rootScope', 'user', 'pageTitle', '$modal', '$window',
       function($scope, $rootScope, user, pageTitle, $modal, $window) {

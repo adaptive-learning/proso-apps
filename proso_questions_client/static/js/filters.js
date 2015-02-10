@@ -1,7 +1,7 @@
 (function() {
   'use strict';
   /* Filters */
-  angular.module('addaptivePractice.filters', [])
+  angular.module('adaptivePractice.filters', [])
 
   .filter('percent', function() {
     return function(n) {
