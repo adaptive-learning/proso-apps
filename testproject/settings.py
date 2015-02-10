@@ -59,6 +59,7 @@ INSTALLED_APPS = (
     'proso_questions',
     'proso_questions_client',
     'proso_user',
+    'proso_feedback',
     'social_auth',
     'south',
 )
@@ -214,8 +215,7 @@ PROSO_TEST_EVALUATOR_ARGS = [{
 
 FEEDBACK_TO = 'autoskolachytre@googlegroups.com'
 FEEDBACK_TO = 'slaweet@seznam.cz'
-FEEDBACK_FROM = 'feedback@autoskolachytre.cz'
-FEEDBACK_FROM_SPAM = 'spam@autoskolachytre.cz'
+FEEDBACK_DOMAIN = 'autoskolachytre.cz'
 
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25

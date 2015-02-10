@@ -21,5 +21,6 @@ urlpatterns = patterns(
     url(r'^common/', include('proso_common.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^convert/', include('lazysignup.urls')),
+    url(r'^feedback/', include('proso_feedback.urls')),
     url(r'', include('social_auth.urls')),
 ) + proso_questions_client.urls.urlpatterns

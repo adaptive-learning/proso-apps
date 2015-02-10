@@ -13,6 +13,7 @@
     'ngMaterial',
     'ngRoute',
     'ngSanitize',
+    'proso.feedback',
     'timer',
     'ui.bootstrap',
   ])

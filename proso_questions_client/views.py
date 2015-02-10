@@ -78,36 +78,3 @@ def initmobile_view(request):
         user.save()
         response['password'] = password
     return HttpResponse(json.dumps(response))
-
-
-def is_likely_worthless(feedback):
-    return len(feedback['text']) <= 50
-
-
-def feedback(request):
-    if request.body:
-        feedback = simplejson.loads(request.body)
-        mail_text = ('## This email is sent from the feedback form on the site. ##\n\n' +
-                     feedback['text'] + '\n' +
-                     '\n\n## end of user message ##\n' +
-                     '\nemail: ' + feedback['email'] +
-                     '\nuser_id: ' + str(request.user.id) +
-                     '\nusername: ' + request.user.username +
-                     '\npage: ' + feedback['page'] +
-                     '\nuser agent: ' + feedback['user_agent'])
-        if is_likely_worthless(feedback):
-            mail_from = settings.FEEDBACK_FROM_SPAM
-        else:
-            mail_from = settings.FEEDBACK_FROM
-        send_mail('autoskolachytre.cz feedback',
-                  mail_text,
-                  mail_from,
-                  [settings.FEEDBACK_TO],
-                  fail_silently=False)
-        # raise Exception(mail_text + settings.FEEDBACK_TO)
-        LOGGER.debug("email sent %s\n", mail_text)
-        response = {
-            'type': 'success',
-            'msg': "Děkujeme Vám za zaslané informace. Feedback od uživatelů je pro nás k nezaplacení.",
-        }
-    return HttpResponse(json.dumps(response))
