@@ -8,8 +8,8 @@
       compile : function(elem) {
         var emailAddress = elem.html();
         emailAddress = emailAddress.replace('{zavinac}', '@');
-        emailAddress = '<a href="mailto:' + emailAddress + 
-  '">' + emailAddress + 
+        emailAddress = '<a href="mailto:' + emailAddress +
+  '">' + emailAddress +
   '</a>';
         elem.html(emailAddress);
       }
@@ -20,7 +20,7 @@
     return {
       restrict : 'C',
       link : function($scope, elem, attrs) {
-        elem.tooltip({ 
+        elem.tooltip({
           'placement' : attrs.placement || 'bottom',
           'container' : attrs.container,
         });
@@ -100,7 +100,7 @@
   }])
 
   .directive('levelProgressBar',['user', '$timeout', function(user, $timeout) {
-    
+
     function getLevelInfo(points) {
       var levelEnd = 0;
       var levelRange = 30;
@@ -119,7 +119,7 @@
         levelRange += rangeIncrease;
         rangeIncrease += 10;
       }
-      
+
     }
     return {
       restrict : 'C',
@@ -147,15 +147,15 @@
     };
   }])
 
-  .directive('infiniteScroll', ["$window", "$document", "$", 
+  .directive('infiniteScroll', ["$window", "$document", "$",
       function ($window, $document, $) {
     return {
       link:function (scope, element, attrs) {
         var offset = parseInt(attrs.threshold) || 0;
         $document.unbind('scroll');
         $document.bind('scroll', function () {
-          if (scope.$eval(attrs.canLoad) && 
-              $($window).scrollTop() + $($window).height() >= 
+          if (scope.$eval(attrs.canLoad) &&
+              $($window).scrollTop() + $($window).height() >=
               $($document).height() - offset) {
             scope.$apply(attrs.infiniteScroll);
           }

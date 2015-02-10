@@ -46,7 +46,7 @@
 
         var ModalFeedbackCtrl = ['$scope', '$modalInstance', '$http', '$cookies',
               '$location', 'feedback', 'gettext',
-            function ($scope, $modalInstance, $http, $cookies, 
+            function ($scope, $modalInstance, $http, $cookies,
               $location, feedback, gettext) {
 
           $scope.feedback = feedback;
@@ -93,7 +93,7 @@
 
         var ModalRatingCtrl = ['$scope', '$modalInstance', '$http', '$cookies',
               '$location', 'gettext',
-            function ($scope, $modalInstance, $http, $cookies, 
+            function ($scope, $modalInstance, $http, $cookies,
               $location, gettext) {
 
           $scope.alerts = [];

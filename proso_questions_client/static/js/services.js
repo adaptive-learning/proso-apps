@@ -73,7 +73,7 @@
     return that;
   }])
 
-  .service('practice', ['$http', '$log', 'user', '$', '$routeParams', 'questions', 
+  .service('practice', ['$http', '$log', 'user', '$', '$routeParams', 'questions',
         'params', 'domain',
       function($http, $log, user, $, $routeParams, questions, params, domain) {
     var qIndex = 0;
@@ -227,7 +227,7 @@
         }
         var url = domain + '/user/initmobile';
         if (localStorage.username && localStorage.password) {
-          url += '?username=' + localStorage.username + 
+          url += '?username=' + localStorage.username +
             '&password=' + localStorage.password;
         }
         $http.get(url).success(function(data) {

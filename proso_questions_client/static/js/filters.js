@@ -111,7 +111,7 @@
       }
       var sum = layers.map(function(p){
         return p.count;
-      }).reduce(function(a, b) { 
+      }).reduce(function(a, b) {
         return a + b;
       });
       return sum;
@@ -119,7 +119,7 @@
   }])
 
   .filter('prettify', function () {
-    
+
     function syntaxHighlight(obj) {
       var json = JSON.stringify(obj, undefined, 4) || "";
       json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -141,7 +141,7 @@
         return '<span class="' + cls + '">' + match + '</span>';
       });
     }
-    
+
     return syntaxHighlight;
   });
 }());
