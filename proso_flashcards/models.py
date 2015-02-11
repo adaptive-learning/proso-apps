@@ -8,6 +8,33 @@ from django.utils.text import slugify
 from proso_models.models import get_environment
 
 
+class ContextManager(models.Manager):
+
+    def from_identifier(self, identifier, language):
+        try:
+            context = self.get(identifier=identifier, language=language)
+        except Context.DoesNotExist:
+            context = Context(identifier=identifier, language=language)
+        return context
+
+
+class Context(models.Model):
+
+    identifier = models.SlugField(unique=True, null=True, blank=True, default=None)
+    item = models.ForeignKey(Item, null=True, blank=True, default=None)
+    name = models.CharField(max_length=50)
+    language = models.CharField(max_length=50)
+    file = models.ImageField(upload_to='context/', max_length=255)
+
+    objects = ContextManager()
+
+    def __str__(self):
+        return str(self.to_json())
+
+    def to_json(self, nested=False):
+        return {'name': self.name, 'url': self.file.url, 'language': self.language}
+
+
 class FlashcardManager(models.Manager):
 
     def reset(self, flashcards):
@@ -39,6 +66,7 @@ class Flashcard(models.Model):
     reverse = models.TextField()
     obverse = models.TextField()
     type = models.CharField(max_length=50, null=True, blank=True, default=None)
+    context = models.ForeignKey(Context, null=True, blank=True, default=None)
 
     objects = FlashcardManager()
 
@@ -57,6 +85,7 @@ class Flashcard(models.Model):
         }
         if not nested:
             result['categories'] = map(lambda x: x.to_json(nested=True), self.category_set.all())
+            result['context'] = self.context.to_json(nested=True) if self.context else None
         return result
 
 
@@ -73,6 +102,7 @@ class CategoryManager(models.Manager):
 class Category(models.Model):
 
     identifier = models.SlugField(null=True, blank=True, default=None)
+    context = models.ForeignKey(Context, null=True, blank=True, default=None)
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=20, null=True, blank=True, default=None)
     language = models.CharField(max_length=50)
@@ -99,6 +129,7 @@ class Category(models.Model):
         if not nested:
             result['subcategories'] = map(
                 lambda x: x.to_json(nested=True), self.subcategories.all())
+            result['context'] = self.context.to_json(nested=True) if self.context else None
         return result
 
 
@@ -133,6 +164,7 @@ class DecoratedAnswer(models.Model):
         }
 
 
+@receiver(pre_save, sender=Context)
 @receiver(pre_save, sender=Flashcard)
 @receiver(pre_save, sender=Category)
 def add_item(sender, instance, **kwargs):
