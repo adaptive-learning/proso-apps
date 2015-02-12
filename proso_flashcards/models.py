@@ -91,9 +91,18 @@ class Flashcard(models.Model):
 
 class CategoryManager(models.Manager):
 
-    def from_identifier(self, identifier, language):
+    def reset(self, category):
+        for subcategory in category.subcategories.all():
+            category.subcategories.remove(subcategory)
+        category.save()
+
+    def from_identifier(self, identifier, language, reset=False):
         try:
-            category = self.get(identifier=identifier, language=language)
+            if reset:
+                category = self.prefetch_related('subcategories').get(identifier=identifier, language=language)
+                self.reset(category)
+            else:
+                category = self.get(identifier=identifier, language=language)
         except Category.DoesNotExist:
             category = Category(identifier=identifier, language=language)
         return category
