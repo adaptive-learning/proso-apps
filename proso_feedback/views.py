@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.template.loader import render_to_string
 from django.http import HttpResponse
