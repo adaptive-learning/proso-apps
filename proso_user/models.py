@@ -13,6 +13,28 @@ def get_content_hash(content):
     return hashlib.sha1(content).hexdigest()
 
 
+class UserProfile(models.Model):
+
+    user = models.OneToOneField(User)
+    send_emails = models.BooleanField(default=True)
+    public = models.BooleanField(default=False)
+
+    def to_json(self, nested=False):
+        return {
+            'id': self.id,
+            'object_type': 'user_profile',
+            'send_emails': self.send_emails,
+            'public': self.public,
+            'user': {
+                'id': self.user.id,
+                'object_type': 'user',
+                'first_name': self.user.first_name,
+                'last_name': self.user.last_name,
+                'username': self.user.username
+            }
+        }
+
+
 class HttpUserAgentManager(models.Manager):
 
     def from_content(self, content):

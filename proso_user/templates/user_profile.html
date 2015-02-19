@@ -1,0 +1,31 @@
+{% extends 'user_base.html' %}
+
+{% load jsonify %}
+
+{% block header_block %}{% endblock %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <h2>Emulate POST request</h2>
+    <form class="pure-form" action="" method="post" enctype='application/json'>
+        <fieldset>
+            <legend>Profile</legend>
+            <input type="text" name="send_emails" placeholder="Send Emails">
+            <input type="text" name="public" placeholder="Public">
+        </fieldset>
+        <fieldset>
+            <legend>User</legend>
+            <input type="text" name="user[first_name]" placeholder="First Name">
+            <input type="text" name="user[last_name]" placeholder="Last Name">
+            <input type="password" name="user[password]">
+            <input type="password" name="user[password_check]">
+        </fieldset>
+        <button type="submit" class="pure-button pure-button-primary">Save</button>
+        {% csrf_token %}
+    </form>
+    <h2>JSON object</h2>
+    {{ json|obj2richjson }}
+{% endblock %}
