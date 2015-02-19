@@ -14,6 +14,7 @@ import os.path
 import proso.util
 from decorator import cache_environment_for_item
 from collections import defaultdict
+from django.db.models import F
 
 
 # This is hack to emulate TRUE value on both psql and sqlite
@@ -411,6 +412,15 @@ class Item(models.Model):
         app_label = 'proso_models'
 
 
+class AnswerManager(models.Manager):
+
+    def get_number_of_answers(self, user_id):
+        return get_environment().number_of_answers(user=user_id)
+
+    def get_number_of_correct_answers(self, user_id):
+        return self.filter(user_id=user_id, item_asked__id=F('item_answered__id')).count()
+
+
 class Answer(models.Model):
 
     user = models.ForeignKey(User)
@@ -427,6 +437,8 @@ class Answer(models.Model):
     response_time = models.IntegerField(null=False, blank=False)
     ab_values = models.ManyToManyField(ABValue)
     ab_values_initialized = models.BooleanField(default=False)
+
+    objects = AnswerManager()
 
     class Meta:
         app_label = 'proso_models'

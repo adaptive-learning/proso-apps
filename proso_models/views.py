@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponseBadRequest
 from proso.django.request import is_time_overriden, get_time, get_user_id
 from proso.django.response import render_json
-from models import get_environment, get_predictive_model
+from models import get_environment, get_predictive_model, Answer
 import numpy
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
@@ -10,6 +10,15 @@ import proso_common.json_enrich as common_json_enrich
 
 def home(request):
     return render(request, 'models_home.html', {})
+
+
+def status(request):
+    user_id = get_user_id(request)
+    return render_json(request, _to_json(request, {
+        'object_type': 'status',
+        'answers_total': Answer.objects.get_number_of_answers(user_id),
+        'answers_correct': Answer.objects.get_number_of_correct_answers(user_id)
+    }), template='models_json.html')
 
 
 def model(request):

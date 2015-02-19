@@ -1,4 +1,7 @@
 {% extends 'common_base.html' %}
 {% block menu_heading_block %}Models{% endblock %}
 {% block menu_list_block %}
+	<ul>
+		<li><a href="{% url 'models_status' %}?html=True">Status</a></li>
+	</ul>
 {% endblock %}

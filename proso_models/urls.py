@@ -6,4 +6,5 @@ urlpatterns = patterns(
     url(r'^read/(?P<key>[\w_]+)', 'read', name='read'),
     url(r'^audit/(?P<key>[\w_]+)', 'audit', name='audit'),
     url(r'^model/', 'model', name='model'),
+    url(r'^status/', 'status', name='models_status'),
 )
