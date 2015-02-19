@@ -6,12 +6,14 @@ from models import get_environment, get_predictive_model, Answer
 import numpy
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
+from lazysignup.decorators import allow_lazy_user
 
 
 def home(request):
     return render(request, 'models_home.html', {})
 
 
+@allow_lazy_user
 def status(request):
     user_id = get_user_id(request)
     return render_json(request, _to_json(request, {
@@ -21,6 +23,7 @@ def status(request):
     }), template='models_json.html')
 
 
+@allow_lazy_user
 def model(request):
     if 'items' not in request.GET:
         return HttpResponseBadRequest('GET parameter "items" has to be specified')
@@ -41,6 +44,7 @@ def model(request):
     return render_json(request, _to_json(request, result), template='models_json.html')
 
 
+@allow_lazy_user
 def audit(request, key):
     if 'user' in request.GET:
         user = get_user_id(request)
@@ -71,6 +75,7 @@ def audit(request, key):
     return render_json(request, map(_to_json_audit, values), template='models_json.html')
 
 
+@allow_lazy_user
 def read(request, key):
     if 'user' in request.GET:
         user = get_user_id(request)

@@ -8,6 +8,7 @@ from logging import getLogger
 from django.conf import settings
 from models import Rating
 from proso_user.models import Session
+from lazysignup.decorators import allow_lazy_user
 
 
 LOGGER = getLogger(__name__)
@@ -21,6 +22,7 @@ def home(request):
     return render(request, 'feedback_home.html', {})
 
 
+@allow_lazy_user
 def feedback(request):
     """
     Send feedback to the authors of the system.
@@ -73,6 +75,7 @@ def feedback(request):
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 
 
+@allow_lazy_user
 def rating(request):
     """
     Rate the current practice.
