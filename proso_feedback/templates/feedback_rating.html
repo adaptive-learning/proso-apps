@@ -1,0 +1,25 @@
+{% extends 'feedback_base.html' %}
+
+{% load jsonify %}
+
+{% block header_block %}{% endblock %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <h2>Emulate POST request</h2>
+    <form class="pure-form pure-form-stacked" action="" method="post" enctype='application/json'>
+        <fieldset>
+            <legend>Rating</legend>
+            <select name="value">
+                <option value="1">Too Easy</option>
+                <option value="2">Appropriate</option>
+                <option value="3">Too Difficult</option>
+            </select>
+            <button type="submit" class="pure-button pure-button-primary">Rate it</button>
+        </fieldset>
+        {% csrf_token %}
+    </form>
+{% endblock %}

@@ -5,7 +5,8 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns(
-    '',
-    url(r'^$', 'proso_feedback.views.feedback', name='feedback'),
-    url(r'^rating$', 'proso_feedback.views.rating', name='rating'),
+    'proso_feedback.views',
+    url(r'^home$', 'home', name='home'),
+    url(r'^feedback$', 'feedback', name='feedback'),
+    url(r'^rating$', 'rating', name='rating'),
 )

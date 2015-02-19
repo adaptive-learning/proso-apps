@@ -1,0 +1,8 @@
+{% extends 'common_base.html' %}
+{% block menu_heading_block %}User{% endblock %}
+{% block menu_list_block %}
+	<ul>
+		<li><a href="{% url 'feedback' %}?html=True">Feedback</a></li>
+		<li><a href="{% url 'rating' %}?html=True">Rating</a></li>
+	</ul>
+{% endblock %}

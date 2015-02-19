@@ -1,0 +1,24 @@
+{% extends 'feedback_base.html' %}
+
+{% load jsonify %}
+
+{% block header_block %}{% endblock %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <h2>Emulate POST request</h2>
+    <form class="pure-form pure-form-stacked" action="" method="post" enctype='application/json'>
+        <fieldset>
+            <legend>Feedback</legend>
+            <input type="text" name="username" placeholder="User Name">
+            <input type="text" name="email" placeholder="E-mail">
+            <input type="text" name="user_agent" placeholder="User Agent">
+            <textarea name="text" cols="60" rows="10"></textarea>
+            <button type="submit" class="pure-button pure-button-primary">Send</button>
+        </fieldset>
+        {% csrf_token %}
+    </form>
+{% endblock %}
