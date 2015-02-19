@@ -1,4 +1,60 @@
 import datetime
+import json as simplejson
+import re
+
+
+def json_body(body):
+    try:
+        return simplejson.loads(body)
+    except ValueError:
+        return parse_common_body_to_json(body)
+
+
+def parse_common_body_to_json(body):
+    body = body.replace('%5B', '[').replace('%5D', ']')
+    result = {}
+    pairs = map(lambda x: x[0], re.findall(r'(.*?[^\\])(\&|$)', body))
+    for pair in pairs:
+        key, value = pair.split('=')
+        result = _store_body_value(key, value, result)
+    return result
+
+
+def _store_body_value(key_string, value, result):
+    if value.isdigit():
+        value = int(value)
+    keys = map(lambda x: x.strip(']'), re.split('\[', key_string))
+    old = result
+    for i in range(len(keys)):
+        k = keys[i]
+        if k.isdigit():
+            k = int(k)
+        if isinstance(old, dict):
+            new = old.get(k)
+        elif k <= len(old) - 1:
+            new = old[k]
+        else:
+            new = None
+        if new is None:
+            if i == len(keys) - 1:
+                new = value
+            else:
+                if keys[i+1] == '0':
+                    new = []
+                else:
+                    new = {}
+            if isinstance(k, int):
+                old.append(new)
+            else:
+                old[k] = new
+        else:
+            if i == len(keys) - 1:
+                if not isinstance(new, list):
+                    new = [new]
+                    old[k] = new
+                new.append(value)
+        old = new
+    return result
 
 
 def is_user_id_overriden(request):
