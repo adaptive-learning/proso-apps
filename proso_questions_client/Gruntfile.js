@@ -28,7 +28,9 @@ module.exports = function(grunt) {
           'static/js/directives.js',
           'static/dist/js/templates.js',
           '../proso_feedback/static/js/app.js',
-          '../proso_feedback/static/dist/js/templates.js',
+          '../proso_feedback/static/js/app.js',
+          '../proso_user/static/js/app.js',
+          '../proso_user/static/dist/js/templates.js',
         ],
         dest: 'static/dist/js/<%= pkg.name %>.min.js'
       },
@@ -57,6 +59,16 @@ module.exports = function(grunt) {
         options:    {
           htmlmin:  { collapseWhitespace: true, collapseBooleanAttributes: true }
         }
+      },
+      'proso.user':          {
+        cwd: '../proso_user',
+        src: [
+          'static/tpl/*.html',
+        ],
+        dest: '../proso_user/static/dist/js/templates.js',
+        options:    {
+          htmlmin:  { collapseWhitespace: true, collapseBooleanAttributes: true }
+        }
       }
     },
     uglify: {
@@ -74,6 +86,8 @@ module.exports = function(grunt) {
           'static/dist/js/templates.js',
           '../proso_feedback/static/js/app.js',
           '../proso_feedback/static/dist/js/templates.js',
+          '../proso_user/static/js/app.js',
+          '../proso_user/static/dist/js/templates.js',
         ],
         dest: 'static/dist/js/<%= pkg.name %>.min.js'
       },
@@ -152,11 +166,19 @@ module.exports = function(grunt) {
         tasks: ['string-replace'],
       },
       templates: {
-        files: ['../proso_feedback/static/tpl/*.html', 'static/tpl/*.html'],
+        files: [
+          '../proso_feedback/static/tpl/*.html',
+          '../proso_user/static/tpl/*.html', 
+          'static/tpl/*.html'
+        ],
         tasks: ['templates', 'concat:app'],
       },
       jsapp: {
-        files: ['../proso_feedback/static/js/*.js', 'static/js/*.js'],
+        files: [
+          '../proso_feedback/static/js/*.js',
+          '../proso_user/static/js/*.js',
+          'static/js/*.js'
+          ],
         tasks: ['concat:app'],
       },
       jslibs: {

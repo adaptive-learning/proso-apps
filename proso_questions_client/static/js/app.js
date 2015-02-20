@@ -9,19 +9,21 @@
     'adaptivePractice.services',
     'angulartics',
     'angulartics.google.analytics',
+    'googleExperiments',
     'ngAnimate',
     'ngMaterial',
     'ngRoute',
     'ngSanitize',
     'proso.feedback',
+    'proso.user',
     'timer',
     'ui.bootstrap',
   ])
 
   .value('$', jQuery)
 
-  .config(['$routeProvider', '$locationProvider', 'domain',
-      function($routeProvider, $locationProvider, domain) {
+  .config(['$routeProvider', '$locationProvider', 'domain', 'googleExperimentsProvider',
+      function($routeProvider, $locationProvider, domain, googleExperimentsProvider) {
     $routeProvider.when('/', {
     }).when('/login/:somepath/', {
       controller : 'ReloadController',
@@ -56,6 +58,9 @@
       // TODO: this desn't work in latest Angular
       //$locationProvider.html5Mode(true);
     }
+      googleExperimentsProvider.configure({
+        experimentId: ''
+      });
   }])
 
   .run(['$analytics', function($analytics) {

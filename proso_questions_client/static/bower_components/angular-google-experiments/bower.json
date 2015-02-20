@@ -1,0 +1,28 @@
+{
+  "name": "angular-google-experiments",
+  "version": "0.0.1",
+  "homepage": "https://github.com/GoAugust/angular-google-experiments",
+  "authors": [
+    "Rudolf Olah <omouse@gmail.com>"
+  ],
+  "description": "Angular module that interfaces with Google Analytics Experiments, change your content dynamically.",
+  "main": "googleExperiments.min.js",
+  "keywords": [
+    "angular",
+    "google",
+    "analytics",
+    "content",
+    "experiments"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.2.16"
+  }
+}

@@ -44,32 +44,17 @@
             </a>
           </span>
           <span class="pull-right ng-cloak">
-            <i class="dropdown pull-right" ng-show="user.username === ''" >
+            <i class="dropdown pull-right" ng-if="!user.username" >
               <a href=""
-                 role="button"
-                 class="dropdown-toggle atooltip drop-login"
+                 class="atooltip drop-login"
                  title="Přihlašte se jednoduše přes Google nebo Facebook, aby si systém váše znalosti pamatoval i příště."
+                 login-button
                  container="body">
                  <i class="glyphicon glyphicon-log-in"></i>
               </a>
-              <ul class="dropdown-menu login" role="menu" aria-labelledby="drop-login">
-                <li class="dropdown-header">
-                  <span>Přihlásit se</span>
-                </li>
-                <li>
-                  <a class="btn btn-danger btn-lg btn-block" href="/login/google-oauth2/">
-                    <i class="social-google"></i> přes Google
-                  </a>
-                </li>
-                <li>
-                  <a class="btn btn-primary btn-lg btn-block" href="/login/facebook/">
-                    <i class="social-facebook"></i> přes Facebook
-                  </a>
-                </li>
-              </ul>
             </i>
-            <i class="dropdown pull-right" ng-show="user.username !== ''"
-                ng-init="initUser('{{user.username}}',0)">
+            <i class="dropdown pull-right" ng-show="user.username"
+                ng-init='initUser({{userJson | safe }})'>
               <a id="drop1" href="" role="button" class="dropdown-toggle" >
                  <i class="glyphicon glyphicon-user"></i>
                </a>

@@ -21,8 +21,8 @@
       $rootScope.user = data;
     };
 
-    $scope.initUser = function (username, points) {
-      $rootScope.user = user.initUser(username, points);
+    $scope.initUser = function (userObj) {
+      $rootScope.user = user.initUser(userObj);
     };
 
     $rootScope.logout = function() {

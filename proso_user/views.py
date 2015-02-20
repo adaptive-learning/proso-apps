@@ -8,6 +8,8 @@ from lazysignup.decorators import allow_lazy_user
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.contrib.auth.models import User
+from django.middleware.csrf import get_token
+from django.utils import simplejson
 
 
 def home(request):
@@ -195,6 +197,38 @@ def session(request):
         return HttpResponse('ok', status=202)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
+
+
+def initmobile_view(request):
+    """
+    Create lazy user with a password. Used from the Android app.
+    Also returns csrf token.
+
+    GET parameters:
+        username:
+            user's name
+        password:
+            user's password
+    """
+    if 'username' in request.GET and 'password' in request.GET:
+        username = request.GET['username']
+        password = request.GET['password']
+        user = auth.authenticate(username=username, password=password)
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+    else:
+        user = request.user
+    response = {
+        'username': user.username,
+        'csrftoken': get_token(request),
+    }
+    if not user.has_usable_password():
+        password = User.objects.make_random_password()
+        user.set_password(password)
+        user.save()
+        response['password'] = password
+    return HttpResponse(simplejson.dumps(response))
 
 
 def _to_json(request, value):

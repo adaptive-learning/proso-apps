@@ -1,9 +1,9 @@
 (function() {
   'use strict';
   /* Controllers */
-  angular.module('proso.auth', ['ui.bootstrap'])
+  angular.module('proso.user', ['ui.bootstrap'])
 
-  .value('gettext', gettext)
+  .value('gettext', window.gettext || function(x){return x;})
 
   .controller('AppUser', ['$scope', 'user', '$routeParams', '$location', 
       '$timeout', 'gettext',
@@ -49,34 +49,32 @@
     };
   }])
 
-  .factory('user', ['$http', '$cookies', 'events', '$routeParams', '$timeout', 'loginModal',
+  .factory('user', ['$http', '$cookies', 'events', '$routeParams', '$timeout', 'loginModal','domain',
       function($http, $cookies, events, $routeParams, $timeout, loginModal) {
 
-    var user;
+    var user = {};
 
     function updateUser(data) {
-      user.points = data.points;
-      user.answered_count = data.answered_count;
-      user.email = data.email;
-      user.first_name = data.first_name;
-      user.last_name = data.last_name;
-      user.send_emails = data.send_emails;
+      angular.extend(user, data.data.user);
     }
 
     var that = {
       initUser : function(userObject) {
-        user = userObject;
-        user.getLevelInfo = function() {
-          return that.getLevelInfo(user);
-        };
+        angular.extend(user, userObject);
+        angular.extend(user, {
+          getLevelInfo : function() {
+            return that.getLevelInfo(user);
+          }
+        });
         
         $timeout(function() {
+          // TODO: this doesn't work
           if ($routeParams.requirelogin) {
             loginModal.open(user);
           }
         }, 100);
 
-        $http.get('/user/').success(updateUser);
+        $http.get('/user/profile').success(updateUser);
         return user;
       },
       getUser : function() {
@@ -84,7 +82,8 @@
       },
       logout : function(callback) {
         $http.get('/user/logout/').success(callback);
-        this.initUser('', 0);
+        user = {};
+        this.initUser({});
         events.emit('userUpdated', user);
         return user;
       },
@@ -102,7 +101,7 @@
             success : function(fn) {fn(user);},
           };
         } else {
-          return $http.get('/user/' + name + '/');
+          return $http.get('/user/profile/' + name + '/');
         }
       },
       getLevelInfo : function(user) {
@@ -132,7 +131,6 @@
       signup : function(userObject) {
         $http.defaults.headers.post['X-CSRFToken'] = $cookies.csrftoken;
         var promise = $http.post('/user/signup/', userObject);
-        promise.success(updateUser);
         return promise;
       },
       login : function(credentials) {
@@ -141,6 +139,27 @@
         promise.success(updateUser);
         return promise;
       },
+      getCsrftoken : function() {
+        return user.csrftoken || $cookies.csrftoken;
+      },
+      initCsfrtoken : function() {
+        if (!domain || that.getUser().csrftoken) {
+          return;
+        }
+        var url = domain + '/user/initmobile';
+        if (localStorage.username && localStorage.password) {
+          url += '?username=' + localStorage.username +
+            '&password=' + localStorage.password;
+        }
+        $http.get(url).success(function(data) {
+          that.initUser(data.username, 0);
+          user.csrftoken = data.csrftoken;
+          if (data.password) {
+            localStorage.username = data.username;
+            localStorage.password = data.password;
+          }
+        });
+      }
     };
     return that;
   }])
@@ -212,12 +231,12 @@
 
       $scope.signup = function() {
         $scope.loading = true;
-        user.signup($scope.registerForm).success(function(user){
+        user.signup($scope.registerForm).success(function(data){
           $scope.loading = false;
 
           $scope.registerForm = {};
           $scope.success = true;
-          $rootScope.user = user;
+          $rootScope.user = user.initUser();
           $analytics.eventTrack('click', {
             category: 'login',
             label: '/login/email',
