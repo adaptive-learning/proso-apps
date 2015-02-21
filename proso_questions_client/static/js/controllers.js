@@ -47,8 +47,12 @@
       }
       $scope.loading = true;
       questions.get($scope.categoryId, $scope.page).
-        error(function(){
-          $scope.error = "V aplikaci bohužel nastala chyba.";
+        error(function(response){
+          if (!response || response.status === 0) {
+            $scope.error = "Aplikaci chybí připojení k internetu.";
+          } else {
+            $scope.error = "V aplikaci bohužel nastala chyba.";
+          }
           $scope.loading = false;
         }).
         success(function(data) {
@@ -128,8 +132,12 @@
 
     practice.first($scope.categoryId, function(q) {
       setQuestion(q);
-    }).error(function(){
-      $scope.error = "V aplikaci bohužel nastala chyba.";
+    }).error(function(response){
+        if (!response || response.status === 0) {
+          $scope.error = "Aplikaci chybí připojení k internetu.";
+        } else {
+          $scope.error = "V aplikaci bohužel nastala chyba.";
+        }
     });
   }])
 
@@ -233,8 +241,13 @@
         });
         $scope.test = data.test;
         $scope.activateQuestion(0);
-      }).error(function(){
-        $scope.error = "V aplikaci bohužel nastala chyba.";
+    console.log('test scope', $scope);
+      }).error(function(response){
+        if (!response || response.status === 0) {
+          $scope.error = "Aplikaci chybí připojení k internetu.";
+        } else {
+          $scope.error = "V aplikaci bohužel nastala chyba.";
+        }
       });
     };
   }])
