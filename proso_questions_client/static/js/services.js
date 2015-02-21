@@ -62,8 +62,8 @@
         $http.get(predictionsUrl, options).success(function(data) {
           for (var i = 0; i < data.data.predictions.length; i++) {
             for (var j = 0; j < questions.length; j++) {
-              if (questions[j].item_id == data.data.predictions[i].item_id ) {
-                questions[j][predictionPropertyName] = data.data.predictions[i].prediction;
+              if (questions[j].item_id == data.data.items[i].item_id ) {
+                questions[j][predictionPropertyName] = data.data.items[i].prediction;
               }
             }
           }

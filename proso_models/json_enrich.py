@@ -2,6 +2,10 @@ from proso.django.response import pass_get_parameters
 from django.core.urlresolvers import reverse
 from proso.django.request import is_time_overriden, get_time, get_user_id
 import models
+import numpy
+
+
+MASTERY_TRESHOLD=0.95
 
 
 def prediction(request, json_list, nested):
@@ -15,7 +19,43 @@ def prediction(request, json_list, nested):
         time)
     for object_json, prediction in zip(json_list, predictions):
         object_json['prediction'] = float("{0:.2f}".format(prediction))
+        object_json['mastered'] = prediction >= MASTERY_TRESHOLD
     return json_list
+
+
+def number_of_answers(request, json_list, nested):
+    object_item_ids = map(lambda x: x['item_id'], json_list)
+    user = get_user_id(request)
+    number_of_answers = _environment(request).number_of_answers_more_items(
+        user=user, items=object_item_ids)
+    for object_json, num in zip(json_list, number_of_answers):
+        object_json['number_of_answers'] = num
+        object_json['covered'] = num > 0
+    return json_list
+
+
+def number_of_correct_answers(request, json_list, nested):
+    object_item_ids = map(lambda x: x['item_id'], json_list)
+    user = get_user_id(request)
+    number_of_correct_answers = models.Answer.objects.get_number_of_correct_answers(
+        user_id=user, item_ids=object_item_ids)
+    for object_json, num in zip(json_list, number_of_correct_answers):
+        object_json['number_of_correct_answers'] = num
+        object_json['covered_correctly'] = num > 0
+    return json_list
+
+
+def group_item_keys(request, json, nested, key, aggr_fun=numpy.mean):
+    if 'items' not in json:
+        return json
+    collected = map(lambda item: item[key], json['items'])
+    aggregated = aggr_fun(collected)
+    if isinstance(aggregated, int):
+        show = aggregated
+    else:
+        show = float("{0:.2f}".format(aggr_fun(collected)))
+    json['group_' + key] = show
+    return json
 
 
 def audit_url(request, json, nested):

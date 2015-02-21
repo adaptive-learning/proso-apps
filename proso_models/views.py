@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponseBadRequest
 from proso.django.request import is_time_overriden, get_time, get_user_id
 from proso.django.response import render_json
-from models import get_environment, get_predictive_model, Answer
+from models import get_environment, Answer, Item
 import numpy
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
@@ -27,20 +27,18 @@ def status(request):
 def model(request):
     if 'items' not in request.GET:
         return HttpResponseBadRequest('GET parameter "items" has to be specified')
-    user = get_user_id(request)
-    time = get_time(request)
-    environment = get_environment()
-    predictive_model = get_predictive_model()
-    if is_time_overriden(request):
-        environment.shift_time(time)
-    items = map(int, request.GET['items'].split(','))
-    preds = predictive_model.predict_more_items(environment, user, items, time)
-    result = {}
-    result['object_type'] = 'model'
-    result['predictions'] = map(
-        lambda (i, p): {'item_id': i, 'prediction': "{0:.2f}".format(p)},
-        zip(items, preds))
-    result['group_prediction'] = "{0:.2f}".format(numpy.mean(preds))
+    item_ids = list(set(map(int, request.GET['items'].split(','))))
+    items = Item.objects.filter(id__in=item_ids).all()
+    if len(items) != len(item_ids):
+        found_item_ids = map(lambda item: item.id, items)
+        not_found_item_ids = set(item_ids) - set(found_item_ids)
+        return render_json(request, {
+            'error': 'There are no items with the following ids: %s' % list(not_found_item_ids)
+        }, template='models_json.html', status=404)
+    result = {
+        'object_type': 'model',
+        'items': map(lambda item: item.to_json(), items)
+    }
     return render_json(request, _to_json(request, result), template='models_json.html')
 
 
@@ -110,6 +108,22 @@ def read(request, key):
 
 def _to_json(request, value):
     json = value
-    for enricher in [json_enrich.audit_url]:
+    group_enricher = lambda key, aggr_fun: (lambda r, j, nested: json_enrich.group_item_keys(r, j, nested, key, aggr_fun))
+    common_json_enrich.enrich_by_object_type(
+        request, json, json_enrich.prediction, ['item'])
+    common_json_enrich.enrich_by_object_type(
+        request, json, json_enrich.number_of_answers, ['item'])
+    common_json_enrich.enrich_by_object_type(
+        request, json, json_enrich.number_of_correct_answers, ['item'])
+    enrichers = [
+        json_enrich.audit_url,
+        group_enricher('prediction', numpy.mean),
+        group_enricher('mastered', numpy.mean),
+        group_enricher('number_of_answers', sum),
+        group_enricher('covered', numpy.mean),
+        group_enricher('number_of_correct_answers', sum),
+        group_enricher('covered_correctly', numpy.mean)
+    ]
+    for enricher in enrichers:
         common_json_enrich.enrich(request, json, enricher)
     return json

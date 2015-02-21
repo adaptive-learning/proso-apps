@@ -408,6 +408,13 @@ class DatabaseEnvironment(CommonEnvironment):
 class Item(models.Model):
     pass
 
+    def to_json(self, nested=False):
+        return {
+            'object_type': 'item',
+            'item_id': self.id,
+            'id': self.id
+        }
+
     class Meta:
         app_label = 'proso_models'
 
@@ -417,8 +424,23 @@ class AnswerManager(models.Manager):
     def get_number_of_answers(self, user_id):
         return get_environment().number_of_answers(user=user_id)
 
-    def get_number_of_correct_answers(self, user_id):
-        return self.filter(user_id=user_id, item_asked__id=F('item_answered__id')).count()
+    def get_number_of_correct_answers(self, user_id, item_ids=None):
+        # TODO move it to environment (and make it working with time shifting)
+        if item_ids is None:
+            return self.filter(user_id=user_id, item_asked__id=F('item_answered__id')).count()
+        else:
+            with closing(connection.cursor()) as cursor:
+                cursor.execute(
+                    '''
+                    SELECT item_asked_id, COUNT(id)
+                    FROM proso_models_answer
+                    WHERE item_asked_id = item_answered_id
+                    AND user_id = %s
+                    AND item_asked_id IN (''' + ','.join(map(str, item_ids)) + ''' )
+                    GROUP BY item_asked_id
+                    ''', [user_id])
+                nums = dict(cursor.fetchall())
+                return map(lambda i: nums.get(i, 0), item_ids)
 
 
 class Answer(models.Model):
