@@ -18,8 +18,8 @@ def status(request):
     user_id = get_user_id(request)
     return render_json(request, _to_json(request, {
         'object_type': 'status',
-        'answers_total': Answer.objects.get_number_of_answers(user_id),
-        'answers_correct': Answer.objects.get_number_of_correct_answers(user_id)
+        'number_of_answers': Answer.objects.get_number_of_answers(user_id),
+        'number_of_correct_answers': Answer.objects.get_number_of_correct_answers(user_id)
     }), template='models_json.html')
 
 
