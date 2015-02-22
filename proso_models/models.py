@@ -45,7 +45,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
     def flush(self):
         to_skip = [
             self.NUMBER_OF_ANSWERS, self.NUMBER_OF_FIRST_ANSWERS,
-            self.LAST_ANSWER_TIME, self.LAST_CORRECTNESS
+            self.LAST_ANSWER_TIME, self.LAST_CORRECTNESS, self.NUMBER_OF_CORRECT_ANSWERS
         ]
         filename_audit = os.path.join(settings.DATA_DIR, 'environment_flush_audit.csv')
         filename_variable = os.path.join(settings.DATA_DIR, 'environment_flush_variable.csv')
