@@ -93,11 +93,19 @@ class CommonEnvironment(Environment):
         pass
 
     @abc.abstractmethod
+    def number_of_correct_answers(self, user=None, item=None):
+        pass
+
+    @abc.abstractmethod
     def number_of_first_answers(self, user=None, item=None):
         pass
 
     @abc.abstractmethod
     def number_of_answers_more_items(self, items, user=None):
+        pass
+
+    @abc.abstractmethod
+    def number_of_correct_answers(self, user=None, item=None):
         pass
 
     @abc.abstractmethod
@@ -128,6 +136,7 @@ class CommonEnvironment(Environment):
 class InMemoryEnvironment(CommonEnvironment):
 
     NUMBER_OF_ANSWERS = 'number_of_answers'
+    NUMBER_OF_CORRECT_ANSWERS = 'number_of_correct_answers'
     NUMBER_OF_FIRST_ANSWERS = 'number_of_first_answers'
     LAST_ANSWER_TIME = 'last_answer_time'
     LAST_CORRECTNESS = 'last_correctness'
@@ -150,6 +159,8 @@ class InMemoryEnvironment(CommonEnvironment):
         if self.number_of_answers(user=user, item=item) == 0:
             update_all(self.NUMBER_OF_FIRST_ANSWERS, 0, increment)
         update_all(self.NUMBER_OF_ANSWERS, 0, increment)
+        if asked == answered:
+            update_all(self.NUMBER_OF_CORRECT_ANSWERS, 0, increment)
         update_all(self.LAST_ANSWER_TIME, time, lambda x: time)
         self.write(self.LAST_CORRECTNESS, asked == answered, user=user)
         if asked != answered and answered is not None:
@@ -202,6 +213,9 @@ class InMemoryEnvironment(CommonEnvironment):
     def number_of_answers(self, user=None, item=None):
         return self.read(self.NUMBER_OF_ANSWERS, user=user, item=item, default=0)
 
+    def number_of_correct_answers(self, user=None, item=None):
+        return self.read(self.NUMBER_OF_CORRECT_ANSWERS, user=user, item=item, default=0)
+
     def number_of_first_answers(self, user=None, item=None):
         return self.read(self.NUMBER_OF_FIRST_ANSWERS, user=user, item=item, default=0)
 
@@ -210,6 +224,9 @@ class InMemoryEnvironment(CommonEnvironment):
 
     def number_of_answers_more_items(self, items, user=None):
         return self.read_more_items(self.NUMBER_OF_ANSWERS, items, user=user, default=0)
+
+    def number_of_correct_answers_more_items(self, items, user=None):
+        return self.read_more_items(self.NUMBER_OF_CORRECT_ANSWERS, items, user=user, default=0)
 
     def number_of_first_answers_more_items(self, items, user=None):
         return self.read_more_items(self.NUMBER_OF_FIRST_ANSWERS, items, user=user, default=0)
@@ -336,6 +353,27 @@ class TestCommonEnvironment(TestEnvironment):
         self.assertEqual(1, env.number_of_answers(user=user_1, item=items[0]))
         self.assertEqual(2, env.number_of_answers(item=items[0]))
         self.assertEqual([2 for i in items], env.number_of_answers_more_items(items))
+
+    def test_number_of_correct_answers(self):
+        env = self.generate_environment()
+        user_1 = self.generate_user()
+        user_2 = self.generate_user()
+        items = [self.generate_item() for i in range(10)]
+        self.assertEqual(0, env.number_of_correct_answers())
+        self.assertEqual(0, env.number_of_correct_answers(user=user_1))
+        self.assertEqual(0, env.number_of_correct_answers(user=user_1, item=items[0]))
+        self.assertEqual(0, env.number_of_correct_answers(item=items[0]))
+        self.assertEqual([0 for i in items], env.number_of_first_answers_more_items(items))
+        for u in [user_1, user_2]:
+            for i in items:
+                for j in range(10):
+                    env.process_answer(u, i, i, i if j < 5 else i + 1, datetime.datetime.now(), 1000)
+        self.assertEqual(100, env.number_of_correct_answers())
+        self.assertEqual(50, env.number_of_correct_answers(user=user_1))
+        self.assertEqual(5, env.number_of_correct_answers(user=user_1, item=items[0]))
+        self.assertEqual(10, env.number_of_correct_answers(item=items[0]))
+        self.assertEqual([10 for i in items], env.number_of_correct_answers_more_items(items))
+
 
     def test_number_of_first_answers(self):
         env = self.generate_environment()

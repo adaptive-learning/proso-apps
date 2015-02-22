@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponseBadRequest
 from proso.django.request import is_time_overriden, get_time, get_user_id
 from proso.django.response import render_json
-from models import get_environment, Answer, Item
+from models import get_environment, Item
 import numpy
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
@@ -16,10 +16,14 @@ def home(request):
 @allow_lazy_user
 def status(request):
     user_id = get_user_id(request)
+    time = get_time(request)
+    environment = get_environment()
+    if is_time_overriden(request):
+        environment.shift_time(time)
     return render_json(request, _to_json(request, {
         'object_type': 'status',
-        'number_of_answers': Answer.objects.get_number_of_answers(user_id),
-        'number_of_correct_answers': Answer.objects.get_number_of_correct_answers(user_id)
+        'number_of_answers': environment.number_of_answers(user=user_id),
+        'number_of_correct_answers': environment.number_of_correct_answers(user=user_id)
     }), template='models_json.html')
 
 
