@@ -6,6 +6,7 @@ from contextlib import closing
 from django.db import transaction
 from collections import defaultdict
 from optparse import make_option
+from proso_user.models import Location, Session
 
 
 class Command(BaseCommand):
@@ -23,6 +24,12 @@ class Command(BaseCommand):
             dest='skip_places',
             default=False,
             help='Skip loading of places.'),
+        make_option(
+            '--skip-answers',
+            action='store_true',
+            dest='skip_answers',
+            default=False,
+            help='Skip loading of answers.'),
         make_option(
             '--limit',
             dest='limit',
@@ -74,7 +81,9 @@ class Command(BaseCommand):
                 cursor.execute('SET CONSTRAINTS ALL DEFERRED;')
             if not options['skip_places']:
                 self.migrate_places()
-            self.migrate_answers(clean=options['clean'], limit=options['limit'])
+            if not options['skip_answers']:
+                self.migrate_answers(clean=options['clean'], limit=options['limit'])
+            print ' -- commit transaction'
 
     def clean_really_old(self):
         with closing(connection.cursor()) as cursor:
@@ -86,10 +95,12 @@ class Command(BaseCommand):
         if clean:
             print ' -- delete answers'
             with closing(connection.cursor()) as cursor:
-                cursor.execute('DELETE FROM proso_flashcards_decoratedanswer_options CASCADE')
-                cursor.execute('DELETE FROM proso_flashcards_decoratedanswer CASCADE')
-                cursor.execute('DELETE FROM proso_models_answer_ab_values CASCADE')
-                cursor.execute('DELETE FROM proso_models_answer CASCADE')
+                cursor.execute('TRUNCATE TABLE proso_flashcards_decoratedanswer_options CASCADE')
+                cursor.execute('TRUNCATE TABLE proso_flashcards_decoratedanswer CASCADE')
+                cursor.execute('TRUNCATE TABLE proso_models_answer_ab_values CASCADE')
+                cursor.execute('TRUNCATE TABLE proso_models_answer CASCADE')
+                cursor.execute('TRUNCATE TABLE proso_user_session CASCADE')
+                cursor.execute('TRUNCATE TABLE proso_user_location CASCADE')
         else:
             with closing(connection.cursor()) as cursor:
                 cursor.execute('SELECT MAX(id) FROM proso_flashcards_decoratedanswer')
@@ -127,6 +138,7 @@ class Command(BaseCommand):
                 ''')
             maps = dict(map(lambda (x, y, z): ((x, y), z), cursor.fetchall()))
         print ' -- load answers where id >', prev_max_answer
+        sessions = Sessions()
         with closing(connection.cursor()) as cursor_source:
             cursor_source.execute(
                 '''
@@ -147,7 +159,7 @@ class Command(BaseCommand):
                 LIMIT %s
                 ''', [prev_max_answer, limit])
             count = 0
-            print ' -- migrate answers'
+            print ' -- migrate', limit, 'answers'
             options_retriever = GeographyOptions()
             ab_values_retriever = GeographyABValues()
             places_mask = lambda i, lang: places[original_places[i], lang] if i else None
@@ -164,9 +176,9 @@ class Command(BaseCommand):
                     cursor_dest.execute(
                         '''
                         INSERT INTO proso_models_answer
-                            (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized, ip_address)
+                            (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized, session_id)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5], True, row[7]])
+                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5], True, sessions.get_session_id(row[0], row[7], row[4])])
                     cursor_dest.execute(
                         '''
                         INSERT INTO proso_flashcards_decoratedanswer
@@ -311,7 +323,9 @@ class Command(BaseCommand):
         with open('geography-flashcards.json', 'w') as f:
             json.dump({
                 'categories': map(lambda used: maps[used], used_maps),
-                'flashcards': places.values()}, f, indent=2)
+                'flashcards': places.values(),
+                'contexts': []
+            }, f, indent=2)
         call_command('load_flashcards', 'geography-flashcards.json')
 
 
@@ -340,6 +354,32 @@ class GeographyOptions:
                 self._max_answer_id = max(self._max_answer_id, row[0])
                 result[row[0]].append(row[1])
             self._cache = result
+
+
+class Sessions:
+
+    def __init__(self):
+        self._sessions = {}
+
+    def get_session_id(self, user, ip_address, time):
+        if ip_address is None or ip_address == '':
+            return None
+        found = self._sessions.get(user)
+        if found is None:
+            session, session_time = self._new_session(user, ip_address), time
+        else:
+            session, session_time = found
+            if session.location.ip_address != ip_address or (time - session_time).total_seconds() > 30 * 60:
+                session = self._new_session(user, ip_address)
+        self._sessions[user] = session, time
+        return session.id
+
+    def _new_session(self, user, ip_address):
+        location = Location(ip_address=ip_address)
+        location.save()
+        session = Session(location=location, user_id=int(user))
+        session.save()
+        return session
 
 
 class GeographyABValues:
