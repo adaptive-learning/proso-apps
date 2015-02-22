@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 import json
-from django.db import connection
+from django.db import connection, connections
 from django.core.management import call_command
 from contextlib import closing
 from django.db import transaction
@@ -36,6 +36,12 @@ class Command(BaseCommand):
             default=1000000,
             type=int,
             help='Maximum number of loaded answer'),
+        make_option(
+            '--geography-database',
+            dest='geography_database',
+            type=str,
+            default='default',
+            help='Database where the data for geogaphy app is.'),
         )
 
     LANGUAGES = {
@@ -82,7 +88,9 @@ class Command(BaseCommand):
             if not options['skip_places']:
                 self.migrate_places()
             if not options['skip_answers']:
-                self.migrate_answers(clean=options['clean'], limit=options['limit'])
+                self.migrate_answers(
+                    source_database=options['geography_database'],
+                    clean=options['clean'], limit=options['limit'])
             print ' -- commit transaction'
 
     def clean_really_old(self):
@@ -90,7 +98,7 @@ class Command(BaseCommand):
             for table in self.REALLY_OLD_TABLES:
                 cursor.execute('DROP TABLE IF EXISTS %s;' % table)
 
-    def migrate_answers(self, clean=True, limit=1000000):
+    def migrate_answers(self, source_database, clean=True, limit=1000000):
         prev_max_answer = 0
         if clean:
             print ' -- delete answers'
@@ -139,7 +147,7 @@ class Command(BaseCommand):
             maps = dict(map(lambda (x, y, z): ((x, y), z), cursor.fetchall()))
         print ' -- load answers where id >', prev_max_answer
         sessions = Sessions()
-        with closing(connection.cursor()) as cursor_source:
+        with closing(connections[source_database].cursor()) as cursor_source:
             cursor_source.execute(
                 '''
                 SELECT
