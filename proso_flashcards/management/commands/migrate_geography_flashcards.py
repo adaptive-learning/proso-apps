@@ -160,7 +160,8 @@ class Command(BaseCommand):
                     place_map_id,
                     ip_address,
                     language,
-                    id
+                    id,
+                    number_of_options
                 FROM geography_answer
                 WHERE id > %s
                 ORDER BY id
@@ -184,9 +185,9 @@ class Command(BaseCommand):
                     cursor_dest.execute(
                         '''
                         INSERT INTO proso_models_answer
-                            (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized, session_id)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5], True, sessions.get_session_id(row[0], row[7], row[4])])
+                            (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized, session_id, pure)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5], True, sessions.get_session_id(row[0], row[7], row[4]), row[10] == 0])
                     cursor_dest.execute(
                         '''
                         INSERT INTO proso_flashcards_decoratedanswer
