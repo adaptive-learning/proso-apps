@@ -153,7 +153,6 @@ class DecoratedAnswer(models.Model):
     }
 
     general_answer = models.ForeignKey(Answer, blank=False, null=False, unique=True, related_name='flashcard_decoratedanswer_set')
-    language = models.CharField(max_length=50)
     direction = models.IntegerField(choices=DIRECTIONS.items())
     options = models.ManyToManyField(Item, related_name='flashcard_decoratedanswer_set')
     category = models.ForeignKey(Category, null=True, blank=True, default=None)
@@ -168,7 +167,6 @@ class DecoratedAnswer(models.Model):
             'user_id': self.general_answer.user_id,
             'time': self.general_answer.time.strftime('%Y-%m-%d %H:%M:%S'),
             'response_time': self.general_answer.response_time,
-            'language': self.language,
             'direction': self.DIRECTIONS[self.direction]
         }
 

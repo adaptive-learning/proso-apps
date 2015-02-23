@@ -187,13 +187,13 @@ class Command(BaseCommand):
                         INSERT INTO proso_models_answer
                             (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized, session_id, pure)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5], True, sessions.get_session_id(row[0], row[7], row[4]), row[10] == 0])
+                        ''', [general_answer_id, row[0], item_asked, item_asked, item_answered, row[4], row[5], True, sessions.get_session_id(row[0], row[7], lang, row[4]), row[10] == 0])
                     cursor_dest.execute(
                         '''
                         INSERT INTO proso_flashcards_decoratedanswer
-                            (id, language, direction, general_answer_id, category_id)
-                        VALUES (%s, %s, %s, %s, %s)
-                        ''', [general_answer_id, lang, row[3], general_answer_id, category])
+                            (id, direction, general_answer_id, category_id)
+                        VALUES (%s, %s, %s, %s)
+                        ''', [general_answer_id, row[3], general_answer_id, category])
                     options = options_retriever.get_options(general_answer_id)
                     for item_id in map(lambda i: places_mask(i, lang), options):
                         cursor_dest.execute(
@@ -370,23 +370,23 @@ class Sessions:
     def __init__(self):
         self._sessions = {}
 
-    def get_session_id(self, user, ip_address, time):
+    def get_session_id(self, user, ip_address, locale, time):
         if ip_address is None or ip_address == '':
             return None
         found = self._sessions.get(user)
         if found is None:
-            session, session_time = self._new_session(user, ip_address), time
+            session, session_time = self._new_session(user, locale, ip_address), time
         else:
             session, session_time = found
             if session.location.ip_address != ip_address or (time - session_time).total_seconds() > 30 * 60:
-                session = self._new_session(user, ip_address)
+                session = self._new_session(user, locale, ip_address)
         self._sessions[user] = session, time
         return session.id
 
-    def _new_session(self, user, ip_address):
+    def _new_session(self, user, locale, ip_address):
         location = Location(ip_address=ip_address)
         location.save()
-        session = Session(location=location, user_id=int(user))
+        session = Session(location=location, user_id=int(user), locale=locale)
         session.save()
         return session
 
