@@ -45,7 +45,8 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
     def flush(self):
         to_skip = [
             self.NUMBER_OF_ANSWERS, self.NUMBER_OF_FIRST_ANSWERS,
-            self.LAST_ANSWER_TIME, self.LAST_CORRECTNESS, self.NUMBER_OF_CORRECT_ANSWERS
+            self.LAST_ANSWER_TIME, self.LAST_CORRECTNESS, self.NUMBER_OF_CORRECT_ANSWERS,
+            self.CONFUSING_FACTOR
         ]
         filename_audit = os.path.join(settings.DATA_DIR, 'environment_flush_audit.csv')
         filename_variable = os.path.join(settings.DATA_DIR, 'environment_flush_variable.csv')
@@ -308,7 +309,7 @@ class DatabaseEnvironment(CommonEnvironment):
                     COUNT(proso_models_answer.id) AS confusing_factor
                 FROM
                     proso_models_answer
-                WHERE
+                WHERE pure AND
                 ''' + where, where_params)
             return cursor.fetchone()[0]
 
@@ -326,7 +327,7 @@ class DatabaseEnvironment(CommonEnvironment):
                     COUNT(id) AS confusing_factor
                 FROM
                     proso_models_answer
-                WHERE
+                WHERE pure AND
                 ''' + where + ' GROUP BY item_answered_id', where_params)
             wrongs = dict(cursor.fetchall())
             return map(lambda i: wrongs.get(i, 0), items)
