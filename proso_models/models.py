@@ -74,14 +74,15 @@ class DatabaseEnvironment(CommonEnvironment):
 
     time = None
 
-    def process_answer(self, user, item, asked, answered, time, response_time, **kwargs):
+    def process_answer(self, user, item, asked, answered, time, response_time, pure, **kwargs):
         answer = Answer(
             user_id=user,
             item_id=item,
             item_asked_id=asked,
             item_answered_id=answered,
             time=time,
-            response_time=response_time)
+            response_time=response_time,
+            pure=pure)
         answer.save()
 
     def audit(self, key, user=None, item=None, item_secondary=None, limit=100000, symmetric=True):
@@ -450,6 +451,7 @@ class Answer(models.Model):
         default=None,
         related_name='item_answered_answers')
     time = models.DateTimeField(default=datetime.now)
+    pure = models.BooleanField(default=True)
     response_time = models.IntegerField(null=False, blank=False)
     ab_values = models.ManyToManyField(ABValue)
     ab_values_initialized = models.BooleanField(default=False)
