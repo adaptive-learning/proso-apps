@@ -38,7 +38,7 @@ def number_of_correct_answers(request, json_list, nested):
     object_item_ids = map(lambda x: x['item_id'], json_list)
     user = get_user_id(request)
     number_of_correct_answers = _environment(request).number_of_correct_answers_more_items(
-        user_id=user, item_ids=object_item_ids)
+        user=user, items=object_item_ids)
     for object_json, num in zip(json_list, number_of_correct_answers):
         object_json['number_of_correct_answers'] = num
         object_json['covered_correctly'] = num > 0
