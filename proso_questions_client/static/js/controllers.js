@@ -90,14 +90,14 @@
         $scope.question.answered = selected;
       }
       $scope.progress = practice.answer($scope.question, $scope.categoryId);
-      if (selected &&  selected.correct) {
+      if (selected && selected.correct) {
         $timeout(function() {
           $scope.next();
         }, 700);
-        user.addPoint();
       } else {
         $scope.canNext = true;
       }
+      user.addAnswer(selected && selected.correct);
     };
 
     $scope.next = function() {
