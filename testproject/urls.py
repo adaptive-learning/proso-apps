@@ -14,7 +14,6 @@ urlpatterns = patterns(
         }
     ),
     url(r'^user/', include('proso_user.urls')),
-    url(r'^flashcards/', include('proso_flashcards.urls')),
     url(r'^questions/', include('proso_questions.urls')),
     url(r'^models/', include('proso_models.urls')),
     url(r'^ab/', include('proso_ab.urls')),
