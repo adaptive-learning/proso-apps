@@ -36,7 +36,11 @@ setup(
         'proso_questions_client.management',
         'proso_questions_client.management.commands',
         'proso_user',
-        'proso_user.migrations'
+        'proso_user.migrations',
+        'proso_flashcards',
+        'proso_flashcards.management',
+        'proso_flashcards.management.commands',
+        'proso_flashcards.migrations',
     ],
     install_requires=[
         'Django>=1.6,<1.7',

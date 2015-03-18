@@ -59,6 +59,7 @@ INSTALLED_APPS = (
     'proso_questions_client',
     'proso_user',
     'proso_feedback',
+    'proso_flashcards',
     'social_auth',
     'south',
 )
