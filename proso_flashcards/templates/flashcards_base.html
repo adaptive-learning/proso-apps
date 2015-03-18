@@ -1,0 +1,7 @@
+{% extends 'common_base.html' %}
+{% block menu_heading_block %}Flashcards{% endblock %}
+{% block menu_list_block %}
+	<ul>
+		<li><a href="{% url 'show_terms' %}?html=True&stats=True">Terms</a></li>
+	</ul>
+{% endblock %}
