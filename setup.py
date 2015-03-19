@@ -41,7 +41,7 @@ setup(
         'Pillow>=2.6.0',
         'clint>=0.4.1',
         'django-debug-toolbar>=1.1',
-        'django-flatblocks>=0.8',
+        'django-flatblocks==0.9',
         'django-ipware>=0.0.8',
         'django-lazysignup>=0.12.2',
         'django-social-auth>=0.7.28',
