@@ -38,6 +38,8 @@ setup(
         'proso_user',
         'proso_user.migrations',
         'proso_flashcards',
+        'proso_flashcards.management',
+        'proso_flashcards.management.commands',
         'proso_flashcards.migrations',
     ],
     install_requires=[
