@@ -7,6 +7,7 @@ import proso_common.json_enrich as common_json_enrich
 
 LOGGER = logging.getLogger('django.request')
 
+
 @cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
 def show_one(request, object_class, id):
     return proso_common.views.show_one(

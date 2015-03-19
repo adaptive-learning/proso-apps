@@ -1,5 +1,5 @@
 from django.db import models
-from proso_models.models import Item, Answer
+from proso_models.models import Item
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 

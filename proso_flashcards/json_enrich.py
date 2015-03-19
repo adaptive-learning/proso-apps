@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from proso.django.response import pass_get_parameters_string, append_get_parameters, pass_get_parameters
+from proso.django.response import pass_get_parameters_string, append_get_parameters
 from django.core.cache import cache
 import json as json_lib
 
