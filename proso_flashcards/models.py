@@ -82,7 +82,7 @@ class Category(models.Model):
         return {
             "id": self.pk,
             "item_id": self.item_id,
-            "object_type": "term",
+            "object_type": "category",
             "lang": self.lang,
             "name": self.name,
             "type": self.type,
