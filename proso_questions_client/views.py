@@ -5,8 +5,7 @@ from django.shortcuts import render_to_response
 from proso_questions_client.utils import StaticFiles, get_user, get_page_title, get_flatblock
 from proso_questions.models import Category
 from logging import getLogger
-from django.utils import simplejson
-
+import json
 
 LOGGER = getLogger(__name__)
 
@@ -37,8 +36,8 @@ def home(request, hack=None):
         'isProduction': settings.ON_PRODUCTION,
         'css_files': StaticFiles.add_hash(CSS_FILES),
         'js_files': StaticFiles.add_hash(JS_FILES),
-        'hashes': simplejson.dumps(hashes),
-        'userJson': simplejson.dumps(get_user(request)),
+        'hashes': json.dumps(hashes),
+        'Json': json.dumps(get_user(request)),
         'isHomepage': hack is None,
         'categories': Category.objects.all().order_by('id'),
         'above_fold_styles': "generated/" + color_scheme + "above-fold.css",

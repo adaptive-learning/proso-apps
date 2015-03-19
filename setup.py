@@ -43,7 +43,7 @@ setup(
         'proso_flashcards.migrations',
     ],
     install_requires=[
-        'Django>=1.6,<1.7',
+        'Django==1.7',
         'Markdown>=2.4.1',
         'Pillow>=2.6.0',
         'clint>=0.4.1',

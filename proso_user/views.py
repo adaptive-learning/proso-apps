@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.contrib.auth.models import User
 from django.middleware.csrf import get_token
-from django.utils import simplejson
+import json
 
 
 def home(request):
@@ -228,7 +228,7 @@ def initmobile_view(request):
         user.set_password(password)
         user.save()
         response['password'] = password
-    return HttpResponse(simplejson.dumps(response))
+    return HttpResponse(json.dumps(response))
 
 
 def _to_json(request, value):
