@@ -5,7 +5,7 @@ from django.dispatch import receiver
 
 
 class Term(models.Model):
-    identifier = models.SlugField(unique=True)
+    identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_terms")
 
     lang = models.CharField(max_length=2)
@@ -25,7 +25,7 @@ class Term(models.Model):
 
 
 class Context(models.Model):
-    identifier = models.SlugField(unique=True)
+    identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_contexts")
 
     lang = models.CharField(max_length=2)
@@ -47,7 +47,7 @@ class Context(models.Model):
 
 
 class Flashcard(models.Model):
-    identifier = models.SlugField(unique=True)
+    identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcards")
 
     lang = models.CharField(max_length=2)
@@ -69,7 +69,7 @@ class Flashcard(models.Model):
 
 
 class Category(models.Model):
-    identifier = models.SlugField(unique=True)
+    identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_categories")
 
     lang = models.CharField(max_length=2)
