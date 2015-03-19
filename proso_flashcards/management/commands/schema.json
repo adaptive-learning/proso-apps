@@ -1,0 +1,115 @@
+{
+  "description": "Schema for data file containing flashcards",
+  "definitions": {
+    "term": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "patternProperties":{
+        "^name-(\\w\\w)$": {
+          "type": "string"
+        }
+      },
+      "required": ["id"]
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "patternProperties":{
+        "^name-(\\w\\w)$": {
+          "type": "string"
+        },
+        "^content-(\\w\\w)$": {
+          "type": "string"
+        }
+      },
+      "required": ["id"]
+    },
+    "flashcard": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "term": {
+          "type": "string"
+        },
+        "context": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "patternProperties":{
+        "^name-(\\w\\w)$": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "term", "context"]
+    },
+    "category": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "parent-categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "patternProperties":{
+        "^name-(\\w\\w)$": {
+          "type": "string"
+        }
+      },
+      "required": ["id"]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "terms": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/term"
+      }
+    },
+    "contexts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/context"
+      }
+    },
+    "flashcards": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/flashcard"
+      }
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/category"
+      }
+    }
+  }
+}

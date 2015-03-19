@@ -1,0 +1,35 @@
+{
+  "categories": [
+    {
+      "id": "0001",
+      "name-en": "my first category",
+      "name-cs": "moje první kategorie"
+    },
+    {
+      "id": "0002",
+      "name-en": "global category",
+      "name-cs": "globalni kategorie"
+    },
+    {
+      "id": "0003",
+      "name-en": "subcategory",
+      "name-cs": "podkategorie",
+      "type": "special",
+      "parent-categories": ["0002"]
+    },
+    {
+      "id": "0004",
+      "name-en": "another subcategory",
+      "name-cs": "dalsi podkategorie",
+      "type": "not so special",
+      "parent-categories": ["0002"]
+    },
+    {
+      "id": "0005",
+      "name-en": "subsubcategory",
+      "name-cs": "podpodkategorie",
+      "type": "special",
+      "parent-categories": ["0004"]
+    }
+  ]
+}

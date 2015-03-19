@@ -1,0 +1,21 @@
+{
+  "terms": [
+    {
+      "id": "0001",
+      "name-en": "square",
+      "name-cs": "ctverec"
+    },
+    {
+      "id": "0002",
+      "name-en": "circle",
+      "name-cs": "kruh",
+      "categories": ["0001", "0004"]
+    },
+    {
+      "id": "0003",
+      "name-en": "triangle",
+      "name-cs": "trojuhelnik",
+      "categories": ["0001"]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "flashcards": [
+    {
+      "id": "0001",
+      "term": "0001",
+      "context": "0001",
+      "description": "not important"
+    },
+    {
+      "id": "0002",
+      "term": "0002",
+      "context": "0001",
+      "description": "very important"
+    },
+    {
+      "id": "0003",
+      "term": "0003",
+      "context": "0002"
+    },
+    {
+      "id": "0004",
+      "term": "0003",
+      "context": "0002"
+    }
+  ]
+}
