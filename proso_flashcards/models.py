@@ -75,7 +75,7 @@ class Category(models.Model):
     lang = models.CharField(max_length=2)
     name = models.TextField()
     type = models.CharField(max_length=50, null=True, blank=True)
-    subcategories = models.ManyToManyField("self", related_name="parents")
+    subcategories = models.ManyToManyField("self", related_name="parents", symmetrical=False)
     terms = models.ManyToManyField(Term, related_name="parents")
 
     def to_json(self):
