@@ -14,7 +14,7 @@ class Migration(SchemaMigration):
             ('identifier', self.gf('django.db.models.fields.SlugField')(default=None, max_length=50, unique=True, null=True, blank=True)),
             ('item', self.gf('django.db.models.fields.related.ForeignKey')(related_name='flashcard_terms', null=True, default=None, to=orm['proso_models.Item'], blank=True, unique=True)),
             ('lang', self.gf('django.db.models.fields.CharField')(max_length=2)),
-            ('text', self.gf('django.db.models.fields.TextField')()),
+            ('name', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
         ))
         db.send_create_signal(u'proso_flashcards', ['Term'])
 
@@ -24,7 +24,8 @@ class Migration(SchemaMigration):
             ('identifier', self.gf('django.db.models.fields.SlugField')(default=None, max_length=50, unique=True, null=True, blank=True)),
             ('item', self.gf('django.db.models.fields.related.ForeignKey')(related_name='flashcard_contexts', null=True, default=None, to=orm['proso_models.Item'], blank=True, unique=True)),
             ('lang', self.gf('django.db.models.fields.CharField')(max_length=2, null=True)),
-            ('text', self.gf('django.db.models.fields.TextField')()),
+            ('name', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
+            ('content', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
         ))
         db.send_create_signal(u'proso_flashcards', ['Context'])
 
@@ -44,7 +45,7 @@ class Migration(SchemaMigration):
             ('identifier', self.gf('django.db.models.fields.SlugField')(default=None, max_length=50, unique=True, null=True, blank=True)),
             ('item', self.gf('django.db.models.fields.related.ForeignKey')(related_name='flashcard_categories', null=True, default=None, to=orm['proso_models.Item'], blank=True, unique=True)),
             ('lang', self.gf('django.db.models.fields.CharField')(max_length=2)),
-            ('text', self.gf('django.db.models.fields.TextField')()),
+            ('name', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('type', self.gf('django.db.models.fields.CharField')(max_length=50)),
         ))
         db.send_create_signal(u'proso_flashcards', ['Category'])
@@ -156,18 +157,19 @@ class Migration(SchemaMigration):
             'identifier': ('django.db.models.fields.SlugField', [], {'default': 'None', 'max_length': '50', 'unique': 'True', 'null': 'True', 'blank': 'True'}),
             'item': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'flashcard_categories'", 'null': 'True', 'default': 'None', 'to': "orm['proso_models.Item']", 'blank': 'True', 'unique': 'True'}),
             'lang': ('django.db.models.fields.CharField', [], {'max_length': '2'}),
+            'name': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'subcategories': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'subcategories_rel_+'", 'to': u"orm['proso_flashcards.Category']"}),
             'terms': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'parents'", 'symmetrical': 'False', 'to': u"orm['proso_flashcards.Term']"}),
-            'text': ('django.db.models.fields.TextField', [], {}),
             'type': ('django.db.models.fields.CharField', [], {'max_length': '50'})
         },
         u'proso_flashcards.context': {
             'Meta': {'object_name': 'Context'},
+            'content': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'identifier': ('django.db.models.fields.SlugField', [], {'default': 'None', 'max_length': '50', 'unique': 'True', 'null': 'True', 'blank': 'True'}),
             'item': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'flashcard_contexts'", 'null': 'True', 'default': 'None', 'to': "orm['proso_models.Item']", 'blank': 'True', 'unique': 'True'}),
             'lang': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True'}),
-            'text': ('django.db.models.fields.TextField', [], {})
+            'name': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'})
         },
         u'proso_flashcards.flashcard': {
             'Meta': {'object_name': 'Flashcard'},
@@ -189,7 +191,7 @@ class Migration(SchemaMigration):
             'identifier': ('django.db.models.fields.SlugField', [], {'default': 'None', 'max_length': '50', 'unique': 'True', 'null': 'True', 'blank': 'True'}),
             'item': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'flashcard_terms'", 'null': 'True', 'default': 'None', 'to': "orm['proso_models.Item']", 'blank': 'True', 'unique': 'True'}),
             'lang': ('django.db.models.fields.CharField', [], {'max_length': '2'}),
-            'text': ('django.db.models.fields.TextField', [], {})
+            'name': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'})
         },
         'proso_models.answer': {
             'Meta': {'object_name': 'Answer'},

@@ -9,7 +9,7 @@ class Term(models.Model):
     item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True, related_name="flashcard_terms")
 
     lang = models.CharField(max_length=2)
-    text = models.TextField()
+    name = models.TextField(null=True, blank=True)
 
     def to_json(self):
         return {
@@ -17,7 +17,7 @@ class Term(models.Model):
             "item_id": self.item_id,
             "object_type": "term",
             "lang": self.lang,
-            "text": self.text,
+            "name": self.name,
         }
 
     def __unicode__(self):
@@ -29,8 +29,8 @@ class Context(models.Model):
     item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True, related_name="flashcard_contexts")
 
     lang = models.CharField(max_length=2, null=True)
-    name = models.TextField()
-    content = models.TextField()
+    name = models.TextField(null=True, blank=True)
+    content = models.TextField(null=True, blank=True)
 
     def to_json(self):
         return {
@@ -71,7 +71,7 @@ class Category(models.Model):
     item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True, related_name="flashcard_categories")
 
     lang = models.CharField(max_length=2)
-    name = models.TextField()
+    name = models.TextField(null=True, blank=True)
     type = models.CharField(max_length=50)
     subcategories = models.ManyToManyField("self", related_name="parents")
     terms = models.ManyToManyField(Term, related_name="parents")
@@ -90,7 +90,7 @@ class Category(models.Model):
         return "{0.lang} - {0.text}".format(self)
 
 
-class FlashcardAnswer(models.Model):
+class FlashcardAnswer(Answer):
     from_term_direction = models.BooleanField()
     options = models.TextField(null=True)
 
