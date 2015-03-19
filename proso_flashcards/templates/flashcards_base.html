@@ -1,7 +1,10 @@
 {% extends 'common_base.html' %}
 {% block menu_heading_block %}Flashcards{% endblock %}
 {% block menu_list_block %}
-	<ul>
-		<li><a href="{% url 'show_terms' %}?html=True&stats=True">Terms</a></li>
-	</ul>
+    <ul>
+        <li><a href="{% url 'show_terms' %}?html=True&stats=True">Terms</a></li>
+        <li><a href="{% url 'show_flashcards' %}?html=True&stats=True">Flashcards</a></li>
+        <li><a href="{% url 'show_contexts' %}?html=True&stats=True">Contexts</a></li>
+        <li><a href="{% url 'show_categorys' %}?html=True&stats=True">Categories</a></li>
+    </ul>
 {% endblock %}
