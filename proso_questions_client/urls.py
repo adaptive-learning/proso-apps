@@ -16,7 +16,7 @@ urlpatterns = patterns(
 
     url(r'^favicon\.ico$', RedirectView.as_view(url='static/dist/favicon.png')),
     url(r'^sitemap\.xml$', 'django.contrib.sitemaps.views.sitemap', {'sitemaps': sitemaps}),
-    url(r'^robots\.txt$', lambda r: HttpResponse("User-agent: *\nDisallow: ", mimetype="text/plain")),
+    url(r'^robots\.txt$', lambda r: HttpResponse("User-agent: *\nDisallow: ", content_type="text/plain")),
     url(r'^user/logout/$', 'proso_questions_client.views.logout_view', name='logout'),
     url(r'^user/initmobile/$', 'proso_questions_client.views.initmobile_view', name='initmobile'),
     url(r'^feedback/', 'proso_questions_client.views.feedback', name='feedback'),

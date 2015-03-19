@@ -59,7 +59,6 @@ INSTALLED_APPS = (
     'proso_questions',
     'proso_questions_client',
     'social_auth',
-    'south',
 )
 
 MIDDLEWARE_CLASSES = (

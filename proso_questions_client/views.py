@@ -7,7 +7,6 @@ from proso_questions.models import Category
 from django.contrib.auth import logout
 from django.http import HttpResponse
 import json
-from django.utils import simplejson
 from logging import getLogger
 from django.core.mail import send_mail
 from django.middleware.csrf import get_token
@@ -86,7 +85,7 @@ def is_likely_worthless(feedback):
 
 def feedback(request):
     if request.body:
-        feedback = simplejson.loads(request.body)
+        feedback = json.loads(request.body)
         mail_text = ('## This email is sent from the feedback form on the site. ##\n\n' +
                      feedback['text'] + '\n' +
                      '\n\n## end of user message ##\n' +
