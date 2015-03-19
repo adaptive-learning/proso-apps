@@ -4,6 +4,7 @@ import proso_common.views
 from time import time as time_lib
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
+from proso_flashcards.models import Term
 
 LOGGER = logging.getLogger('django.request')
 
@@ -21,6 +22,7 @@ def show_more(request, object_class, should_cache=True):
         select_related_all = {
         }
         prefetch_related_all = {
+            Term: ["parents"]
         }
         select_related = select_related_all.get(object_class, [])
         prefetch_related = prefetch_related_all.get(object_class, [])

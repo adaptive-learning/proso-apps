@@ -18,6 +18,7 @@ class Term(models.Model):
             "object_type": "term",
             "lang": self.lang,
             "name": self.name,
+            "parents": [parent.to_json() for parent in self.parents.all()],
         }
 
     def __unicode__(self):
@@ -60,8 +61,10 @@ class Flashcard(models.Model):
             "id": self.pk,
             "item_id": self.item_id,
             "object_type": "flashcard",
+            "lang": self.lang,
             "term": self.term.to_json(),
             "context": self.context.to_json(),
+            "description": self.description
         }
 
     def __unicode__(self):
