@@ -5,11 +5,11 @@ from django.dispatch import receiver
 
 
 class Term(models.Model):
-    identifier = models.SlugField(unique=True, null=True, blank=True, default=None)
-    item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True, related_name="flashcard_terms")
+    identifier = models.SlugField(unique=True)
+    item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_terms")
 
     lang = models.CharField(max_length=2)
-    name = models.TextField(null=True, blank=True)
+    name = models.TextField()
 
     def to_json(self):
         return {
@@ -25,10 +25,10 @@ class Term(models.Model):
 
 
 class Context(models.Model):
-    identifier = models.SlugField(unique=True, null=True, blank=True, default=None)
-    item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True, related_name="flashcard_contexts")
+    identifier = models.SlugField(unique=True)
+    item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_contexts")
 
-    lang = models.CharField(max_length=2, null=True)
+    lang = models.CharField(max_length=2)
     name = models.TextField(null=True, blank=True)
     content = models.TextField(null=True, blank=True)
 
@@ -47,11 +47,13 @@ class Context(models.Model):
 
 
 class Flashcard(models.Model):
-    identifier = models.SlugField(unique=True, null=True, blank=True, default=None)
-    item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True, related_name="flashcards")
+    identifier = models.SlugField(unique=True)
+    item = models.ForeignKey(Item, null=True, default=None, related_name="flashcards")
 
+    lang = models.CharField(max_length=2)
     term = models.ForeignKey(Term, related_name="flashcards")
     context = models.ForeignKey(Context, related_name="flashcards")
+    description = models.TextField(null=True)
 
     def to_json(self):
         return {
@@ -67,11 +69,11 @@ class Flashcard(models.Model):
 
 
 class Category(models.Model):
-    identifier = models.SlugField(unique=True, null=True, blank=True, default=None)
-    item = models.ForeignKey(Item, null=True, blank=True, default=None, unique=True, related_name="flashcard_categories")
+    identifier = models.SlugField(unique=True)
+    item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_categories")
 
     lang = models.CharField(max_length=2)
-    name = models.TextField(null=True, blank=True)
+    name = models.TextField()
     type = models.CharField(max_length=50)
     subcategories = models.ManyToManyField("self", related_name="parents")
     terms = models.ManyToManyField(Term, related_name="parents")
