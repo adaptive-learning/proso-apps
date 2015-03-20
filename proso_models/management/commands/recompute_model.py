@@ -47,11 +47,11 @@ class Command(BaseCommand):
                     item_answered_id,
                     time,
                     response_time,
-                    pure
+                    guess
                 FROM proso_models_answer
                 ORDER BY id
                 ''')
-            for (user, item, asked, answered, time, response_time, pure) in cursor:
+            for (user, item, asked, answered, time, response_time, guess) in cursor:
                 time = self._ensure_is_datetime(time)
                 predictive_model.predict_and_update(
                     environment,
@@ -61,7 +61,7 @@ class Command(BaseCommand):
                     time,
                     item_answered=answered,
                     item_asked=asked)
-                environment.process_answer(user, item, asked, answered, time, response_time, pure)
+                environment.process_answer(user, item, asked, answered, time, response_time, guess)
         environment.flush()
 
     def _ensure_is_datetime(self, value):

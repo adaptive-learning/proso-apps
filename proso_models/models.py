@@ -75,7 +75,7 @@ class DatabaseEnvironment(CommonEnvironment):
 
     time = None
 
-    def process_answer(self, user, item, asked, answered, time, response_time, pure, **kwargs):
+    def process_answer(self, user, item, asked, answered, time, response_time, guess, **kwargs):
         answer = Answer(
             user_id=user,
             item_id=item,
@@ -83,7 +83,7 @@ class DatabaseEnvironment(CommonEnvironment):
             item_answered_id=answered,
             time=time,
             response_time=response_time,
-            pure=pure)
+            guess=guess)
         answer.save()
 
     def audit(self, key, user=None, item=None, item_secondary=None, limit=100000, symmetric=True):
@@ -309,7 +309,7 @@ class DatabaseEnvironment(CommonEnvironment):
                     COUNT(proso_models_answer.id) AS confusing_factor
                 FROM
                     proso_models_answer
-                WHERE pure AND
+                WHERE guess=0 AND
                 ''' + where, where_params)
             return cursor.fetchone()[0]
 
@@ -327,7 +327,7 @@ class DatabaseEnvironment(CommonEnvironment):
                     COUNT(id) AS confusing_factor
                 FROM
                     proso_models_answer
-                WHERE pure AND
+                WHERE guess=0 AND
                 ''' + where + ' GROUP BY item_answered_id', where_params)
             wrongs = dict(cursor.fetchall())
             return map(lambda i: wrongs.get(i, 0), items)
@@ -452,10 +452,10 @@ class Answer(models.Model):
         default=None,
         related_name='item_answered_answers')
     time = models.DateTimeField(default=datetime.now)
-    pure = models.BooleanField(default=True)
     response_time = models.IntegerField(null=False, blank=False)
     ab_values = models.ManyToManyField(ABValue)
     ab_values_initialized = models.BooleanField(default=False)
+    guess = models.FloatField(default=0)
 
     class Meta:
         app_label = 'proso_models'
