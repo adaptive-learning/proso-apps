@@ -1,6 +1,7 @@
 import json
 
 from clint.textui import progress
+from django.db.models import Count
 import os
 from django.core.management.base import BaseCommand, CommandError
 from jsonschema import validate
@@ -32,10 +33,11 @@ class Command(BaseCommand):
                     self._load_terms(data["terms"])
                 if "flashcards" in data:
                     self._load_flashcards(data["flashcards"])
-
+                check_db_integrity()
 
     def _load_categories(self, data=None):
-        print "Loading categories"
+        if data is not None:
+            print "\nLoading categories"
         db_categories = {}
         item_mapping = {}
         for db_category in Category.objects.all().select_related("parents"):
@@ -72,16 +74,17 @@ class Command(BaseCommand):
                     for parent in category["parent-categories"]:
                         if parent + lang not in db_categories:
                             raise CommandError(
-                                "Parent category {} for category {} doesn't exist".format(parent + lang, category["id"]))
+                                "Parent category {} for category {} doesn't exist".format(parent + lang,
+                                                                                          category["id"]))
                         db_category.parents.add(db_categories[parent + lang])
                 db_category.save()
 
         print "New total number of categories in DB: {}".format(len(db_categories))
         return db_categories
 
-
     def _load_contexts(self, data=None):
-        print "Loading contexts"
+        if data is not None:
+            print "\nLoading contexts"
         db_contexts = {}
         item_mapping = {}
         for db_context in Context.objects.all():
@@ -114,9 +117,9 @@ class Command(BaseCommand):
         print "New total number of contexts in DB: {}".format(len(db_contexts))
         return db_contexts
 
-
     def _load_terms(self, data=None):
-        print "Loading terms"
+        if data is not None:
+            print "\nLoading terms"
         db_terms = {}
         item_mapping = {}
         for db_term in Term.objects.all():
@@ -161,9 +164,9 @@ class Command(BaseCommand):
         print "New total number of terms in DB: {}".format(len(db_terms))
         return db_terms
 
-
     def _load_flashcards(self, data):
-        print "Loading flashcards"
+        if data is not None:
+            print "\nLoading flashcards"
         db_flashcards = {}
         item_mapping = {}
         for db_flashcard in Flashcard.objects.all():
@@ -199,3 +202,15 @@ class Command(BaseCommand):
 
         print "New total number of flashcards in DB: {}".format(len(db_flashcards))
         return db_flashcards
+
+
+def check_db_integrity():
+    print "\nChecking DB language integrity"
+    langs = Category.objects.all().values_list("lang", flat=True).distinct()
+    print " -- languages: {}".format(langs)
+    for model in [Category, Term, Flashcard, Context]:
+        bad_objects = model.objects.all() \
+            .values('identifier').annotate(Count("lang")).filter(lang__count__lt=len(langs))
+        if len(bad_objects) > 0:
+            raise CommandError(" -- {}s with wrong number of languages: {}".format(model.__name__, bad_objects))
+    print " -- OK"
