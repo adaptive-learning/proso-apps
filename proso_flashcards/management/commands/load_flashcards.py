@@ -39,7 +39,7 @@ class Command(BaseCommand):
         db_categories = {}
         item_mapping = {}
         for db_category in Category.objects.all().select_related("parents"):
-            db_categories[db_category.identifier] = db_category
+            db_categories[db_category.identifier + db_category.lang] = db_category
             item_mapping[db_category.identifier] = db_category.item_id
         if data is None:
             return db_categories
@@ -62,18 +62,19 @@ class Command(BaseCommand):
                 else:
                     db_category.save()
                     item_mapping[db_category.identifier] = db_category.item_id
-                db_categories[db_category.identifier] = db_category
+                db_categories[db_category.identifier + db_category.lang] = db_category
 
         for category in data:
-            db_category = db_categories[category["id"]]
-            db_category.parents.clear()
-            if "parent-categories" in category:
-                for parent in category["parent-categories"]:
-                    if parent not in db_categories:
-                        raise CommandError(
-                            "Parent category {} for category {} doesn't exist".format(parent, category["id"]))
-                    db_category.parents.add(db_categories[parent])
-            db_category.save()
+            for lang in [k[-2:] for k in category.keys() if re.match(r'^name-\w\w$', k)]:
+                db_category = db_categories[category["id"] + lang]
+                db_category.parents.clear()
+                if "parent-categories" in category:
+                    for parent in category["parent-categories"]:
+                        if parent + lang not in db_categories:
+                            raise CommandError(
+                                "Parent category {} for category {} doesn't exist".format(parent + lang, category["id"]))
+                        db_category.parents.add(db_categories[parent + lang])
+                db_category.save()
 
         print "New total number of categories in DB: {}".format(len(db_categories))
         return db_categories
@@ -84,7 +85,7 @@ class Command(BaseCommand):
         db_contexts = {}
         item_mapping = {}
         for db_context in Context.objects.all():
-            db_contexts[db_context.identifier] = db_context
+            db_contexts[db_context.identifier + db_context.lang] = db_context
             item_mapping[db_context.identifier] = db_context.item_id
         if data is None:
             return db_contexts
@@ -106,7 +107,7 @@ class Command(BaseCommand):
                 else:
                     db_context.save()
                     item_mapping[db_context.identifier] = db_context.item_id
-                db_contexts[db_context.identifier] = db_context
+                db_contexts[db_context.identifier + db_context.lang] = db_context
 
                 # TODO add support for context extensions
 
@@ -119,7 +120,7 @@ class Command(BaseCommand):
         db_terms = {}
         item_mapping = {}
         for db_term in Term.objects.all():
-            db_terms[db_term.identifier] = db_term
+            db_terms[db_term.identifier + db_term.lang] = db_term
             item_mapping[db_term.identifier] = db_term.item_id
         if data is None:
             return db_terms
@@ -140,21 +141,22 @@ class Command(BaseCommand):
                 else:
                     db_term.save()
                     item_mapping[db_term.identifier] = db_term.item_id
-                db_terms[db_term.identifier] = db_term
+                db_terms[db_term.identifier + db_term.lang] = db_term
 
                 # TODO add support for terms extensions
 
         categories = self._load_categories()
         for term in data:
-            db_term = db_terms[term["id"]]
-            db_term.parents.clear()
-            if "categories" in term:
-                for parent in term["categories"]:
-                    if parent not in categories:
-                        raise CommandError(
-                            "Parent category {} for term {} doesn't exist".format(parent, term["id"]))
-                    db_term.parents.add(categories[parent])
-            db_term.save()
+            for lang in [k[-2:] for k in term.keys() if re.match(r'^name-\w\w$', k)]:
+                db_term = db_terms[term["id"] + lang]
+                db_term.parents.clear()
+                if "categories" in term:
+                    for parent in term["categories"]:
+                        if parent + lang not in categories:
+                            raise CommandError(
+                                "Parent category {} for term {} doesn't exist".format(parent + lang, term["id"]))
+                        db_term.parents.add(categories[parent + lang])
+                db_term.save()
 
         print "New total number of terms in DB: {}".format(len(db_terms))
         return db_terms
@@ -165,7 +167,7 @@ class Command(BaseCommand):
         db_flashcards = {}
         item_mapping = {}
         for db_flashcard in Flashcard.objects.all():
-            db_flashcards[db_flashcard.identifier] = db_flashcard
+            db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
             item_mapping[db_flashcard.identifier] = db_flashcard.item_id
 
         for flashcard in progress.bar(data, every=len(data) / 100.):
@@ -193,7 +195,7 @@ class Command(BaseCommand):
                 else:
                     db_flashcard.save()
                     item_mapping[db_flashcard.identifier] = db_flashcard.item_id
-                db_flashcards[db_flashcard.identifier] = db_flashcard
+                db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
 
         print "New total number of flashcards in DB: {}".format(len(db_flashcards))
         return db_flashcards
