@@ -35,8 +35,10 @@ class Command(BaseCommand):
 
 def _load_categories(data=None):
     db_categories = {}
+    item_mapping = {}
     for db_category in Category.objects.all().select_related("parents"):
         db_categories[db_category.identifier] = db_category
+        item_mapping[db_category.identifier] = db_category.item_id
     if data is None:
         return db_categories
 
@@ -52,7 +54,12 @@ def _load_categories(data=None):
             db_category.name = category["name-{}".format(lang)]
             if "type" in category:
                 db_category.type = category["type"]
-            db_category.save()
+            if db_category.identifier in item_mapping:
+                db_category.item_id = item_mapping[db_category.identifier]
+                db_category.save()
+            else:
+                db_category.save()
+                item_mapping[db_category.identifier] = db_category.item_id
             db_categories[db_category.identifier] = db_category
 
     for category in data:
@@ -71,8 +78,10 @@ def _load_categories(data=None):
 
 def _load_contexts(data=None):
     db_contexts = {}
+    item_mapping = {}
     for db_context in Context.objects.all():
         db_contexts[db_context.identifier] = db_context
+        item_mapping[db_context.identifier] = db_context.item_id
     if data is None:
         return db_contexts
 
@@ -87,7 +96,12 @@ def _load_contexts(data=None):
                 )
             db_context.name = context["name-{}".format(lang)]
             db_context.name = context["content-{}".format(lang)]
-            db_context.save()
+            if db_context.identifier in item_mapping:
+                db_context.item_id = item_mapping[db_context.identifier]
+                db_context.save()
+            else:
+                db_context.save()
+                item_mapping[db_context.identifier] = db_context.item_id
             db_contexts[db_context.identifier] = db_context
 
             # TODO add support for context extensions
@@ -97,8 +111,10 @@ def _load_contexts(data=None):
 
 def _load_terms(data=None):
     db_terms = {}
+    item_mapping = {}
     for db_term in Term.objects.all():
         db_terms[db_term.identifier] = db_term
+        item_mapping[db_term.identifier] = db_term.item_id
     if data is None:
         return db_terms
 
@@ -112,7 +128,12 @@ def _load_terms(data=None):
                     lang=lang,
                 )
             db_term.name = term["name-{}".format(lang)]
-            db_term.save()
+            if db_term.identifier in item_mapping:
+                db_term.item_id = item_mapping[db_term.identifier]
+                db_term.save()
+            else:
+                db_term.save()
+                item_mapping[db_term.identifier] = db_term.item_id
             db_terms[db_term.identifier] = db_term
 
             # TODO add support for terms extensions
@@ -133,6 +154,12 @@ def _load_terms(data=None):
 
 
 def _load_flashcards(data):
+    db_flashcards = {}
+    item_mapping = {}
+    for db_flashcard in Flashcard.objects.all():
+        db_flashcards[db_flashcard.identifier] = db_flashcard
+        item_mapping[db_flashcard.identifier] = db_flashcard.item_id
+        
     for flashcard in data:
         terms = Term.objects.filter(identifier=flashcard["term"])
         if len(terms) == 0:
@@ -152,4 +179,12 @@ def _load_flashcards(data):
                 )
             if "description" in flashcard:
                 db_flashcard.description = flashcard["description"]
-            db_flashcard.save()
+            if db_flashcard.identifier in item_mapping:
+                db_flashcard.item_id = item_mapping[db_flashcard.identifier]
+                db_flashcard.save()
+            else:
+                db_flashcard.save()
+                item_mapping[db_flashcard.identifier] = db_flashcard.item_id
+            db_flashcards[db_flashcard.identifier] = db_flashcard
+            
+    return db_flashcards
