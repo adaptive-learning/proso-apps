@@ -5,14 +5,16 @@
       "name-en": "Great image",
       "name-cs": "skvělý obrázek",
       "content-en": "img1.jpg",
-      "content-cs": "obr1.jpg"
+      "content-cs": "obr1.jpg",
+      "extra-info": "something"
     },
     {
       "id": "0002",
       "name-en": "Too cool image",
       "name-cs": "příliš hustý obrázek",
       "content-en": "img2.png",
-      "content-cs": "obr2.png"
+      "content-cs": "obr2.png",
+      "extra-info": "anything"
     }
   ]
 }

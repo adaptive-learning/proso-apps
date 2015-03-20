@@ -1,6 +1,7 @@
 import json
 
 from clint.textui import progress
+from django.conf import settings
 from django.db.models import Count
 import os
 from django.core.management.base import BaseCommand, CommandError
@@ -85,9 +86,11 @@ class Command(BaseCommand):
     def _load_contexts(self, data=None):
         if data is not None:
             print "\nLoading contexts"
+        model = settings.PROSO_FLASHCARDS["context_extension"] \
+            if "context_extension" in settings.PROSO_FLASHCARDS else Context
         db_contexts = {}
         item_mapping = {}
-        for db_context in Context.objects.all():
+        for db_context in model.objects.all():
             db_contexts[db_context.identifier + db_context.lang] = db_context
             item_mapping[db_context.identifier] = db_context.item_id
         if data is None:
@@ -96,14 +99,16 @@ class Command(BaseCommand):
         for context in progress.bar(data, every=len(data) / 100.):
             langs = [k[-2:] for k in context.keys() if re.match(r'^name-\w\w$', k)]
             for lang in langs:
-                db_context = Context.objects.filter(identifier=context["id"], lang=lang).first()
+                db_context = model.objects.filter(identifier=context["id"], lang=lang).first()
                 if db_context is None:
-                    db_context = Context(
+                    db_context = model(
                         identifier=context["id"],
                         lang=lang,
                     )
                 db_context.name = context["name-{}".format(lang)]
                 db_context.name = context["content-{}".format(lang)]
+                if "load_data" in model.__dict__:
+                    model.load_data(context, db_context)
                 if db_context.identifier in item_mapping:
                     db_context.item_id = item_mapping[db_context.identifier]
                     db_context.save()
@@ -120,9 +125,10 @@ class Command(BaseCommand):
     def _load_terms(self, data=None):
         if data is not None:
             print "\nLoading terms"
+        model = settings.PROSO_FLASHCARDS["term_extension"] if "term_extension" in settings.PROSO_FLASHCARDS else Term
         db_terms = {}
         item_mapping = {}
-        for db_term in Term.objects.all():
+        for db_term in model.objects.all():
             db_terms[db_term.identifier + db_term.lang] = db_term
             item_mapping[db_term.identifier] = db_term.item_id
         if data is None:
@@ -131,13 +137,15 @@ class Command(BaseCommand):
         for term in progress.bar(data, every=len(data) / 100.):
             langs = [k[-2:] for k in term.keys() if re.match(r'^name-\w\w$', k)]
             for lang in langs:
-                db_term = Term.objects.filter(identifier=term["id"], lang=lang).first()
+                db_term = model.objects.filter(identifier=term["id"], lang=lang).first()
                 if db_term is None:
-                    db_term = Term(
+                    db_term = model(
                         identifier=term["id"],
                         lang=lang,
                     )
                 db_term.name = term["name-{}".format(lang)]
+                if "load_data" in model.__dict__:
+                    model.load_data(term, db_term)
                 if db_term.identifier in item_mapping:
                     db_term.item_id = item_mapping[db_term.identifier]
                     db_term.save()
@@ -145,8 +153,6 @@ class Command(BaseCommand):
                     db_term.save()
                     item_mapping[db_term.identifier] = db_term.item_id
                 db_terms[db_term.identifier + db_term.lang] = db_term
-
-                # TODO add support for terms extensions
 
         categories = self._load_categories()
         for term in data:
@@ -187,9 +193,9 @@ class Command(BaseCommand):
                     db_flashcard = Flashcard(
                         identifier=flashcard["id"],
                         lang=term.lang,
-                        term=term,
-                        context=context,
                     )
+                db_flashcard.term = term
+                db_flashcard.context = context
                 if "description" in flashcard:
                     db_flashcard.description = flashcard["description"]
                 if db_flashcard.identifier in item_mapping:

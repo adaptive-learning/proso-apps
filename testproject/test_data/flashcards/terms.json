@@ -3,19 +3,22 @@
     {
       "id": "0001",
       "name-en": "square",
-      "name-cs": "ctverec"
+      "name-cs": "ctverec",
+      "extra-info": "bingo!"
     },
     {
       "id": "0002",
       "name-en": "circle",
       "name-cs": "kruh",
-      "categories": ["0001", "0004"]
+      "categories": ["0001", "0004"],
+      "extra-info": "bongo"
     },
     {
       "id": "0003",
       "name-en": "triangle",
       "name-cs": "trojuhelnik",
-      "categories": ["0001"]
+      "categories": ["0001"],
+      "extra-info": "ringo"
     }
   ]
 }

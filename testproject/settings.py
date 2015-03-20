@@ -62,6 +62,7 @@ INSTALLED_APPS = (
     'proso_flashcards',
     'social_auth',
     'south',
+    'testproject.testapp',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -253,3 +254,5 @@ CACHES = {
         'LOCATION': os.path.join(DATA_DIR, '.django_cache'),
     }
 }
+
+PROSO_FLASHCARDS = {}
