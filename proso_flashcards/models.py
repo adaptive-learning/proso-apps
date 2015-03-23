@@ -96,8 +96,16 @@ class Category(models.Model):
 
 
 class FlashcardAnswer(Answer):
-    from_term_direction = models.BooleanField()
-    options = models.TextField(null=True)
+    FROM_TERM = "t2d"
+    FROM_DESCRIPTION = "d2t"
+    DIRECTIONS = (
+        (FROM_TERM, "From term to description"),
+        (FROM_DESCRIPTION, "From description to term"),
+    )
+
+    direction = models.CharField(choices=DIRECTIONS, max_length=3)
+    options = models.ManyToManyField(Term, related_name="answers_with_this_as_option")
+    meta = models.TextField(null=True, blank=True)
 
 
 @receiver(pre_save, sender=Term)
