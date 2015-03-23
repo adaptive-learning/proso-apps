@@ -61,7 +61,6 @@ INSTALLED_APPS = (
     'proso_feedback',
     'proso_flashcards',
     'social_auth',
-    'south',
     'testproject.testapp',
 )
 
