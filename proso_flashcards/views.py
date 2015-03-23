@@ -4,7 +4,7 @@ from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
-from proso.django.response import render, redirect_pass_get
+from proso.django.response import render
 import proso_common.views
 from time import time as time_lib
 import json_enrich
