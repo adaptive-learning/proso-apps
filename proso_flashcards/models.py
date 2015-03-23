@@ -11,15 +11,17 @@ class Term(models.Model):
     lang = models.CharField(max_length=2)
     name = models.TextField()
 
-    def to_json(self):
-        return {
+    def to_json(self, nested=False):
+        json = {
             "id": self.pk,
             "item_id": self.item_id,
-            "object_type": "term",
+            "object_type": "fc_term",
             "lang": self.lang,
             "name": self.name,
-            "parents": [parent.to_json() for parent in self.parents.all()],
         }
+        if not nested:
+            json["parents"] = [parent.to_json(nested=True) for parent in self.parents.all()]
+        return json
 
     def __unicode__(self):
         return "{0.lang} - {0.name}".format(self)
@@ -33,11 +35,11 @@ class Context(models.Model):
     name = models.TextField(null=True, blank=True)
     content = models.TextField(null=True, blank=True)
 
-    def to_json(self):
+    def to_json(self, nested=False):
         return {
             "id": self.pk,
             "item_id": self.item_id,
-            "object_type": "context",
+            "object_type": "fc_context",
             "lang": self.lang,
             "name": self.name,
             "content": self.content,
@@ -56,11 +58,11 @@ class Flashcard(models.Model):
     context = models.ForeignKey(Context, related_name="flashcards")
     description = models.TextField(null=True)
 
-    def to_json(self):
+    def to_json(self, nested=False):
         return {
             "id": self.pk,
             "item_id": self.item_id,
-            "object_type": "flashcard",
+            "object_type": "fc_flashcard",
             "lang": self.lang,
             "term": self.term.to_json(),
             "context": self.context.to_json(),
@@ -81,11 +83,11 @@ class Category(models.Model):
     subcategories = models.ManyToManyField("self", related_name="parents", symmetrical=False)
     terms = models.ManyToManyField(Term, related_name="parents")
 
-    def to_json(self):
+    def to_json(self, nested=False):
         return {
             "id": self.pk,
             "item_id": self.item_id,
-            "object_type": "category",
+            "object_type": "fc_category",
             "lang": self.lang,
             "name": self.name,
             "type": self.type,
@@ -106,6 +108,15 @@ class FlashcardAnswer(Answer):
     direction = models.CharField(choices=DIRECTIONS, max_length=3)
     options = models.ManyToManyField(Term, related_name="answers_with_this_as_option")
     meta = models.TextField(null=True, blank=True)
+
+    def to_json(self, nested=False):
+        json = Answer.to_json(self)
+        json['direction'] = self.direction
+        json['meta'] = self.meta
+        json['object_type'] = "fc_answer"
+        if not nested:
+            json["options"] = [term.to_json(nested=True) for term in self.options.all()]
+        return json
 
 
 @receiver(pre_save, sender=Term)

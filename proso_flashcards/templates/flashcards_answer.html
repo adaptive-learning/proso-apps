@@ -1,0 +1,79 @@
+{% extends 'flashcards_base.html' %}
+{% load staticfiles %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <h2>Emulate POST request</h2>
+    <form class="pure-form" action="" method="post" ng-app="proso_flashcards" ng-controller="answer">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Answer</legend>
+            <input type="number" ng-model="answer.flashcard_id" placeholder="Flashcard Id">
+            <input type="number" ng-model="answer.term_answered_id" placeholder="Term Answered Id">
+            <input type="number" ng-model="answer.response_time" placeholder="Response Time">
+        </fieldset>
+
+        <fieldset>
+            <legend>Direction</legend>
+            <label>From term
+                <input type="radio" name="direction" value="t2d" ng-model="answer.direction"/>
+            </label>
+            <label>From description
+                <input type="radio" name="direction" value="d2t" ng-model="answer.direction"/>
+            </label>
+        </fieldset>
+
+        <fieldset>
+            <legend>Extra</legend>
+            <input type="text" ng-model="option_ids" placeholder="Option Ids (csv)">
+            <input type="text" ng-model="answer.meta" placeholder="Meta">
+        </fieldset>
+
+
+        <button type="button" class="pure-button pure-button-primary" ng-click="submit()">Save</button>
+
+        <pre> {% verbatim %}{{ answer | json:4 }}{% endverbatim %}</pre>
+        <div style="color:red" ng-show="error_msg">Response: <b>{% verbatim %}{{ error_msg }}{% endverbatim %}</b></div>
+    </form>
+
+{% endblock %}
+
+
+{% block head_block %}
+    <script src="{% static "proso_common/angular.min.js" %}"></script>
+    <script>
+        var app = angular.module('proso_flashcards', []);
+        app.config(function($httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        });
+        app.controller("answer", function($scope, $http, $window, $location){
+            $scope.answer = {};
+
+            $scope.$watch("option_ids", function(n, o){
+                if (n == null)
+                    return;
+                $scope.answer.option_ids = [];
+                n.split(",").forEach(function (v) {
+                    v = parseInt(v);
+                    if (v != null && !isNaN(v)){
+                        $scope.answer.option_ids.push(v);
+                    }
+                });
+            });
+
+            $scope.submit = function(){
+                $http.post('', {answer: $scope.answer}).
+                    success(function(data, status, headers, config){
+                        $window.location.href = "answer/" + data[0] + location.search;
+                    }).
+                    error(function(data, status, headers, config){
+                        $scope.error_msg = data;
+                    });
+            };
+        });
+    </script>
+{% endblock %}
