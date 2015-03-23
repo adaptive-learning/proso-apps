@@ -460,6 +460,18 @@ class Answer(models.Model):
     class Meta:
         app_label = 'proso_models'
 
+    def to_json(self):
+        return {
+            'id': self.pk,
+            'object_type': 'answer',
+            'question_item_id': self.item_id,
+            'item_asked_id': self.item_asked_id,
+            'item_answered_id': self.item_answered_id,
+            'user_id': self.user_id,
+            'time': self.time.strftime('%Y-%m-%d %H:%M:%S'),
+            'response_time': self.response_time,
+        }
+
 
 class Variable(models.Model):
 
