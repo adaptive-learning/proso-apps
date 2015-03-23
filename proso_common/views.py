@@ -85,11 +85,12 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
         objs = objs[page * limit:(page + 1) * limit]
     cache_key = 'proso_common_sql_json_%s' % hashlib.sha1(str(objs.query).decode('utf-8')).hexdigest()
     cached = cache.get(cache_key)
-    if cached:
+    if not should_cache and cached:
         list_objs = json_lib.loads(cached)
     else:
         list_objs = map(lambda x: x.to_json(), list(objs))
-        cache.set(cache_key, json_lib.dumps(list_objs), 60 * 60 * 24 * 30)
+        if should_cache:
+            cache.set(cache_key, json_lib.dumps(list_objs), 60 * 60 * 24 * 30)
     LOGGER.debug('loading objects in show_more view took %s seconds', (time_lib() - time_start))
     json = post_process_fun(request, list_objs)
     if 'json_orderby' in request.GET:
