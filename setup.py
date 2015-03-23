@@ -8,8 +8,8 @@ setup(
     name='proso-apps',
     version=VERSION,
     description='General library for applications in PROSO projects',
-    author='Jan Papousek, Vit Stanislav',
-    author_email='jan.papousek@gmail.com, slaweet@seznam.cz',
+    author='Adaptive Learning Group',
+    author_email='al@fi.muni.cz',
     namespace_packages = ['proso', 'proso.django'],
     include_package_data = True,
     packages=[
@@ -59,5 +59,5 @@ setup(
         'ua-parser==0.3.6',
         'user-agents==0.3.1'
     ],
-    license='Gnu GPL v3',
+    license='MIT',
 )
