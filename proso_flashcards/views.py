@@ -31,7 +31,7 @@ def show_more(request, object_class, should_cache=True):
         select_related_all = {
         }
         prefetch_related_all = {
-            Term: ["parents"],
+            settings.PROSO_FLASHCARDS.get("term_extension", Term): ["parents"],
             FlashcardAnswer: ["options"],
         }
         select_related = select_related_all.get(object_class, [])
