@@ -6,9 +6,8 @@ from django.views.generic import TemplateView
 from proso_flashcards.models import Term, Category, Context, Flashcard, FlashcardAnswer
 
 MODELS = [Flashcard, Category, FlashcardAnswer]
-MODELS.append(settings.PROSO_FLASHCARDS["term_extension"] if "term_extension" in settings.PROSO_FLASHCARDS else Term)
-MODELS.append(
-    settings.PROSO_FLASHCARDS["context_extension"] if "context_extension" in settings.PROSO_FLASHCARDS else Context)
+MODELS.append(settings.PROSO_FLASHCARDS.get("term_extension", Term))
+MODELS.append(settings.PROSO_FLASHCARDS.get("context_extension", Context))
 
 SHOULD_NOT_CACHE = [FlashcardAnswer]
 

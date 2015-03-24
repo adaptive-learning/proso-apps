@@ -134,7 +134,5 @@ def create_items(sender, instance, **kwargs):
 
 
 PROSO_MODELS_TO_EXPORT = [Category, Flashcard, FlashcardAnswer,
-                          settings.PROSO_FLASHCARDS["term_extension"]
-                          if "term_extension" in settings.PROSO_FLASHCARDS else Term,
-                          settings.PROSO_FLASHCARDS["context_extension"]
-                          if "context_extension" in settings.PROSO_FLASHCARDS else Context]
+                          settings.PROSO_FLASHCARDS.get("context_extension", Context),
+                          settings.PROSO_FLASHCARDS.get("term_extension", Term),]

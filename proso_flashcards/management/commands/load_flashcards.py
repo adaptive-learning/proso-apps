@@ -86,8 +86,7 @@ class Command(BaseCommand):
     def _load_contexts(self, data=None):
         if data is not None:
             print "\nLoading contexts"
-        model = settings.PROSO_FLASHCARDS["context_extension"] \
-            if "context_extension" in settings.PROSO_FLASHCARDS else Context
+        model = settings.PROSO_FLASHCARDS.get("context_extension", Context)
         db_contexts = {}
         item_mapping = {}
         for db_context in model.objects.all():
@@ -125,7 +124,7 @@ class Command(BaseCommand):
     def _load_terms(self, data=None):
         if data is not None:
             print "\nLoading terms"
-        model = settings.PROSO_FLASHCARDS["term_extension"] if "term_extension" in settings.PROSO_FLASHCARDS else Term
+        model = settings.PROSO_FLASHCARDS.get("term_extension", Term)
         db_terms = {}
         item_mapping = {}
         for db_term in model.objects.all():
