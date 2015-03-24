@@ -156,7 +156,7 @@ class AveragePredictiveModel(PredictiveModel):
     def predict_phase(self, data, user, item, time, **kwargs):
         return float(data[0]) / max(data[1], 1)
 
-    def predict_phase_more_items(self, data, user, items, asked_items, time, **kwargs):
+    def predict_phase_more_items(self, data, user, items, time, **kwargs):
         return map(lambda (tot, num): float(tot) / max(num, 1), zip(data[0], data[1]))
 
     def update_phase(self, environment, data, prediction, user, item, correct, time, **kwargs):
