@@ -268,7 +268,8 @@ def _to_json(request, value):
         common_json_enrich.enrich_by_object_type(
             request, json, models_json_enrich.prediction, ['question', 'set', 'category'])
     common_json_enrich.enrich_by_object_type(request, json, json_enrich.html, ['question', 'resource', 'option'])
-    common_json_enrich.enrich_by_predicate(request, json, json_enrich.url, lambda x: True)
+    common_json_enrich.enrich_by_predicate(request, json, common_json_enrich.url, lambda x: True,
+                                           ignore_get=['filter_column', 'filter_value'] + json_enrich.IGNORE_GET)
     common_json_enrich.enrich_by_object_type(request, json, json_enrich.questions, ['set', 'category'])
     common_json_enrich.enrich_by_object_type(request, json, json_enrich.test_evaluate, 'set')
     LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))

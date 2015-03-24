@@ -1,13 +1,16 @@
 import json
 import logging
+from time import time as time_lib
+
 from django.db import transaction
+
 from django.http import HttpResponse, HttpResponseBadRequest
 from lazysignup.decorators import allow_lazy_user
+
 from proso.django.cache import cache_page_conditional
+
 from proso.django.response import render
 import proso_common.views
-from time import time as time_lib
-import json_enrich
 import proso_common.json_enrich as common_json_enrich
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard
 
@@ -172,6 +175,7 @@ def _to_json(request, value):
     else:
         json = value
     LOGGER.debug("converting value to simple JSON took %s seconds", (time_lib() - time_start))
-    common_json_enrich.enrich_by_predicate(request, json, json_enrich.url, lambda x: True)
+    common_json_enrich.enrich_by_predicate(request, json, common_json_enrich.url, lambda x: True,
+                                           ignore_get=['filter_column', 'filter_value'])
     LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
     return json

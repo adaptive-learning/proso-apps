@@ -1,9 +1,13 @@
 import logging
 from time import time
+from django.core.cache import cache
+import json as json_lib
+from django.core.urlresolvers import reverse
+from proso.django.response import pass_get_parameters_string, append_get_parameters
 
 
 LOGGER = logging.getLogger('django.request')
-
+CACHE_EXPIRATION = 60 * 60 * 24 * 30
 
 def enrich(request, json, fun, nested=False, top_level=True):
     time_start = time()
@@ -19,7 +23,7 @@ def enrich(request, json, fun, nested=False, top_level=True):
     return result
 
 
-def enrich_by_predicate(request, json, fun, predicate):
+def enrich_by_predicate(request, json, fun, predicate, **kwargs):
     time_start = time()
     collected = []
     memory = {'nested': False}
@@ -35,7 +39,7 @@ def enrich_by_predicate(request, json, fun, predicate):
             map(lambda x: _collect(x, True), json_inner.values())
     _collect(json, False)
     if len(collected) > 0:
-        fun(request, collected, memory['nested'])
+        fun(request, collected, memory['nested'], **kwargs)
     LOGGER.debug("enrichment of JSON by predicate by '%s' function took %s seconds", fun.__name__, (time() - time_start))
     return json
 
@@ -46,3 +50,28 @@ def enrich_by_object_type(request, json, fun, object_type):
     else:
         f = lambda x: 'object_type' in x and x['object_type'] == object_type
     return enrich_by_predicate(request, json, fun, f)
+
+
+def url(request, json_list, nested, url_name='show_{}', ignore_get=None):
+    if not ignore_get:
+        ignore_get = []
+    urls = cache.get('proso_urls')
+    if urls is None:
+        urls = {}
+    else:
+        urls = json_lib.loads(urls)
+    cache_updated = False
+    pass_string = pass_get_parameters_string(request, ignore_get)
+    for json in json_list:
+        if 'object_type' not in json or 'id' not in json:
+            continue
+        key = 'show_%s_%s' % (json['object_type'], json['id'])
+        if key in urls:
+            json['url'] = urls[key]
+        else:
+            cache_updated = True
+            json['url'] = reverse(url_name.format(json['object_type']), kwargs={'id': json['id']})
+            urls[key] = json['url']
+        json['url'] = append_get_parameters(json['url'], pass_string)
+    if cache_updated:
+        cache.set('proso_urls', json_lib.dumps(urls), CACHE_EXPIRATION)
