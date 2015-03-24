@@ -8,8 +8,8 @@ from proso_flashcards.models import Term, Context, Flashcard
 class ExtendedTerm(Term):
     extra_info = models.TextField()
 
-    def to_json(self):
-        json = Term.to_json(self)
+    def to_json(self, nested=False):
+        json = Term.to_json(self, nested)
         json["extra-info"] = self.extra_info
         return json
 
@@ -21,8 +21,8 @@ class ExtendedTerm(Term):
 class ExtendedContext(Context):
     extra_info = models.TextField()
 
-    def to_json(self):
-        json = Context.to_json(self)
+    def to_json(self, nested=False):
+        json = Context.to_json(self, nested)
         json["extra-info"] = self.extra_info
         return json
 
