@@ -144,6 +144,8 @@ class Command(BaseCommand):
                         lang=lang,
                     )
                 db_term.name = term["name-{}".format(lang)]
+                if "type" in term:
+                    db_term.type = term["type"]
                 if "load_data" in model.__dict__:
                     model.load_data(term, db_term)
                 if db_term.identifier in item_mapping:

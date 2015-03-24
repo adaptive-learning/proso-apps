@@ -11,6 +11,7 @@ class Term(models.Model):
 
     lang = models.CharField(max_length=2)
     name = models.TextField()
+    type = models.CharField(max_length=50, null=True, blank=True)
 
     def to_json(self, nested=False):
         json = {
@@ -19,6 +20,7 @@ class Term(models.Model):
             "object_type": "fc_term",
             "lang": self.lang,
             "name": self.name,
+            "type": self.type,
         }
         if not nested:
             json["parents"] = [parent.to_json(nested=True) for parent in self.parents.all()]

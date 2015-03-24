@@ -7,6 +7,9 @@
         "id": {
           "type": "string"
         },
+        "type": {
+          "type": "string"
+        },
         "categories": {
           "type": "array",
           "items": {

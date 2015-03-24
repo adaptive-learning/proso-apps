@@ -11,14 +11,16 @@
       "name-en": "circle",
       "name-cs": "kruh",
       "categories": ["0001", "0004"],
-      "extra-info": "bongo"
+      "extra-info": "bongo",
+      "type": "rounded"
     },
     {
       "id": "0003",
       "name-en": "triangle",
       "name-cs": "trojuhelnik",
       "categories": ["0001"],
-      "extra-info": "ringo"
+      "extra-info": "ringo",
+      "type": "pointed"
     }
   ]
 }
