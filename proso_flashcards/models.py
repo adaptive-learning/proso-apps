@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from proso_models.models import Item, Answer
 from django.db.models.signals import pre_save
@@ -128,3 +129,10 @@ def create_items(sender, instance, **kwargs):
         item = Item()
         item.save()
         instance.item = item
+
+
+PROSO_MODELS_TO_EXPORT = [Category, Flashcard, FlashcardAnswer,
+                          settings.PROSO_FLASHCARDS["term_extension"]
+                          if "term_extension" in settings.PROSO_FLASHCARDS else Term,
+                          settings.PROSO_FLASHCARDS["context_extension"]
+                          if "context_extension" in settings.PROSO_FLASHCARDS else Context]
