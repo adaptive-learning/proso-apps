@@ -580,6 +580,7 @@ def log_audit(sender, instance, **kwargs):
         audit = Audit(
             user_id=instance.user_id,
             item_primary=instance.item_primary,
+            item_secondary=instance.item_secondary,
             key=instance.key,
             value=instance.value,
             time=instance.updated)
