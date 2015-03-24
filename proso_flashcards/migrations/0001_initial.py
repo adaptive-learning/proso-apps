@@ -18,7 +18,6 @@ class Migration(migrations.Migration):
                 ('identifier', models.SlugField(default=None, null=True, blank=True)),
                 ('name', models.CharField(max_length=100)),
                 ('type', models.CharField(default=None, max_length=20, null=True, blank=True)),
-                ('language', models.CharField(max_length=50)),
                 ('url_name', models.SlugField(unique=True)),
             ],
             options={
@@ -44,7 +43,6 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('identifier', models.SlugField(default=None, null=True, blank=True)),
-                ('language', models.CharField(max_length=50)),
                 ('reverse', models.TextField()),
                 ('obverse', models.TextField()),
                 ('type', models.CharField(default=None, max_length=50, null=True, blank=True)),
@@ -53,10 +51,6 @@ class Migration(migrations.Migration):
             options={
             },
             bases=(models.Model,),
-        ),
-        migrations.AlterUniqueTogether(
-            name='flashcard',
-            unique_together=set([('item', 'language'), ('identifier', 'language')]),
         ),
         migrations.AddField(
             model_name='category',
@@ -75,9 +69,5 @@ class Migration(migrations.Migration):
             name='subcategories',
             field=models.ManyToManyField(related_name='subcategories_rel_+', to='proso_flashcards.Category'),
             preserve_default=True,
-        ),
-        migrations.AlterUniqueTogether(
-            name='category',
-            unique_together=set([('item', 'language'), ('identifier', 'language')]),
         ),
     ]
