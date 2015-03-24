@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
-from proso_models.models import Item, Answer
-from django.db.models.signals import pre_save
+from proso_models.models import Item, Answer, get_environment
+from django.db.models.signals import pre_save, m2m_changed
 from django.dispatch import receiver
 
 
@@ -67,8 +67,8 @@ class Flashcard(models.Model):
             "item_id": self.item_id,
             "object_type": "fc_flashcard",
             "lang": self.lang,
-            "term": self.term.to_json(),
-            "context": self.context.to_json(),
+            "term": self.term.to_json(nested=True),
+            "context": self.context.to_json(nested=True),
             "description": self.description
         }
 
@@ -135,4 +135,46 @@ def create_items(sender, instance, **kwargs):
 
 PROSO_MODELS_TO_EXPORT = [Category, Flashcard, FlashcardAnswer,
                           settings.PROSO_FLASHCARDS.get("context_extension", Context),
-                          settings.PROSO_FLASHCARDS.get("term_extension", Term),]
+                          settings.PROSO_FLASHCARDS.get("term_extension", Term)]
+
+
+@receiver(m2m_changed, sender=Category.terms.through)
+@receiver(m2m_changed, sender=Category.subcategories.through)
+def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
+
+    environment = get_environment()
+    parent_items = []
+    child_items = []
+
+    if action == "pre_clear":
+        if not reverse:
+            parent_items = [instance.item_id]
+            children = instance.terms if model == Term else instance.subcategories
+            child_items = children.all().values_list("item_id", flat=True)
+        else:
+            parent_items = instance.parents.all().values_list("item_id", flat=True)
+            child_items = [instance.item_id]
+
+    if action == "post_add" or action == "post_remove":
+        if not reverse:
+            parent_items = [instance.item_id]
+            child_items = model.objects.filter(pk__in=pk_set).values_list("item_id", flat=True)
+        else:
+            parent_items = Category.objects.filter(pk__in=pk_set).values_list("item_id", flat=True)
+            child_items = [instance.item_id]
+
+    if action == "post_add":
+        for parent_item in parent_items:
+            for child_item in child_items:
+                environment.write("child", 1, item=parent_item, item_secondary=child_item, symmetric=False)
+                environment.write("parent", 1, item=child_item, item_secondary=parent_item, symmetric=False)
+        return
+
+    if action == "post_remove" or "pre_clear":
+        for parent_item in parent_items:
+            for child_item in child_items:
+                pass
+                # environment.delete("child", item=parent_item, item_secondary=child_item)
+                # environment.delete("parent", item=child_item, item_secondary=parent_item)
+                # TODO
+        return
