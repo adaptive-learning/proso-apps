@@ -15,7 +15,8 @@ class ExtendedTerm(Term):
 
     @staticmethod
     def load_data(data, term):
-        term.extra_info = data["extra-info"]
+        if 'extra-info' in data:
+            term.extra_info = data["extra-info"]
 
 
 class ExtendedContext(Context):
@@ -28,7 +29,8 @@ class ExtendedContext(Context):
 
     @staticmethod
     def load_data(data, context):
-        context.extra_info = data["extra-info"]
+        if 'extra-info' in data:
+            context.extra_info = data["extra-info"]
 
 
 settings.PROSO_FLASHCARDS["term_extension"] = ExtendedTerm
