@@ -9,6 +9,7 @@ from proso.django.response import pass_get_parameters_string, append_get_paramet
 LOGGER = logging.getLogger('django.request')
 CACHE_EXPIRATION = 60 * 60 * 24 * 30
 
+
 def enrich(request, json, fun, nested=False, top_level=True):
     time_start = time()
     if isinstance(json, list):
