@@ -47,7 +47,7 @@ class Command(BaseCommand):
         if data is None:
             return db_categories
 
-        for category in progress.bar(data, every=len(data) / 100.):
+        for category in progress.bar(data, every=max(1, len(data) / 100)):
             langs = [k[-2:] for k in category.keys() if re.match(r'^name-\w\w$', k)]
             for lang in langs:
                 db_category = Category.objects.filter(identifier=category["id"], lang=lang).first()
@@ -95,7 +95,7 @@ class Command(BaseCommand):
         if data is None:
             return db_contexts
 
-        for context in progress.bar(data, every=len(data) / 100.):
+        for context in progress.bar(data, every=max(1, len(data) / 100)):
             langs = [k[-2:] for k in context.keys() if re.match(r'^name-\w\w$', k)]
             for lang in langs:
                 db_context = model.objects.filter(identifier=context["id"], lang=lang).first()
@@ -133,7 +133,7 @@ class Command(BaseCommand):
         if data is None:
             return db_terms
 
-        for term in progress.bar(data, every=len(data) / 100.):
+        for term in progress.bar(data, every=max(1, len(data) / 100)):
             langs = [k[-2:] for k in term.keys() if re.match(r'^name-\w\w$', k)]
             for lang in langs:
                 db_term = model.objects.filter(identifier=term["id"], lang=lang).first()
@@ -180,7 +180,7 @@ class Command(BaseCommand):
             db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
             item_mapping[db_flashcard.identifier] = db_flashcard.item_id
 
-        for flashcard in progress.bar(data, every=len(data) / 100.):
+        for flashcard in progress.bar(data, every=max(1, len(data) / 100)):
             terms = Term.objects.filter(identifier=flashcard["term"])
             if len(terms) == 0:
                 raise CommandError("Term {} for flashcard {} doesn't exist".format(flashcard["term"], flashcard["id"]))
