@@ -10,6 +10,8 @@ MODELS.append(settings.PROSO_FLASHCARDS["term_extension"] if "term_extension" in
 MODELS.append(
     settings.PROSO_FLASHCARDS["context_extension"] if "context_extension" in settings.PROSO_FLASHCARDS else Context)
 
+SHOULD_NOT_CACHE = [FlashcardAnswer]
+
 urlpatterns = patterns(
     'proso_flashcards.views',
     url(r'^(|home)$', ensure_csrf_cookie(TemplateView.as_view(template_name="flashcards_home.html")), name='home'),
@@ -21,5 +23,6 @@ for model in MODELS:
     urlpatterns += patterns(
         'proso_flashcards.views',
         url(r'^{}/(?P<id>\d+)$'.format(name), 'show_one', {'object_class': model}, name='show_fc_{}'.format(name)),
-        url(r'^{}s$'.format(name), 'show_more', {'object_class': model}, name='show_fc_{}s'.format(name)),
+        url(r'^{}s$'.format(name), 'show_more', {'object_class': model, 'should_cache': model not in SHOULD_NOT_CACHE},
+            name='show_fc_{}s'.format(name)),
     )
