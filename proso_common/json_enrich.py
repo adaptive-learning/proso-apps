@@ -4,6 +4,7 @@ from django.core.cache import cache
 import json as json_lib
 from django.core.urlresolvers import reverse
 from proso.django.response import pass_get_parameters_string, append_get_parameters
+from proso_models.models import get_environment
 
 
 LOGGER = logging.getLogger('django.request')
@@ -45,12 +46,12 @@ def enrich_by_predicate(request, json, fun, predicate, **kwargs):
     return json
 
 
-def enrich_by_object_type(request, json, fun, object_type):
+def enrich_by_object_type(request, json, fun, object_type, **kwargs):
     if isinstance(object_type, list):
         f = lambda x: 'object_type' in x and x['object_type'] in object_type
     else:
         f = lambda x: 'object_type' in x and x['object_type'] == object_type
-    return enrich_by_predicate(request, json, fun, f)
+    return enrich_by_predicate(request, json, fun, f, **kwargs)
 
 
 def url(request, json_list, nested, url_name='show_{}', ignore_get=None):
@@ -76,3 +77,21 @@ def url(request, json_list, nested, url_name='show_{}', ignore_get=None):
         json['url'] = append_get_parameters(json['url'], pass_string)
     if cache_updated:
         cache.set('proso_urls', json_lib.dumps(urls), CACHE_EXPIRATION)
+
+
+def env_variables(request, json_list, nested, variable_type):
+    environment = get_environment()
+    items = [json["item_id"] for json in json_list]
+
+    for json in json_list:
+        if env_variables not in json:
+            json["env_variables"] = {}
+
+    for (key, user, relationship) in variable_type:
+        if not relationship:
+            for json, v in zip(json_list, environment.read_more_items(key, items, user)):
+                if v:
+                    json["env_variables"][key] = v
+        else:
+            for json, v in zip(json_list, environment.get_items_with_values_more_items(key, items, user)):
+                json["env_variables"][key] = dict(v)

@@ -64,6 +64,8 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
         turn on the enrichment of the objects by some statistics
       html
         turn on the HTML version of the API
+      environment
+        turn on the enrichment of the related environment values
     """
     if not should_cache and 'json_orderby' in request.GET:
         return render_json(request, {
