@@ -5,7 +5,9 @@ PEP8=pep8 --ignore=E501,E225,E123,E128
 APPS=proso_common proso_feedback proso_flashcards proso_models proso_questions proso_questions_client proso_user
 GRUNT_APPS=proso_questions_client
 
-VERSION:=$(shell grep "VERSION = '.*'" proso/release.py | awk -F ' = ' '{print $$2}' | tr -d "'")
+VERSION_FULL:=$(shell grep "VERSION = '.*'" proso/release.py | awk -F ' = ' '{print $$2}' | tr -d "'")
+VERSION:=$(shell echo $(VERSION_FULL) | awk -F '-' '{print $$1}')
+VERSION_SUFFIX:=$(shell echo $(VERSION_FULL) | awk -F '-' '{print $$2}')
 MAJOR_VERSION=$(word 1,$(subst ., ,$(VERSION)))
 MINOR_VERSION=$(word 2,$(subst ., ,$(VERSION)))
 MICRO_VERSION=$(word 3,$(subst ., ,$(VERSION)))
@@ -35,7 +37,7 @@ develop: check
 
 install: check
 	python setup.py sdist
-	pip install dist/proso-apps-*
+	pip install dist/proso-apps-$(VERSION_FULL)-*
 
 uninstall:
 	pip uninstall --yes proso-apps
@@ -54,6 +56,23 @@ grunt:
 
 ################################################################################
 
+milestone:
+	MAJOR=$(MAJOR_VERSION); \
+	MINOR=$(MINOR_VERSION); \
+	MICRO=$(MICRO_VERSION); \
+	if [ "$(MILESTONE)" ]; then \
+		SUFFIX="-$(MILESTONE)"; \
+	else \
+		SUFFIX=""; \
+	fi; \
+	sed -i "s/VERSION = '.*'/VERSION = '$${MAJOR}.$${MINOR}.$${MICRO}$${SUFFIX}'/g" proso/release.py; \
+
+snapshot:
+	MAJOR=$(MAJOR_VERSION); \
+	MINOR=$(MINOR_VERSION); \
+	MICRO=$(MICRO_VERSION); \
+	sed -i "s/VERSION = '.*'/VERSION = '$${MAJOR}.$${MINOR}.$${MICRO}-SNAPSHOT'/g" proso/release.py; \
+
 publish-version:
 	git reset
 	git add proso/release.py
@@ -65,18 +84,15 @@ increase-major:
 	MINOR=0; \
 	MICRO=0; \
 	sed -i "s/VERSION = '.*'/VERSION = '$${MAJOR}.$${MINOR}.$${MICRO}'/g" proso/release.py; \
-	$(MAKE) publish-version
 
 increase-minor:
 	MAJOR=$(MAJOR_VERSION); \
 	MINOR=`expr $(MINOR_VERSION) + 1`; \
 	MICRO=0; \
 	sed -i "s/VERSION = '.*'/VERSION = '$${MAJOR}.$${MINOR}.$${MICRO}'/g" proso/release.py;
-	$(MAKE) publish-version
 
 increase-micro:
 	MAJOR=$(MAJOR_VERSION); \
 	MINOR=$(MINOR_VERSION); \
 	MICRO=`expr $(MICRO_VERSION) + 1`; \
 	sed -i "s/VERSION = '.*'/VERSION = '$${MAJOR}.$${MINOR}.$${MICRO}'/g" proso/release.py;
-	$(MAKE) publish-version
