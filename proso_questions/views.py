@@ -71,10 +71,7 @@ def show_more(request, object_class, should_cache=True):
             objs = object_class.objects.select_related(*select_related).\
                 prefetch_related(*prefetch_related).all()
         if object_class == DecoratedAnswer:
-            if is_user_id_overriden(request):
-                user_id = int(request.GET['user'])
-            else:
-                user_id = request.user.id
+            user_id = get_user_id(request)
             objs = objs.filter(general_answer__user_id=user_id).order_by('-general_answer__time')
         return objs
 
