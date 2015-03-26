@@ -173,6 +173,6 @@ def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
     if action == "post_remove" or "pre_clear":
         for parent_item in parent_items:
             for child_item in child_items:
-                 environment.delete("child", item=parent_item, item_secondary=child_item)
-                 environment.delete("parent", item=child_item, item_secondary=parent_item)
+                environment.delete("child", item=parent_item, item_secondary=child_item)
+                environment.delete("parent", item=child_item, item_secondary=parent_item)
         return
