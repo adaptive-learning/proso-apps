@@ -51,7 +51,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
         filename_audit = os.path.join(settings.DATA_DIR, 'environment_flush_audit.csv')
         filename_variable = os.path.join(settings.DATA_DIR, 'environment_flush_variable.csv')
         with open(filename_audit, 'w') as file_audit:
-            for (key, u, i_p, i_s, p, t, v) in self.export_audit():
+            for (key, u, i_p, i_s, t, v) in self.export_audit():
                 if key in to_skip:
                     continue
                 file_audit.write(
@@ -61,13 +61,13 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                 if key in to_skip:
                     continue
                 file_variable.write(
-                    ('%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t)).replace('None', ''))
+                    ('%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t, p)).replace('None', ''))
         print 'BEGIN;'
         print 'SET CONSTRAINTS ALL DEFERRED;'
         print "TRUNCATE TABLE proso_models_audit;"
         print "TRUNCATE TABLE proso_models_variable;"
         print "\copy proso_models_audit (key, user_id, item_primary_id, item_secondary_id, time, value) FROM '%s' WITH (FORMAT csv);" % filename_audit
-        print "\copy proso_models_variable (key, user_id, item_primary_id, item_secondary_id, value, audit, updated) FROM '%s' WITH (FORMAT csv);" % filename_variable
+        print "\copy proso_models_variable (key, user_id, item_primary_id, item_secondary_id, value, audit, updated, permanent) FROM '%s' WITH (FORMAT csv);" % filename_variable
         print 'COMMIT;'
 
 

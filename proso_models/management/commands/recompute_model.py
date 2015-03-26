@@ -25,18 +25,15 @@ class Command(BaseCommand):
                     item_primary_id,
                     item_secondary_id,
                     value,
-                    updated
+                    updated,
+                    key
                 FROM proso_models_variable
-                WHERE
-                    key = 'parent'
+                WHERE permanent
                 ''')
             for row in cursor:
                 environment.write(
-                    'parent', row[3], user=row[0], item=row[1],
-                    item_secondary=row[2], time=self._ensure_is_datetime(row[4]), symmetric=False)
-                environment.write(
-                    'child', row[3], user=row[0], item=row[2],
-                    item_secondary=row[1], time=self._ensure_is_datetime(row[4]), symmetric=False)
+                    row[5], row[3], user=row[0], item=row[1],
+                    item_secondary=row[2], time=self._ensure_is_datetime(row[4]), symmetric=False, permanent=True)
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''

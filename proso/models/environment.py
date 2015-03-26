@@ -285,8 +285,7 @@ class InMemoryEnvironment(CommonEnvironment):
                     for item_secondary, values in secondaries.iteritems():
                         if len(values) > 0:
                             permanent, time, value = values[-1]
-                            if not permanent:
-                                yield (key, user, item_primary, item_secondary, permanent, time, value)
+                            yield (key, user, item_primary, item_secondary, permanent, time, value)
 
     def export_audit(self):
         for key, users in self._data.iteritems():
@@ -295,7 +294,7 @@ class InMemoryEnvironment(CommonEnvironment):
                     for item_secondary, values in secondaries.iteritems():
                         for permanent, time, value in values:
                             if not permanent:
-                                yield (key, user, item_primary, item_secondary, permanent, time, value)
+                                yield (key, user, item_primary, item_secondary, time, value)
 
 
 ################################################################################

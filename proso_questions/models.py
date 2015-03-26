@@ -403,13 +403,15 @@ def question_parents(sender, **kwargs):
             1,
             item=category.item_id,
             item_secondary=question.item_id,
-            symmetric=False)
+            symmetric=False,
+            permanent=True)
         environment.write(
             'parent',
             1,
             item=question.item_id,
             item_secondary=category.item_id,
-            symmetric=False)
+            symmetric=False,
+            permanent=True)
 
 
 @receiver(post_delete, sender=Image)

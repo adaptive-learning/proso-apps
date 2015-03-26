@@ -166,8 +166,8 @@ def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
     if action == "post_add":
         for parent_item in parent_items:
             for child_item in child_items:
-                environment.write("child", 1, item=parent_item, item_secondary=child_item, symmetric=False)
-                environment.write("parent", 1, item=child_item, item_secondary=parent_item, symmetric=False)
+                environment.write("child", 1, item=parent_item, item_secondary=child_item, symmetric=False, permanent=True)
+                environment.write("parent", 1, item=child_item, item_secondary=parent_item, symmetric=False, permanent=True)
         return
 
     if action == "post_remove" or "pre_clear":
