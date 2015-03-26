@@ -60,7 +60,11 @@ class Environment:
         pass
 
     @abc.abstractmethod
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=True):
+        pass
+
+    @abc.abstractmethod
+    def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         pass
 
     def update(self, key, init_value, update_fun, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True):
@@ -173,14 +177,17 @@ class InMemoryEnvironment(CommonEnvironment):
         items = [item_secondary, item]
         if symmetric:
             items = sorted(items)
-        found = list(self._data[key][user][items[1]][items[0]])
+        found = self._data[key][user][items[1]][items[0]]
+        if found and found[0][0]:
+            return []
+        found = map(lambda x: (x[1], x[2]), found)
         if limit is not None:
             found = found[-limit:]
         found.reverse()
         return found
 
     def get_items_with_values(self, key, item, user=None):
-        return map(lambda (i, l): (i, l[-1][1]), self._data[key][user][item].items())
+        return map(lambda (i, l): (i, l[-1][2]), self._data[key][user][item].items())
 
     def get_items_with_values_more_items(self, key, items, user=None):
         return map(lambda i: self.get_items_with_values(key, i, user), items)
@@ -191,7 +198,7 @@ class InMemoryEnvironment(CommonEnvironment):
             items = sorted(items)
         found = self._data[key][user][items[1]][items[0]]
         if found:
-            return found[-1][1]
+            return found[-1][2]
         else:
             return default
 
@@ -200,17 +207,38 @@ class InMemoryEnvironment(CommonEnvironment):
             lambda i: self.read(key, user, i, item, default, symmetric),
             items)
 
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False):
+        if permanent:
+            audit = False
         items = [item_secondary, item]
         if symmetric:
             items = sorted(items)
         if time is None:
             time = datetime.datetime.now()
         found = self._data[key][user][items[1]][items[0]]
+        if len(found) and found[-1][0] != permanent:
+            raise Exception("The variable %s for items %s, %s and user %s changed permamency from %s to %s" % (
+                key, item, item_secondary, user, found[-1][0], permanent
+            ))
         if audit or not found:
-            found.append((time, value))
+            found.append((permanent, time, value))
         else:
-            found[-1] = (time, value)
+            found[-1] = (permanent, time, value)
+
+    def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
+        items = [item_secondary, item]
+        if symmetric:
+            items = sorted(items)
+        found = self._data[key][user][items[1]][items[0]]
+        if len(found) and not found[-1][0]:
+            raise Exception("Can't delete variable %s which is not permanent." % key)
+        del self._data[key][user][items[1]][items[0]]
+        if len(self._data[key][user][items[1]]) == 0:
+            del self._data[key][user][items[1]]
+            if len(self._data[key][user]) == 0:
+                del self._data[key][user]
+                if len(self._data[key]):
+                    del self._data[key]
 
     def number_of_answers(self, user=None, item=None):
         return self.read(self.NUMBER_OF_ANSWERS, user=user, item=item, default=0)
@@ -256,16 +284,18 @@ class InMemoryEnvironment(CommonEnvironment):
                 for item_primary, secondaries in primaries.iteritems():
                     for item_secondary, values in secondaries.iteritems():
                         if len(values) > 0:
-                            time, value = values[-1]
-                            yield (key, user, item_primary, item_secondary, time, value)
+                            permanent, time, value = values[-1]
+                            if not permanent:
+                                yield (key, user, item_primary, item_secondary, permanent, time, value)
 
     def export_audit(self):
         for key, users in self._data.iteritems():
             for user, primaries in users.iteritems():
                 for item_primary, secondaries in primaries.iteritems():
                     for item_secondary, values in secondaries.iteritems():
-                        for time, value in values:
-                            yield (key, user, item_primary, item_secondary, time, value)
+                        for permanent, time, value in values:
+                            if not permanent:
+                                yield (key, user, item_primary, item_secondary, permanent, time, value)
 
 
 ################################################################################
@@ -287,6 +317,21 @@ class TestEnvironment(unittest.TestCase):
     @abc.abstractmethod
     def generate_environment(self):
         pass
+
+    def test_permanent(self):
+        items = [self.generate_item() for i in range(3)]
+        env = self.generate_environment()
+        env.write('key', items[0])
+        with self.assertRaises(Exception):
+            env.delete('key')
+        with self.assertRaises(Exception):
+            env.write('key', 1, permament=True)
+        env.write('key_permanent', 1, permanent=True)
+        env.write('key_permanent', 2, permanent=True)
+        self.assertEqual([], env.audit('key_permanent'))
+        self.assertEqual(2, env.read('key_permanent'))
+        env.delete('key_permanent')
+        self.assertEqual([], env.audit('key_permanent'))
 
     def test_write_and_read(self):
         env = self.generate_environment()

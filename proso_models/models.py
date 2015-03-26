@@ -51,13 +51,13 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
         filename_audit = os.path.join(settings.DATA_DIR, 'environment_flush_audit.csv')
         filename_variable = os.path.join(settings.DATA_DIR, 'environment_flush_variable.csv')
         with open(filename_audit, 'w') as file_audit:
-            for (key, u, i_p, i_s, t, v) in self.export_audit():
+            for (key, u, i_p, i_s, p, t, v) in self.export_audit():
                 if key in to_skip:
                     continue
                 file_audit.write(
                     ('%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, t.strftime('%Y-%m-%d %H:%M:%S'), v)).replace('None', ''))
         with open(filename_variable, 'w') as file_variable:
-            for (key, u, i_p, i_s, t, v) in self.export_values():
+            for (key, u, i_p, i_s, p, t, v) in self.export_values():
                 if key in to_skip:
                     continue
                 file_variable.write(
@@ -175,7 +175,9 @@ class DatabaseEnvironment(CommonEnvironment):
             result = dict(result)
             return map(lambda key: result.get(key, default), items)
 
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False):
+        if permanent:
+            audit = False
         if key is None:
             raise Exception('Key has to be specified')
         if value is None:
@@ -191,13 +193,36 @@ class DatabaseEnvironment(CommonEnvironment):
         }
         try:
             variable = Variable.objects.get(**data)
+            if variable.permanent != permanent:
+                raise Exception("Variable %s changed permanency." % key)
         except Variable.DoesNotExist:
             variable = Variable(**data)
         if variable.value != value:
             variable.value = value
             variable.audit = audit
+            variable.permanent = permanent
             variable.updated = datetime.now() if time is None else time
             variable.save()
+
+    def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
+        if key is None:
+            raise Exception('Key has to be specified')
+        items = [item_secondary, item]
+        if symmetric:
+            items = sorted(items)
+        data = {
+            'user_id': user,
+            'item_primary_id': items[1],
+            'item_secondary_id': items[0],
+            'key': key
+        }
+        try:
+            variable = Variable.objects.get(**data)
+            if not variable.permanent:
+                raise Exception("Can't delete variable %s which is not permanent." % key)
+            variable.delete()
+        except Variable.DoesNotExist:
+            pass
 
     def number_of_answers(self, user=None, item=None):
         with closing(connection.cursor()) as cursor:
@@ -488,6 +513,7 @@ class Variable(models.Model):
         blank=True,
         default=None,
         related_name='item_secondary_variables')
+    permanent = models.BooleanField(default=False)
     key = models.CharField(max_length=50)
     value = models.FloatField()
     audit = models.BooleanField(default=True)
@@ -499,7 +525,8 @@ class Variable(models.Model):
             'key': self.key,
             'item_primary': self.item_primary_id,
             'item_secondary': self.item_secondary_id,
-            'value': self.value
+            'value': self.value,
+            'permanent': self.permanent
         })
 
     class Meta:
