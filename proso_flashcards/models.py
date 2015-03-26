@@ -27,7 +27,7 @@ class Term(models.Model):
         return json
 
     def __unicode__(self):
-        return "{0.lang} - {0.name}".format(self)
+        return u"{0.lang} - {0.name}".format(self)
 
 
 class Context(models.Model):
@@ -49,7 +49,7 @@ class Context(models.Model):
         }
 
     def __unicode__(self):
-        return "{0.lang} - {0.name}".format(self)
+        return u"{0.lang} - {0.name}".format(self)
 
 
 class Flashcard(models.Model):
@@ -73,7 +73,7 @@ class Flashcard(models.Model):
         }
 
     def __unicode__(self):
-        return "{0.term} - {0.context}".format(self)
+        return u"{0.term} - {0.context}".format(self)
 
 
 class Category(models.Model):
@@ -97,7 +97,7 @@ class Category(models.Model):
         }
 
     def __unicode__(self):
-        return "{0.lang} - {0.name}".format(self)
+        return u"{0.lang} - {0.name}".format(self)
 
 
 class FlashcardAnswer(Answer):
