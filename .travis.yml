@@ -1,0 +1,8 @@
+nguage: python
+python: 2.7
+install:
+- pip install pep8
+- pip install pyflakes
+script:
+  - make install
+  - make test
