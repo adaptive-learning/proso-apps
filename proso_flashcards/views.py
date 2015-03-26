@@ -9,6 +9,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from lazysignup.decorators import allow_lazy_user
 
 from proso.django.cache import cache_page_conditional
+from proso.django.request import get_user_id
 
 from proso.django.response import render
 import proso_common.views
@@ -47,6 +48,9 @@ def show_more(request, object_class, should_cache=True):
         else:
             objs = object_class.objects.select_related(*select_related). \
                 prefetch_related(*prefetch_related).all()
+        if object_class == FlashcardAnswer:
+            user_id = get_user_id(request)
+            objs = objs.filter(user_id=user_id).order_by('-time')
         return objs
 
     return proso_common.views.show_more(
