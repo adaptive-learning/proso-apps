@@ -37,7 +37,7 @@ develop: check
 
 install: check
 	python setup.py sdist
-	pip install dist/proso-apps-$(VERSION_FULL)-*
+	pip install dist/proso-apps-$(VERSION_FULL)*
 
 uninstall:
 	pip uninstall --yes proso-apps
@@ -56,6 +56,20 @@ grunt:
 
 ################################################################################
 
+release:
+	$(MAKE) MILESTONE="$(MILESTONE)" milestone; \
+	if [ "$(MILESTONE)" ]; then \
+		$(MAKE) snapshot; \
+		git add proso/release.py; \
+		$(MAKE) commit-back-to-snapshot; \
+	else \
+		$(MAKE) upload; \
+		$(MAKE) increase-minor; \
+		$(MAKE) snapshot; \
+		git add proso/release.py; \
+		$(MAKE) commit-start-working; \
+	fi; \
+
 milestone:
 	MAJOR=$(MAJOR_VERSION); \
 	MINOR=$(MINOR_VERSION); \
@@ -66,6 +80,13 @@ milestone:
 		SUFFIX=""; \
 	fi; \
 	sed -i "s/VERSION = '.*'/VERSION = '$${MAJOR}.$${MINOR}.$${MICRO}$${SUFFIX}'/g" proso/release.py; \
+	$(MAKE) publish-version; \
+
+commit-back-to-snapshot:
+	git commit -m 'back to $(VERSION_FULL)'; \
+
+commit-start-working:
+		git commit -m 'start working on $(VERSION)'; \
 
 snapshot:
 	MAJOR=$(MAJOR_VERSION); \
@@ -76,8 +97,9 @@ snapshot:
 publish-version:
 	git reset
 	git add proso/release.py
-	git commit -m 'release a new version $(VERSION)'
-	git tag release-$(VERSION)
+	git commit -m 'release a new version $(VERSION_FULL)'
+	git tag release-$(VERSION_FULL)
+	git push origin release-$(VERSION_FULL)
 
 increase-major:
 	MAJOR=`expr $(MAJOR_VERSION) + 1`; \
