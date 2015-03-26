@@ -77,6 +77,9 @@ class Flashcard(models.Model):
 
 
 class Category(models.Model):
+    class Meta:
+        verbose_name_plural = "categories"
+
     identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_categories")
 
@@ -141,7 +144,6 @@ PROSO_MODELS_TO_EXPORT = [Category, Flashcard, FlashcardAnswer,
 @receiver(m2m_changed, sender=Category.terms.through)
 @receiver(m2m_changed, sender=Category.subcategories.through)
 def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
-
     environment = get_environment()
     parent_items = []
     child_items = []
@@ -166,8 +168,10 @@ def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
     if action == "post_add":
         for parent_item in parent_items:
             for child_item in child_items:
-                environment.write("child", 1, item=parent_item, item_secondary=child_item, symmetric=False, permanent=True)
-                environment.write("parent", 1, item=child_item, item_secondary=parent_item, symmetric=False, permanent=True)
+                environment.write("child", 1, item=parent_item, item_secondary=child_item, symmetric=False,
+                                  permanent=True)
+                environment.write("parent", 1, item=child_item, item_secondary=parent_item, symmetric=False,
+                                  permanent=True)
         return
 
     if action == "post_remove" or "pre_clear":
