@@ -3,12 +3,14 @@
     {
       "id": "0001",
       "name-en": "my first category",
-      "name-cs": "moje první kategorie"
+      "name-cs": "moje první kategorie",
+      "not-in-model": true
     },
     {
       "id": "0002",
       "name-en": "global category",
-      "name-cs": "globalni kategorie"
+      "name-cs": "globalni kategorie",
+      "parent-categories": ["0001"]
     },
     {
       "id": "0003",

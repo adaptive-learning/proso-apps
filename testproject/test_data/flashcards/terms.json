@@ -10,7 +10,7 @@
       "id": "0002",
       "name-en": "circle",
       "name-cs": "kruh",
-      "categories": ["0001", "0004"],
+      "categories": ["0002", "0004"],
       "extra-info": "bongo",
       "type": "rounded"
     },

@@ -57,6 +57,8 @@ class Command(BaseCommand):
                         lang=lang,
                     )
                 db_category.name = category["name-{}".format(lang)]
+                if "not-in-model" in category:
+                    db_category.not_in_model = category["not-in-model"]
                 if "type" in category:
                     db_category.type = category["type"]
                 if db_category.identifier in item_mapping:

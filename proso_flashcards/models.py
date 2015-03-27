@@ -88,6 +88,7 @@ class Category(models.Model):
     type = models.CharField(max_length=50, null=True, blank=True)
     subcategories = models.ManyToManyField("self", related_name="parents", symmetrical=False)
     terms = models.ManyToManyField(Term, related_name="parents")
+    not_in_model = models.BooleanField(default=False)
 
     def to_json(self, nested=False):
         return {
@@ -97,6 +98,7 @@ class Category(models.Model):
             "lang": self.lang,
             "name": self.name,
             "type": self.type,
+            "not-in-model": self.not_in_model,
         }
 
     def __unicode__(self):
@@ -157,12 +159,15 @@ def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
             parent_items = instance.parents.all().values_list("item_id", flat=True)
             child_items = [instance.item_id]
 
+    if action == "post_add" and not reverse and instance.not_in_model:
+        return
+
     if action == "post_add" or action == "post_remove":
         if not reverse:
             parent_items = [instance.item_id]
             child_items = model.objects.filter(pk__in=pk_set).values_list("item_id", flat=True)
         else:
-            parent_items = Category.objects.filter(pk__in=pk_set).values_list("item_id", flat=True)
+            parent_items = Category.objects.filter(pk__in=pk_set, not_in_model=False).values_list("item_id", flat=True)
             child_items = [instance.item_id]
 
     if action == "post_add":
@@ -177,6 +182,6 @@ def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
     if action == "post_remove" or "pre_clear":
         for parent_item in parent_items:
             for child_item in child_items:
-                environment.delete("child", item=parent_item, item_secondary=child_item)
-                environment.delete("parent", item=child_item, item_secondary=parent_item)
+                environment.delete("child", item=parent_item, item_secondary=child_item, symmetric=False)
+                environment.delete("parent", item=child_item, item_secondary=parent_item, symmetric=False)
         return
