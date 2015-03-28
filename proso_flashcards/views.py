@@ -1,20 +1,21 @@
 import json
 import logging
 from time import time as time_lib
+
 from django.conf import settings
-
 from django.db import transaction
-
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 
 from proso.django.cache import cache_page_conditional
-from proso.django.request import get_user_id
-
-from proso.django.response import render
+from proso.django.request import get_user_id, get_time, is_time_overriden
+from proso.django.response import render, render_json
 import proso_common.views
 import proso_common.json_enrich as common_json_enrich
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard
+from proso_models.models import get_environment
+
 
 LOGGER = logging.getLogger('django.request')
 
@@ -89,21 +90,89 @@ def answer(request):
     if request.method == 'GET':
         return render(request, 'flashcards_answer.html', {}, help_text=answer.__doc__)
     elif request.method == 'POST':
-        data = json.loads(request.body)
-        if "answer" in data:
-            answers = [data["answer"]]
-        elif "answers" in data:
-            answers = data["answers"]
-        else:
-            return HttpResponseBadRequest("Answer(s) not found")
+        answers = _get_answers(request)
         saved_answers = _save_answer(request, answers)
-
         if not isinstance(saved_answers, list):
             return saved_answers
 
         return HttpResponse(json.dumps([a.pk for a in saved_answers]), status=201)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
+
+
+@ensure_csrf_cookie
+@allow_lazy_user
+@transaction.atomic
+def practice(request):
+    """
+    Return the given number of questions to practice adaptively. In case of
+    POST request, try to save the answer(s).
+
+    GET parameters:
+      categories:
+      contexts:
+        list of ids of contexts to which flashcards selection will be restricted
+      categories:
+        list of ids of categories to which flashcards selection will be restricted
+      language:
+        language of flashcards
+      limit:
+        number of returned questions (default 10, maximum 100)
+      time:
+        time in format '%Y-%m-%d_%H:%M:%S' used for practicing
+      user:
+        identifier for the practicing user (only for stuff users)
+      stats:
+        turn on the enrichment of the objects by some statistics
+      html
+        turn on the HTML version of the API
+
+    BODY
+      see answer resource
+    """
+
+    limit = min(int(request.GET.get('limit', 10)), 100)
+    # prepare
+    user = get_user_id(request)
+    time = get_time(request)
+    environment = get_environment()
+    if is_time_overriden(request):
+        environment.shift_time(time)
+
+    # save answers
+    status = 200
+    if request.method == 'POST':
+        answers = _get_answers(request)
+        saved_answers = _save_answer(request, answers)
+        if not isinstance(saved_answers, list):
+            return saved_answers
+        status = 201
+
+    # select
+    categories = json.loads(request.GET.get("categories", []))
+    contexts = json.loads(request.GET.get("contexts", []))
+
+    time_before_practice = time_lib()
+    candidates = Flashcard.objects.candidates(categories, contexts)
+    flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates,
+                                            request.GET.get("language", None))
+    LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))
+    data = _to_json(request, {
+        'flashcards': map(lambda x: x.to_json(), flashcards)
+    })
+    return render_json(request, data, template='flashcards_json.html', status=status, help_text=practice.__doc__)
+
+
+def _get_answers(request):
+    data = json.loads(request.body)
+    if "answer" in data:
+        answers = [data["answer"]]
+    elif "answers" in data:
+        answers = data["answers"]
+    else:
+        return HttpResponseBadRequest("Answer(s) not found")
+
+    return answers
 
 
 def _save_answer(request, answers):
@@ -182,7 +251,7 @@ def _to_json(request, value):
         json = value
     LOGGER.debug("converting value to simple JSON took %s seconds", (time_lib() - time_start))
     common_json_enrich.enrich_by_predicate(request, json, common_json_enrich.url, lambda x: True,
-                                           ignore_get=['filter_column', 'filter_value'])
+                                           ignore_get=['filter_column', 'filter_value', 'categories', 'contexts'])
     if 'environment' in request.GET:
         common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
                                                  ["fc_term"], variable_type=[("parent", None, True)])

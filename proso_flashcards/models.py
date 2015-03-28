@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
-from proso_models.models import Item, Answer, get_environment
+from django.db.models import Q
+import itertools
+from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector
 from django.db.models.signals import pre_save, m2m_changed
 from django.dispatch import receiver
 
@@ -52,6 +54,48 @@ class Context(models.Model):
         return u"{0.lang} - {0.name}".format(self)
 
 
+class FlashcardManager(models.Manager):
+    def candidates(self, categories, contexts):
+        qs = self.all()
+        if isinstance(contexts, list) and len(contexts) > 0:
+            qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id: Q(context_id=id), contexts)))
+        if isinstance(categories, list) and len(categories) > 0:
+            qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id: Q(term__parents__id=id), categories)))
+        return qs
+
+    def practice(self, environment, user, time, limit, flashcard_qs, language=None):
+        # prepare
+        item_selector = get_item_selector()
+        option_selector = get_option_selector(item_selector)
+        items = list(flashcard_qs.filter(lang=language).order_by("?")[:100].values_list("item_id", flat=True))
+
+        selected_items = item_selector.select(environment, user, items, time, limit)
+
+        # get selected flashcards
+        flashcards = Flashcard.objects.filter(item_id__in=selected_items).prefetch_related("term", "context")
+        if language is not None:
+            flashcards = flashcards.filter(lang=language)
+        flashcards = sorted(flashcards, key=lambda fc: selected_items.index(fc.item_id))
+
+        # select options
+        from proso_flashcards.flashcard_construction import get_option_set, get_direction
+
+        optionSets = get_option_set().get_option_for_flashcards(flashcards)
+        options = option_selector.select_options_more_items(environment, user, items, time, optionSets)
+        all_options = {}
+        for option in Flashcard.objects.filter(item_id__in=set(itertools.chain(*options))).prefetch_related("term",
+                                                                                                            "context"):
+            all_options[option.item_id] = option
+        options = dict(zip(items, options))
+        direction = get_direction()
+        for flashcard in flashcards:
+            flashcard.direction = direction.get_direction(flashcard)
+            if len(options[flashcard.item_id]) > 0:
+                flashcard.options = map(lambda id: all_options[id], options[flashcard.item_id])
+
+        return flashcards
+
+
 class Flashcard(models.Model):
     identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcards")
@@ -61,8 +105,10 @@ class Flashcard(models.Model):
     context = models.ForeignKey(Context, related_name="flashcards")
     description = models.TextField(null=True)
 
+    objects = FlashcardManager()
+
     def to_json(self, nested=False):
-        return {
+        data = {
             "id": self.pk,
             "item_id": self.item_id,
             "object_type": "fc_flashcard",
@@ -71,6 +117,11 @@ class Flashcard(models.Model):
             "context": self.context.to_json(nested=True),
             "description": self.description
         }
+        if hasattr(self, "options"):
+            data["options"] = map(lambda o: o.to_json(), self.options)
+        if hasattr(self, "direction"):
+            data["direction"] = self.direction
+        return data
 
     def __unicode__(self):
         return u"{0.term} - {0.context}".format(self)
