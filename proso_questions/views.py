@@ -9,7 +9,7 @@ from django.db import transaction
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
 import proso_models.json_enrich as models_json_enrich
-from proso.django.request import is_time_overriden, is_user_id_overriden, get_time, get_user_id
+from proso.django.request import is_time_overriden, get_time, get_user_id
 from proso_models.models import get_environment, get_recommendation
 import logging
 from time import time as time_lib

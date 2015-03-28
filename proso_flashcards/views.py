@@ -28,6 +28,7 @@ def show_one(request, object_class, id):
 @cache_page_conditional(
     condition=lambda request: 'stats' not in request.GET)
 def show_more(request, object_class, should_cache=True):
+
     def _load_objects(request, object_class):
         select_related_all = {
         }
