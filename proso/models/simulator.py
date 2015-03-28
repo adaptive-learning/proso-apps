@@ -15,7 +15,7 @@ class UserKnowledgeProvider:
         pass
 
     @abc.abstractmethod
-    def process_answer(user, item, correct, time, response_time, options=None):
+    def process_answer(self, user, item, correct, time, response_time, options=None):
         pass
 
     def user_type(self, user):
@@ -131,14 +131,14 @@ class Simulator:
         self.users = users
         self.items = items
 
-    def answers(self, environment, predictive_model, recommendation, n):
+    def answers(self, environment, predictive_model, item_selector, n):
         activity = self.activity()
         knowledge_provider = self.user_knowledge_provider()
         knowledge_provider.reset()
         answers = []
         for i in range(n):
             user, time = activity.next()
-            r = recommendation.recommend(environment, user, self.items, time, 1, options=True)
+            r = item_selector.select(environment, user, self.items, time, 1, options=True)
             item, options = (r[0][0], r[1][0]) if isinstance(r, tuple) else (r[0], [])
             prediction = knowledge_provider.prediction(user, item, time, options=options)
             prediction_without_options = knowledge_provider.prediction(user, item, time)
@@ -183,8 +183,8 @@ class OneConstantUserSimulator(Simulator):
     _activity = None
     _user_knowledge_provider = None
 
-    def answers(self, environment, predictive_model, recommendation, n):
-        return Simulator.answers(self, environment, predictive_model, recommendation, n)
+    def answers(self, environment, predictive_model, item_selector, n):
+        return Simulator.answers(self, environment, predictive_model, item_selector, n)
 
     def activity(self):
         if self._activity is None:
@@ -202,8 +202,8 @@ class MoreConstantUsersSimulator(Simulator):
     _activity = None
     _user_knowledge_provider = None
 
-    def answers(self, environment, predictive_model, recommendation, n):
-        return Simulator.answers(self, environment, predictive_model, recommendation, n)
+    def answers(self, environment, predictive_model, item_selector, n):
+        return Simulator.answers(self, environment, predictive_model, item_selector, n)
 
     def activity(self):
         if self._activity is None:
@@ -221,8 +221,8 @@ class MoreImprovingUsersSimulator(Simulator):
     _activity = None
     _user_knowledge_provider = None
 
-    def answers(self, environment, predictive_model, recommendation, n):
-        return Simulator.answers(self, environment, predictive_model, recommendation, n)
+    def answers(self, environment, predictive_model, item_selector, n):
+        return Simulator.answers(self, environment, predictive_model, item_selector, n)
 
     def activity(self):
         if self._activity is None:
@@ -241,9 +241,9 @@ class Evaluator:
         self._simulator = simulator
         self._number_of_answers = number_of_answers
 
-    def prepare(self, environment, predictive_model, recommendation):
+    def prepare(self, environment, predictive_model, item_selector):
         self._answers = pandas.DataFrame(self._simulator.answers(
-            environment, predictive_model, recommendation, self._number_of_answers))
+            environment, predictive_model, item_selector, self._number_of_answers))
 
     def average_coverage(self):
         coverage = self._answers.groupby('user').apply(lambda data: len(data['item'].unique()) / float(len(self._simulator.items)))

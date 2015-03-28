@@ -105,7 +105,7 @@ class QuestionManager(models.Manager):
         except IndexError:
             return []
 
-    def practice(self, recommendation, environment, user_id, time, n, questions=None):
+    def practice(self, item_selector, environment, user_id, time, n, questions=None):
         if questions is not None:
             all_ids = map(lambda x: x.item_id, questions)
         else:
@@ -119,17 +119,17 @@ class QuestionManager(models.Manager):
                     """, [n * 100])
                 all_ids = map(lambda x: x[0], cursor.fetchall())
         n = min(n, len(all_ids))
-        recommended = recommendation.recommend(environment, user_id, all_ids, time, n)
+        selected_items = item_selector.select(environment, user_id, all_ids, time, n)
         if questions is not None:
             questions_dict = dict(zip(all_ids, questions))
         else:
-            questions = (self.filter(item_id__in=recommended).
+            questions = (self.filter(item_id__in=selected_items).
                     select_related('resource').
                     prefetch_related(
                         'question_options', 'question_options__option_images',
                         'question_images', 'resource__resource_images', 'set_set', 'category_set'))
             questions_dict = dict([(q.item_id, q) for q in questions])
-        return map(lambda i: questions_dict[i], recommended)
+        return map(lambda i: questions_dict[i], selected_items)
 
 
 class Question(models.Model):

@@ -9,21 +9,21 @@ from collections import defaultdict
 LOGGER = logging.getLogger('django.request')
 
 
-class Recommendation:
+class ItemSelection:
 
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def recommend(self, environment, user, items, time, n, **kwargs):
+    def select(self, environment, user, items, time, n, **kwargs):
         pass
 
 
-class RandomRecommendation(Recommendation):
+class RandomItemSelection(ItemSelection):
 
     def __init__(self, predictive_model):
         self._predictive_model = predictive_model
 
-    def recommend(self, environment, user, items, time, n, **kwargs):
+    def select(self, environment, user, items, time, n, **kwargs):
         candidates = random.sample(items, n)
         if kwargs.get('options'):
             return candidates, map(lambda item: self._options(item, items), candidates)
@@ -36,10 +36,10 @@ class RandomRecommendation(Recommendation):
         return random.sample(items, random.randint(1, 5))
 
     def __str__(self):
-        return 'RANDOM RECOMMENDATION'
+        return 'RANDOM ITEM SELECTION'
 
 
-class ScoreRecommendation(Recommendation):
+class ScoreItemSelection(ItemSelection):
 
     def __init__(
             self, predictive_model, weight_probability=10.0, weight_number_of_answers=5.0,
@@ -54,7 +54,7 @@ class ScoreRecommendation(Recommendation):
         self._weight_parent_number_of_answers = weight_parent_number_of_answers
         self._recompute_parent_score = recompute_parent_score
 
-    def recommend(self, environment, user, items, time, n, **kwargs):
+    def select(self, environment, user, items, time, n, **kwargs):
         answers_num = dict(zip(items, environment.number_of_answers_more_items(user=user, items=items)))
         last_answer_time = dict(zip(items, environment.last_answer_time_more_items(user=user, items=items)))
         probability = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
@@ -102,7 +102,7 @@ class ScoreRecommendation(Recommendation):
                 score, chosen = max(finished)
                 if proso.django.log:
                     LOGGER.debug(
-                        'recommending %s (total_score %.2f, prob score %.2f, time_score %.2f, answers score %.2f, parents %s)' %
+                        'selecting %s (total_score %.2f, prob score %.2f, time_score %.2f, answers score %.2f, parents %s)' %
                         (
                             chosen, score[0],
                             self._weight_probability * self._score_probability(prob_target, probability[chosen]),
@@ -198,5 +198,5 @@ class ScoreRecommendation(Recommendation):
         return result_options + [item]
 
     def __str__(self):
-        return 'SCORE RECOMMENDATION: target probability {0:.2f}, weight probability {1:.2f}, weight time {2:.2f}, weight answers {3:.2f}'.format(
+        return 'SCORE BASED ITEM SELECTION: target probability {0:.2f}, weight probability {1:.2f}, weight time {2:.2f}, weight answers {3:.2f}'.format(
             self._target_probability, self._weight_probability, self._weight_time_ago, self._weight_number_of_answers)

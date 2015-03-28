@@ -180,7 +180,7 @@ except SyntaxError:
 
 PROSO_PREDICTIVE_MODEL = 'proso.models.prediction.AlwaysLearningPredictiveModel'
 PROSO_ENVIRONMENT = 'proso_models.models.DatabaseEnvironment'
-PROSO_RECOMMENDATION = 'proso.models.recommendation.ScoreRecommendation'
+PROSO_ITEM_SELECTION = 'proso.models.item_selection.ScoreItemSelection'
 PROSO_TEST_EVALUATOR = 'proso_questions.models.CategoryTestEvaluator'
 PROSO_TEST_EVALUATOR_ARGS = [{
     u'Pravidla provozu na pozemních komunikacích': {

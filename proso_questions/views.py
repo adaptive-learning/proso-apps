@@ -10,7 +10,7 @@ import json_enrich
 import proso_common.json_enrich as common_json_enrich
 import proso_models.json_enrich as models_json_enrich
 from proso.django.request import is_time_overriden, get_time, get_user_id
-from proso_models.models import get_environment, get_recommendation
+from proso_models.models import get_environment, get_item_selector
 import logging
 from time import time as time_lib
 from proso.django.cache import cache_page_conditional
@@ -115,7 +115,7 @@ def practice(request):
     user = get_user_id(request)
     time = get_time(request)
     environment = get_environment()
-    recommendation = get_recommendation()
+    item_selector = get_item_selector()
     if is_time_overriden(request):
         environment.shift_time(time)
     category = request.GET.get('category', None)
@@ -129,9 +129,9 @@ def practice(request):
         if not isinstance(saved_answers, list):
             return saved_answers
         status = 201
-    # recommend
+    # select a construct questions
     time_before_practice = time_lib()
-    candidates = Question.objects.practice(recommendation, environment, user, time, limit, questions=questions)
+    candidates = Question.objects.practice(item_selector, environment, user, time, limit, questions=questions)
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))
     json = _to_json(request, {
         'questions': map(lambda x: x.to_json(), candidates)
