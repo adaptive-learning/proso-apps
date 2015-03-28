@@ -36,6 +36,10 @@ def get_item_selector():
     return proso.util.instantiate(settings.PROSO_ITEM_SELECTION, get_predictive_model())
 
 
+def get_option_selector(item_selector):
+    return proso.util.instantiate(settings.PROSO_OPTION_SELECTION, item_selector)
+
+
 ################################################################################
 # Environment
 ################################################################################

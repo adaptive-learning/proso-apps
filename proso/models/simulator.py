@@ -131,15 +131,17 @@ class Simulator:
         self.users = users
         self.items = items
 
-    def answers(self, environment, predictive_model, item_selector, n):
+    def answers(self, environment, predictive_model, item_selector, n, option_selector=None):
         activity = self.activity()
         knowledge_provider = self.user_knowledge_provider()
         knowledge_provider.reset()
         answers = []
         for i in range(n):
             user, time = activity.next()
-            r = item_selector.select(environment, user, self.items, time, 1, options=True)
-            item, options = (r[0][0], r[1][0]) if isinstance(r, tuple) else (r[0], [])
+            item = item_selector.select(environment, user, self.items, time, 1)
+            options = []
+            if option_selector is not None:
+                options = option_selector.select_options(user, item, time, self.items)
             prediction = knowledge_provider.prediction(user, item, time, options=options)
             prediction_without_options = knowledge_provider.prediction(user, item, time)
             reality = random.random()
@@ -183,8 +185,8 @@ class OneConstantUserSimulator(Simulator):
     _activity = None
     _user_knowledge_provider = None
 
-    def answers(self, environment, predictive_model, item_selector, n):
-        return Simulator.answers(self, environment, predictive_model, item_selector, n)
+    def answers(self, environment, predictive_model, item_selector, n, option_selector=None):
+        return Simulator.answers(self, environment, predictive_model, item_selector, n, option_selector)
 
     def activity(self):
         if self._activity is None:
@@ -202,8 +204,8 @@ class MoreConstantUsersSimulator(Simulator):
     _activity = None
     _user_knowledge_provider = None
 
-    def answers(self, environment, predictive_model, item_selector, n):
-        return Simulator.answers(self, environment, predictive_model, item_selector, n)
+    def answers(self, environment, predictive_model, item_selector, n, option_selector=None):
+        return Simulator.answers(self, environment, predictive_model, item_selector, n, option_selector)
 
     def activity(self):
         if self._activity is None:
@@ -221,8 +223,8 @@ class MoreImprovingUsersSimulator(Simulator):
     _activity = None
     _user_knowledge_provider = None
 
-    def answers(self, environment, predictive_model, item_selector, n):
-        return Simulator.answers(self, environment, predictive_model, item_selector, n)
+    def answers(self, environment, predictive_model, item_selector, n, option_selector=None):
+        return Simulator.answers(self, environment, predictive_model, item_selector, n, option_selector)
 
     def activity(self):
         if self._activity is None:
