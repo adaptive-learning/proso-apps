@@ -52,12 +52,13 @@ setup(
         'django-ipware>=0.0.8',
         'django-lazysignup>=0.12.2',
         'django-social-auth>=0.7.28',
+        'flake8==2.4.0',
         'jsonschema>=2.4.0',
         'numpy>=1.8.2',
         'psycopg2>=2.5.4',
         'PyYAML==3.11',
         'ua-parser==0.3.6',
-        'user-agents==0.3.1'
+        'user-agents==0.3.1',
     ],
     license='MIT',
 )
