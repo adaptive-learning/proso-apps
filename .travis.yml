@@ -1,6 +1,7 @@
 nguage: python
 python: 2.7
 install:
+- pip install flake8
 - make install
 script:
 - make test
