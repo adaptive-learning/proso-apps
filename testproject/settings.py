@@ -182,6 +182,8 @@ PROSO_PREDICTIVE_MODEL = 'proso.models.prediction.AlwaysLearningPredictiveModel'
 PROSO_ENVIRONMENT = 'proso_models.models.DatabaseEnvironment'
 PROSO_ITEM_SELECTION = 'proso.models.item_selection.ScoreItemSelection'
 PROSO_OPTION_SELECTION = 'proso.models.option_selection.ConfusingOptionSelection'
+PROSO_FLASHCARDS_OPTION_SET = 'proso_flashcards.flashcard_construction.ContextOptionSet'
+PROSO_FLASHCARDS_DIRECTION = 'proso_flashcards.flashcard_construction.RandomDirection'
 PROSO_TEST_EVALUATOR = 'proso_questions.models.CategoryTestEvaluator'
 PROSO_TEST_EVALUATOR_ARGS = [{
     u'Pravidla provozu na pozemních komunikacích': {
