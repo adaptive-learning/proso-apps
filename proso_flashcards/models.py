@@ -83,8 +83,8 @@ class FlashcardManager(models.Manager):
         optionSets = get_option_set().get_option_for_flashcards(flashcards)
         options = option_selector.select_options_more_items(environment, user, items, time, optionSets)
         all_options = {}
-        for option in Flashcard.objects.filter(item_id__in=set(itertools.chain(*options))).prefetch_related("term",
-                                                                                                            "context"):
+        for option in Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options)))\
+                .prefetch_related("term", "context"):
             all_options[option.item_id] = option
         options = dict(zip(items, options))
         direction = get_direction()
