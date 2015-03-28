@@ -81,12 +81,12 @@ class FlashcardManager(models.Manager):
         from proso_flashcards.flashcard_construction import get_option_set, get_direction
 
         optionSets = get_option_set().get_option_for_flashcards(flashcards)
-        options = option_selector.select_options_more_items(environment, user, items, time, optionSets)
+        options = option_selector.select_options_more_items(environment, user, selected_items, time, optionSets)
         all_options = {}
         for option in Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options)))\
                 .prefetch_related("term", "context"):
             all_options[option.item_id] = option
-        options = dict(zip(items, options))
+        options = dict(zip(selected_items, options))
         direction = get_direction()
         for flashcard in flashcards:
             flashcard.direction = direction.get_direction(flashcard)
