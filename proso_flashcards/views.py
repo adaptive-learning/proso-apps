@@ -114,6 +114,8 @@ def practice(request):
         list of ids of contexts to which flashcards selection will be restricted
       categories:
         list of ids of categories to which flashcards selection will be restricted
+      types:
+        list of types of terms to which flashcards selection will be restricted
       language:
         language of flashcards
       limit:
@@ -149,11 +151,12 @@ def practice(request):
         status = 201
 
     # select
-    categories = json.loads(request.GET.get("categories", []))
-    contexts = json.loads(request.GET.get("contexts", []))
+    categories = json.loads(request.GET.get("categories", "[]"))
+    contexts = json.loads(request.GET.get("contexts", "[]"))
+    types = json.loads(request.GET.get("types", "[]"))
 
     time_before_practice = time_lib()
-    candidates = Flashcard.objects.candidates(categories, contexts)
+    candidates = Flashcard.objects.candidates(categories, contexts, types)
     flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates,
                                             request.GET.get("language", None))
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))

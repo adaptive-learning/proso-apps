@@ -55,12 +55,14 @@ class Context(models.Model):
 
 
 class FlashcardManager(models.Manager):
-    def candidates(self, categories, contexts):
+    def candidates(self, categories, contexts, types):
         qs = self.all()
         if isinstance(contexts, list) and len(contexts) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id: Q(context_id=id), contexts)))
         if isinstance(categories, list) and len(categories) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id: Q(term__parents__id=id), categories)))
+        if isinstance(types, list) and len(types) > 0:
+            qs = qs.filter(reduce(lambda a, b: a | b, map(lambda type: Q(term__type=type), types)))
         return qs
 
     def practice(self, environment, user, time, limit, flashcard_qs, language=None):
