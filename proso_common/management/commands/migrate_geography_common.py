@@ -39,18 +39,21 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        self.dump_load('auth', options)
+        self.dump_load('auth', options, exclude=['auth.permission'])
         self.dump_load('lazysignup', options)
         self.dump_load('proso_feedback', options)
         self.dump_load('social_auth', options)
 
-    def dump_load(self, app, options):
+    def dump_load(self, app, options, exclude=None):
+        if exclude is None:
+            exclude = []
         if not options['skip_' + app]:
             print ' -- migration of', app
             with open('geography-%s.json' % app, 'w') as output:
                 call_command(
                     'dumpdata', app,
                     stdout=output,
+                    exclude=exclude,
                     database=options['geography_database'])
             call_command('loaddata', 'geography-%s.json' % app)
         else:
