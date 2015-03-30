@@ -167,7 +167,7 @@ class FlashcardAnswer(Answer):
     )
 
     direction = models.CharField(choices=DIRECTIONS, max_length=3)
-    options = models.ManyToManyField(Term, related_name="answers_with_this_as_option")
+    options = models.ManyToManyField(Flashcard, related_name="answers_with_this_as_option")
     meta = models.TextField(null=True, blank=True)
 
     def to_json(self, nested=False):
@@ -176,7 +176,7 @@ class FlashcardAnswer(Answer):
         json['meta'] = self.meta
         json['object_type'] = "fc_answer"
         if not nested:
-            json["options"] = [term.to_json(nested=True) for term in self.options.all()]
+            json["options"] = [flashcard.to_json(nested=True) for flashcard in self.options.all()]
         return json
 
 

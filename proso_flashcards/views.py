@@ -79,7 +79,7 @@ def answer(request):
 
       answer = {
         "flashcard_id": int,
-        "term_answered_id": int,
+        "flashcard_answered_id": int or null,
         "response_time": int,           -- response time in milliseconds
         "direction": "t2d" or "d2t",    -- direction of question: from term to description or conversely
         "option_ids": [ints],           -- optional - list of ids of terms, which were alternatives to correct one
@@ -182,32 +182,22 @@ def _save_answer(request, answers):
     time_start = time_lib()
     saved_answers = []
     try:
-        flashcard_ids = set([a["flashcard_id"] for a in answers])
-        flashcards = dict(map(lambda fc: (fc.id, fc),
-                              Flashcard.objects.filter(pk__in=flashcard_ids)
-                              .select_related("term")))
-    except KeyError:
-        return HttpResponseBadRequest("Flashcard id not found")
-    if len(flashcard_ids) != len(flashcards):
-        return HttpResponseBadRequest("Invalid flashcard id")
-
-    try:
-        terms_ids = set()
+        flashcard_ids = set()
         for a in answers:
-            if a["term_answered_id"] is not None:
-                terms_ids.add(a["term_answered_id"])
+            flashcard_ids.add(a["flashcard_id"])
+            if a["flashcard_answered_id"] is not None:
+                flashcard_ids.add(a["flashcard_answered_id"])
             if "option_ids" in a:
-                terms_ids |= set(a["option_ids"])
-        terms = dict(map(lambda t: (t.id, t),
-                         Term.objects.filter(pk__in=terms_ids)))
+                flashcard_ids |= set(a["option_ids"])
+        flashcards = dict(map(lambda fc: (fc.id, fc), Flashcard.objects.filter(pk__in=flashcard_ids)))
     except KeyError:
-        return HttpResponseBadRequest("Answered term id not found")
-    if len(terms_ids) != len(terms):
-        return HttpResponseBadRequest("Invalid term id (answered or as option)")
+        return HttpResponseBadRequest("Flashcard or answered flashcard id not found")
+    if len(flashcard_ids) != len(flashcards):
+        return HttpResponseBadRequest("Invalid flashcard id (asked, answered or as option)")
 
     for a in answers:
         flashcard = flashcards[a["flashcard_id"]]
-        term_answered = terms[a["term_answered_id"]] if a["term_answered_id"] is not None else None
+        flashcard_answered = flashcards[a["flashcard_answered_id"]] if a["flashcard_answered_id"] is not None else None
         if "response_time" in a:
             response_time = a["response_time"]
         else:
@@ -224,8 +214,8 @@ def _save_answer(request, answers):
         db_answer = FlashcardAnswer(
             user_id=request.user.id,
             item_id=flashcard.item_id,
-            item_asked_id=flashcard.term.item_id,
-            item_answered_id=term_answered.item_id if term_answered else None,
+            item_asked_id=flashcard.item_id,
+            item_answered_id=flashcard_answered.item_id if flashcard_answered else None,
             response_time=response_time,
             direction=direction,
             meta=a["meta"] if "meta" in a else None,
@@ -233,8 +223,9 @@ def _save_answer(request, answers):
         db_answer.save()
 
         if "option_ids" in a:
+            db_answer.options.add(flashcard)
             for option in a["option_ids"]:
-                db_answer.options.add(terms[option])
+                db_answer.options.add(flashcards[option])
             db_answer.save()
 
         saved_answers.append(db_answer)
