@@ -4,7 +4,6 @@ from django.db import connection, connections
 from django.core.management import call_command
 from contextlib import closing
 from django.db import transaction
-from proso_flashcards.models import DecoratedAnswer
 from collections import defaultdict
 from optparse import make_option
 
