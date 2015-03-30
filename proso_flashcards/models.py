@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models import Q
 import itertools
 from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector
-from django.db.models.signals import pre_save, m2m_changed
+from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
 
 
@@ -85,7 +85,7 @@ class FlashcardManager(models.Manager):
         optionSets = get_option_set().get_option_for_flashcards(flashcards)
         options = option_selector.select_options_more_items(environment, user, selected_items, time, optionSets)
         all_options = {}
-        for option in Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options)))\
+        for option in Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options))) \
                 .prefetch_related("term", "context"):
             all_options[option.item_id] = option
         options = dict(zip(selected_items, options))
@@ -238,3 +238,21 @@ def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
                 environment.delete("child", item=parent_item, item_secondary=child_item, symmetric=False)
                 environment.delete("parent", item=child_item, item_secondary=parent_item, symmetric=False)
         return
+
+
+@receiver(post_save, sender=Flashcard)
+def add_parent(sender, instance, **kwargs):
+    environment = get_environment()
+    parent = instance.term.item_id
+    child = instance.item_id
+    environment.write("child", 1, item=parent, item_secondary=child, symmetric=False, permanent=True)
+    environment.write("parent", 1, item=child, item_secondary=parent, symmetric=False, permanent=True)
+
+
+@receiver(pre_delete, sender=Flashcard)
+def delete_parent(sender, instance, **kwargs):
+    environment = get_environment()
+    parent = instance.term.item_id
+    child = instance.item_id
+    environment.delete("child", 1, item=parent, item_secondary=child, symmetric=False)
+    environment.delete("parent", 1, item=child, item_secondary=parent, symmetric=False)

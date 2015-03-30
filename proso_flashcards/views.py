@@ -248,9 +248,13 @@ def _to_json(request, value):
                                            ignore_get=['filter_column', 'filter_value', 'categories', 'contexts'])
     if 'environment' in request.GET:
         common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
-                                                 ["fc_term"], variable_type=[("parent", None, True)])
+                                                 ["fc_term"],
+                                                 variable_type=[("parent", None, True), ("child", None, True)])
         common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
                                                  ["fc_category"],
                                                  variable_type=[("parent", None, True), ("child", None, True)])
+        common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
+                                                 ["fc_flashcard"],
+                                                 variable_type=[("parent", None, True)])
     LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
     return json
