@@ -123,7 +123,7 @@ class Command(BaseCommand):
                 FROM geography_placerelation
                 INNER JOIN geography_placerelation_related_places ON
                     geography_placerelation.id = geography_placerelation_related_places.placerelation_id
-                WHERE type = 1
+                WHERE type = 1 OR type = 4
                 ''')
             for row in cursor:
                 terms[row[1]]['categories'].append(categories[row[0]]['id'])
