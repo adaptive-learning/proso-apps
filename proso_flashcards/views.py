@@ -111,13 +111,13 @@ def practice(request):
     GET parameters:
       categories:
       contexts:
-        list of ids of contexts to which flashcards selection will be restricted
+        list of ids (int) of contexts to which flashcards selection will be restricted
       categories:
-        list of ids of categories to which flashcards selection will be restricted
+        list of ids (int) of categories to which flashcards selection will be restricted
       types:
-        list of types of terms to which flashcards selection will be restricted
+        list of names (str) of types of terms to which flashcards selection will be restricted
       language:
-        language of flashcards
+        language (str) of flashcards
       limit:
         number of returned questions (default 10, maximum 100)
       time:
