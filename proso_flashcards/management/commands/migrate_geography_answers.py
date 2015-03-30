@@ -58,7 +58,7 @@ class Command(BaseCommand):
         if flashcard is None:
             filtered = filter(lambda (k, v): (k[0].endswith(place_code) and k[2] == lang), flashcards.items())
             if len(filtered) == 0:
-                raise Exception("There is no flashcard: %s, %s, %s" % (place_code, map_code, lang))
+                raise FlashcardException("There is no flashcard: %s, %s, %s" % (place_code, map_code, lang))
             if len(filtered) == 1:
                 return mask(filtered[0][1])
             filtered_dict = dict(filtered)
@@ -121,41 +121,48 @@ class Command(BaseCommand):
                     count += 1
                     if count % 10000 == 0:
                         print count, 'answers processed'
-                    lang = self.LANGUAGES[row[8]]
-                    item_asked_id = self.get_flashcard(row[6], row[1], lang, flashcards)
-                    item_id = item_asked_id
-                    item_answered_id = self.get_flashcard(row[6], row[2], lang, flashcards)
-                    guess = 0 if row[10] == 0 else 1.0 / row[10]
-                    direction = self.DIRECTIONS[row[3]]
-                    general_answer_id = row[9]
-                    cursor_dest.execute(
-                        '''
-                        INSERT INTO proso_models_answer
-                            (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized, session_id, guess)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ''', [general_answer_id, row[0], item_id, item_asked_id, item_answered_id, row[4], row[5], True, geography_sessions.get_session_id(row[0], row[7], lang, row[4]), guess])
-                    cursor_dest.execute(
-                        '''
-                        INSERT INTO proso_flashcards_flashcardanswer
-                            (direction, answer_ptr_id)
-                        VALUES (%s, %s)
-                        ''', [direction, general_answer_id])
-                    options = geography_options.get_options(general_answer_id)
-                    for item_id in map(lambda i: self.get_flashcard(row[6], i, lang, flashcards, mask=lambda o: o.id if o else None), options):
+                    try:
+                        lang = self.LANGUAGES[row[8]]
+                        item_asked_id = self.get_flashcard(row[6], row[1], lang, flashcards)
+                        item_id = item_asked_id
+                        item_answered_id = self.get_flashcard(row[6], row[2], lang, flashcards)
+                        guess = 0 if row[10] == 0 else 1.0 / row[10]
+                        direction = self.DIRECTIONS[row[3]]
+                        general_answer_id = row[9]
                         cursor_dest.execute(
                             '''
-                            INSERT INTO proso_flashcards_flashcardanswer_options
-                                (flashcardanswer_id, flashcard_id)
-                            VALUES (%s, %s)
-                            ''', [general_answer_id, item_id])
-                    ab_values = geography_ab_values.get_values(general_answer_id)
-                    for value_id in ab_values:
+                            INSERT INTO proso_models_answer
+                                (id, user_id, item_id, item_asked_id, item_answered_id, time, response_time, ab_values_initialized, session_id, guess)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ''', [general_answer_id, row[0], item_id, item_asked_id, item_answered_id, row[4], row[5], True, geography_sessions.get_session_id(row[0], row[7], lang, row[4]), guess])
                         cursor_dest.execute(
                             '''
-                            INSERT INTO proso_models_answer_ab_values
-                                (answer_id, value_id)
+                            INSERT INTO proso_flashcards_flashcardanswer
+                                (direction, answer_ptr_id)
                             VALUES (%s, %s)
-                            ''', [general_answer_id, value_id])
+                            ''', [direction, general_answer_id])
+                        options = geography_options.get_options(general_answer_id)
+                        for item_id in map(lambda i: self.get_flashcard(row[6], i, lang, flashcards, mask=lambda o: o.id if o else None), options):
+                            cursor_dest.execute(
+                                '''
+                                INSERT INTO proso_flashcards_flashcardanswer_options
+                                    (flashcardanswer_id, flashcard_id)
+                                VALUES (%s, %s)
+                                ''', [general_answer_id, item_id])
+                        ab_values = geography_ab_values.get_values(general_answer_id)
+                        for value_id in ab_values:
+                            cursor_dest.execute(
+                                '''
+                                INSERT INTO proso_models_answer_ab_values
+                                    (answer_id, value_id)
+                                VALUES (%s, %s)
+                                ''', [general_answer_id, value_id])
+                    except FlashcardException as e:
+                        print general_answer_id, '|', str(e)
+
+
+class FlashcardException(Exception):
+    pass
 
 
 class GeographyOptions:
