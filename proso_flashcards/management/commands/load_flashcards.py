@@ -107,7 +107,7 @@ class Command(BaseCommand):
                         lang=lang,
                     )
                 db_context.name = context["name-{}".format(lang)]
-                db_context.name = context["content-{}".format(lang)]
+                db_context.content = context["content-{}".format(lang)]
                 if "load_data" in model.__dict__:
                     model.load_data(context, db_context)
                 if db_context.identifier in item_mapping:
