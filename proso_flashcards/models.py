@@ -115,8 +115,8 @@ class Flashcard(models.Model):
             "item_id": self.item_id,
             "object_type": "fc_flashcard",
             "lang": self.lang,
-            "term": self.term.to_json(nested=True),
-            "context": self.context.to_json(nested=True),
+            "term": self.get_term().to_json(nested=True),
+            "context": self.get_context().to_json(nested=True),
             "description": self.description
         }
         if hasattr(self, "options"):
@@ -124,6 +124,36 @@ class Flashcard(models.Model):
         if hasattr(self, "direction"):
             data["direction"] = self.direction
         return data
+
+    def get_term(self):
+        extension = settings.PROSO_FLASHCARDS.get("term_extension", None)
+        if extension is None:
+            return self.term
+        else:
+            return getattr(self.term, extension.__name__.lower())
+
+    def get_context(self):
+        extension = settings.PROSO_FLASHCARDS.get("context_extension", None)
+        if extension is None:
+            return self.context
+        else:
+            return getattr(self.context, extension.__name__.lower())
+
+    @staticmethod
+    def related_term():
+        extension = settings.PROSO_FLASHCARDS.get("term_extension", None)
+        if extension is None:
+            return "term"
+        else:
+            return "term__{}".format(extension.__name__.lower())
+
+    @staticmethod
+    def related_context():
+        extension = settings.PROSO_FLASHCARDS.get("context_extension", None)
+        if extension is None:
+            return "context"
+        else:
+            return "context__{}".format(extension.__name__.lower())
 
     def __unicode__(self):
         return u"{0.term} - {0.context}".format(self)
