@@ -1,9 +1,10 @@
 from django.db import models
 import hashlib
 from ipware.ip import get_ip
+from social_auth.db.django_models import UserSocialAuth
 import user_agents
 from proso_common.models import get_current_request
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 import datetime
@@ -30,7 +31,8 @@ class UserProfile(models.Model):
                 'object_type': 'user',
                 'first_name': self.user.first_name,
                 'last_name': self.user.last_name,
-                'username': self.user.username
+                'username': self.user.username,
+                'email': self.user.email
             }
         }
 
@@ -228,3 +230,10 @@ def init_content_hash_http_user_agent(sender, instance, **kwargs):
 @receiver(pre_save, sender=TimeZone)
 def init_content_hash_time_zone(sender, instance, **kwargs):
     init_content_hash(instance)
+
+
+@receiver(post_save, sender=UserSocialAuth)
+def my_handler(sender, instance, created=False, **kwargs):
+    if not hasattr(instance.user, "userprofile"):
+        profile = UserProfile(user=instance.user)
+        profile.save()
