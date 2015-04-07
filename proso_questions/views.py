@@ -50,22 +50,25 @@ def show_more(request, object_class, should_cache=True):
             if value.isdigit():
                 value = int(value)
             if column == 'category_id':
-                objs = (get_object_or_404(Category, pk=value).
-                        questions.
-                        select_related(*select_related).
-                        prefetch_related(*prefetch_related).all())
+                objs = (get_object_or_404(Category, pk=value).questions)
+                if len(select_related) > 0:
+                    objs = objs.select_related(*select_related)
+                objs = objs.prefetch_related(*prefetch_related).all()
             elif column == 'set_id':
-                objs = (get_object_or_404(Set, pk=value).
-                        questions.
-                        select_related(*select_related).
-                        prefetch_related(*prefetch_related).all())
+                objs = (get_object_or_404(Set, pk=value).questions)
+                if len(select_related) > 0:
+                    objs = objs.select_related(*select_related)
+                objs = objs.prefetch_related(*prefetch_related).all()
             else:
-                objs = (object_class.objects.
-                        select_related(*select_related).
-                        prefetch_related(*prefetch_related).filter(**{column: value}))
+                objs = object_class.objects
+                if len(select_related) > 0:
+                    objs = objs.select_related(*select_related)
+                objs = objs.prefetch_related(*prefetch_related).filter(**{column: value})
         else:
-            objs = object_class.objects.select_related(*select_related).\
-                prefetch_related(*prefetch_related).all()
+            objs = object_class.objects
+            if len(select_related) > 0:
+                objs = objs.select_related(*select_related)
+            objs = objs.prefetch_related(*prefetch_related).all()
         if object_class == DecoratedAnswer:
             user_id = get_user_id(request)
             objs = objs.filter(general_answer__user_id=user_id).order_by('-general_answer__time')

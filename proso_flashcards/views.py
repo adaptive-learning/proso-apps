@@ -40,17 +40,18 @@ def show_more(request, object_class, should_cache=True):
         }
         select_related = select_related_all.get(object_class, [])
         prefetch_related = prefetch_related_all.get(object_class, [])
+        objs = object_class.objects
+        if len(select_related) > 0:
+            objs = objs.select_related(*select_related)
         if 'filter_column' in request.GET and 'filter_value' in request.GET:
             column = request.GET['filter_column']
             value = request.GET['filter_value']
             if value.isdigit():
                 value = int(value)
-            objs = (object_class.objects.
-                    select_related(*select_related).
-                    prefetch_related(*prefetch_related).filter(**{column: value}))
+
+            objs = objs.prefetch_related(*prefetch_related).filter(**{column: value})
         else:
-            objs = object_class.objects.select_related(*select_related). \
-                prefetch_related(*prefetch_related).all()
+            objs = objs.prefetch_related(*prefetch_related).all()
         if object_class == FlashcardAnswer:
             user_id = get_user_id(request)
             objs = objs.filter(user_id=user_id).order_by('-time')
