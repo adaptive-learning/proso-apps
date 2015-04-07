@@ -46,7 +46,6 @@ def profile(request):
             template='user_profile.html', help_text=profile.__doc__)
     elif request.method == 'POST':
         to_save = json_body(request.body)
-        print to_save
         user_id = get_user_id(request)
         user_profile = get_object_or_404(UserProfile, user_id=user_id)
         user = to_save.get('user', None)
