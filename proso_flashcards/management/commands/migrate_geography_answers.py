@@ -5,6 +5,7 @@ from django.db import connections, connection
 from proso_flashcards.models import Flashcard
 from proso_user.models import Location, Session
 from collections import defaultdict
+from django.db import transaction
 
 
 class Command(BaseCommand):
@@ -42,7 +43,11 @@ class Command(BaseCommand):
     }
 
     def handle(self, *args, **options):
-        self.migrate_answers(options['geography_database'], clean=options['clean'], limit=options['limit'])
+        with transaction.atomic():
+            with closing(connection.cursor()) as cursor:
+                cursor.execute('SET CONSTRAINTS ALL DEFERRED;')
+            self.migrate_answers(options['geography_database'], clean=options['clean'], limit=options['limit'])
+        print ' -- commit transaction'
 
     def load_flashcards(self):
         return dict(map(lambda o: ((o.identifier, o.context.identifier, o.lang), o), list(Flashcard.objects.select_related('context').all())))
