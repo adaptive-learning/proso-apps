@@ -18,10 +18,6 @@ def is_likely_worthless(feedback):
     return len(feedback['text']) <= 50
 
 
-def home(request):
-    return render(request, 'feedback_home.html', {})
-
-
 @allow_lazy_user
 def feedback(request):
     """

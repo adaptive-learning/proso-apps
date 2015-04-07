@@ -1,8 +1,10 @@
 from django.conf.urls import patterns, url
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.generic import TemplateView
 
 urlpatterns = patterns(
     'proso_models.views',
-    url(r'^home', 'home', name='home'),
+    url(r'^(|home)$', ensure_csrf_cookie(TemplateView.as_view(template_name="models_home.html")), name='home'),
     url(r'^read/(?P<key>[\w_]+)', 'read', name='read'),
     url(r'^audit/(?P<key>[\w_]+)', 'audit', name='audit'),
     url(r'^model/', 'model', name='model'),

@@ -1,9 +1,15 @@
 {% extends 'ab_base.html' %}
 
 {% block content_block %}
-    {% if help_text %}
-        <h2>Documentation</h2>
-        {{ help_text|safe }}
-    {% endif %}
     <h2>Welcome in API for PROSO AB Testing</h2>
+    <pre>
+This module provides all necessary stuff to perform A/B experiments.
+
+You can modify the behaviour of the module by the following GET parameter
+(available on all pages):
+  ab_experiment_reset:
+    reset all cached values of A/B experiments for the current user
+  ab_value_(?P<name>[\w_]+):
+    set the value for of A/B experiment called <name>
+    </pre>
 {% endblock %}

@@ -12,10 +12,6 @@ from django.middleware.csrf import get_token
 import json
 
 
-def home(request):
-    return render(request, 'user_home.html', {})
-
-
 @allow_lazy_user
 @transaction.atomic
 def profile(request):

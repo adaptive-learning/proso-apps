@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from django.http import HttpResponseBadRequest
 from proso.django.request import is_time_overriden, get_time, get_user_id
 from proso.django.response import render_json
@@ -7,10 +6,6 @@ import numpy
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
 from lazysignup.decorators import allow_lazy_user
-
-
-def home(request):
-    return render(request, 'models_home.html', {})
 
 
 @allow_lazy_user

@@ -6,20 +6,6 @@ from models import Experiment
 from lazysignup.decorators import allow_lazy_user
 
 
-def home(request):
-    """
-    This module provides all necessary stuff to perform A/B experiments.
-
-    You can modify the behaviour of the module by the following GET parameter
-    (available on all pages):
-      ab_experiment_reset:
-        reset all cached values of A/B experiments for the current user
-      ab_value_(?P<name>[\w_]+):
-        set the value for of A/B experiment called <name>
-    """
-    return render(request, 'ab_home.html', {}, help_text=home.__doc__)
-
-
 def show_one(request, object_class, id):
     """
     Return object of the given type with the specified identifier.
