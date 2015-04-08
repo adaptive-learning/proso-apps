@@ -3,7 +3,7 @@
 
 {% block content_block %}
 
-<div ng-app="proso" ng-controller="auth">
+<div id="ng" ng-app="proso" ng-controller="auth">
     <h2>Angular service for user</h2>
     <div ng-show="user_service.user.error">{% verbatim %}{{ user_service.user.error }}{% endverbatim %}</div>
     <div ng-show="user_service.user.loading">Komunikujem se serverem</div>
@@ -21,6 +21,8 @@
             <input type="password" required ng-model="login.password" placeholder="Password"/>
             <input type="submit" value="Login"/>
         </form>
+        <br/>
+        <input type="button" ng-click="user_service.login_google()" value="with Google"/>
 
         <hr/>
         <h4>Sign up</h4>
@@ -58,5 +60,10 @@
             $scope.user_service = user_service;
             user_service.process_user({{ user | safe }});
         });
+
+        var social_auth_callback = function(){
+            var element = angular.element(document.getElementById("ng"));
+            element.injector().get("user_service").load_user_fromJS(element.scope());
+        };
     </script>
 {% endblock %}

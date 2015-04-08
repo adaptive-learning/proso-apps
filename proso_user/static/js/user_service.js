@@ -110,4 +110,18 @@ UserService = function($http){
             });
     };
 
+    self.login_google = function() {
+        _open_popup('/login/google-oauth2/', '/user/close_popup')
+    };
+
+    self.login_google = function() {
+        _open_popup('/login/facebook/', '/user/close_popup')
+    };
+
+    var _open_popup = function(url, next){
+        var settings = 'height=700,width=7000,left=100,top=100,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=yes,directories=no,status=yes';
+        url += "?next=" + next;
+        window.open(url, "popup", settings)
+    };
+
 };

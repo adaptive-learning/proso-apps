@@ -12,5 +12,6 @@ urlpatterns = patterns(
     url(r'^session/', 'session', name='session'),
     url(r'^signup/', 'signup', name='signup'),
     url(r'^ngservice/', 'user_service', name='user_service'),
+    url(r'^close_popup/', TemplateView.as_view(template_name="close_popup.html"), name='close_popup'),
     url(r'^initmobile/', 'initmobile_view', name='initmobile'),
 )
