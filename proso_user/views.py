@@ -1,4 +1,3 @@
-from lazysignup.utils import is_lazy_user
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
 from proso.django.request import get_user_id, json_body
@@ -98,6 +97,7 @@ def login(request):
                 'error_type': 'account_not_activated'
             }, template='user_json.html', status=401)
         auth.login(request, user)
+        request.method = "GET"
         return profile(request)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
@@ -147,7 +147,8 @@ def signup(request):
         else:
             user_profile = UserProfile(user=request.user)
             user_profile.save()
-            return HttpResponse('ok', status=201)
+            request.method = "GET"
+            return profile(request)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 
@@ -302,6 +303,7 @@ def _user_exists(**kwargs):
         return True
     except User.DoesNotExist:
         return False
+
 
 @ensure_csrf_cookie
 def user_service(request):

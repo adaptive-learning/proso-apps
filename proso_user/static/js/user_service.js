@@ -11,7 +11,7 @@ UserService = function($http){
         _reset_error();
         return $http.post("/user/signup/", data)
             .success(function(response){
-                self.load_user()
+                self.process_user(response.data);
             })
             .error(function(response){
                 user.error = response.error;
@@ -65,7 +65,7 @@ UserService = function($http){
             password: pass
         })
             .success(function(response){
-                self.load_user()
+                self.process_user(response.data);
             })
             .error(function(response){
                 user.error = response.error;
