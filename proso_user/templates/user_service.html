@@ -1,0 +1,61 @@
+{% extends 'user_base.html' %}
+{% load staticfiles %}
+
+{% block content_block %}
+
+<div ng-app="proso" ng-controller="auth">
+    <h2>Angular service for user</h2>
+    <div ng-show="user_service.user.error">{% verbatim %}{{ user_service.user.error }}{% endverbatim %}</div>
+    <div ng-show="user_service.user.loading">Komunikujem se serverem</div>
+    <div ng-show="user_service.user.logged && !user_service.user.loading">
+        <hr/>
+        User: {% verbatim %}{{ user_service.user.username }}{% endverbatim %}
+        <input type="button" ng-click="user_service.logout()" value="Logout"/>
+    </div>
+    <div ng-hide="user_service.user.logged || user_service.user.loading">
+        <hr/>
+        <h4>Login</h4>
+        <form ng-submit="user_service.login(login.username, login.password)">
+            <input type="text" required ng-model="login.username" placeholder="User Name"/>
+            <input type="password" required ng-model="login.password" placeholder="Password"/>
+            <input type="submit" value="Login"/>
+        </form>
+
+        <hr/>
+        <h4>Sign up</h4>
+        <form ng-submit="user_service.signup(signup)">
+            <input type="text" required ng-model="signup.username" placeholder="User Name"/>
+            <input type="email" required ng-model="signup.email" placeholder="E-mail"/>
+            <input type="password" required ng-model="signup.password" placeholder="Password"/>
+            <input type="password" required ng-model="signup.password_check" placeholder="Password Again"/>
+            <input type="text" ng-model="signup.first_name" placeholder="First Name"/>
+            <input type="text" ng-model="signup.last_name" placeholder="Last Name"/>
+            <input type="submit" value="Sing Up"/>
+        </form>
+        <pre>{% verbatim %}{{ signup | json:4 }}{% endverbatim %}</pre>
+    </div>
+    <hr/>
+    <h4>User object</h4>
+
+    <pre>{% verbatim %}{{ user_service.user | json:4 }}{% endverbatim %}</pre>
+
+</div>
+{% endblock %}
+
+
+{% block head_block %}
+    <script src="{% static "js/user_service.js" %}"></script>
+    <script src="{% static "proso_common/angular.min.js" %}"></script>
+    <script>
+        var app = angular.module('proso', []);
+        app.config(function($httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        });
+        app.service("user_service", UserService);
+        app.controller("auth", function($scope, user_service){
+            $scope.user_service = user_service;
+            user_service.process_user({{ user | safe }});
+        });
+    </script>
+{% endblock %}

@@ -11,5 +11,6 @@ urlpatterns = patterns(
     url(r'^profile/', 'profile', name='profile'),
     url(r'^session/', 'session', name='session'),
     url(r'^signup/', 'signup', name='signup'),
+    url(r'^ngservice/', 'user_service', name='user_service'),
     url(r'^initmobile/', 'initmobile_view', name='initmobile'),
 )

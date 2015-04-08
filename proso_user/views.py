@@ -302,3 +302,11 @@ def _user_exists(**kwargs):
         return True
     except User.DoesNotExist:
         return False
+
+@ensure_csrf_cookie
+def user_service(request):
+    if not hasattr(request.user, "userprofile"):
+        user = ""
+    else:
+        user = json.dumps(request.user.userprofile.to_json())
+    return render(request, "user_service.html", {"user": user})
