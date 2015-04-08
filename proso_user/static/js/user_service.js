@@ -99,4 +99,15 @@ UserService = function($http){
         scope.$apply(self.load_user())
     };
 
+    self.load_session = function(){
+        user.loading = true;
+        $http.get("/user/session/")
+            .success(function(response){
+                user.session = response.data;
+            })
+            .finally(function(response){
+                user.loading = false;
+            });
+    };
+
 };

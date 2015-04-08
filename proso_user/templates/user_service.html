@@ -11,6 +11,7 @@
         <hr/>
         User: {% verbatim %}{{ user_service.user.username }}{% endverbatim %}
         <input type="button" ng-click="user_service.logout()" value="Logout"/>
+        <input type="button" ng-click="user_service.load_session()" value="Get session"/>
     </div>
     <div ng-hide="user_service.user.logged || user_service.user.loading">
         <hr/>
