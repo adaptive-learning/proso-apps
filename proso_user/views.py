@@ -1,3 +1,4 @@
+from lazysignup.utils import is_lazy_user
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
 from proso.django.request import get_user_id, json_body
@@ -134,6 +135,11 @@ def signup(request):
     if request.method == 'GET':
         return render(request, 'user_signup.html', {}, help_text=signup.__doc__)
     elif request.method == 'POST':
+        if request.user.is_authenticated() and hasattr(request.user, "userprofile"):
+            return render_json(request, {
+                'error': 'User already logged in',
+                'error_type': 'username_logged'
+            }, template='user_json.html', status=400)
         credentials = json_body(request.body)
         error = _save_user(request, credentials, new=True)
         if error is not None:
