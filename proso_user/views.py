@@ -1,7 +1,7 @@
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
 from proso.django.request import get_user_id, json_body
-from models import Session, UserProfile
+from models import Session, UserProfile, TimeZone
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
@@ -190,7 +190,7 @@ def session(request):
         if locale:
             current_session.locale = locale
         if time_zone:
-            current_session.time_zone = time_zone
+            current_session.time_zone = TimeZone.objects.from_content(time_zone)
         if display_width:
             current_session.display_width = display_width
         if display_height:
