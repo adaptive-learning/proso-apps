@@ -183,10 +183,11 @@ def session(request):
         current_session = Session.objects.get_current_session()
         if current_session is None:
             return HttpResponseBadRequest("there is no current session to modify")
-        locale = request.POST.get('locale', None)
-        time_zone = request.POST.get('time_zone', None)
-        display_width = request.POST.get('display_width', None)
-        display_height = request.POST.get('display_height', None)
+        data = json_body(request.body)
+        locale = data.get('locale', None)
+        time_zone = data.get('time_zone', None)
+        display_width = data.get('display_width', None)
+        display_height = data.get('display_height', None)
         if locale:
             current_session.locale = locale
         if time_zone:
