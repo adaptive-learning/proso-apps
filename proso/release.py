@@ -1,1 +1,1 @@
-VERSION = '1.0.0-m1'
+VERSION = '1.0.0-SNAPSHOT'
