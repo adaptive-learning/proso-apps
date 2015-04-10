@@ -1,4 +1,7 @@
+from django.conf import settings
+from threading import currentThread
 import datetime
+import importlib
 import json as simplejson
 import re
 
@@ -78,3 +81,25 @@ def get_time(request):
         return time
     else:
         return datetime.datetime.now()
+
+
+###############################################################################
+# currect request
+###############################################################################
+
+_request_initialized = False
+_current_request = {}
+
+
+class RequestMiddleware:
+    def process_request(self, request):
+        global _request_initialized
+        _request_initialized = True
+        _current_request[currentThread()] = request
+
+
+def get_current_request(force=True):
+    if not force and not _request_initialized:
+        return None
+    assert _request_initialized, 'RequestMiddleware is not loaded'
+    return _current_request[currentThread()]

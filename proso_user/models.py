@@ -3,7 +3,7 @@ import hashlib
 from ipware.ip import get_ip
 from social_auth.db.django_models import UserSocialAuth
 import user_agents
-from proso_common.models import get_current_request
+from proso.django.request import get_current_request
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
