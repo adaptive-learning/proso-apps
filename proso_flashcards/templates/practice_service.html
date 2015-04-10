@@ -2,11 +2,20 @@
 {% load staticfiles %}
 
 {% block content_block %}
+<div id="ng" ng-app="proso" ng-controller="auth">
+    <h4>Setting</h4>
+    <label> Set size: <input type="number" ng-model="service.fc_in_set" width="10"/> </label><br/>
+    <label> Queue size: <input type="number" ng-model="service.fc_in_queue" width="10"/> </label><br/>
+
+    <hr/>
+    <h4>Flashcard</h4>
+    <div class="pure-button pure-button-primary" ng-click="get_flashcard()">Get flashcard</div>
+    <p>{% verbatim %}{{ msg }}{% endverbatim %}</p>
+    <pre>{% verbatim %}{{ flashcard | json:4 }}{% endverbatim %}</pre>
     <hr/>
     <h4>Service</h4>
-    <div id="ng" ng-app="proso" ng-controller="auth">
-        <pre>{% verbatim %}{{ service | json:4 }}{% endverbatim %}</pre>
-    </div>
+    <pre>{% verbatim %}{{ service | json:4 }}{% endverbatim %}</pre>
+</div>
 {% endblock %}
 
 
@@ -22,6 +31,20 @@
         app.service("practice_service", PracticeService);
         app.controller("auth", function($scope, practice_service){
             $scope.service = practice_service;
+
+            $scope.get_flashcard = function(){
+                practice_service.get_flashcard().then(
+                        // called after FC is ready
+                        function(flashcard) {
+                            $scope.flashcard = flashcard;
+                        },
+                        // called on error (set complete)
+                        function(msg){
+                            $scope.flashcard = null;
+                            $scope.msg = msg;
+                        }
+                );
+            }
         });
 
     </script>
