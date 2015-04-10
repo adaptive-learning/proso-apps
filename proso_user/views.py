@@ -58,7 +58,8 @@ def profile(request):
             if error:
                 return render_json(request, error, template='user_json.html', status=400)
         user_profile.save()
-        return HttpResponse('ok', status=202)
+        request.method = "GET"
+        return profile(request)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 

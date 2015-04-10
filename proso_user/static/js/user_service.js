@@ -5,6 +5,7 @@ UserService = function($http){
         "loading": false
     };
     var user = this.user = angular.copy(empty_user);
+    var update = this.update = {};
 
     // called on create
     self.init = function (){
@@ -59,6 +60,14 @@ UserService = function($http){
         user.logged = true;
         user.profile = data;
         angular.extend(user, data.user);
+        angular.extend(update, {
+            user: {
+                first_name: user.first_name,
+                last_name: user.last_name
+            },
+            send_emails: user.profile.send_emails,
+            public: user.profile.public
+        });
         delete user.profile.user;
     };
 
@@ -115,7 +124,6 @@ UserService = function($http){
             });
     };
 
-
     self.update_session = function(){
         var data = {
             locale: window.navigator.language || window.navigator.userLanguage || window.navigator.browserLanguage,
@@ -128,6 +136,21 @@ UserService = function($http){
         $http.post("/user/session/", data).error(function(){
             console.error("Error while updating session")
         });
+    };
+
+    self.update_profile = function(data){
+        user.loading = true;
+        _reset_error();
+        $http.post("/user/profile/", data)
+            .success(function(response){
+                self.process_user(response.data);
+            })
+            .error(function(response){
+                user.error = response.error;
+                user.error_type = response.error_type;
+            }).finally(function(response){
+                user.loading = false;
+            });
     };
 
     self.login_google = function() {
