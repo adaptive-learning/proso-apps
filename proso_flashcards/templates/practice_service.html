@@ -1,0 +1,28 @@
+{% extends 'flashcards_base.html' %}
+{% load staticfiles %}
+
+{% block content_block %}
+    <hr/>
+    <h4>Service</h4>
+    <div id="ng" ng-app="proso" ng-controller="auth">
+        <pre>{% verbatim %}{{ service | json:4 }}{% endverbatim %}</pre>
+    </div>
+{% endblock %}
+
+
+{% block head_block %}
+    <script src="{% static "js/practice_service.js" %}"></script>
+    <script src="{% static "proso_common/angular.min.js" %}"></script>
+    <script>
+        var app = angular.module('proso', []);
+        app.config(function($httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        });
+        app.service("practice_service", PracticeService);
+        app.controller("auth", function($scope, practice_service){
+            $scope.service = practice_service;
+        });
+
+    </script>
+{% endblock %}

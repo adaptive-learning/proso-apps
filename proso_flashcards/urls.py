@@ -15,7 +15,9 @@ urlpatterns = patterns(
     'proso_flashcards.views',
     url(r'^(|home)$', ensure_csrf_cookie(TemplateView.as_view(template_name="flashcards_home.html")), name='home'),
     url(r'^answer$', 'answer', name='flashcard_answer'),
-    url(r'^practice', 'practice', name='flashcard_practice'),
+    url(r'^practice/', 'practice', name='flashcard_practice'),
+    url(r'^ngService/', ensure_csrf_cookie(TemplateView.as_view(template_name="practice_service.html")),
+        name='practice_service'),
 )
 
 for model in MODELS:
