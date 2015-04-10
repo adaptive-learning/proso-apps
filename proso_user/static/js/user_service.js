@@ -6,6 +6,11 @@ UserService = function($http){
     };
     var user = this.user = angular.copy(empty_user);
 
+    // called on create
+    self.init = function (){
+        self.update_session();
+    };
+
     self.signup = function(data){
         user.loading = true;
         _reset_error();
@@ -110,6 +115,21 @@ UserService = function($http){
             });
     };
 
+
+    self.update_session = function(){
+        var data = {
+            locale: window.navigator.language || window.navigator.userLanguage || window.navigator.browserLanguage,
+            display_height: window.innerHeight,
+            display_width: window.innerWidth
+        };
+        try{
+            data.time_zone = jstz.determine().name();
+        }catch (err){ console.log("JSTimeZone lib not loaded")}
+        $http.post("/user/session/", data).error(function(){
+            console.error("Error while updating session")
+        });
+    };
+
     self.login_google = function() {
         _open_popup('/login/google-oauth2/', '/user/close_popup')
     };
@@ -123,5 +143,7 @@ UserService = function($http){
         url += "?next=" + next;
         window.open(url, "popup", settings)
     };
+
+    self.init();
 
 };

@@ -7,11 +7,11 @@
     <h2>Angular service for user</h2>
     <div ng-show="user_service.user.error">{% verbatim %}{{ user_service.user.error }}{% endverbatim %}</div>
     <div ng-show="user_service.user.loading">Komunikujem se serverem</div>
+    <input type="button" ng-click="user_service.load_session()" value="Get session"/>
     <div ng-show="user_service.user.logged && !user_service.user.loading">
         <hr/>
         User: {% verbatim %}{{ user_service.user.username }}{% endverbatim %}
         <input type="button" ng-click="user_service.logout()" value="Logout"/>
-        <input type="button" ng-click="user_service.load_session()" value="Get session"/>
     </div>
     <div ng-hide="user_service.user.logged || user_service.user.loading">
         <hr/>
@@ -48,6 +48,7 @@
 
 {% block head_block %}
     <script src="{% static "js/user_service.js" %}"></script>
+    <script src="{% static "js/jstz.min.js" %}"></script>
     <script src="{% static "proso_common/angular.min.js" %}"></script>
     <script>
         var app = angular.module('proso', []);
