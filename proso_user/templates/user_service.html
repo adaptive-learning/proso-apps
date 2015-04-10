@@ -7,11 +7,11 @@
     <h2>Angular service for user</h2>
     <div ng-show="user_service.user.error">{% verbatim %}{{ user_service.user.error }}{% endverbatim %}</div>
     <div ng-show="user_service.user.loading">Komunikujem se serverem</div>
-    <input type="button" ng-click="user_service.load_session()" value="Get session"/>
+    <input type="button" class="pure-button pure-button-primary" ng-click="user_service.load_session()" value="Get session"/>
     <div ng-show="user_service.user.logged && !user_service.user.loading">
         <hr/>
         User: {% verbatim %}{{ user_service.user.username }}{% endverbatim %}
-        <input type="button" ng-click="user_service.logout()" value="Logout"/>
+        <input type="button" class="pure-button pure-button-primary" ng-click="user_service.logout()" value="Logout"/>
     </div>
     <div ng-hide="user_service.user.logged || user_service.user.loading">
         <hr/>
@@ -22,7 +22,8 @@
             <input type="submit" value="Login"/>
         </form>
         <br/>
-        <input type="button" ng-click="user_service.login_google()" value="with Google"/>
+        <input type="button" class="pure-button pure-button-primary" ng-click="user_service.login_google()" value="with Google"/>
+        <input type="button" class="pure-button pure-button-primary" ng-click="user_service.login_facebook()" value="with Facebook"/>
 
         <hr/>
         <h4>Sign up</h4>

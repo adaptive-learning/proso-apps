@@ -134,7 +134,7 @@ UserService = function($http){
         _open_popup('/login/google-oauth2/', '/user/close_popup')
     };
 
-    self.login_google = function() {
+    self.login_facebook = function() {
         _open_popup('/login/facebook/', '/user/close_popup')
     };
 
