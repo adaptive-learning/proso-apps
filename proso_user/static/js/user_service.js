@@ -6,10 +6,10 @@ UserService = function($http){
     };
     var user = this.user = angular.copy(empty_user);
     var update = this.update = {};
+    var session_updated = false;
 
     // called on create
     self.init = function (){
-        self.update_session();
     };
 
     self.signup = function(data){
@@ -69,6 +69,10 @@ UserService = function($http){
             public: user.profile.public
         });
         delete user.profile.user;
+        if (!session_updated){
+            self.update_session();
+            session_updated = true;
+        }
     };
 
     self.login = function(name, pass){
