@@ -148,7 +148,6 @@ def practice(request):
         environment.shift_time(time)
 
     # save answers
-    status = 200
     if request.method == 'POST':
         answers = _get_answers(request)
         if not isinstance(answers, list):
@@ -156,7 +155,6 @@ def practice(request):
         saved_answers = _save_answer(request, answers)
         if not isinstance(saved_answers, list):
             return saved_answers
-        status = 201
 
     # select
     categories = json.loads(request.GET.get("categories", "[]"))
@@ -172,7 +170,7 @@ def practice(request):
     data = _to_json(request, {
         'flashcards': map(lambda x: x.to_json(), flashcards)
     })
-    return render_json(request, data, template='flashcards_json.html', status=status, help_text=practice.__doc__)
+    return render_json(request, data, template='flashcards_json.html', help_text=practice.__doc__)
 
 
 def _get_answers(request):
