@@ -149,7 +149,7 @@ SOCIAL_AUTH_ERROR_KEY = 'socialauth_error'
 SOCIAL_AUTH_RAISE_EXCEPTIONS = False
 GOOGLE_OAUTH2_CLIENT_ID = os.getenv('PROSO_GOOGLE_OAUTH2_CLIENT_ID', '191094260688-97ergmtbuj34jf518ol60cuili58aml9.apps.googleusercontent.com')
 GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('PROSO_GOOGLE_OAUTH2_CLIENT_SECRET', 'blQDABue66taqP__DVAHHb_Y')
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/user/close_popup'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/user/close_popup/'
 
 # http://stackoverflow.com/questions/22005841/is-not-json-serializable-django-social-auth-facebook-login
 SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'

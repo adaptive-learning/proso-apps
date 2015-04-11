@@ -32,7 +32,7 @@ class OptionSet():
 
 class EmptyOptionSet(OptionSet):
     def get_option_for_flashcards(self, flashcards):
-        return dict(zip(flashcards), [] * flashcards)
+        return dict(map(lambda fc: (fc.item_id, []), flashcards))
 
 
 class ContextOptionSet(OptionSet):

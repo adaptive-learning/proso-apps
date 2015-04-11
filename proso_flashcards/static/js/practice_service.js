@@ -80,7 +80,7 @@ PracticeService = function($http, $q){
 
     // preload flashcards
     self.preload_flashcards = function(){
-        _load_flashcards(b);
+        _load_flashcards();
     };
 
     self.reset_set = function(){
@@ -93,7 +93,7 @@ PracticeService = function($http, $q){
     var _load_flashcards = function(){
         self.filter.limit  = self.fc_in_queue - queue.length;
         if (deferred_fc && !promise_resolved_tmp) self.filter.limit ++;                  // if we promised one flashcard
-        self.filter.limit = Math.min(self.filter.limit, self.fc_in_set - self.current);  // check size of set
+        self.filter.limit = Math.min(self.filter.limit, self.fc_in_set - self.current - queue.length);  // check size of set
         if (self.filter.limit == 0) return;                         // nothing to do
         self.filter.avoid = current_fc ? [current_fc.id] : [];      // avoid current FC
         queue.forEach(function(fc){
