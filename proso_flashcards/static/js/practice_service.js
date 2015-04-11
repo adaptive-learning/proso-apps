@@ -3,6 +3,7 @@ PracticeService = function($http, $q){
     self.fc_in_set = 10;
     self.fc_in_queue = 1;   // 0 - for load FC when needed. 1 - for 1 waiting FC, QUESTIONS_IN_SET - for load all FC on start
     self.current = 0;       // number of last provided FC
+    self.save_answer_imidietly = false;
 
     self.filter = {
         contexts: [],
@@ -15,10 +16,48 @@ PracticeService = function($http, $q){
     var deferred_fc = null;
     var promise_resolved_tmp = false;
     var current_fc = null;
+    var answer_queue = [];
 
+    // add answer to queue and upload queued answers if necessary
+    self.save_answer = function(answer, farce_save){
+        if (answer)
+            answer_queue.push(answer);
 
-    self.save_answer = function(answer){
+        if (self.save_answer_imidietly || farce_save || self.current >= self.fc_in_set) {
+            if (answer_queue.length > 0) {
+                $http.post("/flashcards/answer", {answers: answer_queue})
+                    .error(function (response) {
+                        console.error("Problem while uploading answer", response)
+                    });
+                answer_queue = [];
+            }
+        }
+    };
 
+    self.flush_answer_queue = function(){
+        self.save_answer(null, true)
+    };
+
+    // build answer from current FC and save
+    self.save_answer_to_current_fc = function(answered_fc_id, response_time, meta){
+        if (!current_fc)
+            console.error("There is no current flashcard");
+        var answer = {
+            flashcard_id: current_fc.id,
+            flashcard_answered_id: answered_fc_id,
+            response_time: response_time,
+            direction: current_fc.direction
+        };
+        if (meta)
+            answer.meta = meta;
+        if (current_fc.options){
+            answer.option_ids = [];
+            current_fc.options.forEach(function(o){
+                if (o.id != current_fc.id)
+                    answer.option_ids.push(o.id);
+            });
+        }
+        self.save_answer(answer);
     };
 
     // return promise of flashcard
@@ -70,7 +109,14 @@ PracticeService = function($http, $q){
             }
         }
 
-        $http.get("/flashcards/practice/", {params: filter})
+        var request;
+        if (answer_queue.length == 0) {
+            request = $http.get("/flashcards/practice/", {params: filter});
+        }else{
+            request = $http.post("/flashcards/practice/", {answers: answer_queue}, {params: filter});
+            answer_queue = [];
+        }
+        request
             .success(function(response){
                 queue = queue.concat(response.data.flashcards);
                 _resolve_promise();

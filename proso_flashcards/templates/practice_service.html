@@ -15,6 +15,16 @@
         Flashcard id: {% verbatim %}{{ flashcard.id }}{% endverbatim %}
         <pre>{% verbatim %}{{ flashcard | json:4 }}{% endverbatim %}</pre>
     </div>
+    <div ng-show="flashcard">
+        <hr/>
+        <h4>Answer</h4>
+        <form ng-submit="service.save_answer_to_current_fc(answer.id, answer.rt, answer.meta)">
+            <input type="number" required ng-model="answer.id" placeholder="FC Answered id"/>
+            <input type="number" required ng-model="answer.rt" placeholder="Response time"/>
+            <input type="text" ng-model="answer.meta" placeholder="Meta"/>
+            <input type="submit" class="pure-button pure-button-primary" value="Save"/>
+        </form>
+    </div>
     <hr/>
     <h4>Service</h4>
     <pre>{% verbatim %}{{ service | json:4 }}{% endverbatim %}</pre>
