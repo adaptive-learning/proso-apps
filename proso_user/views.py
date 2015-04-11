@@ -146,8 +146,6 @@ def signup(request):
         if error is not None:
             return render_json(request, error, template='user_json.html', status=400)
         else:
-            user_profile = UserProfile(user=request.user)
-            user_profile.save()
             request.method = "GET"
             return profile(request)
     else:

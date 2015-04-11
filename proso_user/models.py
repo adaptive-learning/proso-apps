@@ -8,6 +8,7 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 import datetime
+from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social
 
 
 def get_content_hash(content):
@@ -232,8 +233,16 @@ def init_content_hash_time_zone(sender, instance, **kwargs):
     init_content_hash(instance)
 
 
+@receiver(post_save, sender=User)
+def init_user_profile(sender, instance, created=False, **kwargs):
+    if is_user_real(instance):
+        if is_user_lazy(instance):
+            convert_lazy_user(instance, with_username=False)
+        UserProfile.objects.get_or_create(user=instance)
+
+
 @receiver(post_save, sender=UserSocialAuth)
-def my_handler(sender, instance, created=False, **kwargs):
-    if not hasattr(instance.user, "userprofile"):
-        profile = UserProfile(user=instance.user)
-        profile.save()
+def drop_lazy_user(sender, instance, created=False, **kwargs):
+    user = instance.user
+    if is_user_lazy(user) and is_user_social(user):
+        convert_lazy_user(user, with_username=True)
