@@ -11,9 +11,9 @@ from proso_ab.models import Value as ABValue, Experiment as ABExperiment
 from proso_user.models import Session
 import re
 import os.path
-import proso.util
 from decorator import cache_environment_for_item
 from collections import defaultdict
+from proso.django.config import instantiate_from_subconfig
 
 
 # This is hack to emulate TRUE value on both psql and sqlite
@@ -25,19 +25,32 @@ DATABASE_TRUE = '1 = 1'
 ################################################################################
 
 def get_environment():
-    return proso.util.instantiate(settings.PROSO_ENVIRONMENT)
+    from proso.django.config import get_config
+    print get_config('proso_feedback')
+    return instantiate_from_subconfig(
+        'proso_models', 'environment',
+        default_class='proso_models.models.DatabaseEnvironment'
+    )
 
 
 def get_predictive_model():
-    return proso.util.instantiate(settings.PROSO_PREDICTIVE_MODEL)
+    return instantiate_from_subconfig('proso_models', 'predictive_model')
 
 
 def get_item_selector():
-    return proso.util.instantiate(settings.PROSO_ITEM_SELECTION, get_predictive_model())
+    return instantiate_from_subconfig(
+        'proso_models', 'item_selector',
+        default_class='proso.models.item_selection.ScoreItemSelection',
+        pass_parameters=[get_predictive_model()]
+    )
 
 
 def get_option_selector(item_selector):
-    return proso.util.instantiate(settings.PROSO_OPTION_SELECTION, item_selector)
+    return instantiate_from_subconfig(
+        'proso_models', 'option_selector',
+        default_class='proso.models.option_selection.ConfusingOptionSelection',
+        pass_parameters=[item_selector]
+    )
 
 
 ################################################################################

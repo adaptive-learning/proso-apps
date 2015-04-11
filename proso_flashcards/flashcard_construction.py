@@ -1,17 +1,22 @@
 from collections import defaultdict
 import random
 import abc
-from django.conf import settings
-import proso.util
 from proso_flashcards.models import Flashcard, FlashcardAnswer
+from proso.django.config import instantiate_from_subconfig
 
 
 def get_option_set():
-    return proso.util.instantiate(settings.PROSO_FLASHCARDS_OPTION_SET)
+    return instantiate_from_subconfig(
+        'proso_flashcards', 'option_set',
+        default_class='proso_flashcards.flashcard_construction.ContextOptionSet'
+    )
 
 
 def get_direction():
-    return proso.util.instantiate(settings.PROSO_FLASHCARDS_DIRECTION)
+    return instantiate_from_subconfig(
+        'proso_flashcards', 'direction',
+        default_class='proso_flashcards.flashcard_construction.RandomDirection'
+    )
 
 
 class OptionSet():

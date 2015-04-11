@@ -9,15 +9,14 @@ from django.utils.text import slugify
 from proso_models.models import get_environment
 from collections import defaultdict
 import abc
-from django.conf import settings
-import proso.util
+from proso.django.config import instantiate_from_subconfig
 
 
 def get_test_evaluator():
-    args = []
-    if settings.PROSO_TEST_EVALUATOR == 'proso_questions.models.CategoryTestEvaluator':
-        args = settings.PROSO_TEST_EVALUATOR_ARGS
-    return proso.util.instantiate(settings.PROSO_TEST_EVALUATOR, *args)
+    return instantiate_from_subconfig(
+        'proso_questions', 'test_evaluator',
+        default_class='proso_questions.models.SimpleTestEvaluator'
+    )
 
 
 class ResourceManager(models.Manager):
@@ -311,8 +310,41 @@ class TestEvaluator:
     def score_to_pass(self):
         pass
 
+    @abc.abstractmethod
+    def score_max(self):
+        pass
 
-class CategoryTestEvaluator:
+
+class SimpleTestEvaluator(TestEvaluator):
+
+    def __init__(self, score_to_pass=0, score_max=0, score_correct=1, score_wrong=0, score_not_answered=0):
+        self._score_to_pass = score_to_pass
+        self._score_max = score_max
+        self._score_correct = score_correct
+        self._score_wrong = score_wrong
+        self._score_not_answered = score_not_answered
+
+    def evaluate(self, answers):
+        result = []
+        for answer in answers:
+            score = 0
+            if answer.general_answer.item_answered_id is None:
+                score = self._score_not_answered
+            elif answer.general_answer.item_answered_id == answer.general_answer.item_asked_id:
+                score = self._score_correct
+            else:
+                score = self._score_wrong
+            result.append((answer, score))
+        return result
+
+    def score_to_pass(self):
+        return self._score_to_pass
+
+    def score_max(self):
+        return self._score_max
+
+
+class CategoryTestEvaluator(TestEvaluator):
 
     def __init__(self, score_by_categories, score_to_pass):
         """

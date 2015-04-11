@@ -179,47 +179,10 @@ except ImportError:
 except SyntaxError:
     HASHES = {}
 
-PROSO_PREDICTIVE_MODEL = 'proso.models.prediction.AlwaysLearningPredictiveModel'
-PROSO_ENVIRONMENT = 'proso_models.models.DatabaseEnvironment'
-PROSO_ITEM_SELECTION = 'proso.models.item_selection.ScoreItemSelection'
-PROSO_OPTION_SELECTION = 'proso.models.option_selection.ConfusingOptionSelection'
-PROSO_FLASHCARDS_OPTION_SET = 'proso_flashcards.flashcard_construction.ContextOptionSet'
-PROSO_FLASHCARDS_DIRECTION = 'proso_flashcards.flashcard_construction.RandomDirection'
-PROSO_TEST_EVALUATOR = 'proso_questions.models.CategoryTestEvaluator'
-PROSO_TEST_EVALUATOR_ARGS = [{
-    u'Pravidla provozu na pozemních komunikacích': {
-        'correct': 2,
-        'answers': 10
-    },
-    u'Dopravní značky': {
-        'correct': 1,
-        'answers': 3
-    },
-    u'Zásady bezpečné jízdy': {
-        'correct': 2,
-        'answers': 4
-    },
-    u'Dopravní situace': {
-        'correct': 4,
-        'answers': 3
-    },
-    u'Předpisy o podmínkách provozu vozidel': {
-        'correct': 1,
-        'answers': 2
-    },
-    u'Předpisy související s provozem': {
-        'correct': 2,
-        'answers': 2
-    },
-    u'Zdravotnická příprava': {
-        'correct': 1,
-        'answers': 1
-    }
-}, 43]
-
-FEEDBACK_TO = 'autoskolachytre@googlegroups.com'
-FEEDBACK_TO = 'slaweet@seznam.cz'
-FEEDBACK_DOMAIN = 'autoskolachytre.cz'
+PROSO_CONFIG = {
+    'path': os.path.join(BASE_DIR, 'proso_config.yaml'),
+    'default': 'default'
+}
 
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25

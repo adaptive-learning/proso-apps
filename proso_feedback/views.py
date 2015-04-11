@@ -5,10 +5,10 @@ from django.template.loader import render_to_string
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.mail import EmailMultiAlternatives
 from logging import getLogger
-from django.conf import settings
 from models import Rating
 from proso_user.models import Session
 from lazysignup.decorators import allow_lazy_user
+from proso.django.config import get_subconfig
 
 
 LOGGER = getLogger(__name__)
@@ -38,6 +38,8 @@ def feedback(request):
     if request.method == 'GET':
         return render(request, 'feedback_feedback.html', {}, help_text=feedback.__doc__)
     if request.method == 'POST':
+        feedback_domain = get_subconfig('proso_feedback', 'domain', required=True)
+        feedback_to = get_subconfig('proso_feedback', 'to', required=True)
         feedback_data = json_body(request.body)
         feedback_data['user_agent'] = Session.objects.get_current_session()['http_user_agent']
         if not feedback_data.get('username'):
@@ -45,9 +47,9 @@ def feedback(request):
         if not feedback_data.get('email'):
             feedback_data['email'] = request.user.email
         if is_likely_worthless(feedback_data):
-            mail_from = 'spam@' + settings.FEEDBACK_DOMAIN
+            mail_from = 'spam@' + feedback_domain
         else:
-            mail_from = 'feedback@' + settings.FEEDBACK_DOMAIN
+            mail_from = 'feedback@' + feedback_domain
 
         text_content = render_to_string("emails/feedback.plain.txt", {
             "feedback": feedback_data,
@@ -58,10 +60,10 @@ def feedback(request):
             "user": request.user,
         })
         mail = EmailMultiAlternatives(
-            settings.FEEDBACK_DOMAIN + ' feedback',
+            feedback_domain + ' feedback',
             text_content,
             mail_from,
-            [settings.FEEDBACK_TO],
+            feedback_to,
         )
         mail.attach_alternative(html_content, "text/html")
         mail.send()
