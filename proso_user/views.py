@@ -244,28 +244,28 @@ def _to_json(request, value):
 
 
 def _check_credentials(credentials, new=False):
-    if new and 'username' not in credentials:
+    if new and not credentials.get('username'):
         return {
             'error': 'There is no username',
             'error_type': 'username_empty'
         }
-    if new and 'email' not in credentials:
+    if new and not credentials.get('email'):
         return {
             'error': 'There is no e-mail',
             'error_type': 'email_empty'
         }
-    if new and 'password' not in credentials:
+    if new and not credentials.get('password'):
         return {
             'error': 'There is no password',
             'error_type': 'password_empty'
         }
 
-    if 'password' in credentials and credentials['password'] != credentials.get('password_check'):
+    if credentials.get('password') and credentials['password'] != credentials.get('password_check'):
         return {
             'error': 'Passwords do not match.',
             'error_type': 'password_not_match'
         }
-    if 'username' in credentials and _user_exists(username=credentials['username']):
+    if credentials.get('username') and _user_exists(username=credentials['username']):
         return {
             'error': 'There is already a user with the given username.',
             'error_type': 'username_exists'
@@ -298,11 +298,7 @@ def _save_user(request, credentials, new=False):
 
 
 def _user_exists(**kwargs):
-    try:
-        User.objects.get(**kwargs)
-        return True
-    except User.DoesNotExist:
-        return False
+    return User.objects.filter(**kwargs).exists()
 
 
 @ensure_csrf_cookie
