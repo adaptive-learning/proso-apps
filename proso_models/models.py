@@ -25,8 +25,6 @@ DATABASE_TRUE = '1 = 1'
 ################################################################################
 
 def get_environment():
-    from proso.django.config import get_config
-    print get_config('proso_feedback')
     return instantiate_from_subconfig(
         'proso_models', 'environment',
         default_class='proso_models.models.DatabaseEnvironment'
