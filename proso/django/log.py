@@ -16,7 +16,7 @@ def is_log_prepared():
 
 
 def get_request_log():
-    assert _installed_middleware, 'RequestCacheMiddleware not loaded'
+    assert _installed_middleware, 'RequestLogMiddleware not loaded'
     return _request_log[currentThread()]
 
 
