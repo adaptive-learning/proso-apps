@@ -93,6 +93,8 @@ def answer(request):
         return render(request, 'flashcards_answer.html', {}, help_text=answer.__doc__)
     elif request.method == 'POST':
         answers = _get_answers(request)
+        if not isinstance(answers, list):
+            return answers
         saved_answers = _save_answer(request, answers)
         if not isinstance(saved_answers, list):
             return saved_answers
@@ -149,6 +151,8 @@ def practice(request):
     status = 200
     if request.method == 'POST':
         answers = _get_answers(request)
+        if not isinstance(answers, list):
+            return answers
         saved_answers = _save_answer(request, answers)
         if not isinstance(saved_answers, list):
             return saved_answers
