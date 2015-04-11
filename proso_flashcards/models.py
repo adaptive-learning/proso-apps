@@ -55,8 +55,8 @@ class Context(models.Model):
 
 
 class FlashcardManager(models.Manager):
-    def candidates(self, categories, contexts, types):
-        qs = self.all()
+    def candidates(self, categories, contexts, types, avoid):
+        qs = self.filter(~Q(id__in=avoid))
         if isinstance(contexts, list) and len(contexts) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id: Q(context_id=id), contexts)))
         if isinstance(categories, list) and len(categories) > 0:

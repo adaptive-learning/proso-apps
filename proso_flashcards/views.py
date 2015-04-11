@@ -120,6 +120,8 @@ def practice(request):
         list of names (str) of types of terms to which flashcards selection will be restricted
       language:
         language (str) of flashcards
+      avoid:
+        list of ids (int) of flashcards to avoid
       limit:
         number of returned questions (default 10, maximum 100)
       time:
@@ -156,9 +158,10 @@ def practice(request):
     categories = json.loads(request.GET.get("categories", "[]"))
     contexts = json.loads(request.GET.get("contexts", "[]"))
     types = json.loads(request.GET.get("types", "[]"))
+    avoid = json.loads(request.GET.get("avoid", "[]"))
 
     time_before_practice = time_lib()
-    candidates = Flashcard.objects.candidates(categories, contexts, types)
+    candidates = Flashcard.objects.candidates(categories, contexts, types, avoid)
     flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates,
                                             request.GET.get("language", None))
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))
