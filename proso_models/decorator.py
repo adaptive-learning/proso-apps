@@ -1,6 +1,6 @@
 import inspect
 from functools import wraps
-from cache import get_request_cache, is_cache_prepared
+from proso.django.cache import get_request_cache, is_cache_prepared
 
 
 class cache_environment_for_item:
