@@ -107,7 +107,14 @@ class Command(BaseCommand):
                         lang=lang,
                     )
                 db_context.name = context["name-{}".format(lang)]
-                db_context.content = context["content-{}".format(lang)]
+                content_key = "content-{}".format(lang)
+                if content_key in context:
+                    db_context.content = context[content_key]
+                elif 'content' in context:
+                    db_context.content = context['content']
+                else:
+                    raise CommandError(
+                        'There is no content for context %s, language %s' % (db_context.identifier, lang))
                 if "load_data" in model.__dict__:
                     model.load_data(context, db_context)
                 if db_context.identifier in item_mapping:
