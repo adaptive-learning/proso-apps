@@ -77,7 +77,7 @@ class Command(BaseCommand):
                     for parent in category["parent-categories"]:
                         if parent + lang not in db_categories:
                             raise CommandError(
-                                "Parent category {} for category {} doesn't exist".format(parent + lang,
+                                "Parent category {} (lang {}) for category {} doesn't exist".format(parent, lang,
                                                                                           category["id"]))
                         db_category.parents.add(db_categories[parent + lang])
                 db_category.save()
