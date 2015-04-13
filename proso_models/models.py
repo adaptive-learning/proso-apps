@@ -587,14 +587,18 @@ class Audit(models.Model):
 # Signals
 ################################################################################
 
-@receiver(pre_save, sender=Answer)
+@receiver(pre_save)
 def init_session(sender, instance, **kwargs):
+    if not issubclass(sender, Answer):
+        return
     if instance.session_id is None:
         Session.objects.get_current_session_id()
 
 
-@receiver(post_save, sender=Answer)
+@receiver(post_save)
 def update_predictive_model(sender, instance, **kwargs):
+    if not issubclass(sender, Answer):
+        return
     environment = get_environment()
     predictive_model = get_predictive_model()
     predictive_model.predict_and_update(
@@ -607,8 +611,10 @@ def update_predictive_model(sender, instance, **kwargs):
         item_asked=instance.item_asked_id)
 
 
-@receiver(post_save, sender=Answer)
+@receiver(post_save)
 def insert_ab_values(sender, instance, **kwargs):
+    if not issubclass(sender, Answer):
+        return
     if not instance.ab_values_initialized:
         instance.ab_values_initialized = True
         for value in ABExperiment.objects.get_values(force=False):
