@@ -17,7 +17,7 @@ UserService = function($http){
         _reset_error();
         return $http.post("/user/signup/", data)
             .success(function(response){
-                self.process_user(response.data);
+                _process_user(response.data);
             })
             .error(function(response){
                 user.error = response.error;
@@ -44,15 +44,19 @@ UserService = function($http){
         user.loading = true;
         return $http.get("/user/profile/")
             .success(function(response){
-                self.process_user(response.data);
+                _process_user(response.data);
             })
             .finally(function(response){
                 user.loading = false;
             });
     };
 
-    // process user data
     self.process_user = function(data){
+        _process_user(angular.copy(data))
+    };
+
+    // process user data
+    var _process_user = function(data){
         if (!data) {
             user.logged = false;
             return;
@@ -83,7 +87,7 @@ UserService = function($http){
             password: pass
         })
             .success(function(response){
-                self.process_user(response.data);
+                _process_user(response.data);
             })
             .error(function(response){
                 user.error = response.error;
@@ -147,7 +151,7 @@ UserService = function($http){
         _reset_error();
         $http.post("/user/profile/", data)
             .success(function(response){
-                self.process_user(response.data);
+                _process_user(response.data);
             })
             .error(function(response){
                 user.error = response.error;
