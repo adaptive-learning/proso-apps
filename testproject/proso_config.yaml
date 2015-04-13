@@ -1,9 +1,7 @@
 default:
     proso_models:
         predictive_model:
-            class: proso.models.prediction.AlwaysLearningPredictiveModel
-            parameters:
-                pfae_good: 1.0
+            class: proso.models.prediction.PriorCurrentPredictiveModel
     proso_feedback:
         domain: localhost
         to:
