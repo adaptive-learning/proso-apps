@@ -13,7 +13,8 @@ import re
 import os.path
 from decorator import cache_environment_for_item
 from collections import defaultdict
-from proso.django.config import instantiate_from_subconfig
+from proso.django.config import instantiate_from_subconfig, get_global_config
+from proso_common.models import Config
 
 
 # This is hack to emulate TRUE value on both psql and sqlite
@@ -496,6 +497,7 @@ class Answer(models.Model):
     ab_values = models.ManyToManyField(ABValue)
     ab_values_initialized = models.BooleanField(default=False)
     guess = models.FloatField(default=0)
+    config = models.ForeignKey(Config, null=True, blank=True, default=None)
 
     class Meta:
         app_label = 'proso_models'
@@ -592,7 +594,15 @@ def init_session(sender, instance, **kwargs):
     if not issubclass(sender, Answer):
         return
     if instance.session_id is None:
-        Session.objects.get_current_session_id()
+        instance.session_id = Session.objects.get_current_session_id()
+
+
+@receiver(pre_save)
+def init_config(sender, instance, **kwargs):
+    if not issubclass(sender, Answer):
+        return
+    if instance.config_id is None:
+        instance.config_id = Config.objects.from_content(get_global_config()).id
 
 
 @receiver(post_save)

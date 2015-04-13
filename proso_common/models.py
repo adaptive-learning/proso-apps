@@ -1,5 +1,12 @@
 from django.conf import settings
+from django.db import models
+import hashlib
 import importlib
+import json
+
+
+def get_content_hash(content):
+    return hashlib.sha1(content).hexdigest()
 
 
 def get_tables_allowed_to_export():
@@ -13,3 +20,33 @@ def get_tables_allowed_to_export():
         except ImportError:
             continue
     return tables
+
+
+class ConfigManager(models.Manager):
+
+    def from_content(self, content):
+        try:
+            content = json.dumps(content)
+            content_hash = get_content_hash(content)
+            return self.get(content_hash=content_hash)
+        except Config.DoesNotExist:
+            config = Config(
+                content=content,
+                content_hash=content_hash)
+            config.save()
+            return config
+
+
+class Config(models.Model):
+
+    content = models.TextField(null=False, blank=False)
+    content_hash = models.CharField(max_length=40, null=False, blank=False, db_index=True)
+
+    objects = ConfigManager()
+
+    def to_json(self, nested=False):
+        return {
+            'id': self.id,
+            'object_type': 'config',
+            'content': json.loads(self.content)
+        }

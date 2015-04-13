@@ -42,9 +42,13 @@ def instantiate_from_subconfig(app_name, key, default_class=None, default_parame
 
 
 def get_config(app_name, config_name=None):
+    return get_global_config(config_name).get(app_name, {})
+
+
+def get_global_config(config_name=None):
     if config_name is None:
         config_name = get_default_config_name()
-    return _load_config().get(config_name, {}).get(app_name, {})
+    return _load_config().get(config_name, {})
 
 
 def _load_config():
