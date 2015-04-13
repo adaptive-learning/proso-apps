@@ -4,8 +4,9 @@
 {% block content_block %}
 <div id="ng" ng-app="proso" ng-controller="auth">
     <h4>Setting</h4>
-    <label> Set size: <input type="number" ng-model="service.fc_in_set" width="10"/> </label><br/>
-    <label> Queue size: <input type="number" ng-model="service.fc_in_queue" width="10"/> </label><br/>
+    <label> Set size: <input type="number" ng-model="service.set_lenght" width="10"/> </label><br/>
+    <label> Queue max size: <input type="number" ng-model="service.fc_queue_size_max" width="10"/> </label><br/>
+    <label> Queue min size: <input type="number" ng-model="service.fc_queue_size_min" width="10"/> </label><br/>
 
     <hr/>
     <h4>Flashcard</h4>

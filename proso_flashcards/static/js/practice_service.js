@@ -1,7 +1,8 @@
 PracticeService = function($http, $q){
     var self = this;
-    self.fc_in_set = 10;
-    self.fc_in_queue = 1;   // 0 - for load FC when needed. 1 - for 1 waiting FC, QUESTIONS_IN_SET - for load all FC on start
+    self.set_lenght = 10;
+    self.fc_queue_size_max = 1;   // 0 - for load FC when needed. 1 - for 1 waiting FC, QUESTIONS_IN_SET - for load all FC on start
+    self.fc_queue_size_min = 1;
     self.current = 0;       // number of last provided FC
     self.save_answer_imidietly = false;
 
@@ -23,7 +24,7 @@ PracticeService = function($http, $q){
         if (answer)
             answer_queue.push(answer);
 
-        if (self.save_answer_imidietly || farce_save || self.current >= self.fc_in_set) {
+        if (self.save_answer_imidietly || farce_save || self.current >= self.set_lenght) {
             if (answer_queue.length > 0) {
                 $http.post("/flashcards/answer", {answers: answer_queue})
                     .error(function (response) {
@@ -91,9 +92,11 @@ PracticeService = function($http, $q){
 
 
     var _load_flashcards = function(){
-        self.filter.limit  = self.fc_in_queue - queue.length;
+        if (queue.length >= self.fc_queue_size_min)                                           // if there are some FC queued
+            return;
+        self.filter.limit  = self.fc_queue_size_max - queue.length;
         if (deferred_fc && !promise_resolved_tmp) self.filter.limit ++;                  // if we promised one flashcard
-        self.filter.limit = Math.min(self.filter.limit, self.fc_in_set - self.current - queue.length);  // check size of set
+        self.filter.limit = Math.min(self.filter.limit, self.set_lenght - self.current - queue.length);  // check size of set
         if (self.filter.limit == 0) return;                         // nothing to do
         self.filter.avoid = current_fc ? [current_fc.id] : [];      // avoid current FC
         queue.forEach(function(fc){
@@ -131,7 +134,7 @@ PracticeService = function($http, $q){
         if (deferred_fc == null){
             return;
         }
-        if (self.fc_in_set == self.current){
+        if (self.set_lenght == self.current){
             deferred_fc.reject("Set was completed");
             return;
         }
