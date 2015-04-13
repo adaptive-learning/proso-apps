@@ -1,10 +1,10 @@
 UserService = function($http){
     var self = this;
-    var empty_user = {
+    self.status = {
         "logged": false,
         "loading": false
     };
-    var user = this.user = angular.copy(empty_user);
+    self.user = {};
     var update = this.update = {};
     var session_updated = false;
     self.error = {};
@@ -14,7 +14,7 @@ UserService = function($http){
     };
 
     self.signup = function(data){
-        user.loading = true;
+        self.status.loading = true;
         _reset_error();
         return $http.post("/user/signup/", data)
             .success(function(response){
@@ -24,7 +24,7 @@ UserService = function($http){
                 self.error = response;
             })
             .finally(function(response){
-                user.loading = false;
+                self.status.loading = false;
             });
     };
 
@@ -41,13 +41,13 @@ UserService = function($http){
 
     // get user profile from backend
     self.load_user = function(){
-        user.loading = true;
+        self.status.loading = true;
         return $http.get("/user/profile/")
             .success(function(response){
                 _process_user(response.data);
             })
             .finally(function(response){
-                user.loading = false;
+                self.status.loading = false;
             });
     };
 
@@ -58,21 +58,21 @@ UserService = function($http){
     // process user data
     var _process_user = function(data){
         if (!data) {
-            user.logged = false;
+            self.status.logged = false;
             return;
         }
-        user.logged = true;
-        user.profile = data;
-        angular.extend(user, data.user);
+        self.status.logged = true;
+        self.user.profile = data;
+        angular.extend(self.user, data.user);
         angular.extend(update, {
             user: {
-                first_name: user.first_name,
-                last_name: user.last_name
+                first_name: self.user.first_name,
+                last_name: self.user.last_name
             },
-            send_emails: user.profile.send_emails,
-            public: user.profile.public
+            send_emails: self.user.profile.send_emails,
+            public: self.user.profile.public
         });
-        delete user.profile.user;
+        delete self.user.profile.user;
         if (!session_updated){
             self.update_session();
             session_updated = true;
@@ -80,7 +80,7 @@ UserService = function($http){
     };
 
     self.login = function(name, pass){
-        user.loading = true;
+        self.status.loading = true;
         _reset_error();
         return $http.post("/user/login/", {
             username: name,
@@ -93,19 +93,19 @@ UserService = function($http){
                 self.error = response;
             })
             .finally(function(response){
-                user.loading = false;
+                self.status.loading = false;
             });
     };
 
     self.logout = function(){
-        user.loading = true;
+        self.status.loading = true;
         $http.get("/user/logout/")
             .success(function(response){
-                clear_obj(user);
-                angular.extend(user, empty_user);
+                clear_obj(self.user);
+                self.status.logged = false;
             })
             .finally(function(response){
-                user.loading = false;
+                self.status.loading = false;
             });
     };
 
@@ -124,13 +124,13 @@ UserService = function($http){
     };
 
     self.load_session = function(){
-        user.loading = true;
+        self.status.loading = true;
         $http.get("/user/session/")
             .success(function(response){
-                user.session = response.data;
+                self.user.session = response.data;
             })
             .finally(function(response){
-                user.loading = false;
+                self.status.loading = false;
             });
     };
 
@@ -149,7 +149,7 @@ UserService = function($http){
     };
 
     self.update_profile = function(data){
-        user.loading = true;
+        self.status.loading = true;
         _reset_error();
         $http.post("/user/profile/", data)
             .success(function(response){
@@ -158,7 +158,7 @@ UserService = function($http){
             .error(function(response){
                 self.error = response;
             }).finally(function(response){
-                user.loading = false;
+                self.status.loading = false;
             });
     };
 

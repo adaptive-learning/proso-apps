@@ -4,7 +4,6 @@ app.service("user_service", UserService);
 
 describe("User Service", function() {
     var $httpBackend, $userService;
-    var empty_user = { "logged": false, "loading": false };
     var test_user = {
         "profile": {
             "send_emails": true,
@@ -57,8 +56,9 @@ describe("User Service", function() {
     it("provide basic structure", function() {
         expect($userService.user).toBeDefined();
         expect($userService.error).toBeDefined();
-        expect($userService.user.logged).toBeDefined();
-        expect($userService.user.loading).toBeDefined();
+        expect($userService.status).toBeDefined();
+        expect($userService.status.logged).toBeDefined();
+        expect($userService.status.loading).toBeDefined();
     });
 
     it("logout", function(){
@@ -66,25 +66,25 @@ describe("User Service", function() {
         $httpBackend.expectPOST("/user/session/").respond(200);
         $userService.load_user();
         $httpBackend.flush();
-        expect($userService.user).not.toEqual(empty_user);
+        expect($userService.user).not.toEqual({});
 
         $httpBackend.expectGET("/user/logout/").respond(200, "OK");
         $userService.logout();
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
-        expect($userService.user.logged).toBeFalsy();
-        expect($userService.user).toEqual(empty_user);
+        expect($userService.status.loading).toBeFalsy();
+        expect($userService.status.logged).toBeFalsy();
+        expect($userService.user).toEqual({});
     });
 
     it("sign up", function(){
         $httpBackend.expectPOST("/user/signup/").respond(200, {data: test_user_profile});
         $httpBackend.expectPOST("/user/session/").respond(200);
         $userService.signup(test_signup_data);
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
-        expect($userService.user.logged).toBeTruthy();
+        expect($userService.status.loading).toBeFalsy();
+        expect($userService.status.logged).toBeTruthy();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
         expect($userService.error).toEqual({});
     });
@@ -94,10 +94,10 @@ describe("User Service", function() {
         $httpBackend.expectPOST("/user/session/").respond(200);
         $userService.signup_params(test_signup_data.username, test_signup_data.email, test_signup_data.password,
             test_signup_data.password_check, test_signup_data.first_name, test_signup_data.last_name);
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
-        expect($userService.user.logged).toBeTruthy();
+        expect($userService.status.loading).toBeFalsy();
+        expect($userService.status.logged).toBeTruthy();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
         expect($userService.error).toEqual({});
     });
@@ -105,10 +105,10 @@ describe("User Service", function() {
     it("fail sign up", function(){
         $httpBackend.expectPOST("/user/signup/").respond(400, error);
         $userService.signup(test_signup_data);
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
-        expect($userService.user.logged).toBeFalsy();
+        expect($userService.status.loading).toBeFalsy();
+        expect($userService.status.logged).toBeFalsy();
         expect($userService.error).toEqual(error);
     });
 
@@ -116,21 +116,21 @@ describe("User Service", function() {
         $httpBackend.expectGET("/user/profile/").respond(200, {data: test_user_profile});
         $httpBackend.expectPOST("/user/session/").respond(200);
         $userService.load_user();
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
-        expect($userService.user.logged).toBeTruthy();
+        expect($userService.status.loading).toBeFalsy();
+        expect($userService.status.logged).toBeTruthy();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
     });
 
     it("fail load user profile", function(){
         $httpBackend.expectGET("/user/profile/").respond(404);
         $userService.load_user();
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
-        expect($userService.user.logged).toBeFalsy();
-        expect($userService.user).toEqual(empty_user);
+        expect($userService.status.loading).toBeFalsy();
+        expect($userService.status.logged).toBeFalsy();
+        expect($userService.user).toEqual({});
     });
 
     it("process user", function(){
@@ -138,7 +138,7 @@ describe("User Service", function() {
         $userService.process_user(test_user_profile);
         $httpBackend.flush();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
-        expect($userService.user.logged).toBeTruthy();
+        expect($userService.status.logged).toBeTruthy();
     });
 
     it("process user should not change object", function(){
@@ -153,10 +153,10 @@ describe("User Service", function() {
         $httpBackend.expectPOST("/user/login/", {"username":"login","password":"pass"}).respond(200, {data: test_user_profile});
         $httpBackend.expectPOST("/user/session/").respond(200);
         $userService.login("login", "pass");
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
-        expect($userService.user.logged).toBeTruthy();
+        expect($userService.status.loading).toBeFalsy();
+        expect($userService.status.logged).toBeTruthy();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
         expect($userService.error).toEqual({});
     });
@@ -164,19 +164,19 @@ describe("User Service", function() {
     it("fail login", function(){
         $httpBackend.expectPOST("/user/login/", {"username":"login","password":"pass"}).respond(400, error);
         $userService.login("login", "pass");
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
-        expect($userService.user.logged).toBeFalsy();
+        expect($userService.status.loading).toBeFalsy();
+        expect($userService.status.logged).toBeFalsy();
         expect($userService.error).toEqual(error);
     });
 
     it("load session", function(){
         $httpBackend.expectGET("/user/session/").respond(200, {data: "mySession"});
         $userService.load_session();
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
+        expect($userService.status.loading).toBeFalsy();
         expect($userService.user.session).toBe("mySession")
     });
 
@@ -184,9 +184,9 @@ describe("User Service", function() {
         $httpBackend.expectPOST("/user/profile/", {data: "profile data"}).respond(200, {data: test_user_profile});
         $httpBackend.expectPOST("/user/session/").respond(200);
         $userService.update_profile({data: "profile data"});
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
+        expect($userService.status.loading).toBeFalsy();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
         expect($userService.error).toEqual({});
 
@@ -195,9 +195,9 @@ describe("User Service", function() {
     it("fail update profile", function(){
         $httpBackend.expectPOST("/user/profile/", {data: "profile data"}).respond(400, error);
         $userService.update_profile({data: "profile data"});
-        expect($userService.user.loading).toBeTruthy();
+        expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
-        expect($userService.user.loading).toBeFalsy();
+        expect($userService.status.loading).toBeFalsy();
         expect($userService.error).toEqual(error);
 
     });
