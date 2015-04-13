@@ -4,7 +4,7 @@ PracticeService = function($http, $q){
     self.fc_queue_size_max = 1;   // 0 - for load FC when needed. 1 - for 1 waiting FC, QUESTIONS_IN_SET - for load all FC on start
     self.fc_queue_size_min = 1;
     self.current = 0;       // number of last provided FC
-    self.save_answer_imidietly = false;
+    self.save_answer_immediately = false;
 
     self.filter = {
         contexts: [],
@@ -24,9 +24,9 @@ PracticeService = function($http, $q){
         if (answer)
             answer_queue.push(answer);
 
-        if (self.save_answer_imidietly || farce_save || self.current >= self.set_lenght) {
+        if (self.save_answer_immediately || farce_save || self.current >= self.set_lenght) {
             if (answer_queue.length > 0) {
-                $http.post("/flashcards/answer", {answers: answer_queue})
+                $http.post("/flashcards/answer/", {answers: answer_queue})
                     .error(function (response) {
                         console.error("Problem while uploading answer", response)
                     });
@@ -41,8 +41,10 @@ PracticeService = function($http, $q){
 
     // build answer from current FC and save
     self.save_answer_to_current_fc = function(answered_fc_id, response_time, meta){
-        if (!current_fc)
+        if (!current_fc) {
             console.error("There is no current flashcard");
+            return;
+        }
         var answer = {
             flashcard_id: current_fc.id,
             flashcard_answered_id: answered_fc_id,
@@ -62,7 +64,7 @@ PracticeService = function($http, $q){
     };
 
     // return promise of flashcard
-    self.get_flashcard = function(answer){
+    self.get_flashcard = function(){
         if(deferred_fc){
             return $q(function(resolve, reject){
                 reject("Already one flashcard promised")
@@ -88,6 +90,14 @@ PracticeService = function($http, $q){
         self.clear_queue();
         self.current = 0;
         deferred_fc = null;
+    };
+
+    self.get_fc_queue = function(){
+        return queue;
+    };
+
+    self.get_answer_queue = function(){
+        return answer_queue;
     };
 
 
@@ -122,7 +132,11 @@ PracticeService = function($http, $q){
         request
             .success(function(response){
                 queue = queue.concat(response.data.flashcards);
-                _resolve_promise();
+                if (queue.length > 0)
+                    _resolve_promise();
+                else{
+                    console.error("No Flashcards to practice")
+                }
             })
             .error(function (response) {
                 console.error("Something went wrong while loading flashcards from backend.")
