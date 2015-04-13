@@ -3,8 +3,6 @@ from django.conf import settings
 import proso.util
 from contextlib import closing
 from django.db import connection
-import re
-import datetime
 from proso_models.models import get_predictive_model
 
 
@@ -33,7 +31,7 @@ class Command(BaseCommand):
             for row in cursor:
                 environment.write(
                     row[5], row[3], user=row[0], item=row[1],
-                    item_secondary=row[2], time=self._ensure_is_datetime(row[4]), symmetric=False, permanent=True)
+                    item_secondary=row[2], time=row[4], symmetric=False, permanent=True)
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
@@ -49,7 +47,6 @@ class Command(BaseCommand):
                 ORDER BY id
                 ''')
             for (user, item, asked, answered, time, response_time, guess) in cursor:
-                time = self._ensure_is_datetime(time)
                 predictive_model.predict_and_update(
                     environment,
                     user,
@@ -60,12 +57,3 @@ class Command(BaseCommand):
                     item_asked=asked)
                 environment.process_answer(user, item, asked, answered, time, response_time, guess)
         environment.flush()
-
-    def _ensure_is_datetime(self, value):
-        if isinstance(value, datetime.datetime) or value is None:
-            return value
-        else:
-            matched = re.match(r'([\d -\:]*)\.\d+', value)
-            if matched is not None:
-                value = matched.groups()[0]
-            return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
