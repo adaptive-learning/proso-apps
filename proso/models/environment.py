@@ -176,7 +176,7 @@ class InMemoryEnvironment(CommonEnvironment):
     def audit(self, key, user=None, item=None, item_secondary=None, limit=None, symmetric=True):
         items = [item_secondary, item]
         if symmetric:
-            items = sorted(items)
+            items.sort()
         found = self._data[key][user][items[1]][items[0]]
         if found and found[0][0]:
             return []
@@ -195,7 +195,7 @@ class InMemoryEnvironment(CommonEnvironment):
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         items = [item_secondary, item]
         if symmetric:
-            items = sorted(items)
+            items.sort()
         found = self._data[key][user][items[1]][items[0]]
         if found:
             return found[-1][2]
@@ -212,7 +212,7 @@ class InMemoryEnvironment(CommonEnvironment):
             audit = False
         items = [item_secondary, item]
         if symmetric:
-            items = sorted(items)
+            items.sort()
         if time is None:
             time = datetime.datetime.now()
         found = self._data[key][user][items[1]][items[0]]
@@ -228,7 +228,7 @@ class InMemoryEnvironment(CommonEnvironment):
     def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         items = [item_secondary, item]
         if symmetric:
-            items = sorted(items)
+            items.sort()
         found = self._data[key][user][items[1]][items[0]]
         if len(found) and not found[-1][0]:
             raise Exception("Can't delete variable %s which is not permanent." % key)
