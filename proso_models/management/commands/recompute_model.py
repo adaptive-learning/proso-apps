@@ -1,19 +1,16 @@
 from django.core.management.base import BaseCommand
-from django.conf import settings
-import proso.util
 from contextlib import closing
 from django.db import connection
 from proso_models.models import get_predictive_model
+from proso.django.config import instantiate_from_subconfig
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        if hasattr(settings, 'PROSO_RECOMPUTE_ENVIRONMENT') and settings.PROSO_RECOMPUTE_ENVIRONMENT is not None:
-            env_class = settings.PROSO_RECOMPUTE_ENVIRONMENT
-        else:
-            env_class = 'proso_models.models.InMemoryDatabaseFlushEnvironment'
-        environment = proso.util.instantiate(env_class)
+        environment = instantiate_from_subconfig(
+            'proso_models', 'recompute_environment',
+            default_class='proso_models.models.InMemoryDatabaseFlushEnvironment')
         predictive_model = get_predictive_model()
         with closing(connection.cursor()) as cursor:
             cursor.execute(
