@@ -7,6 +7,7 @@ UserService = function($http){
     var user = this.user = angular.copy(empty_user);
     var update = this.update = {};
     var session_updated = false;
+    self.error = {};
 
     // called on create
     self.init = function (){
@@ -20,8 +21,7 @@ UserService = function($http){
                 _process_user(response.data);
             })
             .error(function(response){
-                user.error = response.error;
-                user.error_type = response.error_type;
+                self.error = response;
             })
             .finally(function(response){
                 user.loading = false;
@@ -90,8 +90,7 @@ UserService = function($http){
                 _process_user(response.data);
             })
             .error(function(response){
-                user.error = response.error;
-                user.error_type = response.error_type;
+                self.error = response;
             })
             .finally(function(response){
                 user.loading = false;
@@ -102,7 +101,7 @@ UserService = function($http){
         user.loading = true;
         $http.get("/user/logout/")
             .success(function(response){
-                for (var prop in user) if (user.hasOwnProperty(prop)) delete user[prop];
+                clear_obj(user);
                 angular.extend(user, empty_user);
             })
             .finally(function(response){
@@ -112,8 +111,11 @@ UserService = function($http){
 
 
     var _reset_error = function(){
-        user.error = null;
-        user.error_type = null;
+        clear_obj(self.error)
+    };
+
+    var clear_obj = function(obj){
+        for (var prop in obj) if (obj.hasOwnProperty(prop)) delete obj[prop];
     };
 
 
@@ -154,8 +156,7 @@ UserService = function($http){
                 _process_user(response.data);
             })
             .error(function(response){
-                user.error = response.error;
-                user.error_type = response.error_type;
+                self.error = response;
             }).finally(function(response){
                 user.loading = false;
             });

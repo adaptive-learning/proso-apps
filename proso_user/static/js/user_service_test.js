@@ -54,8 +54,9 @@ describe("User Service", function() {
         $httpBackend.verifyNoOutstandingRequest();
     });
 
-    it("provide user", function() {
+    it("provide basic structure", function() {
         expect($userService.user).toBeDefined();
+        expect($userService.error).toBeDefined();
         expect($userService.user.logged).toBeDefined();
         expect($userService.user.loading).toBeDefined();
     });
@@ -85,6 +86,7 @@ describe("User Service", function() {
         expect($userService.user.loading).toBeFalsy();
         expect($userService.user.logged).toBeTruthy();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
+        expect($userService.error).toEqual({});
     });
 
     it("sign up by params", function(){
@@ -97,6 +99,7 @@ describe("User Service", function() {
         expect($userService.user.loading).toBeFalsy();
         expect($userService.user.logged).toBeTruthy();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
+        expect($userService.error).toEqual({});
     });
 
     it("fail sign up", function(){
@@ -105,9 +108,8 @@ describe("User Service", function() {
         expect($userService.user.loading).toBeTruthy();
         $httpBackend.flush();
         expect($userService.user.loading).toBeFalsy();
-        expect($userService.user.error).toBe(error.error);
         expect($userService.user.logged).toBeFalsy();
-        expect($userService.user.error_type).toBe(error.error_type);
+        expect($userService.error).toEqual(error);
     });
 
     it("load user profile", function(){
@@ -156,6 +158,7 @@ describe("User Service", function() {
         expect($userService.user.loading).toBeFalsy();
         expect($userService.user.logged).toBeTruthy();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
+        expect($userService.error).toEqual({});
     });
 
     it("fail login", function(){
@@ -165,8 +168,7 @@ describe("User Service", function() {
         $httpBackend.flush();
         expect($userService.user.loading).toBeFalsy();
         expect($userService.user.logged).toBeFalsy();
-        expect($userService.user.error).toBe(error.error);
-        expect($userService.user.error_type).toBe(error.error_type);
+        expect($userService.error).toEqual(error);
     });
 
     it("load session", function(){
@@ -186,6 +188,17 @@ describe("User Service", function() {
         $httpBackend.flush();
         expect($userService.user.loading).toBeFalsy();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
+        expect($userService.error).toEqual({});
+
+    });
+
+    it("fail update profile", function(){
+        $httpBackend.expectPOST("/user/profile/", {data: "profile data"}).respond(400, error);
+        $userService.update_profile({data: "profile data"});
+        expect($userService.user.loading).toBeTruthy();
+        $httpBackend.flush();
+        expect($userService.user.loading).toBeFalsy();
+        expect($userService.error).toEqual(error);
 
     });
 

@@ -5,7 +5,7 @@
 
 <div id="ng" ng-app="proso" ng-controller="auth">
     <h2>Angular service for user</h2>
-    <div ng-show="user_service.user.error">{% verbatim %}{{ user_service.user.error }}{% endverbatim %}</div>
+    <div ng-show="user_service.error.error">{% verbatim %}{{ user_service.error.error }}{% endverbatim %}</div>
     <div ng-show="user_service.user.loading">Komunikujem se serverem</div>
     <input type="button" class="pure-button pure-button-primary" ng-click="user_service.load_session()" value="Get session"/>
     <div ng-show="user_service.user.logged && !user_service.user.loading">
@@ -53,6 +53,10 @@
     <h4>User object</h4>
 
     <pre>{% verbatim %}{{ user_service.user | json:4 }}{% endverbatim %}</pre>
+
+    <h4>Error</h4>
+
+    <pre>{% verbatim %}{{ user_service.error | json:4 }}{% endverbatim %}</pre>
 
     <div ng-show="user_service.user.logged">
         <hr/>
