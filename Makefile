@@ -25,10 +25,8 @@ register:
 ################################################################################
 
 test:
-	python -m unittest discover -p test_*.py -s proso
-	for APP in $(APPS); do \
-		python manage.py test $$APP --traceback; \
-	done;
+	python -m unittest discover -p test_*.py -s proso; \
+	python manage.py test --traceback --pattern *_test.py;
 
 reinstall: check uninstall install
 
