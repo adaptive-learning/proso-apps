@@ -16,7 +16,7 @@ class UserAPITest(TestCase):
             'password': 'some_password',
             'password_check': 'some_password',
         }), content_type='application/json')
-        self.assertEqual(response.status_code, 200, 'The user is successfuly created.')
+        self.assertEqual(response.status_code, 201, 'The user is successfuly created.')
         expected_profile = {
             "send_emails": True,
             "user": {
@@ -51,7 +51,7 @@ class UserAPITest(TestCase):
         }), content_type='application/json')
         expected_profile['public'] = True
         expected_profile['user']['first_name'] = 'Kvido'
-        self.assertEqual(response.status_code, 200, 'The profile can be updated.')
+        self.assertEqual(response.status_code, 202, 'The profile can be updated.')
         self.assertEqual(
             json.loads(response.content)['data'], expected_profile,
             'The updated profile matches.'

@@ -14,7 +14,7 @@ import json
 
 @allow_lazy_user
 @transaction.atomic
-def profile(request):
+def profile(request, status=200):
     """
     Get the user's profile. If the user has no assigned profile, the HTTP 404
     is returned. Make a POST request to modify the user's profile.
@@ -42,7 +42,7 @@ def profile(request):
         user_id = get_user_id(request)
         user_profile = get_object_or_404(UserProfile, user_id=user_id)
         return render_json(
-            request, _to_json(request, user_profile),
+            request, _to_json(request, user_profile), status=status,
             template='user_profile.html', help_text=profile.__doc__)
     elif request.method == 'POST':
         to_save = json_body(request.body)
@@ -59,7 +59,7 @@ def profile(request):
                 return render_json(request, error, template='user_json.html', status=400)
         user_profile.save()
         request.method = "GET"
-        return profile(request)
+        return profile(request, status=202)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 
@@ -147,7 +147,7 @@ def signup(request):
             return render_json(request, error, template='user_json.html', status=400)
         else:
             request.method = "GET"
-            return profile(request)
+            return profile(request, status=201)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 
