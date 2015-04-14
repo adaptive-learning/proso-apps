@@ -13,7 +13,7 @@ from proso.django.request import get_user_id, get_time, is_time_overriden
 from proso.django.response import render, render_json
 import proso_common.views
 import proso_common.json_enrich as common_json_enrich
-from proso_flashcards.models import Term, FlashcardAnswer, Flashcard
+from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context
 from proso_models.models import get_environment
 
 
@@ -37,6 +37,8 @@ def show_more(request, object_class, should_cache=True):
         prefetch_related_all = {
             settings.PROSO_FLASHCARDS.get("term_extension", Term): ["parents"],
             FlashcardAnswer: ["options"],
+            Flashcard: ["categories"],
+            settings.PROSO_FLASHCARDS.get("context_extension", Context): ["categories"],
         }
         select_related = select_related_all.get(object_class, [])
         prefetch_related = prefetch_related_all.get(object_class, [])

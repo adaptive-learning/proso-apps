@@ -14,7 +14,8 @@
       "name-cs": "příliš hustý obrázek",
       "content-en": "img2.png",
       "content-cs": "obr2.png",
-      "extra-info": "anything"
+      "extra-info": "anything",
+      "categories": ["0007"]
     }
   ]
 }

@@ -32,6 +32,16 @@
       "name-cs": "podpodkategorie",
       "type": "special",
       "parent-categories": ["0004"]
+    },
+    {
+      "id": "0006",
+      "name-en": "flashcard-category",
+      "name-cs": "kategorie kartiček"
+    },
+    {
+      "id": "0007",
+      "name-en": "context-category",
+      "name-cs": "kategorie kontextů"
     }
   ]
 }

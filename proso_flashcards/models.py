@@ -41,7 +41,7 @@ class Context(models.Model):
     content = models.TextField(null=True, blank=True)
 
     def to_json(self, nested=False):
-        return {
+        json = {
             "id": self.pk,
             "item_id": self.item_id,
             "object_type": "fc_context",
@@ -49,6 +49,9 @@ class Context(models.Model):
             "name": self.name,
             "content": self.content,
         }
+        if not nested:
+            json["categories"] = [category.to_json(nested=True) for category in self.categories.all()]
+        return json
 
     def __unicode__(self):
         return u"{0.lang} - {0.name}".format(self)
@@ -123,6 +126,8 @@ class Flashcard(models.Model):
             data["options"] = map(lambda o: o.to_json(), self.options)
         if hasattr(self, "direction"):
             data["direction"] = self.direction
+        if not nested:
+            data["categories"] = [category.to_json(nested=True) for category in self.categories.all()]
         return data
 
     def get_term(self):
@@ -171,6 +176,8 @@ class Category(models.Model):
     type = models.CharField(max_length=50, null=True, blank=True)
     subcategories = models.ManyToManyField("self", related_name="parents", symmetrical=False)
     terms = models.ManyToManyField(Term, related_name="parents")
+    flashcards = models.ManyToManyField(Flashcard, related_name="categories")
+    contexts = models.ManyToManyField(Context, related_name="categories")
     not_in_model = models.BooleanField(default=False)
 
     def to_json(self, nested=False):

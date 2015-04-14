@@ -125,7 +125,18 @@ class Command(BaseCommand):
                     item_mapping[db_context.identifier] = db_context.item_id
                 db_contexts[db_context.identifier + db_context.lang] = db_context
 
-                # TODO add support for context extensions
+        categories = self._load_categories()
+        for context in data:
+            for lang in [k[-2:] for k in context.keys() if re.match(r'^name-\w\w$', k)]:
+                db_context = db_contexts[context["id"] + lang]
+                db_context.categories.clear()
+                if "categories" in context:
+                    for parent in context["categories"]:
+                        if parent + lang not in categories:
+                            raise CommandError(
+                                "Parent category {} for context {} doesn't exist".format(parent + lang, context["id"]))
+                        db_context.categories.add(categories[parent + lang])
+                db_context.save()
 
         print "New total number of contexts in DB: {}".format(len(db_contexts))
         return db_contexts
@@ -215,6 +226,19 @@ class Command(BaseCommand):
                     db_flashcard.save()
                     item_mapping[db_flashcard.identifier] = db_flashcard.item_id
                 db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
+
+        categories = self._load_categories()
+        for flashcard in data:
+            for lang in Category.objects.all().values_list("lang", flat=True).distinct():
+                db_flashcard = db_flashcards[flashcard["id"] + lang]
+                db_flashcard.categories.clear()
+                if "categories" in flashcard:
+                    for parent in flashcard["categories"]:
+                        if parent + lang not in categories:
+                            raise CommandError(
+                                "Parent category {} for flashcard {} doesn't exist".format(parent + lang, flashcard["id"]))
+                        db_flashcard.categories.add(categories[parent + lang])
+                db_flashcard.save()
 
         print "New total number of flashcards in DB: {}".format(len(db_flashcards))
         return db_flashcards
