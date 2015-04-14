@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -21,6 +22,7 @@ MEDIA_URL = '/media/'
 
 ON_PRODUCTION = False
 ON_STAGING = False
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 if 'PROSO_ON_PRODUCTION' in os.environ:
     ON_PRODUCTION = True

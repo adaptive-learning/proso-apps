@@ -2,6 +2,7 @@ from django.core.cache.backends.locmem import LocMemCache
 from django.views.decorators.cache import cache_page
 from functools import wraps
 from threading import currentThread
+from django.conf import settings
 
 
 _request_cache = {}
@@ -39,10 +40,13 @@ class RequestCache(LocMemCache):
 class RequestCacheMiddleware(object):
 
         def __init__(self):
+            if hasattr(settings, 'TESTING') and settings.TESTING:
+                return
             global _installed_middleware
             _installed_middleware = True
 
         def process_request(self, request):
-            cache = _request_cache.get(currentThread()) or RequestCache()
-            _request_cache[currentThread()] = cache
-            cache.clear()
+            if _installed_middleware:
+                cache = _request_cache.get(currentThread()) or RequestCache()
+                _request_cache[currentThread()] = cache
+                cache.clear()
