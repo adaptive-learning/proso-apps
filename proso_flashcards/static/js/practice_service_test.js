@@ -178,6 +178,35 @@ describe("Practice Service - flashcards", function() {
         }
 
     });
+
+    it("use of filter parameters", function(){
+        $practiceService.filter.types = ["cosi", "kdesi"];
+        $practiceService.filter.contexts = [71, 72, 33];
+        $practiceService.filter.categories = [15, 16];
+        $practiceService.filter.language= "xx";
+
+        $httpBackend.expectGET(/\/flashcards\/practice\/\?.*categories=%5B15,16%5D.*contexts=%5B71,72,33%5D.*language=xx.*types=%5B%22cosi%22,%22kdesi%22%5D.*/).respond(200, {data: generate_flashcards(1)});
+        $practiceService.preload_flashcards();
+        $httpBackend.flush();
+
+        expect($practiceService.current).toBe(0);
+    });
+
+    it("avoid already loaded flashcards", function(){
+        $httpBackend.expectGET(/\/flashcards\/practice\/?.*/).respond(200, {data: {flashcards: [
+            {id: 41}, {id: 42},{id: 43}
+        ]}});
+        $practiceService.fc_queue_size_max = $practiceService.fc_queue_size_min = 3;
+        $practiceService.preload_flashcards();
+        $httpBackend.flush();
+
+        $httpBackend.expectGET(/\/flashcards\/practice\/?.*41,42,43.*/);
+        $practiceService.get_flashcard();
+        $timeout.flush();
+        $httpBackend.flush();
+
+        expect($practiceService.current).toBe(1);
+    });
 });
 
 describe("Practice Service - answers", function() {
