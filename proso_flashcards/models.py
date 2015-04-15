@@ -108,7 +108,7 @@ class FlashcardManager(models.Manager):
         key = "fc: category_subitems:" + ",".join(map(str, sorted(categories)))
         items = cache.get(key)
         if items is None:
-            items = self.under_categories(categories).values_list("item_id", flat=True)
+            items = list(self.under_categories(categories).values_list("item_id", flat=True))
             cache.set(key, items, CACHE_EXPIRATION)
 
         return items
