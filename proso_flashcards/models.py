@@ -1,10 +1,13 @@
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models
 from django.db.models import Q
 import itertools
 from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector
 from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
+
+CACHE_EXPIRATION = 60 * 60 * 24 * 30
 
 
 class Term(models.Model):
@@ -101,6 +104,23 @@ class FlashcardManager(models.Manager):
 
         return flashcards
 
+    def under_categories_as_items(self, categories):
+        key = "fc: category_subitems:" + ",".join(map(str, sorted(categories)))
+        items = cache.get(key)
+        if items is None:
+            items = self.under_categories(categories).values_list("item_id", flat=True)
+            cache.set(key, items, CACHE_EXPIRATION)
+
+        return items
+
+    def under_categories(self, categories):
+        all_categories = Category.objects.subcategories(categories)
+        return self.filter(
+            Q(categories__pk__in=all_categories) |
+            Q(context__pk__in=Category.objects.subcontexts(all_categories)) |
+            Q(term__pk__in=Category.objects.subterms(all_categories))
+        )
+
 
 class Flashcard(models.Model):
     identifier = models.SlugField()
@@ -165,6 +185,21 @@ class Flashcard(models.Model):
         return u"{0.term} - {0.context}".format(self)
 
 
+class CategoryManager(models.Manager):
+    def subcategories(self, categories):
+        subcategories = set(categories)
+        while len(categories) > 0:
+            categories = self.filter(parents__pk__in=categories).values_list("pk", flat=True)
+            subcategories |= set(categories)
+        return list(subcategories)
+
+    def subcontexts(self, categories):
+        return Context.objects.filter(categories__pk__in=categories)
+
+    def subterms(self, categories):
+        return Term.objects.filter(parents__pk__in=categories)
+
+
 class Category(models.Model):
     class Meta:
         verbose_name_plural = "categories"
@@ -180,6 +215,8 @@ class Category(models.Model):
     flashcards = models.ManyToManyField(Flashcard, related_name="categories")
     contexts = models.ManyToManyField(Context, related_name="categories")
     not_in_model = models.BooleanField(default=False)
+
+    objects = CategoryManager()
 
     def to_json(self, nested=False):
         return {
