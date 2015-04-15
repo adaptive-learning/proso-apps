@@ -13,6 +13,7 @@ from proso.django.request import get_user_id, get_time, is_time_overriden
 from proso.django.response import render, render_json
 import proso_common.views
 import proso_common.json_enrich as common_json_enrich
+import proso_models.json_enrich as models_json_enrich
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context
 from proso_models.models import get_environment
 
@@ -265,5 +266,8 @@ def _to_json(request, value):
         common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
                                                  ["fc_flashcard"],
                                                  variable_type=[("parent", None, True)])
+    if 'stats' in request.GET:
+        common_json_enrich.enrich_by_object_type(
+            request, json, models_json_enrich.prediction, ['fc_flashcard', 'fc_term'])
     LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
     return json
