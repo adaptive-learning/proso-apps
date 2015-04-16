@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from django.conf import settings
 import os
 import sys
 
@@ -83,6 +84,8 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'testproject.urls'
 
+TEMPLATE_CONTEXT_PROCESSORS = \
+    settings.TEMPLATE_CONTEXT_PROCESSORS + ("proso_common.context_processors.config_processor", )
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
