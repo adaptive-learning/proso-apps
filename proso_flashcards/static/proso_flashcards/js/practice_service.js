@@ -1,5 +1,5 @@
 try{ m = angular.module('proso_apps.services'); } catch (err) { m = angular.module('proso_apps.services', []); }
-m.service("practiceService", ["$http", "$q", function($http, $q){
+m.service("practiceService", ["$http", "$q", "configService", function($http, $q, configService){
     var self = this;
 
     // TODO get summary
@@ -14,13 +14,18 @@ m.service("practiceService", ["$http", "$q", function($http, $q){
     var current = 0;
 
     // called on create and set reset
-    self.init = function (){
-        config.set_length = 10;
-        config.fc_queue_size_max = 1;   // 0 - for load FC when needed. 1 - for 1 waiting FC, QUESTIONS_IN_SET - for load all FC on start
-        config.fc_queue_size_min = 1;
-        config.save_answer_immediately = false;
+    self.init_set = function(config_name){
+        var key = "practice." + config_name + ".";
+        config.set_length = configService.get_config("proso_flashcards", key + "set_length", 10);
+        config.fc_queue_size_max = configService.get_config("proso_flashcards", key + "fc_queue_size_max", 1);
+        config.fc_queue_size_min = configService.get_config("proso_flashcards", key + "fc_queue_size_min", 1);
+        config.save_answer_immediately = configService.get_config("proso_flashcards", key + "save_answer_immediately", false);
+
         self.set_filter({});
-        current = 0;       // number of last provided FC
+        current = 0;
+        self.flush_answer_queue();
+        self.clear_queue();
+        deferred_fc = null;
     };
 
     self.set_filter = function(filter){
@@ -108,14 +113,6 @@ m.service("practiceService", ["$http", "$q", function($http, $q){
         _load_flashcards();
     };
 
-    self.reset_set = function(){
-        // TODO cancel ongoing requests
-        self.flush_answer_queue();
-        self.clear_queue();
-        deferred_fc = null;
-        self.init()
-    };
-
     self.get_fc_queue = function(){
         return queue;
     };
@@ -184,6 +181,4 @@ m.service("practiceService", ["$http", "$q", function($http, $q){
         }
         _load_flashcards();
     };
-
-    self.init();
 }]);
