@@ -1,6 +1,5 @@
 #  -*- coding: utf-8 -*-
-from proso.django.config import *
-from django.test.utils import override_settings
+from proso.django.config import get_config, get_default_config_name, instantiate_from_config, set_default_config_name
 import django.test
 
 
@@ -38,4 +37,3 @@ class TestClass:
 
     def __init__(self, dummy):
         self.dummy = dummy
-
