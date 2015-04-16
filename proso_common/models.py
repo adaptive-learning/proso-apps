@@ -24,11 +24,11 @@ def get_tables_allowed_to_export():
 
 class ConfigManager(models.Manager):
 
-    def from_content(self, content):
+    def from_content(self, content, app_name=None, key=None):
         try:
             content = json.dumps(content)
             content_hash = get_content_hash(content)
-            return self.get(content_hash=content_hash)
+            return self.get(content_hash=content_hash, app_name=app_name, key=key)
         except Config.DoesNotExist:
             config = Config(
                 content=content,
@@ -39,6 +39,8 @@ class ConfigManager(models.Manager):
 
 class Config(models.Model):
 
+    app_name = models.CharField(max_length=100, null=True, blank=True)
+    key = models.CharField(max_length=100, null=True, blank=True)
     content = models.TextField(null=False, blank=False)
     content_hash = models.CharField(max_length=40, null=False, blank=False, db_index=True)
 
@@ -48,5 +50,7 @@ class Config(models.Model):
         return {
             'id': self.id,
             'object_type': 'config',
-            'content': json.loads(self.content)
+            'content': json.loads(self.content),
+            'key': self.key,
+            'app_name': self.app_name,
         }
