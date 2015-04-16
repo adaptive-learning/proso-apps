@@ -12,14 +12,15 @@ m.service("configService", ["$http", function($http){
         var variable = config[app_name];
         var path =  key.split(".");
         for (var i=0; i < path.length; i++){
-            variable = variable[path[i]];
             if (typeof variable === 'undefined') return default_value;
+            variable = variable[path[i]];
         }
+        if (typeof variable === 'undefined') return default_value;
         return variable;
     };
 
-    var _load_config = function(){
-        $http.get("/common/config/")
+    self.load_config = function(){
+        return $http.get("/common/config/")
             .success(function(response){
                 self.process_config(response.data)
             })
