@@ -1,4 +1,5 @@
-UserService = function($http){
+angular.module('proso_apps.services', [])
+.service("userService", ["$http", function($http){
     var self = this;
     self.status = {
         "logged": false,
@@ -178,4 +179,4 @@ UserService = function($http){
 
     self.init();
 
-};
+}]);

@@ -1,7 +1,3 @@
-var app = angular.module('proso', []);
-app.service("practice_service", PracticeService);
-
-
 describe("Practice Service - flashcards", function() {
     var $httpBackend, $practiceService, $timeout;
 
@@ -13,13 +9,12 @@ describe("Practice Service - flashcards", function() {
         return flashcards;
     };
 
-
-    beforeEach(module('proso'));
+    beforeEach(module('proso_apps.services'));
 
     beforeEach(inject(function($injector) {
         $httpBackend = $injector.get('$httpBackend');
         $timeout = $injector.get("$timeout");
-        $practiceService = $injector.get('practice_service');
+        $practiceService = $injector.get('practiceService');
 
         for (var limit = 1; limit <=10; limit++){
             $httpBackend.whenGET(new RegExp("\/flashcards\/practice\/?.*limit="+limit+"&.*"))
@@ -227,12 +222,12 @@ describe("Practice Service - answers", function() {
     };
 
 
-    beforeEach(module('proso'));
+    beforeEach(module('proso_apps.services'));
 
     beforeEach(inject(function($injector) {
         $httpBackend = $injector.get('$httpBackend');
         $timeout = $injector.get("$timeout");
-        $practiceService = $injector.get('practice_service');
+        $practiceService = $injector.get('practiceService');
 
         for (var limit = 1; limit <=10; limit++){
             $httpBackend.whenGET(new RegExp("\/flashcards\/practice\/?.*limit="+limit+"&.*"))

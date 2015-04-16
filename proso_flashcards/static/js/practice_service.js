@@ -1,30 +1,52 @@
-PracticeService = function($http, $q){
+angular.module('proso_apps.services', [])
+.service("practiceService", ["$http", "$q", function($http, $q){
     var self = this;
-    self.set_lenght = 10;
-    self.fc_queue_size_max = 1;   // 0 - for load FC when needed. 1 - for 1 waiting FC, QUESTIONS_IN_SET - for load all FC on start
-    self.fc_queue_size_min = 1;
-    self.current = 0;       // number of last provided FC
-    self.save_answer_immediately = false;
 
-    self.filter = {
-        contexts: [],
-        categories: [],
-        types: [],
-        language: "en"
-    };
+    // TODO get summary
 
     var queue = [];
     var deferred_fc = null;
     var promise_resolved_tmp = false;
     var current_fc = null;
     var answer_queue = [];
+    
+    var config = {};
+    var current = 0;
+
+    // called on create and set reset
+    self.init = function (){
+        config.set_length = 10;
+        config.fc_queue_size_max = 1;   // 0 - for load FC when needed. 1 - for 1 waiting FC, QUESTIONS_IN_SET - for load all FC on start
+        config.fc_queue_size_min = 1;
+        config.save_answer_immediately = false;
+        self.set_filter({});
+        current = 0;       // number of last provided FC
+    };
+
+    self.set_filter = function(filter){
+        config.filter = {
+            contexts: [],
+            categories: [],
+            types: [],
+            language: "en"
+        };
+        angular.extend(config.filter, filter);
+    };
+
+    self.get_current = function(){
+        return current;
+    };
+
+    self.get_config = function(){
+        return angular.copy(config);
+    };
 
     // add answer to queue and upload queued answers if necessary
     self.save_answer = function(answer, farce_save){
         if (answer)
             answer_queue.push(answer);
 
-        if (self.save_answer_immediately || farce_save || self.current >= self.set_lenght) {
+        if (config.save_answer_immediately || farce_save || current >= config.set_length) {
             if (answer_queue.length > 0) {
                 $http.post("/flashcards/answer/", {answers: answer_queue})
                     .error(function (response) {
@@ -87,9 +109,11 @@ PracticeService = function($http, $q){
     };
 
     self.reset_set = function(){
+        // TODO cancel ongoing requests
+        self.flush_answer_queue();
         self.clear_queue();
-        self.current = 0;
         deferred_fc = null;
+        self.init()
     };
 
     self.get_fc_queue = function(){
@@ -102,23 +126,23 @@ PracticeService = function($http, $q){
 
 
     var _load_flashcards = function(){
-        if (queue.length >= self.fc_queue_size_min)                                           // if there are some FC queued
+        if (queue.length >= config.fc_queue_size_min)                                           // if there are some FC queued
             return;
-        self.filter.limit  = self.fc_queue_size_max - queue.length;
-        if (deferred_fc && !promise_resolved_tmp) self.filter.limit ++;                  // if we promised one flashcard
-        self.filter.limit = Math.min(self.filter.limit, self.set_lenght - self.current - queue.length);  // check size of set
-        if (self.filter.limit == 0) return;                         // nothing to do
-        self.filter.avoid = current_fc ? [current_fc.id] : [];      // avoid current FC
+        config.filter.limit  = config.fc_queue_size_max - queue.length;
+        if (deferred_fc && !promise_resolved_tmp) config.filter.limit ++;                  // if we promised one flashcard
+        config.filter.limit = Math.min(config.filter.limit, config.set_length - current - queue.length);  // check size of set
+        if (config.filter.limit == 0) return;                         // nothing to do
+        config.filter.avoid = current_fc ? [current_fc.id] : [];      // avoid current FC
         queue.forEach(function(fc){
-            self.filter.avoid.push(fc.id);
+            config.filter.avoid.push(fc.id);
         });
 
         var filter = {};
-        for (var key in self.filter){
-            if (self.filter[key] instanceof Array) {
-                filter[key] = JSON.stringify(self.filter[key]);
+        for (var key in config.filter){
+            if (config.filter[key] instanceof Array) {
+                filter[key] = JSON.stringify(config.filter[key]);
             }else{
-                filter[key] = self.filter[key];
+                filter[key] = config.filter[key];
             }
         }
 
@@ -148,16 +172,18 @@ PracticeService = function($http, $q){
         if (deferred_fc == null){
             return;
         }
-        if (self.set_lenght == self.current){
+        if (config.set_length == current){
             deferred_fc.reject("Set was completed");
             return;
         }
         if (queue.length > 0) {
             current_fc = queue.shift();
-            self.current++;
+            current++;
             promise_resolved_tmp = true;
             deferred_fc.resolve(current_fc);
         }
         _load_flashcards();
     };
-};
+
+    self.init();
+}]);

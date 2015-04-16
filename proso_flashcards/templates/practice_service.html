@@ -3,12 +3,6 @@
 
 {% block content_block %}
 <div id="ng" ng-app="proso" ng-controller="auth">
-    <h4>Setting</h4>
-    <label> Set size: <input type="number" ng-model="service.set_lenght" width="10"/> </label><br/>
-    <label> Queue max size: <input type="number" ng-model="service.fc_queue_size_max" width="10"/> </label><br/>
-    <label> Queue min size: <input type="number" ng-model="service.fc_queue_size_min" width="10"/> </label><br/>
-
-    <hr/>
     <h4>Flashcard</h4>
     <div class="pure-button pure-button-primary" ng-click="get_flashcard()">Get flashcard</div>
     <p>{% verbatim %}{{ msg }}{% endverbatim %}</p>
@@ -28,26 +22,26 @@
     </div>
     <hr/>
     <h4>Service</h4>
-    <pre>{% verbatim %}{{ service | json:4 }}{% endverbatim %}</pre>
+    <pre>Current FC: {% verbatim %}{{ service.get_current() }}{% endverbatim %}</pre>
+    <pre>{% verbatim %}{{ service.get_config() | json:4 }}{% endverbatim %}</pre>
 </div>
 {% endblock %}
 
 
 {% block head_block %}
-    <script src="{% static "js/practice_service.js" %}"></script>
     <script src="{% static "proso_common/angular.min.js" %}"></script>
+    <script src="{% static "js/practice_service.js" %}"></script>
     <script>
-        var app = angular.module('proso', []);
+        var app = angular.module('proso', ["proso_apps.services"]);
         app.config(function($httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
         });
-        app.service("practice_service", PracticeService);
-        app.controller("auth", function($scope, practice_service){
-            $scope.service = practice_service;
+        app.controller("auth", function($scope, practiceService){
+            $scope.service = practiceService;
 
             $scope.get_flashcard = function(){
-                practice_service.get_flashcard().then(
+                practiceService.get_flashcard().then(
                         // called after FC is ready
                         function(flashcard) {
                             $scope.flashcard = flashcard;

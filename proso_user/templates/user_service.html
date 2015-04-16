@@ -67,24 +67,23 @@
 
 
 {% block head_block %}
-    <script src="{% static "js/user_service.js" %}"></script>
-    <script src="{% static "js/jstz.min.js" %}"></script>
     <script src="{% static "proso_common/angular.min.js" %}"></script>
+    <script src="{% static "js/jstz.min.js" %}"></script>
+    <script src="{% static "js/user_service.js" %}"></script>
     <script>
-        var app = angular.module('proso', []);
+        var app = angular.module('proso', ["proso_apps.services"]);
         app.config(function($httpProvider) {
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
         });
-        app.service("user_service", UserService);
-        app.controller("auth", function($scope, user_service){
-            $scope.user_service = user_service;
-            user_service.process_user({{ user | safe }});
+        app.controller("auth", function($scope, userService){
+            $scope.user_service = userService;
+            userService.process_user({{ user | safe }});
         });
 
         var social_auth_callback = function(){
             var element = angular.element(document.getElementById("ng"));
-            element.injector().get("user_service").load_user_fromJS(element.scope());
+            element.injector().get("userService").load_user_fromJS(element.scope());
         };
     </script>
 {% endblock %}

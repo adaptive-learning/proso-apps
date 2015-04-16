@@ -1,7 +1,3 @@
-var app = angular.module('proso', []);
-app.service("user_service", UserService);
-
-
 describe("User Service", function() {
     var $httpBackend, $userService;
     var test_user = {
@@ -41,11 +37,11 @@ describe("User Service", function() {
     };
     var error = { "error_type": "error_type", "error": "error"};
 
-    beforeEach(module('proso'));
+    beforeEach(module('proso_apps.services'));
 
     beforeEach(inject(function($injector) {
         $httpBackend = $injector.get('$httpBackend');
-        $userService = $injector.get('user_service');
+        $userService = $injector.get('userService');
     }));
 
     afterEach(function() {
