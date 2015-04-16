@@ -1,5 +1,5 @@
-angular.module('proso_apps.services', [])
-.service("practiceService", ["$http", "$q", function($http, $q){
+try{ m = angular.module('proso_apps.services'); } catch (err) { m = angular.module('proso_apps.services', []); }
+m.service("practiceService", ["$http", "$q", function($http, $q){
     var self = this;
 
     // TODO get summary

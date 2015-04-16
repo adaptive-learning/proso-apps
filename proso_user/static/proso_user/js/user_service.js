@@ -1,5 +1,5 @@
-angular.module('proso_apps.services', [])
-.service("userService", ["$http", function($http){
+try{ m = angular.module('proso_apps.services'); } catch (err) { m = angular.module('proso_apps.services', []); }
+m.service("userService", ["$http", function($http){
     var self = this;
     self.status = {
         "logged": false,
