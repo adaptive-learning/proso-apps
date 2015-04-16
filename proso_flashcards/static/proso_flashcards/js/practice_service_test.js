@@ -1,3 +1,29 @@
+var config;
+var configServiceMock = function(){
+    var self = this;
+    config = {"proso_flashcards": { "practice": {"test": {
+        "set_length": 10,
+        "fc_queue_size_max": 1,
+        "fc_queue_size_min": 1,
+        "save_answer_immediately": false
+    }}}};
+
+    self.get_config = function(app_name, key, default_value){
+        if (config == null){
+            console.error("Config not loaded");
+            return;
+        }
+
+        var variable = config[app_name];
+        var path =  key.split(".");
+        for (var i=0; i < path.length; i++){
+            variable = variable[path[i]];
+            if (typeof variable === 'undefined') return default_value;
+        }
+        return variable;
+    };
+};
+
 describe("Practice Service - flashcards", function() {
     var $httpBackend, $practiceService, $timeout;
 
@@ -11,16 +37,22 @@ describe("Practice Service - flashcards", function() {
 
     beforeEach(module('proso_apps.services'));
 
+    beforeEach(module(function ($provide) { $provide.service("configService", configServiceMock); }));
+
     beforeEach(inject(function($injector) {
+
         $httpBackend = $injector.get('$httpBackend');
         $timeout = $injector.get("$timeout");
         $practiceService = $injector.get('practiceService');
+    }));
 
+    beforeEach(function(){
         for (var limit = 1; limit <=10; limit++){
             $httpBackend.whenGET(new RegExp("\/flashcards\/practice\/?.*limit="+limit+"&.*"))
                 .respond(200, {data: {flashcards: generate_flashcards(limit)}});
         }
-    }));
+        $practiceService.init_set("test");
+    });
 
     afterEach(function() {
         $httpBackend.verifyNoOutstandingExpectation();
@@ -29,12 +61,13 @@ describe("Practice Service - flashcards", function() {
 
 
     it("should provide interface", function(){
-        expect($practiceService.set_lenght).toBeDefined();
-        expect($practiceService.fc_queue_size_max).toBeDefined();
-        expect($practiceService.fc_queue_size_min).toBeDefined();
-        expect($practiceService.current).toBeDefined();
-        expect($practiceService.save_answer_immediately).toBeDefined();
-        expect($practiceService.filter).toBeDefined();
+        expect($practiceService.get_current).toBeDefined();
+        expect($practiceService.init_set).toBeDefined();
+        expect($practiceService.set_filter).toBeDefined();
+        expect($practiceService.save_answer).toBeDefined();
+        expect($practiceService.save_answer_to_current_fc).toBeDefined();
+        expect($practiceService.flush_answer_queue).toBeDefined();
+        expect($practiceService.get_flashcard).toBeDefined();
     });
 
     it("getting first flashcard", function(){
@@ -46,23 +79,20 @@ describe("Practice Service - flashcards", function() {
     });
 
     it("fc_queue_size_max should change limit of loaded FC", function(){
-        $practiceService.fc_queue_size_max = 1;
         $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*limit=2.*"))
                 .respond(200, {data: {flashcards: generate_flashcards(2)}});
         $practiceService.get_flashcard();
         $httpBackend.flush();
 
-        $practiceService.reset_set();
-
-        $practiceService.fc_queue_size_max = 5;
+        config.proso_flashcards.practice.test.fc_queue_size_max = 5;
+        $practiceService.init_set("test");
         $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*limit=6.*"))
                 .respond(200, {data: {flashcards: generate_flashcards(6)}});
         $practiceService.get_flashcard();
         $httpBackend.flush();
 
-        $practiceService.reset_set();
-
-        $practiceService.set_lenght = $practiceService.fc_queue_size_max = 10;
+        config.proso_flashcards.practice.test.set_length = config.proso_flashcards.practice.test.fc_queue_size_max = 10;
+        $practiceService.init_set("test");
         $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*limit=10.*"))
                 .respond(200, {data: {flashcards: generate_flashcards(10)}});
         $practiceService.get_flashcard();
@@ -73,8 +103,9 @@ describe("Practice Service - flashcards", function() {
 
     it("getting more flashcards", function(){
         var handler = jasmine.createSpy('success');
-        $practiceService.fc_queue_size_max = 4;
-        $practiceService.set_lenght = 5;
+        config.proso_flashcards.practice.test.fc_queue_size_max = 4;
+        config.proso_flashcards.practice.test.set_length = 5;
+        $practiceService.init_set("test");
 
         $practiceService.get_flashcard().then(handler);
         $httpBackend.flush();
@@ -116,8 +147,9 @@ describe("Practice Service - flashcards", function() {
     it("reject get more FC than length", function(){
         var handler = jasmine.createSpy('success');
         var handler2 = jasmine.createSpy('error');
-        $practiceService.fc_queue_size_max = 10;
-        $practiceService.set_lenght = 3;
+        config.proso_flashcards.practice.test.fc_queue_size_max = 10;
+        config.proso_flashcards.practice.test.set_length = 3;
+        $practiceService.init_set("test");
 
         $practiceService.get_flashcard().then(handler, handler2);
         $httpBackend.flush();
@@ -140,19 +172,20 @@ describe("Practice Service - flashcards", function() {
     });
 
     it("current counter", function(){
-        $practiceService.set_lenght = 3;
-        $practiceService.fc_queue_size_max = $practiceService.fc_queue_size_min = 1;
-        expect($practiceService.current).toBe(0);
+        config.proso_flashcards.practice.test.set_length = 3;
+        config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.fc_queue_size_min = 1;
+        $practiceService.init_set("test");
+        expect($practiceService.get_current()).toBe(0);
         $practiceService.get_flashcard();
         $httpBackend.flush();
-        expect($practiceService.current).toBe(1);
+        expect($practiceService.get_current()).toBe(1);
         $practiceService.get_flashcard();
         $httpBackend.flush();
-        expect($practiceService.current).toBe(2);
+        expect($practiceService.get_current()).toBe(2);
         $practiceService.get_flashcard();
-        expect($practiceService.current).toBe(3);
+        expect($practiceService.get_current()).toBe(3);
         $practiceService.get_flashcard();
-        expect($practiceService.current).toBe(3);
+        expect($practiceService.get_current()).toBe(3);
 
     });
 
@@ -160,38 +193,41 @@ describe("Practice Service - flashcards", function() {
         $httpBackend.expectGET(/\/flashcards\/practice\/?.*/).respond(200, {data: {flashcards: []}});
         $practiceService.get_flashcard();
         $httpBackend.flush();
-        expect($practiceService.current).toBe(0);
+        expect($practiceService.get_current()).toBe(0);
     });
 
     it("queue length", function() {
         for (var size = 1; size <= 10; size++) {
-            $practiceService.fc_queue_size_max = size;
+            config.proso_flashcards.practice.test.fc_queue_size_max = size;
+            $practiceService.init_set("test");
             $practiceService.preload_flashcards();
             $httpBackend.flush();
             expect($practiceService.get_fc_queue().length).toBe(size);
-            $practiceService.reset_set();
         }
 
     });
 
     it("use of filter parameters", function(){
-        $practiceService.filter.types = ["cosi", "kdesi"];
-        $practiceService.filter.contexts = [71, 72, 33];
-        $practiceService.filter.categories = [15, 16];
-        $practiceService.filter.language= "xx";
+        var filter = {};
+        filter.types = ["cosi", "kdesi"];
+        filter.contexts = [71, 72, 33];
+        filter.categories = [15, 16];
+        filter.language= "xx";
+        $practiceService.set_filter(filter);
 
         $httpBackend.expectGET(/\/flashcards\/practice\/\?.*categories=%5B15,16%5D.*contexts=%5B71,72,33%5D.*language=xx.*types=%5B%22cosi%22,%22kdesi%22%5D.*/).respond(200, {data: generate_flashcards(1)});
         $practiceService.preload_flashcards();
         $httpBackend.flush();
 
-        expect($practiceService.current).toBe(0);
+        expect($practiceService.get_current()).toBe(0);
     });
 
     it("avoid already loaded flashcards", function(){
         $httpBackend.expectGET(/\/flashcards\/practice\/?.*/).respond(200, {data: {flashcards: [
             {id: 41}, {id: 42},{id: 43}
         ]}});
-        $practiceService.fc_queue_size_max = $practiceService.fc_queue_size_min = 3;
+        config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.fc_queue_size_min = 3;
+        $practiceService.init_set("test");
         $practiceService.preload_flashcards();
         $httpBackend.flush();
 
@@ -200,7 +236,7 @@ describe("Practice Service - flashcards", function() {
         $timeout.flush();
         $httpBackend.flush();
 
-        expect($practiceService.current).toBe(1);
+        expect($practiceService.get_current()).toBe(1);
     });
 });
 
@@ -224,16 +260,22 @@ describe("Practice Service - answers", function() {
 
     beforeEach(module('proso_apps.services'));
 
+    beforeEach(module(function ($provide) { $provide.service("configService", configServiceMock); }));
+
     beforeEach(inject(function($injector) {
+
         $httpBackend = $injector.get('$httpBackend');
         $timeout = $injector.get("$timeout");
         $practiceService = $injector.get('practiceService');
+    }));
 
+    beforeEach(function(){
         for (var limit = 1; limit <=10; limit++){
             $httpBackend.whenGET(new RegExp("\/flashcards\/practice\/?.*limit="+limit+"&.*"))
                 .respond(200, {data: {flashcards: generate_flashcards(limit)}});
         }
-    }));
+        $practiceService.init_set("test");
+    });
 
     afterEach(function() {
         $httpBackend.verifyNoOutstandingExpectation();
@@ -261,19 +303,20 @@ describe("Practice Service - answers", function() {
 
 
     it("save answer immediately", function() {
-        $practiceService.save_answer_immediately = true;
+        config.proso_flashcards.practice.test.save_answer_immediately = true;
+        $practiceService.init_set("test");
         $httpBackend.expectPOST("/flashcards/answer/", {answers: [1]}).respond(200, "OK");
         $practiceService.save_answer(1);
         $httpBackend.flush();
         expect($practiceService.get_answer_queue()).toEqual([]);
 
-        $practiceService.save_answer_immediately = false;
+        config.proso_flashcards.practice.test.save_answer_immediately = false;
+        $practiceService.init_set("test");
         $practiceService.save_answer(1);
         expect($practiceService.get_answer_queue()).toEqual([1]);
     });
 
     it("save answer with getting FC", function() {
-        $practiceService.save_answer_immediately = false;
         $httpBackend.expectPOST(/\/flashcards\/practice\/?.*/, {answers: [1, 2, 3]})
             .respond(200, {data: generate_flashcards(1)});
         $practiceService.save_answer(1);
@@ -285,8 +328,8 @@ describe("Practice Service - answers", function() {
     });
 
     it("save answer at the end of set", function() {
-        $practiceService.save_answer_immediately = false;
-        $practiceService.fc_queue_size_max = $practiceService.set_lenght = 5;
+        config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 5;
+        $practiceService.init_set("test");
         for (var i = 1; i < 5; i++){
             $practiceService.get_flashcard();
             if (i == 1){
@@ -304,7 +347,8 @@ describe("Practice Service - answers", function() {
     });
 
     it("save answer to current flashcard", function() {
-        $practiceService.save_answer_immediately = true;
+        config.proso_flashcards.practice.test.save_answer_immediately = true;
+        $practiceService.init_set("test");
 
         $practiceService.get_flashcard();
         $httpBackend.flush();
@@ -322,7 +366,8 @@ describe("Practice Service - answers", function() {
     });
 
     it("save answer to current flashcard without flashcard", function() {
-        $practiceService.save_answer_immediately = true;
+        config.proso_flashcards.practice.test.save_answer_immediately = true;
+        $practiceService.init_set("test");
         $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
         expect($practiceService.get_answer_queue()).toEqual([]);
      });
