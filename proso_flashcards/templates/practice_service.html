@@ -38,12 +38,15 @@
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
             $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
         });
+        var config_loaded;
         app.run(function(configService){
             configService.process_config({{ config_json | safe }});
+            // config_loaded = configService.load_config();
         });
         app.controller("auth", function($scope, practiceService){
             $scope.service = practiceService;
             practiceService.init_set("intro");
+            // config_loaded.then(function(){ practiceService.init_set("intro")});
 
             $scope.get_flashcard = function(){
                 practiceService.get_flashcard().then(
