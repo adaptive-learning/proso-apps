@@ -13,7 +13,7 @@ import re
 import os.path
 from decorator import cache_environment_for_item
 from collections import defaultdict
-from proso.django.config import instantiate_from_subconfig, get_global_config
+from proso.django.config import instantiate_from_config, get_global_config
 from proso_common.models import Config
 
 
@@ -26,18 +26,18 @@ DATABASE_TRUE = '1 = 1'
 ################################################################################
 
 def get_environment():
-    return instantiate_from_subconfig(
+    return instantiate_from_config(
         'proso_models', 'environment',
         default_class='proso_models.models.DatabaseEnvironment'
     )
 
 
 def get_predictive_model():
-    return instantiate_from_subconfig('proso_models', 'predictive_model')
+    return instantiate_from_config('proso_models', 'predictive_model')
 
 
 def get_item_selector():
-    return instantiate_from_subconfig(
+    return instantiate_from_config(
         'proso_models', 'item_selector',
         default_class='proso.models.item_selection.ScoreItemSelection',
         pass_parameters=[get_predictive_model()]
@@ -45,7 +45,7 @@ def get_item_selector():
 
 
 def get_option_selector(item_selector):
-    return instantiate_from_subconfig(
+    return instantiate_from_config(
         'proso_models', 'option_selector',
         default_class='proso.models.option_selection.ConfusingOptionSelection',
         pass_parameters=[item_selector]

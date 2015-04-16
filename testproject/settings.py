@@ -181,11 +181,6 @@ except ImportError:
 except SyntaxError:
     HASHES = {}
 
-PROSO_CONFIG = {
-    'path': os.path.join(BASE_DIR, 'proso_config.yaml'),
-    'default': 'default'
-}
-
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
 

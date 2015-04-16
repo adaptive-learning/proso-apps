@@ -8,7 +8,7 @@ from logging import getLogger
 from models import Rating
 from proso_user.models import Session
 from lazysignup.decorators import allow_lazy_user
-from proso.django.config import get_subconfig
+from proso.django.config import get_config
 
 
 LOGGER = getLogger(__name__)
@@ -38,8 +38,8 @@ def feedback(request):
     if request.method == 'GET':
         return render(request, 'feedback_feedback.html', {}, help_text=feedback.__doc__)
     if request.method == 'POST':
-        feedback_domain = get_subconfig('proso_feedback', 'domain', required=True)
-        feedback_to = get_subconfig('proso_feedback', 'to', required=True)
+        feedback_domain = get_config('proso_feedback', 'domain', required=True)
+        feedback_to = get_config('proso_feedback', 'to', required=True)
         feedback_data = json_body(request.body)
         feedback_data['user_agent'] = Session.objects.get_current_session()['http_user_agent']
         if not feedback_data.get('username'):

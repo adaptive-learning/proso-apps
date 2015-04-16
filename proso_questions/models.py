@@ -9,11 +9,11 @@ from django.utils.text import slugify
 from proso_models.models import get_environment
 from collections import defaultdict
 import abc
-from proso.django.config import instantiate_from_subconfig
+from proso.django.config import instantiate_from_config
 
 
 def get_test_evaluator():
-    return instantiate_from_subconfig(
+    return instantiate_from_config(
         'proso_questions', 'test_evaluator',
         default_class='proso_questions.models.SimpleTestEvaluator'
     )

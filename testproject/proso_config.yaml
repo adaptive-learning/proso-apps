@@ -6,3 +6,14 @@ default:
         domain: localhost
         to:
             - root@localhost
+    proso_tests:
+        a:
+            b:
+                c: blah
+        instantiate_ok:
+            inner:
+                class: proso_common.config_test.TestClass
+                parameters:
+                    dummy: ok
+        instantiate_nok:
+            class: proso_common.config_test.TestClass

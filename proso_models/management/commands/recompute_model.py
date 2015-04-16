@@ -2,13 +2,13 @@ from django.core.management.base import BaseCommand
 from contextlib import closing
 from django.db import connection
 from proso_models.models import get_predictive_model
-from proso.django.config import instantiate_from_subconfig
+from proso.django.config import instantiate_from_config
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        environment = instantiate_from_subconfig(
+        environment = instantiate_from_config(
             'proso_models', 'recompute_environment',
             default_class='proso_models.models.InMemoryDatabaseFlushEnvironment')
         predictive_model = get_predictive_model()
