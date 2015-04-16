@@ -12,6 +12,7 @@ import hashlib
 from django.core.cache import cache
 import json as json_lib
 import logging
+from proso.django.config import get_global_config
 
 
 LOGGER = logging.getLogger('django.request')
@@ -102,6 +103,10 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
             json = json[page * limit:(page + 1) * limit]
         LOGGER.debug('sorting objects according to JSON field took %s seconds', (time_lib() - time_before_json_sort))
     return render_json(request, json, template=template, help_text=show_more.__doc__)
+
+
+def config(request):
+    return render_json(request, get_global_config(), template='common_json.html')
 
 
 def csv(request, table_name=None):
