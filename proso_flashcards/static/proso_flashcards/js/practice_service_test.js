@@ -68,6 +68,7 @@ describe("Practice Service - flashcards", function() {
         expect($practiceService.save_answer_to_current_fc).toBeDefined();
         expect($practiceService.flush_answer_queue).toBeDefined();
         expect($practiceService.get_flashcard).toBeDefined();
+        expect($practiceService.get_summary).toBeDefined();
     });
 
     it("getting first flashcard", function(){
@@ -238,6 +239,20 @@ describe("Practice Service - flashcards", function() {
 
         expect($practiceService.get_current()).toBe(1);
     });
+
+    it("should drop incoming FC after starting new set", function(){
+        $practiceService.preload_flashcards();
+        $practiceService.init_set("test");
+        $httpBackend.flush();
+        expect($practiceService.get_fc_queue().length).toBe(0);
+    });
+
+    it("", function(){
+        $practiceService.preload_flashcards();
+        $practiceService.init_set("test");
+        $httpBackend.flush();
+        expect($practiceService.get_fc_queue().length).toBe(0);
+    });
 });
 
 describe("Practice Service - answers", function() {
@@ -370,5 +385,85 @@ describe("Practice Service - answers", function() {
         $practiceService.init_set("test");
         $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
         expect($practiceService.get_answer_queue()).toEqual([]);
+    });
+
+    it("questions in summary", function() {
+        config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 5;
+        $practiceService.init_set("test");
+        $practiceService.get_flashcard();
+        $httpBackend.flush();
+        $timeout.flush();
+        $practiceService.get_flashcard();
+        $timeout.flush();
+        $practiceService.get_flashcard();
+        $timeout.flush();
+
+        expect($practiceService.get_summary().flashcards).toEqual(generate_flashcards(3));
      });
+
+    it("answers in summary", function() {
+        config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 5;
+        $practiceService.init_set("test");
+        $practiceService.get_flashcard();
+        $httpBackend.flush();
+        $timeout.flush();
+        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+
+        $practiceService.get_flashcard();
+        $timeout.flush();
+        $practiceService.save_answer_to_current_fc(1, 32, "moje meta");
+
+        $practiceService.get_flashcard();
+        $timeout.flush();
+        $practiceService.save_answer(123);
+
+        var answers = $practiceService.get_summary().answers;
+        expect(answers[0].response_time).toBe(12);
+        expect(answers[0].flashcard_answered_id).toBe(null);
+        expect(answers[1].flashcard_answered_id).toBe(1);
+        expect(answers[1].response_time).toBe(32);
+        expect(answers[2]).toBe(123);
+     });
+
+
+    it("count in summary", function() {
+        config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 5;
+        $practiceService.init_set("test");
+        expect($practiceService.get_summary().count).toBe(0);
+        $practiceService.get_flashcard();
+        $httpBackend.flush();
+        $timeout.flush();
+        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+        $practiceService.get_flashcard();
+        $timeout.flush();
+        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+        expect($practiceService.get_summary().count).toBe(2);
+        $practiceService.get_flashcard();
+        expect($practiceService.get_summary().count).toBe(2);
+        $timeout.flush();
+        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+
+        expect($practiceService.get_summary().count).toBe(3);
+     });
+
+    it("correct in summary", function() {
+        config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 5;
+        $practiceService.init_set("test");
+        expect($practiceService.get_summary().correct).toBe(0);
+        $practiceService.get_flashcard();
+        $httpBackend.flush();
+        $timeout.flush();
+        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+        expect($practiceService.get_summary().correct).toBe(0);
+        $practiceService.get_flashcard();
+        $timeout.flush();
+        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+        expect($practiceService.get_summary().correct).toBe(0);
+        $practiceService.get_flashcard();
+        $timeout.flush();
+        $practiceService.save_answer_to_current_fc(2, 12, "moje meta");
+
+        expect($practiceService.get_summary().correct).toBe(1);
+     });
+
 });

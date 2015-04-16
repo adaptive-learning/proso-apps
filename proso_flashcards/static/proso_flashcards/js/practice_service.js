@@ -2,8 +2,6 @@ try{ m = angular.module('proso_apps.services'); } catch (err) { m = angular.modu
 m.service("practiceService", ["$http", "$q", "configService", function($http, $q, configService){
     var self = this;
 
-    // TODO get summary
-
     var queue = [];
     var deferred_fc = null;
     var promise_resolved_tmp = false;
@@ -12,6 +10,13 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
     
     var config = {};
     var current = 0;
+    var set_id = 0;
+    var summary = {
+        flashcards: [],
+        answers: [],
+        correct: 0,
+        count: 0
+    };
 
     // called on create and set reset
     self.init_set = function(config_name){
@@ -26,6 +31,7 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
         self.flush_answer_queue();
         self.clear_queue();
         deferred_fc = null;
+        set_id++;
     };
 
     self.set_filter = function(filter){
@@ -48,8 +54,13 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
 
     // add answer to queue and upload queued answers if necessary
     self.save_answer = function(answer, farce_save){
-        if (answer)
+        if (answer) {
             answer_queue.push(answer);
+            summary.answers.push(answer);
+            summary.count++;
+            if (answer.flashcard_id == answer.flashcard_answered_id)
+                summary.correct++;
+        }
 
         if (config.save_answer_immediately || farce_save || current >= config.set_length) {
             if (answer_queue.length > 0) {
@@ -121,6 +132,10 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
         return answer_queue;
     };
 
+    self.get_summary = function(){
+        return summary;
+    };
+
 
     var _load_flashcards = function(){
         if (queue.length >= config.fc_queue_size_min)                                           // if there are some FC queued
@@ -150,8 +165,11 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
             request = $http.post("/flashcards/practice/", {answers: answer_queue}, {params: filter});
             answer_queue = [];
         }
+        var request_in_set = set_id;
         request
             .success(function(response){
+                if (request_in_set != set_id)
+                    return;
                 queue = queue.concat(response.data.flashcards);
                 if (queue.length > 0)
                     _resolve_promise();
@@ -177,6 +195,7 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
             current_fc = queue.shift();
             current++;
             promise_resolved_tmp = true;
+            summary.flashcards.push(current_fc);
             deferred_fc.resolve(current_fc);
         }
         _load_flashcards();
