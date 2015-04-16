@@ -67,9 +67,9 @@
 
 
 {% block head_block %}
-    <script src="{% static "proso_common/angular.min.js" %}"></script>
-    <script src="{% static "js/jstz.min.js" %}"></script>
-    <script src="{% static "js/user_service.js" %}"></script>
+    <script src="{% static "proso_common/angular/angular.min.js" %}"></script>
+    <script src="{% static "proso_user/js/jstz.min.js" %}"></script>
+    <script src="{% static "proso_user/js/user_service.js" %}"></script>
     <script>
         var app = angular.module('proso', ["proso_apps.services"]);
         app.config(function($httpProvider) {
