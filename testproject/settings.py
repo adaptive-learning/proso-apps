@@ -157,9 +157,7 @@ SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/user/close_popup/'
 SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
 
 
-ALLOWED_HOSTS = [
-    '.autoskolachytre.cz',
-]
+ALLOWED_HOSTS = []
 
 LOGIN_REDIRECT_URL = '/'
 
