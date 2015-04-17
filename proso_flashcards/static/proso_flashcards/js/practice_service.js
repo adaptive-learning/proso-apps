@@ -18,6 +18,8 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
         count: 0
     };
 
+    var contexts = {};
+
     // called on create and set reset
     self.init_set = function(config_name){
         var key = "practice." + config_name + ".";
@@ -25,6 +27,7 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
         config.fc_queue_size_max = configService.get_config("proso_flashcards", key + "fc_queue_size_max", 1);
         config.fc_queue_size_min = configService.get_config("proso_flashcards", key + "fc_queue_size_min", 1);
         config.save_answer_immediately = configService.get_config("proso_flashcards", key + "save_answer_immediately", false);
+        config.cache_context = configService.get_config("proso_flashcards", key + "cache_context", false);
 
         self.set_filter({});
         current = 0;
@@ -157,6 +160,9 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
                 filter[key] = config.filter[key];
             }
         }
+        if (config.cache_context){
+            filter["without_contexts"] = 1;
+        }
 
         var request;
         if (answer_queue.length == 0) {
@@ -171,6 +177,7 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
                 if (request_in_set != set_id)
                     return;
                 queue = queue.concat(response.data.flashcards);
+                _load_contexts();
                 if (queue.length > 0)
                     _resolve_promise();
                 else{
@@ -183,6 +190,28 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
 
     };
 
+    var _load_contexts = function(){
+        if (config.cache_context){
+            queue.forEach(function(fc){
+                if (fc.context_id in contexts){
+                    if (contexts[fc.context_id] != "loading"){
+                        fc.context = contexts[fc.context_id];
+                    }
+                }else{
+                    contexts[fc.context_id] = "loading";
+                    $http.get("/flashcards/context/" + fc.context_id)
+                        .success(function(response){
+                            contexts[fc.context_id] = response.data;
+                            _resolve_promise();
+                        }).error(function(){
+                            delete contexts[fc.context_id];
+                            console.error("Error while loading context from backend")
+                        })
+                }
+            });
+        }
+    };
+
     var _resolve_promise = function(){
         if (deferred_fc == null){
             return;
@@ -192,6 +221,13 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
             return;
         }
         if (queue.length > 0) {
+            if (config.cache_context){
+                if (typeof contexts[queue[0].context_id]  === 'object'){
+                    queue[0].context = contexts[queue[0].context_id];
+                }else{
+                    return;
+                }
+            }
             current_fc = queue.shift();
             current++;
             promise_resolved_tmp = true;

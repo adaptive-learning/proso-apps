@@ -5,7 +5,8 @@ var configServiceMock = function(){
         "set_length": 10,
         "fc_queue_size_max": 1,
         "fc_queue_size_min": 1,
-        "save_answer_immediately": false
+        "save_answer_immediately": false,
+        "cache_context": false
     }}}};
 
     self.get_config = function(app_name, key, default_value){
@@ -247,11 +248,97 @@ describe("Practice Service - flashcards", function() {
         expect($practiceService.get_fc_queue().length).toBe(0);
     });
 
-    it("", function(){
-        $practiceService.preload_flashcards();
+    var generate_full_flashcards = function(limit, without_contexts, same_id){
+        var flashcards = [];
+        for (var i = 1; i <= limit; i++){
+            var id = same_id ? 1 : i;
+            var fc = {
+                "context_id": id
+            };
+            if (!without_contexts)
+                fc.context = {id: id, content: 42};
+            flashcards.push(fc);
+        }
+        return flashcards;
+    };
+
+    it("if cache context - still return question with context", function(){
+        config.proso_flashcards.practice.test.cache_context = true;
         $practiceService.init_set("test");
+        $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*without_contexts.*"))
+                .respond(200, {data: {flashcards: generate_full_flashcards(2, true, true)}});
+        $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
+
+        var fc;
+        $practiceService.get_flashcard().then(function(d){fc = d});
         $httpBackend.flush();
-        expect($practiceService.get_fc_queue().length).toBe(0);
+        $timeout.flush();
+
+        expect(fc.context).toBeDefined();
+    });
+
+    it("if cache context - context should have correct id", function(){
+        config.proso_flashcards.practice.test.cache_context = true;
+        $practiceService.init_set("test");
+        $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*without_contexts.*"))
+            .respond(200, {data: {flashcards: generate_full_flashcards(2, true, true)}});
+        $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
+
+        var fc;
+        $practiceService.get_flashcard().then(function(d){fc = d});
+        $httpBackend.flush();
+        $timeout.flush();
+
+        expect(fc.context.id).toBe(fc.context_id);
+    });
+
+    it("if cache context - should load context separately", function(){
+        config.proso_flashcards.practice.test.cache_context = true;
+        config.proso_flashcards.practice.test.set_length = 2;
+        $practiceService.init_set("test");
+        $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*without_contexts.*"))
+            .respond(200, {data: {flashcards: generate_full_flashcards(2, true)}});
+        $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
+        $httpBackend.expectGET("/flashcards/context/2").respond({data: {id: 2, content: 42}});
+
+        var fc;
+        $practiceService.get_flashcard().then(function(d){fc = d});
+        $httpBackend.flush();
+        $timeout.flush();
+        expect(fc.context.id).toBe(fc.context_id);
+
+        $practiceService.get_flashcard().then(function(d){fc = d});
+        $timeout.flush();
+        expect(fc.context.id).toBe(fc.context_id);
+    });
+
+    it("if cache context - should load context only once", function(){
+        config.proso_flashcards.practice.test.cache_context = true;
+        $practiceService.init_set("test");
+        $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*without_contexts.*"))
+            .respond(200, {data: {flashcards: generate_full_flashcards(10, true, true)}});
+        $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
+
+        var fc, fc2;
+        $practiceService.get_flashcard().then(function(d){fc = d});
+        $httpBackend.flush();
+        $timeout.flush();
+        expect(fc.context.id).toBe(fc.context_id);
+
+        $practiceService.get_flashcard().then(function(d){fc2 = d});
+        $timeout.flush();
+        expect(fc.context.id).toBe(fc.context_id);
+
+        expect(fc).not.toBe(fc2);
+        expect(fc.context).toBe(fc2.context);
+    });
+
+    it("if not cache context - should not load context", function(){
+        $practiceService.get_flashcard();
+        $httpBackend.flush();
+        $timeout.flush();
+
+        expect(true).toBe(true);
     });
 });
 
