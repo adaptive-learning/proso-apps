@@ -72,7 +72,7 @@ class FlashcardManager(models.Manager):
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda type: Q(term__type=type), types)))
         return qs
 
-    def practice(self, environment, user, time, limit, flashcard_qs, language=None):
+    def practice(self, environment, user, time, limit, flashcard_qs, language=None, with_contexts=True):
         # prepare
         item_selector = get_item_selector()
         option_selector = get_option_selector(item_selector)
@@ -81,7 +81,9 @@ class FlashcardManager(models.Manager):
         selected_items = item_selector.select(environment, user, items, time, limit)
 
         # get selected flashcards
-        flashcards = Flashcard.objects.filter(item_id__in=selected_items).prefetch_related("term", "context")
+        flashcards = Flashcard.objects.filter(item_id__in=selected_items).prefetch_related(Flashcard.related_term())
+        if with_contexts:
+            flashcards = flashcards.prefetch_related(Flashcard.related_context())
         if language is not None:
             flashcards = flashcards.filter(lang=language)
         flashcards = sorted(flashcards, key=lambda fc: selected_items.index(fc.item_id))
@@ -133,22 +135,25 @@ class Flashcard(models.Model):
 
     objects = FlashcardManager()
 
-    def to_json(self, nested=False):
+    def to_json(self, nested=False, categories=True, contexts=True):
         data = {
             "id": self.pk,
             "item_id": self.item_id,
             "object_type": "fc_flashcard",
             "lang": self.lang,
             "term": self.get_term().to_json(nested=True),
-            "context": self.get_context().to_json(nested=True),
             "description": self.description
         }
         if hasattr(self, "options"):
             data["options"] = map(lambda o: o.to_json(), self.options)
         if hasattr(self, "direction"):
             data["direction"] = self.direction
-        if not nested:
+        if not nested and categories:
             data["categories"] = [category.to_json(nested=True) for category in self.categories.all()]
+        if not nested and contexts:
+            data["context"] = self.get_context().to_json(nested=True)
+        else:
+            data["context_id"] = self.context_id
         return data
 
     def get_term(self):

@@ -130,6 +130,8 @@ def practice(request):
         list of ids (int) of flashcards to avoid
       limit:
         number of returned questions (default 10, maximum 100)
+      without_contexts:
+        if context (boolean) is attached
       time:
         time in format '%Y-%m-%d_%H:%M:%S' used for practicing
       user:
@@ -165,14 +167,15 @@ def practice(request):
     contexts = json.loads(request.GET.get("contexts", "[]"))
     types = json.loads(request.GET.get("types", "[]"))
     avoid = json.loads(request.GET.get("avoid", "[]"))
+    with_contexts = not "without_contexts" in request.GET
 
     time_before_practice = time_lib()
     candidates = Flashcard.objects.candidates(categories, contexts, types, avoid)
     flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates,
-                                            request.GET.get("language", None))
+                                            request.GET.get("language", None), with_contexts)
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))
     data = _to_json(request, {
-        'flashcards': map(lambda x: x.to_json(), flashcards)
+        'flashcards': map(lambda x: x.to_json(categories=False, contexts=with_contexts), flashcards)
     })
     return render_json(request, data, template='flashcards_json.html', help_text=practice.__doc__)
 
