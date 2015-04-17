@@ -36,12 +36,14 @@
     {
       "id": "0006",
       "name-en": "flashcard-category",
-      "name-cs": "kategorie kartiček"
+      "name-cs": "kategorie kartiček",
+      "not-in-model": true
     },
     {
       "id": "0007",
       "name-en": "context-category",
-      "name-cs": "kategorie kontextů"
+      "name-cs": "kategorie kontextů",
+      "not-in-model": true
     }
   ]
 }
