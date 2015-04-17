@@ -21,6 +21,10 @@ default:
         practice:
             common:
                 set_length: 10
+                fc_queue_size_max: 1,
+                fc_queue_size_min: 1,
+                save_answer_immediately: false,
+                cache_context: false
             intro:
                 set_length: 5
                 fc_queue_size_max: 5
