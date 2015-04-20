@@ -13,3 +13,4 @@ image
 .django_cache
 local_settings.py
 testproject/data
+testproject/media

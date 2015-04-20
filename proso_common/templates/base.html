@@ -1,0 +1,9 @@
+{% extends 'common_base.html' %}
+{% block menu_heading_block %}Common{% endblock %}
+{% block menu_list_block %}
+    <ul>
+        <li><a href="{% url 'config' %}">Config</a></li>
+        <li><a href="{% url 'csv_list' %}">Csv list</a></li>
+        <li><a href="{% url 'analysis' %}">Analysis</a></li>
+    </ul>
+{% endblock %}

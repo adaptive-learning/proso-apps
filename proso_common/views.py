@@ -1,4 +1,6 @@
-from proso.django.response import render_json
+from django.shortcuts import render_to_response
+from proso.django.response import render_json, render
+from proso_common.management.commands import analyse
 from proso_common.models import get_tables_allowed_to_export
 from django.conf import settings
 from django.core.servers.basehttp import FileWrapper
@@ -142,3 +144,14 @@ def _csv_table(request, table_name):
     response = HttpResponse(FileWrapper(open(zip_file)), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename=' + table_name + '.zip'
     return response
+
+
+def analysis(request, app_name=None):
+    data = {}
+    if app_name is None:
+        data["apps"] = list(os.listdir(analyse.OUTPUT_DIR))
+    else:
+        data["imgs"] = map(lambda i: "analysis/{}/{}".format(app_name, i),
+                           os.listdir(os.path.join(analyse.OUTPUT_DIR, app_name)))
+        data["app_name"] = app_name
+    return render(request, 'common_analysis.html', data)

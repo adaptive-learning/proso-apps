@@ -10,7 +10,7 @@ from django.conf import settings
 
 
 INPUT_DIR = settings.DATA_DIR
-OUTPUT_DIR = os.path.join(settings.DATA_DIR, "analysis")
+OUTPUT_DIR = os.path.join(settings.MEDIA_ROOT, "analysis")
 
 
 class Command(BaseCommand):

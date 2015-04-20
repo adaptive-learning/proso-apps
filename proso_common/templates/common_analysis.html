@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block header_block %}{% endblock %}
+
+{% block content_block %}
+    {% for app in apps %}
+        <a href="{% url "analysis" app %}">{{ app }}</a>
+        <br/>
+    {% endfor %}
+
+    <h2>{{ app_name }}</h2>
+    {% for img in imgs %}
+        <img src="{{ MEDIA_URL }}{{ img }}" alt="{{ img }}"/>
+    {% endfor %}
+
+
+{% endblock %}
