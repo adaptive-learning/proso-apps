@@ -1,4 +1,3 @@
-from django.shortcuts import render_to_response
 from proso.django.response import render_json, render
 from proso_common.management.commands import analyse
 from proso_common.models import get_tables_allowed_to_export
