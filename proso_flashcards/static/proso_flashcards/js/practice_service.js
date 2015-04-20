@@ -1,5 +1,5 @@
 try{ m = angular.module('proso_apps.services'); } catch (err) { m = angular.module('proso_apps.services', []); }
-m.service("practiceService", ["$http", "$q", "configService", function($http, $q, configService){
+m.service("practiceService", ["$http", "$q", "configService", "$cookies", function($http, $q, configService, $cookies){
     var self = this;
 
     var queue = [];
@@ -67,6 +67,7 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
 
         if (config.save_answer_immediately || farce_save || current >= config.set_length) {
             if (answer_queue.length > 0) {
+                $http.defaults.headers.post['X-CSRFToken'] = $cookies.csrftoken;
                 $http.post("/flashcards/answer/", {answers: answer_queue})
                     .error(function (response) {
                         console.error("Problem while uploading answer", response)
@@ -168,6 +169,7 @@ m.service("practiceService", ["$http", "$q", "configService", function($http, $q
         if (answer_queue.length == 0) {
             request = $http.get("/flashcards/practice/", {params: filter});
         }else{
+            $http.defaults.headers.post['X-CSRFToken'] = $cookies.csrftoken;
             request = $http.post("/flashcards/practice/", {answers: answer_queue}, {params: filter});
             answer_queue = [];
         }
