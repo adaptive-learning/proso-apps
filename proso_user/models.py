@@ -246,3 +246,6 @@ def drop_lazy_user(sender, instance, created=False, **kwargs):
     user = instance.user
     if is_user_lazy(user) and is_user_social(user):
         convert_lazy_user(user, with_username=True)
+
+
+PROSO_MODELS_TO_EXPORT = [User, UserProfile, Session]

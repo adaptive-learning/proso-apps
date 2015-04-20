@@ -645,4 +645,4 @@ def log_audit(sender, instance, **kwargs):
         audit.save()
 
 
-PROSO_MODELS_TO_EXPORT = [Answer, Audit, Item, Variable]
+PROSO_MODELS_TO_EXPORT = [Answer]
