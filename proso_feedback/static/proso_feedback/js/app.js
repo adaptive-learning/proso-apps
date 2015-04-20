@@ -33,7 +33,7 @@
           }
 
           $modal.open({
-            templateUrl: 'static/tpl/feedback_modal.html',
+            templateUrl: 'static/proso_feedback/tpl/feedback_modal.html',
             controller: ModalFeedbackCtrl,
             size: 'lg',
             resolve: {
@@ -130,7 +130,7 @@
 
         $scope.ratingPoll = function () {
           $modal.open({
-            templateUrl: 'static/tpl/rating_modal.html',
+            templateUrl: 'static/proso_feedback/tpl/rating_modal.html',
             controller: ModalRatingCtrl,
           });
         };
