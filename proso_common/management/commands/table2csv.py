@@ -29,7 +29,7 @@ class Command(BaseCommand):
             batch_size = settings.PROSO_TABLE_EXPORT_BATCH_SIZE
         if len(args) > 0:
             table_name = args[0]
-            self.handle_one_table(batch_size, table_name)
+            self.handle_one_table(table_name, batch_size)
         else:
             self.handle_all_tables(batch_size)
 
