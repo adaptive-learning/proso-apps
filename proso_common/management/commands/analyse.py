@@ -1,16 +1,12 @@
 from optparse import make_option
 import gc
 from time import time
-import os
-import pandas as pd
 import importlib
-from django.core.management import call_command
-from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
-import re
-import pylab as plt
-import seaborn as snb
 
+import os
+from django.core.management import call_command
+from django.core.management.base import BaseCommand
+from django.conf import settings
 
 
 INPUT_DIR = settings.DATA_DIR
