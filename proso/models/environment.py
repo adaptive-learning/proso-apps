@@ -386,39 +386,39 @@ class TestCommonEnvironment(TestEnvironment):
         user_1 = self.generate_user()
         user_2 = self.generate_user()
         items = [self.generate_item() for i in range(10)]
-        self.assertEqual(0, env.number_of_answers())
-        self.assertEqual(0, env.number_of_answers(user=user_1))
-        self.assertEqual(0, env.number_of_answers(user=user_1, item=items[0]))
-        self.assertEqual(0, env.number_of_answers(item=items[0]))
+        self.assertEqual(env.number_of_answers(), 0)
+        self.assertEqual(env.number_of_answers(user=user_1), 0)
+        self.assertEqual(env.number_of_answers(user=user_1, item=items[0]), 0)
+        self.assertEqual(env.number_of_answers(item=items[0]), 0)
         self.assertEqual([0 for i in items], env.number_of_answers_more_items(items))
         for u in [user_1, user_2]:
             for i in items:
                 env.process_answer(u, i, i, i, datetime.datetime.now(), 1000, True)
-        self.assertEqual(20, env.number_of_answers())
-        self.assertEqual(10, env.number_of_answers(user=user_1))
-        self.assertEqual(1, env.number_of_answers(user=user_1, item=items[0]))
-        self.assertEqual(2, env.number_of_answers(item=items[0]))
-        self.assertEqual([2 for i in items], env.number_of_answers_more_items(items))
+        self.assertEqual(env.number_of_answers(), 20)
+        self.assertEqual(env.number_of_answers(user=user_1), 10)
+        self.assertEqual(env.number_of_answers(user=user_1, item=items[0]), 1)
+        self.assertEqual(env.number_of_answers(item=items[0]), 2)
+        self.assertEqual(env.number_of_answers_more_items(items), [2 for i in items])
 
     def test_number_of_correct_answers(self):
         env = self.generate_environment()
         user_1 = self.generate_user()
         user_2 = self.generate_user()
         items = [self.generate_item() for i in range(10)]
-        self.assertEqual(0, env.number_of_correct_answers())
-        self.assertEqual(0, env.number_of_correct_answers(user=user_1))
-        self.assertEqual(0, env.number_of_correct_answers(user=user_1, item=items[0]))
-        self.assertEqual(0, env.number_of_correct_answers(item=items[0]))
-        self.assertEqual([0 for i in items], env.number_of_first_answers_more_items(items))
+        self.assertEqual(env.number_of_correct_answers(), 0)
+        self.assertEqual(env.number_of_correct_answers(user=user_1), 0)
+        self.assertEqual(env.number_of_correct_answers(user=user_1, item=items[0]), 0)
+        self.assertEqual(env.number_of_correct_answers(item=items[0]), 0)
+        self.assertEqual(env.number_of_first_answers_more_items(items), [0 for i in items])
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
                     env.process_answer(u, i, i, i if j < 5 else i + 1, datetime.datetime.now(), 1000, True)
-        self.assertEqual(100, env.number_of_correct_answers())
-        self.assertEqual(50, env.number_of_correct_answers(user=user_1))
-        self.assertEqual(5, env.number_of_correct_answers(user=user_1, item=items[0]))
-        self.assertEqual(10, env.number_of_correct_answers(item=items[0]))
-        self.assertEqual([10 for i in items], env.number_of_correct_answers_more_items(items))
+        self.assertEqual(env.number_of_correct_answers(), 100)
+        self.assertEqual(env.number_of_correct_answers(user=user_1), 50)
+        self.assertEqual(env.number_of_correct_answers(user=user_1, item=items[0]), 5)
+        self.assertEqual(env.number_of_correct_answers(item=items[0]), 10)
+        self.assertEqual(env.number_of_correct_answers_more_items(items), [10 for i in items])
 
 
     def test_number_of_first_answers(self):
@@ -426,20 +426,20 @@ class TestCommonEnvironment(TestEnvironment):
         user_1 = self.generate_user()
         user_2 = self.generate_user()
         items = [self.generate_item() for i in range(10)]
-        self.assertEqual(0, env.number_of_first_answers())
-        self.assertEqual(0, env.number_of_first_answers(user=user_1))
-        self.assertEqual(0, env.number_of_first_answers(user=user_1, item=items[0]))
-        self.assertEqual(0, env.number_of_first_answers(item=items[0]))
-        self.assertEqual([0 for i in items], env.number_of_first_answers_more_items(items))
+        self.assertEqual(env.number_of_first_answers(), 0)
+        self.assertEqual(env.number_of_first_answers(user=user_1), 0)
+        self.assertEqual(env.number_of_first_answers(user=user_1, item=items[0]), 0)
+        self.assertEqual(env.number_of_first_answers(item=items[0]), 0)
+        self.assertEqual(env.number_of_first_answers_more_items(items), [0 for i in items])
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
                     env.process_answer(u, i, i, i, datetime.datetime.now(), 1000, True)
-        self.assertEqual(20, env.number_of_first_answers())
-        self.assertEqual(10, env.number_of_first_answers(user=user_1))
-        self.assertEqual(1, env.number_of_first_answers(user=user_1, item=items[0]))
-        self.assertEqual(2, env.number_of_first_answers(item=items[0]))
-        self.assertEqual([2 for i in items], env.number_of_first_answers_more_items(items))
+        self.assertEqual(env.number_of_first_answers(), 20)
+        self.assertEqual(env.number_of_first_answers(user=user_1), 10)
+        self.assertEqual(env.number_of_first_answers(user=user_1, item=items[0]), 1)
+        self.assertEqual(env.number_of_first_answers(item=items[0]), 2)
+        self.assertEqual(env.number_of_first_answers_more_items(items), [2 for i in items])
 
     def test_symmetry(self):
         env = self.generate_environment()
@@ -449,20 +449,20 @@ class TestCommonEnvironment(TestEnvironment):
             key='test_assymetric', value=1, item=items[0],
             item_secondary=items[1], symmetric=False)
         self.assertEqual(
-            1, env.read(key='test_symmetric', item=items[1], item_secondary=items[0]))
-        self.assertEqual(
-            None, env.read(key='test_assymetric', item=items[1], item_secondary=items[0]))
+            env.read(key='test_symmetric', item=items[1], item_secondary=items[0]), 1)
+        self.assertIsNone(
+            env.read(key='test_assymetric', item=items[1], item_secondary=items[0]))
 
     def test_last_answer_time(self):
         env = self.generate_environment()
         user_1 = self.generate_user()
         user_2 = self.generate_user()
         items = [self.generate_item() for i in range(10)]
-        self.assertEqual(None, env.last_answer_time())
-        self.assertEqual(None, env.last_answer_time(user=user_1))
-        self.assertEqual(None, env.last_answer_time(user=user_1, item=items[0]))
-        self.assertEqual(None, env.last_answer_time(item=items[0]))
-        self.assertEqual([None for i in items], env.last_answer_time_more_items(items))
+        self.assertIsNone(env.last_answer_time())
+        self.assertIsNone(env.last_answer_time(user=user_1))
+        self.assertIsNone(env.last_answer_time(user=user_1, item=items[0]))
+        self.assertIsNone(env.last_answer_time(item=items[0]))
+        self.assertEqual(env.last_answer_time_more_items(items), [None for i in items])
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
@@ -471,41 +471,41 @@ class TestCommonEnvironment(TestEnvironment):
         self.assertIsNotNone(env.number_of_first_answers(user=user_1))
         self.assertIsNotNone(env.number_of_first_answers(user=user_1, item=items[0]))
         self.assertIsNotNone(env.number_of_first_answers(item=items[0]))
-        self.assertNotEqual([None for i in items], env.number_of_first_answers_more_items(items))
+        self.assertNotEqual(env.number_of_first_answers_more_items(items), [None for i in items])
 
     def test_rolling_success(self):
         env = self.generate_environment()
         user_1 = self.generate_user()
         user_2 = self.generate_user()
         items = [self.generate_item() for i in range(10)]
-        self.assertEqual(1.0, env.rolling_success(user_1))
-        self.assertEqual(1.0, env.rolling_success(user_2))
+        self.assertEqual(env.rolling_success(user_1), 1.0)
+        self.assertEqual(env.rolling_success(user_2), 1.0)
         diff = 0
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
                     env.process_answer(u, i, i, i + diff, datetime.datetime.now(), 1000, True)
             diff += 1
-        self.assertEqual(1.0, env.rolling_success(user_1))
-        self.assertEqual(0.0, env.rolling_success(user_2))
+        self.assertEqual(env.rolling_success(user_1), 1.0)
+        self.assertEqual(env.rolling_success(user_2), 0.0)
 
     def test_confusing_factor(self):
         env = self.generate_environment()
         user_1 = self.generate_user()
         user_2 = self.generate_user()
         items = [self.generate_item() for i in range(10)]
-        self.assertEqual(0, env.confusing_factor(item=items[0], item_secondary=items[1]))
-        self.assertEqual(0, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1))
+        self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1]), 0)
+        self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1), 0)
         for i in items:
             for guess in [0, 1./3, 1./5]:
                 env.process_answer(user_1, items[0], items[0], i, datetime.datetime.now(), 1000, guess)
         for i in items:
             for guess in [0, 1./3, 1./5]:
                 env.process_answer(user_2, i, i, i, datetime.datetime.now(), 1000, guess)
-        self.assertEqual(1, env.confusing_factor(item=items[0], item_secondary=items[1]))
-        self.assertEqual(1, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1))
-        self.assertEqual(0, env.confusing_factor(item=items[0], item_secondary=items[1], user=user_2))
-        self.assertEqual(0, env.confusing_factor(item=items[2], item_secondary=items[3]))
+        self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1]), 1)
+        self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1), 1)
+        self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1], user=user_2), 0)
+        self.assertEqual(env.confusing_factor(item=items[2], item_secondary=items[3]), 0)
 
     def test_get_items_with_values(self):
         env = self.generate_environment()
@@ -513,11 +513,11 @@ class TestCommonEnvironment(TestEnvironment):
         items = [self.generate_item() for i in range(2)]
         env.write('parent', 10, user=users[0], item=items[0], item_secondary=items[1], symmetric=False)
         env.write('parent', 20, item=items[1], item_secondary=items[0], symmetric=False)
-        self.assertEqual([(items[1], 10)], env.get_items_with_values('parent', user=users[0], item=items[0]))
-        self.assertEqual([], env.get_items_with_values('parent', user=users[0], item=items[1]))
-        self.assertEqual([], env.get_items_with_values('parent', user=users[1], item=items[0]))
-        self.assertEqual([(items[0], 20)], env.get_items_with_values('parent', item=items[1]))
-        self.assertEqual([], env.get_items_with_values('parent', user=users[0], item=items[1]))
+        self.assertEqual(env.get_items_with_values('parent', user=users[0], item=items[0]), [(items[1], 10)])
+        self.assertEqual(env.get_items_with_values('parent', user=users[0], item=items[1]), [])
+        self.assertEqual(env.get_items_with_values('parent', user=users[1], item=items[0]), [])
+        self.assertEqual(env.get_items_with_values('parent', item=items[1]), [(items[0], 20)])
+        self.assertEqual(env.get_items_with_values('parent', user=users[0], item=items[1]), [])
 
     def test_get_items_with_values_more_items(self):
         env = self.generate_environment()
@@ -526,8 +526,8 @@ class TestCommonEnvironment(TestEnvironment):
         env.write('parent', 10, user=users[0], item=items[0], item_secondary=items[1], symmetric=False)
         env.write('parent', 20, item=items[1], item_secondary=items[0], symmetric=False)
         self.assertEqual(
-            [[(items[1], 10)], []],
-            env.get_items_with_values_more_items('parent', user=users[0], items=items))
+            env.get_items_with_values_more_items('parent', user=users[0], items=items),
+            [[(items[1], 10)], []])
         self.assertEqual(
-            [[], [(items[0], 20)]],
-            env.get_items_with_values_more_items('parent', items=items))
+            env.get_items_with_values_more_items('parent', items=items),
+            [[], [(items[0], 20)]])
