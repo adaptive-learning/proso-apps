@@ -1,5 +1,16 @@
 import re
 import importlib
+import time
+
+_timers = {}
+
+
+def timer(name):
+    now = time.clock()
+    if name in _timers:
+        diff = now - _timers[name]
+        return diff
+    _timers[name] = now
 
 
 def instantiate(classname, *args, **kwargs):
