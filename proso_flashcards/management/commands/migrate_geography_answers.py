@@ -6,6 +6,7 @@ from proso_flashcards.models import Flashcard
 from proso_user.models import Location, Session
 from collections import defaultdict
 from django.db import transaction
+from clint.textui import progress
 
 
 class Command(BaseCommand):
@@ -90,6 +91,8 @@ class Command(BaseCommand):
             with closing(connection.cursor()) as cursor:
                 cursor.execute('SELECT MAX(id) FROM proso_models_answer')
                 prev_max_answer, = cursor.fetchone()
+                if prev_max_answer is None:
+                    prev_max_answer = 0
         print ' -- load flashcards'
         flashcards = self.load_flashcards()
         print ' -- prepare retrievers'
@@ -120,12 +123,9 @@ class Command(BaseCommand):
                 ORDER BY geography_answer.id
                 LIMIT %s
                 ''', [prev_max_answer, limit])
-            count = 0
             with closing(connection.cursor()) as cursor_dest:
-                for row in cursor_source:
-                    count += 1
-                    if count % 10000 == 0:
-                        print count, 'answers processed'
+                progress_bar = progress.bar(cursor_source, every=max(1, cursor_source.rowcount / 100), expected_size=cursor_source.rowcount)
+                for row in progress_bar:
                     try:
                         lang = self.LANGUAGES[row[8]]
                         item_asked_id = self.get_flashcard(row[6], row[1], lang, flashcards)
