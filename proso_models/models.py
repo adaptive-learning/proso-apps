@@ -193,6 +193,47 @@ class DatabaseEnvironment(CommonEnvironment):
             result = dict(result)
             return map(lambda key: result.get(key, default), items)
 
+    def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
+        with closing(connection.cursor()) as cursor:
+            where, where_params = self._where_single(key, user, item, item_secondary, symmetric=symmetric)
+            if self._time is None:
+                cursor.execute(
+                    'SELECT updated FROM proso_models_variable WHERE ' + where,
+                    where_params)
+                fetched = cursor.fetchone()
+                return None if fetched is None else fetched[0]
+            else:
+                audit = self.audit(key, user, item, item_secondary, limit=1)
+                if len(audit) == 0:
+                    return None
+                else:
+                    return audit[0][0]
+
+    def time_more_items(self, key, items, user=None, item=None, symmetric=True):
+        with closing(connection.cursor()) as cursor:
+            where, where_params = self._where_more_items(key, items, user, item, symmetric=symmetric)
+            if self._time is None:
+                cursor.execute(
+                    'SELECT item_primary_id, item_secondary_id, updated FROM proso_models_variable WHERE '
+                    + where,
+                    where_params)
+                result = cursor.fetchall()
+            else:
+                cursor.execute(
+                    '''SELECT DISTINCT ON
+                        (key, item_primary_id, item_secondary_id, user_id)
+                        item_primary_id, item_secondary_id, time FROM proso_models_audit WHERE
+                    ''' + where +
+                    ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time',
+                    where_params)
+                result = cursor.fetchall()
+            if item is None:
+                result = map(lambda (x, y, z): (x, z), result)
+            else:
+                result = map(lambda (x, y, z): (x, z) if y == item else (y, z), result)
+            result = dict(result)
+            return map(lambda key: result.get(key), items)
+
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False):
         if permanent:
             audit = False
@@ -434,7 +475,7 @@ class DatabaseEnvironment(CommonEnvironment):
         else:
             raise Exception("Unsupported type of condition:" + str(type(condition)))
         if top_most and not for_answers:
-            result_cond = ('(%s) AND (info_id = ? OR permanent)' % result_cond)
+            result_cond = ('(%s) AND (info_id = ? OR info_id IS NULL)' % result_cond)
             result_params = result_params + [self._info_id]
         if top_most and self._time is not None and time_shift:
             result_cond = ('(%s) AND time < ?' % result_cond)

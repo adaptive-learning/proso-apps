@@ -75,6 +75,14 @@ class Environment:
             item=item, item_secondary=item_secondary, time=time, audit=audit, symmetric=symmetric)
 
     @abc.abstractmethod
+    def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
+        pass
+
+    @abc.abstractmethod
+    def time_more_items(self, key, items, user=None, item=None, symmetric=True):
+        pass
+
+    @abc.abstractmethod
     def export_values(self):
         pass
 
@@ -144,12 +152,11 @@ class InMemoryEnvironment(CommonEnvironment):
     NUMBER_OF_ANSWERS = 'number_of_answers'
     NUMBER_OF_CORRECT_ANSWERS = 'number_of_correct_answers'
     NUMBER_OF_FIRST_ANSWERS = 'number_of_first_answers'
-    LAST_ANSWER_TIME = 'last_answer_time'
     LAST_CORRECTNESS = 'last_correctness'
     CONFUSING_FACTOR = 'confusing_factor'
 
     def __init__(self):
-        # key -> user -> item_primary -> item_secondary -> [(time, value)]
+        # key -> user -> item_primary -> item_secondary -> [(permanent, time, value)]
         self._data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
 
     def process_answer(self, user, item, asked, answered, time, response_time, guess, **kwargs):
@@ -167,7 +174,6 @@ class InMemoryEnvironment(CommonEnvironment):
         update_all(self.NUMBER_OF_ANSWERS, 0, increment)
         if asked == answered:
             update_all(self.NUMBER_OF_CORRECT_ANSWERS, 0, increment)
-        update_all(self.LAST_ANSWER_TIME, time, lambda x: time)
         self.write(self.LAST_CORRECTNESS, asked == answered, user=user)
         if guess == 0 and asked != answered and answered is not None:
             self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered)
@@ -193,12 +199,9 @@ class InMemoryEnvironment(CommonEnvironment):
         return map(lambda i: self.get_items_with_values(key, i, user), items)
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
-        items = [item_secondary, item]
-        if symmetric:
-            items.sort()
-        found = self._data[key][user][items[1]][items[0]]
+        found = self._get(key, user=user, item=item, item_secondary=item_secondary, symmetric=symmetric)
         if found:
-            return found[-1][2]
+            return found[2]
         else:
             return default
 
@@ -208,6 +211,7 @@ class InMemoryEnvironment(CommonEnvironment):
             items)
 
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False):
+        value = float(value)
         if permanent:
             audit = False
         items = [item_secondary, item]
@@ -240,6 +244,18 @@ class InMemoryEnvironment(CommonEnvironment):
                 if len(self._data[key]):
                     del self._data[key]
 
+    def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
+        found = self._get(key, user=user, item=item, item_secondary=item_secondary, symmetric=symmetric)
+        if found:
+            return found[1]
+        else:
+            return None
+
+    def time_more_items(self, key, items, user=None, item=None, symmetric=True):
+        return map(
+            lambda i: self.time(key, user, i, item, symmetric),
+            items)
+
     def number_of_answers(self, user=None, item=None):
         return self.read(self.NUMBER_OF_ANSWERS, user=user, item=item, default=0)
 
@@ -250,7 +266,7 @@ class InMemoryEnvironment(CommonEnvironment):
         return self.read(self.NUMBER_OF_FIRST_ANSWERS, user=user, item=item, default=0)
 
     def last_answer_time(self, user=None, item=None):
-        return self.read(self.LAST_ANSWER_TIME, user=user, item=item)
+        return self.time(self.NUMBER_OF_ANSWERS, user=user, item=item)
 
     def number_of_answers_more_items(self, items, user=None):
         return self.read_more_items(self.NUMBER_OF_ANSWERS, items, user=user, default=0)
@@ -262,7 +278,7 @@ class InMemoryEnvironment(CommonEnvironment):
         return self.read_more_items(self.NUMBER_OF_FIRST_ANSWERS, items, user=user, default=0)
 
     def last_answer_time_more_items(self, items, user=None):
-        return self.read_more_items(self.LAST_ANSWER_TIME, items, user=user)
+        return self.time_more_items(self.NUMBER_OF_ANSWERS, items, user=user)
 
     def rolling_success(self, user, window_size=10):
         audit = self.audit(self.LAST_CORRECTNESS, user=user, limit=window_size)
@@ -296,6 +312,15 @@ class InMemoryEnvironment(CommonEnvironment):
                             if not permanent:
                                 yield (key, user, item_primary, item_secondary, time, value)
 
+    def _get(self, key, user=None, item=None, item_secondary=None, symmetric=True):
+        items = [item_secondary, item]
+        if symmetric:
+            items.sort()
+        found = self._data[key][user][items[1]][items[0]]
+        if found:
+            return found[-1]
+        else:
+            return None
 
 ################################################################################
 # Tests
@@ -380,6 +405,33 @@ class TestEnvironment(unittest.TestCase):
 class TestCommonEnvironment(TestEnvironment):
 
     __metaclass__ = abc.ABCMeta
+
+    def test_time(self):
+        env = self.generate_environment()
+        users = [self.generate_user() for i in range(2)]
+        items = [self.generate_item() for i in range(10)]
+        self.assertIsNone(env.time('key'))
+        self.assertIsNone(env.time('key', user=users[0]))
+        self.assertIsNone(env.time('key', user=users[0], item=items[0]))
+        self.assertIsNone(env.time('key', user=users[0], item=items[0], item_secondary=items[1]))
+        self.assertIsNone(env.time('key', item=items[0]))
+        self.assertIsNone(env.time('key', item=items[0], item_secondary=items[1]))
+        times = [datetime.datetime.fromtimestamp(i) for i in range(1, 11)]
+        env.write('key', 1, time=times[0])
+        env.write('key', 1, time=times[1], user=users[0])
+        env.write('key', 1, time=times[2], user=users[0], item=items[0])
+        env.write('key', 1, time=times[3], user=users[0], item=items[0], item_secondary=items[1])
+        env.write('key', 1, time=times[4], item=items[0])
+        env.write('key', 1, time=times[5], item=items[0], item_secondary=items[1])
+        self.assertEqual(env.time('key'), times[0])
+        self.assertEqual(env.time('key', user=users[0]), times[1])
+        self.assertEqual(env.time('key', user=users[0], item=items[0]), times[2])
+        self.assertEqual(env.time('key', user=users[0], item=items[0], item_secondary=items[1]), times[3])
+        self.assertEqual(env.time('key', item=items[0]), times[4])
+        self.assertEqual(env.time('key', item=items[0], item_secondary=items[1]), times[5])
+        for i, t in zip(items[1:], times):
+            env.write('key', 2, item=items[0], item_secondary=i, time=t)
+        self.assertEquals(env.time_more_items('key', item=items[0], items=items[1:]), times[:9])
 
     def test_number_of_answers(self):
         env = self.generate_environment()
