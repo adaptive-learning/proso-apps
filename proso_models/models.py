@@ -89,7 +89,9 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
 
 class DatabaseEnvironment(CommonEnvironment):
 
-    time = None
+    def __init__(self, info_id=None):
+        self._time = None
+        self._info_id = info_id
 
     def process_answer(self, user, item, asked, answered, time, response_time, guess, **kwargs):
         answer = Answer(
@@ -152,7 +154,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_single(key, user, item, item_secondary, symmetric=symmetric)
-            if self.time is None:
+            if self._time is None:
                 cursor.execute(
                     'SELECT value FROM proso_models_variable WHERE ' + where,
                     where_params)
@@ -169,7 +171,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(key, items, user, item, symmetric=symmetric)
-            if self.time is None:
+            if self._time is None:
                 cursor.execute(
                     'SELECT item_primary_id, item_secondary_id, value FROM proso_models_variable WHERE '
                     + where,
@@ -217,6 +219,8 @@ class DatabaseEnvironment(CommonEnvironment):
             variable.value = value
             variable.audit = audit
             variable.permanent = permanent
+            if not permanent:
+                variable.info_id = self._info_id
             variable.updated = datetime.now() if time is None else time
             variable.save()
 
@@ -242,7 +246,7 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def number_of_answers(self, user=None, item=None):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False)
+            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
             cursor.execute(
                 'SELECT COUNT(id) FROM proso_models_answer WHERE '
                 + where, where_params)
@@ -250,7 +254,7 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def number_of_correct_answers(self, user=None, item=None):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False)
+            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
             cursor.execute(
                 'SELECT COUNT(id) FROM proso_models_answer WHERE item_asked_id = item_answered_id AND '
                 + where, where_params)
@@ -258,7 +262,7 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def number_of_first_answers(self, user=None, item=None):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False)
+            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
             cursor.execute(
                 'SELECT COUNT(1) FROM (SELECT 1 FROM proso_models_answer WHERE '
                 + where + ' GROUP BY user_id, item_id) AS t', where_params)
@@ -266,7 +270,7 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def last_answer_time(self, user=None, item=None):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False)
+            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
             cursor.execute(
                 'SELECT MAX(time) FROM proso_models_answer WHERE '
                 + where, where_params)
@@ -275,7 +279,7 @@ class DatabaseEnvironment(CommonEnvironment):
     @cache_environment_for_item(default=0)
     def number_of_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': items}, False)
+            where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
             cursor.execute(
                 'SELECT item_id, COUNT(id) FROM proso_models_answer WHERE '
                 + where + ' GROUP BY item_id' + ('' if user is None else ', user_id'),
@@ -286,7 +290,7 @@ class DatabaseEnvironment(CommonEnvironment):
     @cache_environment_for_item(default=0)
     def number_of_correct_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': items}, False)
+            where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
             cursor.execute(
                 'SELECT item_id, COUNT(id) FROM proso_models_answer WHERE item_asked_id = item_answered_id AND '
                 + where + ' GROUP BY item_id' + ('' if user is None else ', user_id'),
@@ -297,7 +301,7 @@ class DatabaseEnvironment(CommonEnvironment):
     @cache_environment_for_item(default=0)
     def number_of_first_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': items}, False)
+            where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
             cursor.execute(
                 'SELECT item_id, COUNT(1) FROM (SELECT user_id, item_id FROM proso_models_answer WHERE '
                 + where + ' GROUP BY user_id, item_id) AS t GROUP BY item_id' + ('' if user is None else ', user_id'),
@@ -309,7 +313,7 @@ class DatabaseEnvironment(CommonEnvironment):
     @cache_environment_for_item()
     def last_answer_time_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': items}, False)
+            where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
             cursor.execute(
                 'SELECT item_id, MAX(time) FROM proso_models_answer WHERE '
                 + where + ' GROUP BY item_id' + ('' if user is None else ', user_id'),
@@ -319,7 +323,7 @@ class DatabaseEnvironment(CommonEnvironment):
             return map(lambda i: fetched.get(i, None), items)
 
     def shift_time(self, new_time):
-        self.time = new_time
+        self._time = new_time
 
     def rolling_success(self, user, window_size=10):
         with closing(connection.cursor()) as cursor:
@@ -343,7 +347,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 'item_asked_id': item,
                 'item_answered_id': item_secondary,
                 'user_id': user
-            }, force_null=False)
+            }, force_null=False, for_answers=True)
             cursor.execute(
                 '''
                 SELECT
@@ -360,7 +364,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 'item_asked_id': item,
                 'item_answered_id': items,
                 'user_id': user
-            }, force_null=False)
+            }, force_null=False, for_answers=True)
             cursor.execute(
                 '''
                 SELECT
@@ -379,7 +383,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def export_audit():
         pass
 
-    def _where_single(self, key, user=None, item=None, item_secondary=None, force_null=True, symmetric=True, time_shift=True):
+    def _where_single(self, key, user=None, item=None, item_secondary=None, force_null=True, symmetric=True, time_shift=True, for_answers=False):
         if key is None:
             raise Exception('Key has to be specified')
         items = [item_secondary, item]
@@ -389,9 +393,9 @@ class DatabaseEnvironment(CommonEnvironment):
             'user_id': user,
             'item_primary_id': items[1],
             'item_secondary_id': items[0],
-            'key': key}, force_null=force_null, time_shift=time_shift)
+            'key': key}, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
 
-    def _where_more_items(self, key, items, user=None, item=None, force_null=True, symmetric=True, time_shift=True):
+    def _where_more_items(self, key, items, user=None, item=None, force_null=True, symmetric=True, time_shift=True, for_answers=False):
         if key is None:
             raise Exception('Key has to be specified')
         cond_secondary = {
@@ -401,7 +405,7 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_secondary_id': item
         }
         if item is None or all(map(lambda x: item <= x, items)) or not symmetric:
-            return self._where(cond_secondary, force_null=force_null, time_shift=time_shift)
+            return self._where(cond_secondary, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
         cond_primary = {
             'key': key,
             'user_id': user,
@@ -409,19 +413,19 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_secondary_id': items
         }
         if all(map(lambda x: item >= x, items)):
-            return self._where(cond_primary, force_null=force_null, time_shift=time_shift)
+            return self._where(cond_primary, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
         return self._where({
             'item is primary': cond_primary,
             'item is secondary': cond_secondary
-        }, force_null=force_null, time_shift=time_shift)
+        }, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
 
-    def _where(self, condition, force_null=True, top_most=True, time_shift=True):
+    def _where(self, condition, force_null=True, top_most=True, time_shift=True, for_answers=False):
         if isinstance(condition, tuple):
             result_cond, result_params = self._column_comparison(
                 condition[0], condition[1], force_null=force_null)
         elif isinstance(condition, dict):
             conds, params = zip(*map(
-                lambda x: self._where(x, force_null, top_most=False), condition.items()))
+                lambda x: self._where(x, force_null, top_most=False, for_answers=for_answers), condition.items()))
             params = [p for ps in params for p in ps]
             operator = ' AND '
             if any(map(lambda x: isinstance(x, dict), condition)):
@@ -429,9 +433,13 @@ class DatabaseEnvironment(CommonEnvironment):
             result_cond, result_params = operator.join(conds), params
         else:
             raise Exception("Unsupported type of condition:" + str(type(condition)))
-        if top_most and self.time is not None and time_shift:
-            result_cond = ('(%s) AND time < ?' % result_cond).replace('?', '%s')
-            result_params = result_params + [self.time.strftime('%Y-%m-%d %H:%M:%S')]
+        if top_most and not for_answers:
+            result_cond = ('(%s) AND (info_id = ? OR permanent)' % result_cond)
+            result_params = result_params + [self._info_id]
+        if top_most and self._time is not None and time_shift:
+            result_cond = ('(%s) AND time < ?' % result_cond)
+            result_params = result_params + [self._time.strftime('%Y-%m-%d %H:%M:%S')]
+        result_cond = result_cond.replace('?', '%s')
         return result_cond, result_params
 
     def _column_comparison(self, column, value, force_null=True):
@@ -465,6 +473,31 @@ class DatabaseEnvironment(CommonEnvironment):
 ################################################################################
 # Models
 ################################################################################
+
+class EnvironmentInfo(models.Model):
+
+    STATUS_DISABLED = 0
+    STATUS_LOADING = 1
+    STATUS_ENABLED = 2
+    STATUS_ACTIVE = 3
+
+    STATUS = (
+        (STATUS_DISABLED, 'disabled'),
+        (STATUS_LOADING, 'loading'),
+        (STATUS_ENABLED, 'enabled'),
+        (STATUS_ACTIVE, 'active'),
+    )
+
+    status = models.IntegerField(choices=STATUS, default=1)
+    revision = models.IntegerField()
+    config = models.ForeignKey(Config)
+    load_progress = models.IntegerField(default=0)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('config', 'revision')
+
 
 class Item(models.Model):
     pass
@@ -535,6 +568,7 @@ class Variable(models.Model):
     value = models.FloatField()
     audit = models.BooleanField(default=True)
     updated = models.DateTimeField(default=datetime.now)
+    info = models.ForeignKey(EnvironmentInfo, null=True, blank=True, default=None)
 
     def __str__(self):
         return str({
@@ -548,12 +582,13 @@ class Variable(models.Model):
 
     class Meta:
         app_label = 'proso_models'
-        unique_together = ('key', 'user', 'item_primary', 'item_secondary')
+        unique_together = ('info', 'key', 'user', 'item_primary', 'item_secondary')
         index_together = [
-            ['key', 'user'],
-            ['key', 'item_primary'],
-            ['key', 'user', 'item_primary'],
-            ['key', 'user', 'item_primary', 'item_secondary']
+            ['info', 'key'],
+            ['info', 'key', 'user'],
+            ['info', 'key', 'item_primary'],
+            ['info', 'key', 'user', 'item_primary'],
+            ['info', 'key', 'user', 'item_primary', 'item_secondary']
         ]
 
 
@@ -574,14 +609,16 @@ class Audit(models.Model):
     key = models.CharField(max_length=50)
     value = models.FloatField()
     time = models.DateTimeField(default=datetime.now)
+    info = models.ForeignKey(EnvironmentInfo, null=True, blank=True, default=None)
 
     class Meta:
         app_label = 'proso_models'
         index_together = [
-            ['key', 'user'],
-            ['key', 'item_primary'],
-            ['key', 'user', 'item_primary'],
-            ['key', 'user', 'item_primary', 'item_secondary']
+            ['info', 'key'],
+            ['info', 'key', 'user'],
+            ['info', 'key', 'item_primary'],
+            ['info', 'key', 'user', 'item_primary'],
+            ['info', 'key', 'user', 'item_primary', 'item_secondary']
         ]
 
 
