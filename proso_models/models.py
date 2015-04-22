@@ -18,6 +18,7 @@ from proso_common.models import Config
 import json
 from django.core.cache import cache
 from proso.django.cache import get_request_cache, is_cache_prepared
+from django.db import transaction
 
 
 ENVIRONMENT_INFO_CACHE_EXPIRATION = 30 * 60
@@ -81,33 +82,123 @@ def get_option_selector(item_selector):
 
 class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
 
-    def flush(self):
-        to_skip = [
-            self.NUMBER_OF_ANSWERS, self.NUMBER_OF_FIRST_ANSWERS,
-            self.LAST_ANSWER_TIME, self.LAST_CORRECTNESS, self.NUMBER_OF_CORRECT_ANSWERS,
-            self.CONFUSING_FACTOR
-        ]
+    DROP_KEYS = [
+        InMemoryEnvironment.NUMBER_OF_ANSWERS,
+        InMemoryEnvironment.NUMBER_OF_FIRST_ANSWERS,
+        InMemoryEnvironment.LAST_CORRECTNESS,
+        InMemoryEnvironment.NUMBER_OF_CORRECT_ANSWERS,
+        InMemoryEnvironment.CONFUSING_FACTOR
+    ]
+
+    def __init__(self, info):
+        # key -> user -> item_primary -> item_secondary -> [(time, value)]
+        InMemoryEnvironment.__init__(self)
+        self._prefetched = {}
+        self._info_id = info.id
+        self._to_delete = []
+
+    def prefetch(self, users, items):
+        if len(users) == 0 and len(items) == 0:
+            return
+        users = map(str, users)
+        items = map(str, items)
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(
+                '''
+                SELECT key, user_id, item_primary_id, item_secondary_id, updated, value, id
+                FROM proso_models_variable
+                WHERE
+                    (info_id = %s OR permanent)
+                AND
+                    (user_id IN (''' + ','.join(users) + ''') OR user_id is NULL)
+                AND
+                    (
+                        item_primary_id IS NULL
+                        OR
+                        item_primary_id IN (''' + ','.join(items) + ''')
+                        OR
+                        item_secondary_id IN (''' + ','.join(items) + ''')
+                    )
+                ''', [self._info_id])
+            for row in cursor:
+                self._prefetched[row[0], row[1], row[2], row[3]] = (row[4], row[5], row[6])
+
+    def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
+        prefetched = self._get_prefetched(key, user, item, item_secondary, symmetric)
+        if prefetched:
+            return prefetched[1]
+        else:
+            return InMemoryEnvironment.read(
+                self, key, user=user, item=item, item_secondary=item_secondary,
+                default=default, symmetric=symmetric
+            )
+
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False):
+        prefetched_key = self._prefetched_key(key, user, item, item_secondary, symmetric)
+        prefetched = self._prefetched.get(prefetched_key)
+        if prefetched is not None:
+            self._to_delete.append(prefetched[2])
+            del self._prefetched[prefetched_key]
+        InMemoryEnvironment.write(
+            self, key, value, user=user, item=item,
+            item_secondary=item_secondary, symmetric=symmetric
+        )
+
+    def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
+        prefetched = self._get_prefetched(key, user, item, item_secondary, symmetric)
+        if prefetched:
+            return prefetched[0]
+        else:
+            return InMemoryEnvironment.time(
+                self, key, user=user, item=item,
+                item_secondary=item_secondary, symmetric=symmetric
+            )
+
+    def flush(self, clean):
         filename_audit = os.path.join(settings.DATA_DIR, 'environment_flush_audit.csv')
         filename_variable = os.path.join(settings.DATA_DIR, 'environment_flush_variable.csv')
         with open(filename_audit, 'w') as file_audit:
             for (key, u, i_p, i_s, t, v) in self.export_audit():
-                if key in to_skip:
+                if key in self.DROP_KEYS:
                     continue
                 file_audit.write(
-                    ('%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, t.strftime('%Y-%m-%d %H:%M:%S'), v)).replace('None', ''))
+                    '%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, t.strftime('%Y-%m-%d %H:%M:%S'), v, self._info_id))
         with open(filename_variable, 'w') as file_variable:
             for (key, u, i_p, i_s, p, t, v) in self.export_values():
-                if key in to_skip:
-                    continue
                 file_variable.write(
-                    ('%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t, p)).replace('None', ''))
-        print 'BEGIN;'
-        print 'SET CONSTRAINTS ALL DEFERRED;'
-        print "TRUNCATE TABLE proso_models_audit;"
-        print "TRUNCATE TABLE proso_models_variable;"
-        print "\copy proso_models_audit (key, user_id, item_primary_id, item_secondary_id, time, value) FROM '%s' WITH (FORMAT csv);" % filename_audit
-        print "\copy proso_models_variable (key, user_id, item_primary_id, item_secondary_id, value, audit, updated, permanent) FROM '%s' WITH (FORMAT csv);" % filename_variable
-        print 'COMMIT;'
+                    '%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t, p, self._info_id))
+        with transaction.atomic():
+            with closing(connection.cursor()) as cursor:
+                cursor.execute('SET CONSTRAINTS ALL DEFERRED')
+                if self._to_delete:
+                    cursor.execute('DELETE FROM proso_models_variable WHERE id IN (' + ','.join(map(str, self._to_delete)) + ')')
+                if clean:
+                    cursor.execute('DELETE FROM proso_models_variable WHERE key IN (' + ','.join(['%s' for k in self.DROP_KEYS]) + ') AND info_id = %s', self.DROP_KEYS + [self._info_id])
+                with open(filename_audit, 'r') as file_audit:
+                    cursor.copy_from(
+                        file_audit,
+                        'proso_models_audit',
+                        sep=',',
+                        null='None',
+                        columns=['key', 'user_id', 'item_primary_id', 'item_secondary_id', 'time', 'value', 'info_id']
+                    )
+                with open(filename_variable, 'r') as file_variable:
+                    cursor.copy_from(
+                        file_variable,
+                        'proso_models_variable',
+                        sep=',',
+                        null='None',
+                        columns=['key', 'user_id', 'item_primary_id', 'item_secondary_id', 'value', 'audit', 'updated', 'permanent', 'info_id']
+                    )
+
+    def _get_prefetched(self, key, user, item, item_secondary, symmetric):
+        return self._prefetched.get(self._prefetched_key(key, user, item, item_secondary, symmetric))
+
+    def _prefetched_key(self, key, user, item, item_secondary, symmetric):
+        items = [item_secondary, item]
+        if symmetric:
+            items.sort()
+        return (key, user, items[1], items[0])
 
 
 class DatabaseEnvironment(CommonEnvironment):
