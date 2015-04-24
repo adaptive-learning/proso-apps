@@ -30,14 +30,11 @@
 
 {% block head_block %}
     <script src="{% static "proso_common/angular/angular.min.js" %}"></script>
+    <script src="{% static "proso_common/angular/angular-cookies.min.js" %}"></script>
     <script src="{% static "proso_common/js/config_service.js" %}"></script>
     <script src="{% static "proso_flashcards/js/practice_service.js" %}"></script>
     <script>
-        var app = angular.module('proso', ["proso_apps.services"]);
-        app.config(function($httpProvider) {
-            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        });
+        var app = angular.module('proso', ["proso_apps.services", "ngCookies"]);
         var config_loaded;
         app.run(function(configService){
             configService.process_config({{ config_json | safe }});
