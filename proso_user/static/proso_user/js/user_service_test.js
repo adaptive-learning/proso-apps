@@ -173,7 +173,7 @@ describe("User Service", function() {
         expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
         expect($userService.status.loading).toBeFalsy();
-        expect($userService.user.session).toBe("mySession")
+        expect($userService.user.session).toBe("mySession");
     });
 
     it("update profile", function(){

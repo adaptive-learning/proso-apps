@@ -10,7 +10,7 @@ var configServiceMock = function(){
     }}}};
 
     self.get_config = function(app_name, key, default_value){
-        if (config == null){
+        if (config === null){
             console.error("Config not loaded");
             return;
         }
@@ -19,7 +19,7 @@ var configServiceMock = function(){
         var path =  key.split(".");
         for (var i=0; i < path.length; i++){
             variable = variable[path[i]];
-            if (typeof variable === 'undefined') return default_value;
+            if (typeof variable === 'undefined'){ return default_value; }
         }
         return variable;
     };
@@ -255,8 +255,9 @@ describe("Practice Service - flashcards", function() {
             var fc = {
                 "context_id": id
             };
-            if (!without_contexts)
+            if (!without_contexts) {
                 fc.context = {id: id, content: 42};
+            }
             flashcards.push(fc);
         }
         return flashcards;
@@ -270,7 +271,7 @@ describe("Practice Service - flashcards", function() {
         $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
 
         var fc;
-        $practiceService.get_flashcard().then(function(d){fc = d});
+        $practiceService.get_flashcard().then(function(d){fc = d;});
         $httpBackend.flush();
         $timeout.flush();
 
@@ -285,7 +286,7 @@ describe("Practice Service - flashcards", function() {
         $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
 
         var fc;
-        $practiceService.get_flashcard().then(function(d){fc = d});
+        $practiceService.get_flashcard().then(function(d){fc = d;});
         $httpBackend.flush();
         $timeout.flush();
 
@@ -302,12 +303,12 @@ describe("Practice Service - flashcards", function() {
         $httpBackend.expectGET("/flashcards/context/2").respond({data: {id: 2, content: 42}});
 
         var fc;
-        $practiceService.get_flashcard().then(function(d){fc = d});
+        $practiceService.get_flashcard().then(function(d){fc = d;});
         $httpBackend.flush();
         $timeout.flush();
         expect(fc.context.id).toBe(fc.context_id);
 
-        $practiceService.get_flashcard().then(function(d){fc = d});
+        $practiceService.get_flashcard().then(function(d){fc = d;});
         $timeout.flush();
         expect(fc.context.id).toBe(fc.context_id);
     });
@@ -320,12 +321,12 @@ describe("Practice Service - flashcards", function() {
         $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
 
         var fc, fc2;
-        $practiceService.get_flashcard().then(function(d){fc = d});
+        $practiceService.get_flashcard().then(function(d){fc = d;});
         $httpBackend.flush();
         $timeout.flush();
         expect(fc.context.id).toBe(fc.context_id);
 
-        $practiceService.get_flashcard().then(function(d){fc2 = d});
+        $practiceService.get_flashcard().then(function(d){fc2 = d;});
         $timeout.flush();
         expect(fc.context.id).toBe(fc.context_id);
 
@@ -433,7 +434,7 @@ describe("Practice Service - answers", function() {
         $practiceService.init_set("test");
         for (var i = 1; i < 5; i++){
             $practiceService.get_flashcard();
-            if (i == 1){
+            if (i === 1){
                 $httpBackend.flush();
             }
             $timeout.flush();

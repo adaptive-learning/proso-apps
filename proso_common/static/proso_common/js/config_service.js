@@ -4,7 +4,7 @@ m.service("configService", ["$http", function($http){
     var config = null;
 
     self.get_config = function(app_name, key, default_value){
-        if (config == null){
+        if (config === null){
             console.error("Config not loaded");
             return;
         }
@@ -12,17 +12,17 @@ m.service("configService", ["$http", function($http){
         var variable = config[app_name];
         var path =  key.split(".");
         for (var i=0; i < path.length; i++){
-            if (typeof variable === 'undefined') return default_value;
+            if (typeof variable === 'undefined'){ return default_value;}
             variable = variable[path[i]];
         }
-        if (typeof variable === 'undefined') return default_value;
+        if (typeof variable === 'undefined'){ return default_value;}
         return variable;
     };
 
     self.load_config = function(){
         return $http.get("/common/config/")
             .success(function(response){
-                self.process_config(response.data)
+                self.process_config(response.data);
             })
             .error(function(){
                 console.error("Problem while loading config from server");
