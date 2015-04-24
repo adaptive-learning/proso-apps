@@ -58,6 +58,7 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
     // add answer to queue and upload queued answers if necessary
     self.save_answer = function(answer, farce_save){
         if (answer) {
+            answer.time = Date.now();
             answer_queue.push(answer);
             summary.answers.push(answer);
             summary.count++;
@@ -67,6 +68,10 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
 
         if (config.save_answer_immediately || farce_save || current >= config.set_length) {
             if (answer_queue.length > 0) {
+                answer_queue.forEach(function(answer){
+                    answer.time_gap = Math.round((Date.now() - answer.time) / 1000);
+                    delete answer.time;
+                });
                 $http.defaults.headers.post['X-CSRFToken'] = $cookies.csrftoken;
                 $http.post("/flashcards/answer/", {answers: answer_queue})
                     .error(function (response) {

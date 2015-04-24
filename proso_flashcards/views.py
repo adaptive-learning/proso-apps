@@ -1,6 +1,7 @@
 import json
 import logging
 from time import time as time_lib
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -90,6 +91,7 @@ def answer(request):
         "direction": "t2d" or "d2t",    -- direction of question: from term to description or conversely
         "option_ids": [ints],           -- optional - list of ids of terms, which were alternatives to correct one
         "meta": "str"                   -- optional information
+        "time_gap": int                 -- waiting time in frontend in seconds
       }
     """
 
@@ -234,6 +236,8 @@ def _save_answer(request, answers):
             direction=direction,
             meta=a["meta"] if "meta" in a else None,
         )
+        if "time_gap" in a:
+            db_answer.time = datetime.now() - timedelta(seconds=a["time_gap"])
         db_answer.save()
 
         if "option_ids" in a:

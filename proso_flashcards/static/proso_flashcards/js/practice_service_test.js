@@ -454,12 +454,12 @@ describe("Practice Service - answers", function() {
         $practiceService.get_flashcard();
         $httpBackend.flush();
 
-        $httpBackend.expectPOST("/flashcards/answer/", {"answers":[{"flashcard_id":0,"flashcard_answered_id":42,"response_time":42000,"direction":"xxxs","meta":"moje meta"}]}).respond(200, "OK");
+        $httpBackend.expectPOST("/flashcards/answer/", {"answers":[{"flashcard_id":0,"flashcard_answered_id":42,"response_time":42000,"direction":"xxxs","meta":"moje meta", time_gap:0}]}).respond(200, "OK");
         $practiceService.save_answer_to_current_fc(42, 42000, "moje meta");
         $httpBackend.flush();
 
         $practiceService.get_flashcard();
-        $httpBackend.expectPOST("/flashcards/answer/", {"answers":[{"flashcard_id":1,"flashcard_answered_id":null,"response_time":12,"direction":"xxxs","meta":"moje meta"}]}).respond(200, "OK");
+        $httpBackend.expectPOST("/flashcards/answer/", {"answers":[{"flashcard_id":1,"flashcard_answered_id":null,"response_time":12,"direction":"xxxs","meta":"moje meta", time_gap:0}]}).respond(200, "OK");
         $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
         $httpBackend.flush();
 
@@ -552,4 +552,28 @@ describe("Practice Service - answers", function() {
         expect($practiceService.get_summary().correct).toBe(1);
      });
 
+    it("create good time gaps", function() {
+        config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 2;
+        $practiceService.init_set("test");
+
+        $practiceService.get_flashcard();
+        $httpBackend.flush();
+
+        $practiceService.save_answer_to_current_fc(42, 42000, "moje meta");
+
+        $practiceService.get_flashcard();
+        var d = Date.now() + 3000;
+        var x = spyOn(Date, 'now');
+        x.and.callFake(function() { return d; });
+        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+
+        $httpBackend.expectPOST("/flashcards/answer/", {"answers":[
+            {"flashcard_id":0,"flashcard_answered_id":42,"response_time":42000,"direction":"xxxs","meta":"moje meta", time_gap:3},
+            {"flashcard_id":1,"flashcard_answered_id":null,"response_time":12,"direction":"xxxs","meta":"moje meta", time_gap:0}
+        ]}).respond(200, "OK");
+        $httpBackend.flush();
+
+        expect($practiceService.get_summary().correct).toBe(0);
+
+    });
 });
