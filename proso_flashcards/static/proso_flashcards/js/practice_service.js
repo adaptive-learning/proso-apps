@@ -196,6 +196,9 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
                 }
             })
             .error(function (response) {
+                if (deferred_fc !== null){
+                    deferred_fc.reject("Something went wrong while loading flashcards from backend.");
+                }
                 console.error("Something went wrong while loading flashcards from backend.");
             });
 
