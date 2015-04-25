@@ -23,6 +23,7 @@ setup(
         'proso_common',
         'proso_common.management',
         'proso_common.management.commands',
+        'proso_common.migrations',
         'proso_feedback',
         'proso_models',
         'proso_models.management',
