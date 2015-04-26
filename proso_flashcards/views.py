@@ -121,9 +121,9 @@ def practice(request):
     GET parameters:
       categories:
       contexts:
-        list of ids (int) of contexts to which flashcards selection will be restricted
+        list of ids (int) or identifiers (str) of contexts to which flashcards selection will be restricted
       categories:
-        list of ids (int) of categories to which flashcards selection will be restricted
+        list of ids (int) or identifiers (str) of categories to which flashcards selection will be restricted
       types:
         list of names (str) of types of terms to which flashcards selection will be restricted
       language:

@@ -64,10 +64,13 @@ class FlashcardManager(models.Manager):
     def candidates(self, categories, contexts, types, avoid):
         qs = self.filter(~Q(id__in=avoid))
         if isinstance(contexts, list) and len(contexts) > 0:
-            qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id: Q(context_id=id), contexts)))
+            qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
+                    Q(context_id=id) if isinstance(id, int) else Q(context_identifier=id), contexts)))
         if isinstance(categories, list) and len(categories) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
-                        Q(term__parents__id=id) | Q(categories__id=id) | Q(context__categories__id=id), categories)))
+                Q(term__parents__id=id) | Q(categories__id=id) | Q(context__categories__id=id) if isinstance(id, int)
+                else Q(term__parents__identifier=id) | Q(categories__identifier=id) |
+                Q(context__categories__identifier=id), categories)))
         if isinstance(types, list) and len(types) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda type: Q(term__type=type), types)))
         return qs
