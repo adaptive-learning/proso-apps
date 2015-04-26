@@ -69,7 +69,8 @@ class Command(BaseCommand):
                     item_mapping[db_category.identifier] = db_category.item_id
                 db_categories[db_category.identifier + db_category.lang] = db_category
 
-        for category in data:
+        print "\nBuilding dependencies"
+        for category in progress.bar(data, every=max(1, len(data) / 100)):
             for lang in [k[-2:] for k in category.keys() if re.match(r'^name-\w\w$', k)]:
                 db_category = db_categories[category["id"] + lang]
                 db_category.parents.clear()
@@ -126,7 +127,8 @@ class Command(BaseCommand):
                 db_contexts[db_context.identifier + db_context.lang] = db_context
 
         categories = self._load_categories()
-        for context in data:
+        print "\nBuilding dependencies"
+        for context in progress.bar(data, every=max(1, len(data) / 100)):
             for lang in [k[-2:] for k in context.keys() if re.match(r'^name-\w\w$', k)]:
                 db_context = db_contexts[context["id"] + lang]
                 db_context.categories.clear()
@@ -176,7 +178,8 @@ class Command(BaseCommand):
                 db_terms[db_term.identifier + db_term.lang] = db_term
 
         categories = self._load_categories()
-        for term in data:
+        print "\nBuilding dependencies"
+        for term in progress.bar(data, every=max(1, len(data) / 100)):
             for lang in [k[-2:] for k in term.keys() if re.match(r'^name-\w\w$', k)]:
                 db_term = db_terms[term["id"] + lang]
                 db_term.parents.clear()
@@ -228,7 +231,8 @@ class Command(BaseCommand):
                 db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
 
         categories = self._load_categories()
-        for flashcard in data:
+        print "\nBuilding dependencies"
+        for flashcard in progress.bar(data, every=max(1, len(data) / 100)):
             for lang in Category.objects.all().values_list("lang", flat=True).distinct():
                 db_flashcard = db_flashcards[flashcard["id"] + lang]
                 db_flashcard.categories.clear()
