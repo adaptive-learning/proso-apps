@@ -60,7 +60,7 @@ describe("User Service", function() {
     it("logout", function(){
         $httpBackend.expectGET("/user/profile/").respond(200, {data: test_user_profile});
         $httpBackend.expectPOST("/user/session/").respond(200);
-        $userService.load_user();
+        $userService.loadUser();
         $httpBackend.flush();
         expect($userService.user).not.toEqual({});
 
@@ -88,7 +88,7 @@ describe("User Service", function() {
     it("sign up by params", function(){
         $httpBackend.expectPOST("/user/signup/", test_signup_data).respond(200, {data: test_user_profile});
         $httpBackend.expectPOST("/user/session/").respond(200);
-        $userService.signup_params(test_signup_data.username, test_signup_data.email, test_signup_data.password,
+        $userService.signupParams(test_signup_data.username, test_signup_data.email, test_signup_data.password,
             test_signup_data.password_check, test_signup_data.first_name, test_signup_data.last_name);
         expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
@@ -111,7 +111,7 @@ describe("User Service", function() {
     it("load user profile", function(){
         $httpBackend.expectGET("/user/profile/").respond(200, {data: test_user_profile});
         $httpBackend.expectPOST("/user/session/").respond(200);
-        $userService.load_user();
+        $userService.loadUser();
         expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
         expect($userService.status.loading).toBeFalsy();
@@ -121,7 +121,7 @@ describe("User Service", function() {
 
     it("fail load user profile", function(){
         $httpBackend.expectGET("/user/profile/").respond(404);
-        $userService.load_user();
+        $userService.loadUser();
         expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
         expect($userService.status.loading).toBeFalsy();
@@ -131,7 +131,7 @@ describe("User Service", function() {
 
     it("process user", function(){
         $httpBackend.expectPOST("/user/session/").respond(200);
-        $userService.process_user(test_user_profile);
+        $userService.processUser(test_user_profile);
         $httpBackend.flush();
         expect($userService.user).toEqual(jasmine.objectContaining(test_user));
         expect($userService.status.logged).toBeTruthy();
@@ -140,7 +140,7 @@ describe("User Service", function() {
     it("process user should not change object", function(){
         var obj = angular.copy(test_user_profile);
         $httpBackend.expectPOST("/user/session/").respond(200);
-        $userService.process_user(obj);
+        $userService.processUser(obj);
         $httpBackend.flush();
         expect(obj).toEqual(test_user_profile);
     });
@@ -169,7 +169,7 @@ describe("User Service", function() {
 
     it("load session", function(){
         $httpBackend.expectGET("/user/session/").respond(200, {data: "mySession"});
-        $userService.load_session();
+        $userService.loadSession();
         expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
         expect($userService.status.loading).toBeFalsy();
@@ -179,7 +179,7 @@ describe("User Service", function() {
     it("update profile", function(){
         $httpBackend.expectPOST("/user/profile/", {data: "profile data"}).respond(200, {data: test_user_profile});
         $httpBackend.expectPOST("/user/session/").respond(200);
-        $userService.update_profile({data: "profile data"});
+        $userService.updateProfile({data: "profile data"});
         expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
         expect($userService.status.loading).toBeFalsy();
@@ -190,7 +190,7 @@ describe("User Service", function() {
 
     it("fail update profile", function(){
         $httpBackend.expectPOST("/user/profile/", {data: "profile data"}).respond(400, error);
-        $userService.update_profile({data: "profile data"});
+        $userService.updateProfile({data: "profile data"});
         expect($userService.status.loading).toBeTruthy();
         $httpBackend.flush();
         expect($userService.status.loading).toBeFalsy();
@@ -200,7 +200,7 @@ describe("User Service", function() {
 
     it("update session", function(){
         $httpBackend.expectPOST("/user/session/").respond(200);
-        $userService.update_session();
+        $userService.updateSession();
         $httpBackend.flush();
         expect(true).toBe(true);
     });
@@ -208,18 +208,18 @@ describe("User Service", function() {
     it("not update session twice", function(){
         $httpBackend.expectGET("/user/profile/").respond(200, {data: test_user_profile});
         $httpBackend.expectPOST("/user/session/").respond(200);
-        $userService.load_user();
+        $userService.loadUser();
         $httpBackend.flush();
 
         $httpBackend.expectGET("/user/profile/").respond(200, {data: test_user_profile});
-        $userService.load_user();
+        $userService.loadUser();
         $httpBackend.flush();
         expect(true).toBe(true);
     });
 
     it("not update session when not logged in", function(){
         $httpBackend.expectGET("/user/profile/").respond(404);
-        $userService.load_user();
+        $userService.loadUser();
         $httpBackend.flush();
         expect(true).toBe(true);
     });

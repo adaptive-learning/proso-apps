@@ -3,14 +3,14 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
     var self = this;
 
     var queue = [];
-    var deferred_fc = null;
-    var promise_resolved_tmp = false;
-    var current_fc = null;
-    var answer_queue = [];
+    var deferredFC = null;
+    var promiseResolvedTmp = false;
+    var currentFC = null;
+    var answerQueue = [];
     
     var config = {};
     var current = 0;
-    var set_id = 0;
+    var setId = 0;
     var summary = {
         flashcards: [],
         answers: [],
@@ -21,23 +21,23 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
     var contexts = {};
 
     // called on create and set reset
-    self.init_set = function(config_name){
-        var key = "practice." + config_name + ".";
-        config.set_length = configService.get_config("proso_flashcards", key + "set_length", 10);
-        config.fc_queue_size_max = configService.get_config("proso_flashcards", key + "fc_queue_size_max", 1);
-        config.fc_queue_size_min = configService.get_config("proso_flashcards", key + "fc_queue_size_min", 1);
-        config.save_answer_immediately = configService.get_config("proso_flashcards", key + "save_answer_immediately", false);
-        config.cache_context = configService.get_config("proso_flashcards", key + "cache_context", false);
+    self.initSet = function(configName){
+        var key = "practice." + configName + ".";
+        config.set_length = configService.getConfig("proso_flashcards", key + "set_length", 10);
+        config.fc_queue_size_max = configService.getConfig("proso_flashcards", key + "fc_queue_size_max", 1);
+        config.fc_queue_size_min = configService.getConfig("proso_flashcards", key + "fc_queue_size_min", 1);
+        config.save_answer_immediately = configService.getConfig("proso_flashcards", key + "save_answer_immediately", false);
+        config.cache_context = configService.getConfig("proso_flashcards", key + "cache_context", false);
 
-        self.set_filter({});
+        self.setFilter({});
         current = 0;
-        self.flush_answer_queue();
-        self.clear_queue();
-        deferred_fc = null;
-        set_id++;
+        self.flushAnswerQueue();
+        self.clearQueue();
+        deferredFC = null;
+        setId++;
     };
 
-    self.set_filter = function(filter){
+    self.setFilter = function(filter){
         config.filter = {
             contexts: [],
             categories: [],
@@ -47,19 +47,19 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
         angular.extend(config.filter, filter);
     };
 
-    self.get_current = function(){
+    self.getCurrent = function(){
         return current;
     };
 
-    self.get_config = function(){
+    self.getConfig = function(){
         return angular.copy(config);
     };
 
     // add answer to queue and upload queued answers if necessary
-    self.save_answer = function(answer, farce_save){
+    self.saveAnswer = function(answer, farceSave){
         if (answer) {
             answer.time = Date.now();
-            answer_queue.push(answer);
+            answerQueue.push(answer);
             summary.answers.push(answer);
             summary.count++;
             if (answer.flashcard_id === answer.flashcard_answered_id) {
@@ -67,95 +67,95 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
             }
         }
 
-        if (config.save_answer_immediately || farce_save || current >= config.set_length) {
-            if (answer_queue.length > 0) {
-                answer_queue.forEach(function(answer){
+        if (config.save_answer_immediately || farceSave || current >= config.set_length) {
+            if (answerQueue.length > 0) {
+                answerQueue.forEach(function(answer){
                     answer.time_gap = Math.round((Date.now() - answer.time) / 1000);
                     delete answer.time;
                 });
                 $http.defaults.headers.post['X-CSRFToken'] = $cookies.csrftoken;
-                $http.post("/flashcards/answer/", {answers: answer_queue})
+                $http.post("/flashcards/answer/", {answers: answerQueue})
                     .error(function (response) {
                         console.error("Problem while uploading answer", response);
                     });
-                answer_queue = [];
+                answerQueue = [];
             }
         }
     };
 
-    self.flush_answer_queue = function(){
-        self.save_answer(null, true);
+    self.flushAnswerQueue = function(){
+        self.saveAnswer(null, true);
     };
 
     // build answer from current FC and save
-    self.save_answer_to_current_fc = function(answered_fc_id, response_time, meta){
-        if (!current_fc) {
+    self.saveAnswerToCurrentFC = function(answeredFCId, responseTime, meta){
+        if (!currentFC) {
             console.error("There is no current flashcard");
             return;
         }
         var answer = {
-            flashcard_id: current_fc.id,
-            flashcard_answered_id: answered_fc_id,
-            response_time: response_time,
-            direction: current_fc.direction
+            flashcard_id: currentFC.id,
+            flashcard_answered_id: answeredFCId,
+            response_time: responseTime,
+            direction: currentFC.direction
         };
         if (meta) {
             answer.meta = meta;
         }
-        if (current_fc.options){
+        if (currentFC.options){
             answer.option_ids = [];
-            current_fc.options.forEach(function(o){
-                if (o.id !== current_fc.id) {
+            currentFC.options.forEach(function(o){
+                if (o.id !== currentFC.id) {
                     answer.option_ids.push(o.id);
                 }
             });
         }
-        self.save_answer(answer);
+        self.saveAnswer(answer);
     };
 
     // return promise of flashcard
-    self.get_flashcard = function(){
-        if(deferred_fc){
+    self.getFlashcard = function(){
+        if(deferredFC){
             return $q(function(resolve, reject){
                 reject("Already one flashcard promised");
             });
         }
-        deferred_fc  = $q.defer();
-        promise_resolved_tmp = false;
-        _resolve_promise();
-        deferred_fc.promise.then(function(){ deferred_fc = null;}, function(){ deferred_fc = null;});
-        return deferred_fc.promise;
+        deferredFC  = $q.defer();
+        promiseResolvedTmp = false;
+        _resolvePromise();
+        deferredFC.promise.then(function(){ deferredFC = null;}, function(){ deferredFC = null;});
+        return deferredFC.promise;
     };
 
-    self.clear_queue = function(){
+    self.clearQueue = function(){
         queue = [];
     };
 
     // preload flashcards
-    self.preload_flashcards = function(){
-        _load_flashcards();
+    self.preloadFlashcards = function(){
+        _loadFlashcards();
     };
 
-    self.get_fc_queue = function(){
+    self.getFCQueue = function(){
         return queue;
     };
 
-    self.get_answer_queue = function(){
-        return answer_queue;
+    self.getAnswerQueue = function(){
+        return answerQueue;
     };
 
-    self.get_summary = function(){
+    self.getSummary = function(){
         return summary;
     };
 
 
-    var _load_flashcards = function(){
+    var _loadFlashcards = function(){
         if (queue.length >= config.fc_queue_size_min) { return; }                                       // if there are some FC queued
             config.filter.limit  = config.fc_queue_size_max - queue.length;
-        if (deferred_fc && !promise_resolved_tmp) { config.filter.limit ++; }                  // if we promised one flashcard
+        if (deferredFC && !promiseResolvedTmp) { config.filter.limit ++; }                  // if we promised one flashcard
         config.filter.limit = Math.min(config.filter.limit, config.set_length - current - queue.length);  // check size of set
         if (config.filter.limit === 0) {return;}                         // nothing to do
-        config.filter.avoid = current_fc ? [current_fc.id] : [];      // avoid current FC
+        config.filter.avoid = currentFC ? [currentFC.id] : [];      // avoid current FC
         queue.forEach(function(fc){
             config.filter.avoid.push(fc.id);
         });
@@ -173,38 +173,38 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
         }
 
         var request;
-        if (answer_queue.length === 0) {
+        if (answerQueue.length === 0) {
             request = $http.get("/flashcards/practice/", {params: filter});
         }else{
             $http.defaults.headers.post['X-CSRFToken'] = $cookies.csrftoken;
-            request = $http.post("/flashcards/practice/", {answers: answer_queue}, {params: filter});
-            answer_queue = [];
+            request = $http.post("/flashcards/practice/", {answers: answerQueue}, {params: filter});
+            answerQueue = [];
         }
-        var request_in_set = set_id;
+        var request_in_set = setId;
         request
             .success(function(response){
-                if (request_in_set !== set_id) {
+                if (request_in_set !== setId) {
                     return;
                 }
                 queue = queue.concat(response.data.flashcards);
-                _load_contexts();
+                _loadContexts();
                 if (queue.length > 0) {
-                    _resolve_promise();
+                    _resolvePromise();
                 }
                 else{
                     console.error("No Flashcards to practice");
                 }
             })
             .error(function (response) {
-                if (deferred_fc !== null){
-                    deferred_fc.reject("Something went wrong while loading flashcards from backend.");
+                if (deferredFC !== null){
+                    deferredFC.reject("Something went wrong while loading flashcards from backend.");
                 }
                 console.error("Something went wrong while loading flashcards from backend.");
             });
 
     };
 
-    var _load_contexts = function(){
+    var _loadContexts = function(){
         if (config.cache_context){
             queue.forEach(function(fc){
                 if (fc.context_id in contexts){
@@ -216,7 +216,7 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
                     $http.get("/flashcards/context/" + fc.context_id)
                         .success(function(response){
                             contexts[fc.context_id] = response.data;
-                            _resolve_promise();
+                            _resolvePromise();
                         }).error(function(){
                             delete contexts[fc.context_id];
                             console.error("Error while loading context from backend");
@@ -226,12 +226,12 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
         }
     };
 
-    var _resolve_promise = function(){
-        if (deferred_fc === null){
+    var _resolvePromise = function(){
+        if (deferredFC === null){
             return;
         }
         if (config.set_length === current){
-            deferred_fc.reject("Set was completed");
+            deferredFC.reject("Set was completed");
             return;
         }
         if (queue.length > 0) {
@@ -242,12 +242,12 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
                     return;
                 }
             }
-            current_fc = queue.shift();
+            currentFC = queue.shift();
             current++;
-            promise_resolved_tmp = true;
-            summary.flashcards.push(current_fc);
-            deferred_fc.resolve(current_fc);
+            promiseResolvedTmp = true;
+            summary.flashcards.push(currentFC);
+            deferredFC.resolve(currentFC);
         }
-        _load_flashcards();
+        _loadFlashcards();
     };
 }]);

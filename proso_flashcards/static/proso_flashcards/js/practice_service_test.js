@@ -9,7 +9,7 @@ var configServiceMock = function(){
         "cache_context": false
     }}}};
 
-    self.get_config = function(app_name, key, default_value){
+    self.getConfig = function(app_name, key, default_value){
         if (config === null){
             console.error("Config not loaded");
             return;
@@ -52,7 +52,7 @@ describe("Practice Service - flashcards", function() {
             $httpBackend.whenGET(new RegExp("\/flashcards\/practice\/?.*limit="+limit+"&.*"))
                 .respond(200, {data: {flashcards: generate_flashcards(limit)}});
         }
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
     });
 
     afterEach(function() {
@@ -62,19 +62,19 @@ describe("Practice Service - flashcards", function() {
 
 
     it("should provide interface", function(){
-        expect($practiceService.get_current).toBeDefined();
-        expect($practiceService.init_set).toBeDefined();
-        expect($practiceService.set_filter).toBeDefined();
-        expect($practiceService.save_answer).toBeDefined();
-        expect($practiceService.save_answer_to_current_fc).toBeDefined();
-        expect($practiceService.flush_answer_queue).toBeDefined();
-        expect($practiceService.get_flashcard).toBeDefined();
-        expect($practiceService.get_summary).toBeDefined();
+        expect($practiceService.getCurrent).toBeDefined();
+        expect($practiceService.initSet).toBeDefined();
+        expect($practiceService.setFilter).toBeDefined();
+        expect($practiceService.saveAnswer).toBeDefined();
+        expect($practiceService.saveAnswerToCurrentFC).toBeDefined();
+        expect($practiceService.flushAnswerQueue).toBeDefined();
+        expect($practiceService.getFlashcard).toBeDefined();
+        expect($practiceService.getSummary).toBeDefined();
     });
 
     it("getting first flashcard", function(){
 
-        $practiceService.get_flashcard().then(function(flashcard){
+        $practiceService.getFlashcard().then(function(flashcard){
             expect(flashcard).toBe(0);
         });
         $httpBackend.flush();
@@ -83,21 +83,21 @@ describe("Practice Service - flashcards", function() {
     it("fc_queue_size_max should change limit of loaded FC", function(){
         $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*limit=2.*"))
                 .respond(200, {data: {flashcards: generate_flashcards(2)}});
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $httpBackend.flush();
 
         config.proso_flashcards.practice.test.fc_queue_size_max = 5;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
         $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*limit=6.*"))
                 .respond(200, {data: {flashcards: generate_flashcards(6)}});
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $httpBackend.flush();
 
         config.proso_flashcards.practice.test.set_length = config.proso_flashcards.practice.test.fc_queue_size_max = 10;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
         $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*limit=10.*"))
                 .respond(200, {data: {flashcards: generate_flashcards(10)}});
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $httpBackend.flush();
 
         expect(true).toBe(true);
@@ -107,26 +107,26 @@ describe("Practice Service - flashcards", function() {
         var handler = jasmine.createSpy('success');
         config.proso_flashcards.practice.test.fc_queue_size_max = 4;
         config.proso_flashcards.practice.test.set_length = 5;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
 
-        $practiceService.get_flashcard().then(handler);
+        $practiceService.getFlashcard().then(handler);
         $httpBackend.flush();
         $timeout.flush();
         expect(handler).toHaveBeenCalledWith(0);
 
-        $practiceService.get_flashcard().then(handler);
+        $practiceService.getFlashcard().then(handler);
         $timeout.flush();
         expect(handler).toHaveBeenCalledWith(1);
 
-        $practiceService.get_flashcard().then(handler);
+        $practiceService.getFlashcard().then(handler);
         $timeout.flush();
         expect(handler).toHaveBeenCalledWith(2);
 
-        $practiceService.get_flashcard().then(handler);
+        $practiceService.getFlashcard().then(handler);
         $timeout.flush();
         expect(handler).toHaveBeenCalledWith(3);
 
-        $practiceService.get_flashcard().then(handler);
+        $practiceService.getFlashcard().then(handler);
         $timeout.flush();
         expect(handler).toHaveBeenCalledWith(4);
     });
@@ -136,8 +136,8 @@ describe("Practice Service - flashcards", function() {
         var handler2 = jasmine.createSpy('error');
         $practiceService.fc_queue_size_max = 0;
 
-        $practiceService.get_flashcard().then(handler);
-        $practiceService.get_flashcard().then(handler, handler2);
+        $practiceService.getFlashcard().then(handler);
+        $practiceService.getFlashcard().then(handler, handler2);
         $timeout.flush();
         $httpBackend.flush();
         expect(handler).toHaveBeenCalledWith(0);
@@ -151,23 +151,23 @@ describe("Practice Service - flashcards", function() {
         var handler2 = jasmine.createSpy('error');
         config.proso_flashcards.practice.test.fc_queue_size_max = 10;
         config.proso_flashcards.practice.test.set_length = 3;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
 
-        $practiceService.get_flashcard().then(handler, handler2);
+        $practiceService.getFlashcard().then(handler, handler2);
         $httpBackend.flush();
         $timeout.flush();
         expect(handler).toHaveBeenCalledWith(0);
 
-        $practiceService.get_flashcard().then(handler, handler2);
+        $practiceService.getFlashcard().then(handler, handler2);
         $timeout.flush();
         expect(handler).toHaveBeenCalledWith(1);
 
-        $practiceService.get_flashcard().then(handler, handler2);
+        $practiceService.getFlashcard().then(handler, handler2);
         $timeout.flush();
         expect(handler).toHaveBeenCalledWith(2);
 
         expect(handler2).not.toHaveBeenCalled();
-        $practiceService.get_flashcard().then(handler, handler2);
+        $practiceService.getFlashcard().then(handler, handler2);
         $timeout.flush();
         expect(handler2).toHaveBeenCalled();
 
@@ -176,35 +176,35 @@ describe("Practice Service - flashcards", function() {
     it("current counter", function(){
         config.proso_flashcards.practice.test.set_length = 3;
         config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.fc_queue_size_min = 1;
-        $practiceService.init_set("test");
-        expect($practiceService.get_current()).toBe(0);
-        $practiceService.get_flashcard();
+        $practiceService.initSet("test");
+        expect($practiceService.getCurrent()).toBe(0);
+        $practiceService.getFlashcard();
         $httpBackend.flush();
-        expect($practiceService.get_current()).toBe(1);
-        $practiceService.get_flashcard();
+        expect($practiceService.getCurrent()).toBe(1);
+        $practiceService.getFlashcard();
         $httpBackend.flush();
-        expect($practiceService.get_current()).toBe(2);
-        $practiceService.get_flashcard();
-        expect($practiceService.get_current()).toBe(3);
-        $practiceService.get_flashcard();
-        expect($practiceService.get_current()).toBe(3);
+        expect($practiceService.getCurrent()).toBe(2);
+        $practiceService.getFlashcard();
+        expect($practiceService.getCurrent()).toBe(3);
+        $practiceService.getFlashcard();
+        expect($practiceService.getCurrent()).toBe(3);
 
     });
 
     it("should work with empty flashcard list returned from server", function(){
         $httpBackend.expectGET(/\/flashcards\/practice\/?.*/).respond(200, {data: {flashcards: []}});
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $httpBackend.flush();
-        expect($practiceService.get_current()).toBe(0);
+        expect($practiceService.getCurrent()).toBe(0);
     });
 
     it("queue length", function() {
         for (var size = 1; size <= 10; size++) {
             config.proso_flashcards.practice.test.fc_queue_size_max = size;
-            $practiceService.init_set("test");
-            $practiceService.preload_flashcards();
+            $practiceService.initSet("test");
+            $practiceService.preloadFlashcards();
             $httpBackend.flush();
-            expect($practiceService.get_fc_queue().length).toBe(size);
+            expect($practiceService.getFCQueue().length).toBe(size);
         }
 
     });
@@ -215,13 +215,13 @@ describe("Practice Service - flashcards", function() {
         filter.contexts = [71, 72, 33];
         filter.categories = [15, 16];
         filter.language= "xx";
-        $practiceService.set_filter(filter);
+        $practiceService.setFilter(filter);
 
         $httpBackend.expectGET(/\/flashcards\/practice\/\?.*categories=%5B15,16%5D.*contexts=%5B71,72,33%5D.*language=xx.*types=%5B%22cosi%22,%22kdesi%22%5D.*/).respond(200, {data: generate_flashcards(1)});
-        $practiceService.preload_flashcards();
+        $practiceService.preloadFlashcards();
         $httpBackend.flush();
 
-        expect($practiceService.get_current()).toBe(0);
+        expect($practiceService.getCurrent()).toBe(0);
     });
 
     it("avoid already loaded flashcards", function(){
@@ -229,23 +229,23 @@ describe("Practice Service - flashcards", function() {
             {id: 41}, {id: 42},{id: 43}
         ]}});
         config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.fc_queue_size_min = 3;
-        $practiceService.init_set("test");
-        $practiceService.preload_flashcards();
+        $practiceService.initSet("test");
+        $practiceService.preloadFlashcards();
         $httpBackend.flush();
 
         $httpBackend.expectGET(/\/flashcards\/practice\/?.*41,42,43.*/);
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $timeout.flush();
         $httpBackend.flush();
 
-        expect($practiceService.get_current()).toBe(1);
+        expect($practiceService.getCurrent()).toBe(1);
     });
 
     it("should drop incoming FC after starting new set", function(){
-        $practiceService.preload_flashcards();
-        $practiceService.init_set("test");
+        $practiceService.preloadFlashcards();
+        $practiceService.initSet("test");
         $httpBackend.flush();
-        expect($practiceService.get_fc_queue().length).toBe(0);
+        expect($practiceService.getFCQueue().length).toBe(0);
     });
 
     var generate_full_flashcards = function(limit, without_contexts, same_id){
@@ -265,13 +265,13 @@ describe("Practice Service - flashcards", function() {
 
     it("if cache context - still return question with context", function(){
         config.proso_flashcards.practice.test.cache_context = true;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
         $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*without_contexts.*"))
                 .respond(200, {data: {flashcards: generate_full_flashcards(2, true, true)}});
         $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
 
         var fc;
-        $practiceService.get_flashcard().then(function(d){fc = d;});
+        $practiceService.getFlashcard().then(function(d){fc = d;});
         $httpBackend.flush();
         $timeout.flush();
 
@@ -280,13 +280,13 @@ describe("Practice Service - flashcards", function() {
 
     it("if cache context - context should have correct id", function(){
         config.proso_flashcards.practice.test.cache_context = true;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
         $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*without_contexts.*"))
             .respond(200, {data: {flashcards: generate_full_flashcards(2, true, true)}});
         $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
 
         var fc;
-        $practiceService.get_flashcard().then(function(d){fc = d;});
+        $practiceService.getFlashcard().then(function(d){fc = d;});
         $httpBackend.flush();
         $timeout.flush();
 
@@ -296,37 +296,37 @@ describe("Practice Service - flashcards", function() {
     it("if cache context - should load context separately", function(){
         config.proso_flashcards.practice.test.cache_context = true;
         config.proso_flashcards.practice.test.set_length = 2;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
         $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*without_contexts.*"))
             .respond(200, {data: {flashcards: generate_full_flashcards(2, true)}});
         $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
         $httpBackend.expectGET("/flashcards/context/2").respond({data: {id: 2, content: 42}});
 
         var fc;
-        $practiceService.get_flashcard().then(function(d){fc = d;});
+        $practiceService.getFlashcard().then(function(d){fc = d;});
         $httpBackend.flush();
         $timeout.flush();
         expect(fc.context.id).toBe(fc.context_id);
 
-        $practiceService.get_flashcard().then(function(d){fc = d;});
+        $practiceService.getFlashcard().then(function(d){fc = d;});
         $timeout.flush();
         expect(fc.context.id).toBe(fc.context_id);
     });
 
     it("if cache context - should load context only once", function(){
         config.proso_flashcards.practice.test.cache_context = true;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
         $httpBackend.expectGET(new RegExp("\/flashcards\/practice\/?.*without_contexts.*"))
             .respond(200, {data: {flashcards: generate_full_flashcards(10, true, true)}});
         $httpBackend.expectGET("/flashcards/context/1").respond({data: {id: 1, content: 42}});
 
         var fc, fc2;
-        $practiceService.get_flashcard().then(function(d){fc = d;});
+        $practiceService.getFlashcard().then(function(d){fc = d;});
         $httpBackend.flush();
         $timeout.flush();
         expect(fc.context.id).toBe(fc.context_id);
 
-        $practiceService.get_flashcard().then(function(d){fc2 = d;});
+        $practiceService.getFlashcard().then(function(d){fc2 = d;});
         $timeout.flush();
         expect(fc.context.id).toBe(fc.context_id);
 
@@ -335,7 +335,7 @@ describe("Practice Service - flashcards", function() {
     });
 
     it("if not cache context - should not load context", function(){
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $httpBackend.flush();
         $timeout.flush();
 
@@ -376,7 +376,7 @@ describe("Practice Service - answers", function() {
             $httpBackend.whenGET(new RegExp("\/flashcards\/practice\/?.*limit="+limit+"&.*"))
                 .respond(200, {data: {flashcards: generate_flashcards(limit)}});
         }
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
     });
 
     afterEach(function() {
@@ -386,125 +386,125 @@ describe("Practice Service - answers", function() {
 
 
     it("flush answer queue", function() {
-        expect($practiceService.get_answer_queue()).toEqual([]);
-        $practiceService.save_answer(1);
-        $practiceService.save_answer(2);
-        $practiceService.save_answer(3);
-        expect($practiceService.get_answer_queue()).toEqual([1,2,3]);
+        expect($practiceService.getAnswerQueue()).toEqual([]);
+        $practiceService.saveAnswer(1);
+        $practiceService.saveAnswer(2);
+        $practiceService.saveAnswer(3);
+        expect($practiceService.getAnswerQueue()).toEqual([1,2,3]);
 
         $httpBackend.expectPOST("/flashcards/answer/", {answers: [1,2,3]}).respond(200, "OK");
-        $practiceService.flush_answer_queue();
+        $practiceService.flushAnswerQueue();
         $httpBackend.flush();
-        expect($practiceService.get_answer_queue()).toEqual([]);
+        expect($practiceService.getAnswerQueue()).toEqual([]);
 
         $httpBackend.expectPOST("/flashcards/answer/", {answers: [1]}).respond(200, "OK");
-        $practiceService.save_answer(1, true);
+        $practiceService.saveAnswer(1, true);
         $httpBackend.flush();
-        expect($practiceService.get_answer_queue()).toEqual([]);
+        expect($practiceService.getAnswerQueue()).toEqual([]);
     });
 
 
     it("save answer immediately", function() {
         config.proso_flashcards.practice.test.save_answer_immediately = true;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
         $httpBackend.expectPOST("/flashcards/answer/", {answers: [1]}).respond(200, "OK");
-        $practiceService.save_answer(1);
+        $practiceService.saveAnswer(1);
         $httpBackend.flush();
-        expect($practiceService.get_answer_queue()).toEqual([]);
+        expect($practiceService.getAnswerQueue()).toEqual([]);
 
         config.proso_flashcards.practice.test.save_answer_immediately = false;
-        $practiceService.init_set("test");
-        $practiceService.save_answer(1);
-        expect($practiceService.get_answer_queue()).toEqual([1]);
+        $practiceService.initSet("test");
+        $practiceService.saveAnswer(1);
+        expect($practiceService.getAnswerQueue()).toEqual([1]);
     });
 
     it("save answer with getting FC", function() {
         $httpBackend.expectPOST(/\/flashcards\/practice\/?.*/, {answers: [1, 2, 3]})
             .respond(200, {data: generate_flashcards(1)});
-        $practiceService.save_answer(1);
-        $practiceService.save_answer(2);
-        $practiceService.save_answer(3);
-        $practiceService.preload_flashcards();
+        $practiceService.saveAnswer(1);
+        $practiceService.saveAnswer(2);
+        $practiceService.saveAnswer(3);
+        $practiceService.preloadFlashcards();
         $httpBackend.flush();
-        expect($practiceService.get_answer_queue()).toEqual([]);
+        expect($practiceService.getAnswerQueue()).toEqual([]);
     });
 
     it("save answer at the end of set", function() {
         config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 5;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
         for (var i = 1; i < 5; i++){
-            $practiceService.get_flashcard();
+            $practiceService.getFlashcard();
             if (i === 1){
                 $httpBackend.flush();
             }
             $timeout.flush();
-            $practiceService.save_answer(i);
+            $practiceService.saveAnswer(i);
         }
         $httpBackend.expectPOST("/flashcards/answer/", {answers: [1, 2, 3, 4, 5]}).respond(200, "OK");
-        $practiceService.get_flashcard();
-        $practiceService.save_answer(i);
+        $practiceService.getFlashcard();
+        $practiceService.saveAnswer(i);
         $httpBackend.flush();
 
-        expect($practiceService.get_answer_queue()).toEqual([]);
+        expect($practiceService.getAnswerQueue()).toEqual([]);
     });
 
     it("save answer to current flashcard", function() {
         config.proso_flashcards.practice.test.save_answer_immediately = true;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
 
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $httpBackend.flush();
 
         $httpBackend.expectPOST("/flashcards/answer/", {"answers":[{"flashcard_id":0,"flashcard_answered_id":42,"response_time":42000,"direction":"xxxs","meta":"moje meta", time_gap:0}]}).respond(200, "OK");
-        $practiceService.save_answer_to_current_fc(42, 42000, "moje meta");
+        $practiceService.saveAnswerToCurrentFC(42, 42000, "moje meta");
         $httpBackend.flush();
 
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $httpBackend.expectPOST("/flashcards/answer/", {"answers":[{"flashcard_id":1,"flashcard_answered_id":null,"response_time":12,"direction":"xxxs","meta":"moje meta", time_gap:0}]}).respond(200, "OK");
-        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+        $practiceService.saveAnswerToCurrentFC(null, 12, "moje meta");
         $httpBackend.flush();
 
-        expect($practiceService.get_answer_queue()).toEqual([]);
+        expect($practiceService.getAnswerQueue()).toEqual([]);
     });
 
     it("save answer to current flashcard without flashcard", function() {
         config.proso_flashcards.practice.test.save_answer_immediately = true;
-        $practiceService.init_set("test");
-        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
-        expect($practiceService.get_answer_queue()).toEqual([]);
+        $practiceService.initSet("test");
+        $practiceService.saveAnswerToCurrentFC(null, 12, "moje meta");
+        expect($practiceService.getAnswerQueue()).toEqual([]);
     });
 
     it("questions in summary", function() {
         config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 5;
-        $practiceService.init_set("test");
-        $practiceService.get_flashcard();
+        $practiceService.initSet("test");
+        $practiceService.getFlashcard();
         $httpBackend.flush();
         $timeout.flush();
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $timeout.flush();
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $timeout.flush();
 
-        expect($practiceService.get_summary().flashcards).toEqual(generate_flashcards(3));
+        expect($practiceService.getSummary().flashcards).toEqual(generate_flashcards(3));
      });
 
     it("answers in summary", function() {
         config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 5;
-        $practiceService.init_set("test");
-        $practiceService.get_flashcard();
+        $practiceService.initSet("test");
+        $practiceService.getFlashcard();
         $httpBackend.flush();
         $timeout.flush();
-        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+        $practiceService.saveAnswerToCurrentFC(null, 12, "moje meta");
 
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $timeout.flush();
-        $practiceService.save_answer_to_current_fc(1, 32, "moje meta");
+        $practiceService.saveAnswerToCurrentFC(1, 32, "moje meta");
 
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $timeout.flush();
-        $practiceService.save_answer(123);
+        $practiceService.saveAnswer(123);
 
-        var answers = $practiceService.get_summary().answers;
+        var answers = $practiceService.getSummary().answers;
         expect(answers[0].response_time).toBe(12);
         expect(answers[0].flashcard_answered_id).toBe(null);
         expect(answers[1].flashcard_answered_id).toBe(1);
@@ -515,58 +515,58 @@ describe("Practice Service - answers", function() {
 
     it("count in summary", function() {
         config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 5;
-        $practiceService.init_set("test");
-        expect($practiceService.get_summary().count).toBe(0);
-        $practiceService.get_flashcard();
+        $practiceService.initSet("test");
+        expect($practiceService.getSummary().count).toBe(0);
+        $practiceService.getFlashcard();
         $httpBackend.flush();
         $timeout.flush();
-        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
-        $practiceService.get_flashcard();
+        $practiceService.saveAnswerToCurrentFC(null, 12, "moje meta");
+        $practiceService.getFlashcard();
         $timeout.flush();
-        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
-        expect($practiceService.get_summary().count).toBe(2);
-        $practiceService.get_flashcard();
-        expect($practiceService.get_summary().count).toBe(2);
+        $practiceService.saveAnswerToCurrentFC(null, 12, "moje meta");
+        expect($practiceService.getSummary().count).toBe(2);
+        $practiceService.getFlashcard();
+        expect($practiceService.getSummary().count).toBe(2);
         $timeout.flush();
-        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+        $practiceService.saveAnswerToCurrentFC(null, 12, "moje meta");
 
-        expect($practiceService.get_summary().count).toBe(3);
+        expect($practiceService.getSummary().count).toBe(3);
      });
 
     it("correct in summary", function() {
         config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 5;
-        $practiceService.init_set("test");
-        expect($practiceService.get_summary().correct).toBe(0);
-        $practiceService.get_flashcard();
+        $practiceService.initSet("test");
+        expect($practiceService.getSummary().correct).toBe(0);
+        $practiceService.getFlashcard();
         $httpBackend.flush();
         $timeout.flush();
-        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
-        expect($practiceService.get_summary().correct).toBe(0);
-        $practiceService.get_flashcard();
+        $practiceService.saveAnswerToCurrentFC(null, 12, "moje meta");
+        expect($practiceService.getSummary().correct).toBe(0);
+        $practiceService.getFlashcard();
         $timeout.flush();
-        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
-        expect($practiceService.get_summary().correct).toBe(0);
-        $practiceService.get_flashcard();
+        $practiceService.saveAnswerToCurrentFC(null, 12, "moje meta");
+        expect($practiceService.getSummary().correct).toBe(0);
+        $practiceService.getFlashcard();
         $timeout.flush();
-        $practiceService.save_answer_to_current_fc(2, 12, "moje meta");
+        $practiceService.saveAnswerToCurrentFC(2, 12, "moje meta");
 
-        expect($practiceService.get_summary().correct).toBe(1);
+        expect($practiceService.getSummary().correct).toBe(1);
      });
 
     it("create good time gaps", function() {
         config.proso_flashcards.practice.test.fc_queue_size_max = config.proso_flashcards.practice.test.set_length = 2;
-        $practiceService.init_set("test");
+        $practiceService.initSet("test");
 
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         $httpBackend.flush();
 
-        $practiceService.save_answer_to_current_fc(42, 42000, "moje meta");
+        $practiceService.saveAnswerToCurrentFC(42, 42000, "moje meta");
 
-        $practiceService.get_flashcard();
+        $practiceService.getFlashcard();
         var d = Date.now() + 3000;
         var x = spyOn(Date, 'now');
         x.and.callFake(function() { return d; });
-        $practiceService.save_answer_to_current_fc(null, 12, "moje meta");
+        $practiceService.saveAnswerToCurrentFC(null, 12, "moje meta");
 
         $httpBackend.expectPOST("/flashcards/answer/", {"answers":[
             {"flashcard_id":0,"flashcard_answered_id":42,"response_time":42000,"direction":"xxxs","meta":"moje meta", time_gap:3},
@@ -574,7 +574,7 @@ describe("Practice Service - answers", function() {
         ]}).respond(200, "OK");
         $httpBackend.flush();
 
-        expect($practiceService.get_summary().correct).toBe(0);
+        expect($practiceService.getSummary().correct).toBe(0);
 
     });
 });

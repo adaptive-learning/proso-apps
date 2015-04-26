@@ -4,10 +4,10 @@ m.service("configService", ["$http", function($http){
     var config = null;
     var GET;
 
-    self.get_config = function(app_name, key, default_value){
-        if (GET[app_name + "." + key]) {
-            variable = GET[app_name + "." + key];
-            if (GET.debug) { console.log(app_name + "." + key, "fake from url", variable); }
+    self.getConfig = function(appName, key, defaultValue){
+        if (GET[appName + "." + key]) {
+            variable = GET[appName + "." + key];
+            if (GET.debug) { console.log(appName + "." + key, "fake from url", variable); }
             return variable;
         }
 
@@ -16,41 +16,41 @@ m.service("configService", ["$http", function($http){
             return;
         }
 
-        var variable = config[app_name];
+        var variable = config[appName];
         var path =  key.split(".");
         for (var i=0; i < path.length; i++){
             if (typeof variable === 'undefined'){
-                if (GET.debug) { console.log(app_name + "." + key, "use default", default_value); }
-                return default_value;
+                if (GET.debug) { console.log(appName + "." + key, "use default", defaultValue); }
+                return defaultValue;
             }
             variable = variable[path[i]];
         }
         if (typeof variable === 'undefined'){
-            if (GET.debug) { console.log(app_name + "." + key, "use default", default_value); }
-            return default_value;}
-        if (GET.debug) { console.log(app_name + "." + key, "from config", variable); }
+            if (GET.debug) { console.log(appName + "." + key, "use default", defaultValue); }
+            return defaultValue;}
+        if (GET.debug) { console.log(appName + "." + key, "from config", variable); }
         return variable;
     };
 
-    self.load_config = function(){
+    self.loadConfig = function(){
         return $http.get("/common/config/")
             .success(function(response){
-                self.process_config(response.data);
+                self.processConfig(response.data);
             })
             .error(function(){
                 console.error("Problem while loading config from server");
             });
     };
 
-    self.process_config = function(data){
+    self.processConfig = function(data){
         config = angular.copy(data);
     };
 
-    var parse_GET = function(){
+    var parseGET = function(){
         GET = getUrlVars();
     };
 
-    parse_GET();
+    parseGET();
 }]);
 
 function getUrlVars() {

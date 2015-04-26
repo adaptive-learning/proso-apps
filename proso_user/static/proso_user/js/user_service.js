@@ -7,7 +7,7 @@ m.service("userService", ["$http", function($http){
     };
     self.user = {};
     var update = this.update = {};
-    var session_updated = false;
+    var sessionUpdated = false;
     self.error = {};
 
     // called on create
@@ -16,10 +16,10 @@ m.service("userService", ["$http", function($http){
 
     self.signup = function(data){
         self.status.loading = true;
-        _reset_error();
+        _resetError();
         return $http.post("/user/signup/", data)
             .success(function(response){
-                _process_user(response.data);
+                _processUser(response.data);
             })
             .error(function(response){
                 self.error = response;
@@ -29,35 +29,35 @@ m.service("userService", ["$http", function($http){
             });
     };
 
-    self.signup_params = function(name, email, pass, pass2, first_name, last_name){
+    self.signupParams = function(name, email, pass, pass2, firstName, lastName){
         return self.signup({
             "username": name,
             "email": email,
             "password": pass,
             "password_check": pass2,
-            "first_name": first_name,
-            "last_name": last_name
+            "first_name": firstName,
+            "last_name": lastName
         });
     };
 
     // get user profile from backend
-    self.load_user = function(){
+    self.loadUser = function(){
         self.status.loading = true;
         return $http.get("/user/profile/")
             .success(function(response){
-                _process_user(response.data);
+                _processUser(response.data);
             })
             .finally(function(response){
                 self.status.loading = false;
             });
     };
 
-    self.process_user = function(data){
-        _process_user(angular.copy(data));
+    self.processUser = function(data){
+        _processUser(angular.copy(data));
     };
 
     // process user data
-    var _process_user = function(data){
+    var _processUser = function(data){
         if (!data) {
             self.status.logged = false;
             return;
@@ -74,21 +74,21 @@ m.service("userService", ["$http", function($http){
             public: self.user.profile.public
         });
         delete self.user.profile.user;
-        if (!session_updated){
-            self.update_session();
-            session_updated = true;
+        if (!sessionUpdated){
+            self.updateSession();
+            sessionUpdated = true;
         }
     };
 
     self.login = function(name, pass){
         self.status.loading = true;
-        _reset_error();
+        _resetError();
         return $http.post("/user/login/", {
             username: name,
             password: pass
         })
             .success(function(response){
-                _process_user(response.data);
+                _processUser(response.data);
             })
             .error(function(response){
                 self.error = response;
@@ -102,7 +102,7 @@ m.service("userService", ["$http", function($http){
         self.status.loading = true;
         $http.get("/user/logout/")
             .success(function(response){
-                clear_obj(self.user);
+                clearObj(self.user);
                 self.status.logged = false;
             })
             .finally(function(response){
@@ -111,22 +111,22 @@ m.service("userService", ["$http", function($http){
     };
 
 
-    var _reset_error = function(){
-        clear_obj(self.error);
+    var _resetError = function(){
+        clearObj(self.error);
     };
 
-    var clear_obj = function(obj){
+    var clearObj = function(obj){
         for (var prop in obj) {
             if (obj.hasOwnProperty(prop)){ delete obj[prop]; }
         }
     };
 
 
-    self.load_user_fromJS = function (scope) {
-        scope.$apply(self.load_user());
+    self.loadUserFromJS = function (scope) {
+        scope.$apply(self.loadUser());
     };
 
-    self.load_session = function(){
+    self.loadSession = function(){
         self.status.loading = true;
         $http.get("/user/session/")
             .success(function(response){
@@ -137,7 +137,7 @@ m.service("userService", ["$http", function($http){
             });
     };
 
-    self.update_session = function(){
+    self.updateSession = function(){
         var data = {
             locale: window.navigator.language || window.navigator.userLanguage || window.navigator.browserLanguage,
             display_height: window.innerHeight,
@@ -151,12 +151,12 @@ m.service("userService", ["$http", function($http){
         });
     };
 
-    self.update_profile = function(data){
+    self.updateProfile = function(data){
         self.status.loading = true;
-        _reset_error();
+        _resetError();
         $http.post("/user/profile/", data)
             .success(function(response){
-                _process_user(response.data);
+                _processUser(response.data);
             })
             .error(function(response){
                 self.error = response;
@@ -165,15 +165,15 @@ m.service("userService", ["$http", function($http){
             });
     };
 
-    self.login_google = function() {
-        _open_popup('/login/google-oauth2/', '/user/close_popup/');
+    self.loginGoogle = function() {
+        _openPopup('/login/google-oauth2/', '/user/close_popup/');
     };
 
-    self.login_facebook = function() {
-        _open_popup('/login/facebook/', '/user/close_popup/');
+    self.loginFacebook = function() {
+        _openPopup('/login/facebook/', '/user/close_popup/');
     };
 
-    var _open_popup = function(url, next){
+    var _openPopup = function(url, next){
         var settings = 'height=700,width=700,left=100,top=100,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=yes,directories=no,status=yes';
         url += "?next=" + next;
         window.open(url, "popup", settings);

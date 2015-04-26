@@ -4,7 +4,7 @@
 {% block content_block %}
 <div id="ng" ng-app="proso" ng-controller="auth">
     <h4>Flashcard</h4>
-    <div class="pure-button pure-button-primary" ng-click="get_flashcard()">Get flashcard</div>
+    <div class="pure-button pure-button-primary" ng-click="getFlashcard()">Get flashcard</div>
     <p>{% verbatim %}{{ msg }}{% endverbatim %}</p>
     <div class="fc">
         Flashcard id: {% verbatim %}{{ flashcard.id }}{% endverbatim %}
@@ -13,7 +13,7 @@
     <div ng-show="flashcard">
         <hr/>
         <h4>Answer</h4>
-        <form ng-submit="service.save_answer_to_current_fc(answer.id, answer.rt, answer.meta)">
+        <form ng-submit="service.saveAnswerToCurrentFC(answer.id, answer.rt, answer.meta)">
             <input type="number" required ng-model="answer.id" placeholder="FC Answered id"/>
             <input type="number" required ng-model="answer.rt" placeholder="Response time"/>
             <input type="text" ng-model="answer.meta" placeholder="Meta"/>
@@ -22,8 +22,8 @@
     </div>
     <hr/>
     <h4>Service</h4>
-    <pre>Current FC: {% verbatim %}{{ service.get_current() }}{% endverbatim %}</pre>
-    <pre>{% verbatim %}{{ service.get_config() | json:4 }}{% endverbatim %}</pre>
+    <pre>Current FC: {% verbatim %}{{ service.getCurrent() }}{% endverbatim %}</pre>
+    <pre>{% verbatim %}{{ service.getConfig() | json:4 }}{% endverbatim %}</pre>
 </div>
 {% endblock %}
 
@@ -37,16 +37,16 @@
         var app = angular.module('proso', ["proso_apps.services", "ngCookies"]);
         var config_loaded;
         app.run(function(configService){
-            configService.process_config({{ config_json | safe }});
+            configService.processConfig({{ config_json | safe }});
             // config_loaded = configService.load_config();
         });
         app.controller("auth", function($scope, practiceService){
             $scope.service = practiceService;
-            practiceService.init_set("intro");
+            practiceService.initSet("intro");
             // config_loaded.then(function(){ practiceService.init_set("intro")});
 
-            $scope.get_flashcard = function(){
-                practiceService.get_flashcard().then(
+            $scope.getFlashcard = function(){
+                practiceService.getFlashcard().then(
                         // called after FC is ready
                         function(flashcard) {
                             $scope.flashcard = flashcard;
