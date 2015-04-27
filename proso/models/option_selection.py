@@ -53,9 +53,11 @@ class ConfusingOptionSelection(OptionSelection):
             return []
         # confusing places
         confusing_factor = environment.confusing_factor_more_items(item, options)
-        confusing_factor_total = float(sum(confusing_factor))
-        confusing_places = map(lambda (a, b): (b, a),
-                               sorted(zip(confusing_factor, options), reverse=True))
+        confusing_places = map(
+            lambda (a, b): (b, a + 1),
+            sorted(zip(confusing_factor, options), reverse=True)
+        )
+        confusing_factor_total = float(sum(confusing_factor) + len(confusing_places))
         # options
         result_options = []
         for i in range(number_of_options):
