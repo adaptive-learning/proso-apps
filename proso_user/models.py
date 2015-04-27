@@ -3,7 +3,7 @@ import hashlib
 from ipware.ip import get_ip
 import user_agents
 from proso.django.request import get_current_request
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save
 from lazysignup.signals import converted
 from django.dispatch import receiver
 from django.contrib.auth.models import User
