@@ -27,11 +27,12 @@ def convert_lazy_user(user):
     converted.send(None, user=user)
 
 
-def name_lazy_user(user):
+def name_lazy_user(user, save=True):
     if not is_user_named(user):
         raise Exception("The given user %s is not named!" % user.id)
     user.username = get_unused_username(user)
-    user.save()
+    if save:
+        user.save()
 
 
 def is_user_lazy(user):

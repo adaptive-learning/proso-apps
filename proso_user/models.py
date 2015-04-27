@@ -244,7 +244,7 @@ def init_user_profile(sender, instance, created=False, **kwargs):
 @receiver(converted)
 def init_username(sender, user, **kwargs):
     if is_user_social(user):
-        name_lazy_user(user)
+        name_lazy_user(user, save=False)
 
 
 PROSO_MODELS_TO_EXPORT = [User, UserProfile, Session]
