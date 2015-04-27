@@ -233,7 +233,7 @@ def init_content_hash_time_zone(sender, instance, **kwargs):
     init_content_hash(instance)
 
 
-@receiver(post_save, sender=User)
+@receiver(pre_save, sender=User)
 def init_user_profile(sender, instance, created=False, **kwargs):
     if is_user_real(instance):
         if is_user_lazy(instance):
