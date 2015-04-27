@@ -15,6 +15,13 @@ from decorator import cache_environment_for_item
 from collections import defaultdict
 from proso.django.config import instantiate_from_config, get_global_config
 from proso_common.models import Config
+import json
+from django.core.cache import cache
+from proso.django.cache import get_request_cache, is_cache_prepared
+
+
+ENVIRONMENT_INFO_CACHE_EXPIRATION = 30 * 60
+ENVIRONMENT_INFO_CACHE_KEY = 'proso_models_env_info'
 
 
 # This is hack to emulate TRUE value on both psql and sqlite
@@ -25,10 +32,26 @@ DATABASE_TRUE = '1 = 1'
 # getters
 ################################################################################
 
+def get_active_environment_info():
+    if is_cache_prepared():
+        cached = get_request_cache().get(ENVIRONMENT_INFO_CACHE_KEY)
+        if cached is not None:
+            return cached
+    cached = cache.get(ENVIRONMENT_INFO_CACHE_KEY)
+    if cached is None:
+        cached = EnvironmentInfo.objects.select_related('config').get(status=EnvironmentInfo.STATUS_ACTIVE).to_json()
+        if is_cache_prepared():
+            get_request_cache().set(ENVIRONMENT_INFO_CACHE_KEY, cached)
+        if EnvironmentInfo.objects.filter(status=EnvironmentInfo.STATUS_LOADING).count() == 0:
+            cache.set(ENVIRONMENT_INFO_CACHE_KEY, cached, ENVIRONMENT_INFO_CACHE_EXPIRATION)
+    return cached
+
+
 def get_environment():
     return instantiate_from_config(
         'proso_models', 'environment',
-        default_class='proso_models.models.DatabaseEnvironment'
+        default_class='proso_models.models.DatabaseEnvironment',
+        pass_parameters=[get_active_environment_info()['id']]
     )
 
 
@@ -248,7 +271,8 @@ class DatabaseEnvironment(CommonEnvironment):
             'user_id': user,
             'item_primary_id': items[1],
             'item_secondary_id': items[0],
-            'key': key
+            'key': key,
+            'info_id': self._info_id,
         }
         try:
             variable = Variable.objects.get(**data)
@@ -539,6 +563,17 @@ class EnvironmentInfo(models.Model):
     class Meta:
         unique_together = ('config', 'revision')
 
+    def to_json(self, nested=False):
+        return {
+            'id': self.id,
+            'object_type': 'environment_info',
+            'status': dict(list(EnvironmentInfo.STATUS))[self.status],
+            'revision': self.revision,
+            'updated': self.updated.strftime('%Y-%m-%d %H:%M:%S'),
+            'created': self.created.strftime('%Y-%m-%d %H:%M:%S'),
+            'config': json.loads(self.config.content),
+        }
+
 
 class Item(models.Model):
     pass
@@ -719,7 +754,8 @@ def log_audit(sender, instance, **kwargs):
             item_secondary=instance.item_secondary,
             key=instance.key,
             value=instance.value,
-            time=instance.updated)
+            time=instance.updated,
+            info_id=instance.info_id)
         audit.save()
 
 

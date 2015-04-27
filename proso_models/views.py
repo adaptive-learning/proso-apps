@@ -1,7 +1,7 @@
 from django.http import HttpResponseBadRequest
 from proso.django.request import is_time_overriden, get_time, get_user_id
 from proso.django.response import render_json
-from models import get_environment, Item
+from models import get_environment, get_active_environment_info, Item
 import numpy
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
@@ -18,7 +18,8 @@ def status(request):
     return render_json(request, _to_json(request, {
         'object_type': 'status',
         'number_of_answers': environment.number_of_answers(user=user_id),
-        'number_of_correct_answers': environment.number_of_correct_answers(user=user_id)
+        'number_of_correct_answers': environment.number_of_correct_answers(user=user_id),
+        'environment_info': get_active_environment_info(),
     }), template='models_json.html')
 
 
