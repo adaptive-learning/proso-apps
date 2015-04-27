@@ -1,14 +1,14 @@
 from django.db import models
 import hashlib
 from ipware.ip import get_ip
-from social_auth.db.django_models import UserSocialAuth
 import user_agents
 from proso.django.request import get_current_request
 from django.db.models.signals import pre_save, post_save
+from lazysignup.signals import converted
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 import datetime
-from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social
+from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social, name_lazy_user
 
 
 def get_content_hash(content):
@@ -237,15 +237,14 @@ def init_content_hash_time_zone(sender, instance, **kwargs):
 def init_user_profile(sender, instance, created=False, **kwargs):
     if is_user_real(instance):
         if is_user_lazy(instance):
-            convert_lazy_user(instance, with_username=False)
+            convert_lazy_user(instance)
         UserProfile.objects.get_or_create(user=instance)
 
 
-@receiver(post_save, sender=UserSocialAuth)
-def drop_lazy_user(sender, instance, created=False, **kwargs):
-    user = instance.user
-    if is_user_lazy(user) and is_user_social(user):
-        convert_lazy_user(user, with_username=True)
+@receiver(converted)
+def init_username(sender, user, **kwargs):
+    if is_user_social(user):
+        name_lazy_user(user)
 
 
 PROSO_MODELS_TO_EXPORT = [User, UserProfile, Session]
