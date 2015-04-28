@@ -66,7 +66,7 @@ class FlashcardManager(models.Manager):
         qs = self.filter(~Q(id__in=avoid))
         if isinstance(contexts, list) and len(contexts) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
-                    Q(context_id=id) if isinstance(id, int) else Q(context_identifier=id), contexts)))
+                    Q(context_id=id) if isinstance(id, int) else Q(context__identifier=id), contexts)))
         if isinstance(categories, list) and len(categories) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
                 Q(term__parents__id=id) | Q(categories__id=id) | Q(context__categories__id=id) if isinstance(id, int)
