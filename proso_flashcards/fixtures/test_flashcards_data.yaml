@@ -1,0 +1,1333 @@
+- fields: {identifier: Jihlava, item: 7, lang: en, name: Jihlava, type: city}
+  model: proso_flashcards.term
+  pk: 1
+- fields: {identifier: Jihlava, item: 7, lang: cs, name: Jihlava, type: city}
+  model: proso_flashcards.term
+  pk: 2
+- fields: {identifier: Jihlava, item: 7, lang: es, name: Jihlava, type: city}
+  model: proso_flashcards.term
+  pk: 3
+- fields: {identifier: Plzen, item: 8, lang: en, name: "Plze\u0148", type: city}
+  model: proso_flashcards.term
+  pk: 4
+- fields: {identifier: Plzen, item: 8, lang: cs, name: "Plze\u0148", type: city}
+  model: proso_flashcards.term
+  pk: 5
+- fields: {identifier: Plzen, item: 8, lang: es, name: "Plze\u0148", type: city}
+  model: proso_flashcards.term
+  pk: 6
+- fields: {identifier: Otrokovice, item: 9, lang: en, name: Otrokovice, type: city}
+  model: proso_flashcards.term
+  pk: 7
+- fields: {identifier: Otrokovice, item: 9, lang: cs, name: Otrokovice, type: city}
+  model: proso_flashcards.term
+  pk: 8
+- fields: {identifier: Otrokovice, item: 9, lang: es, name: Otrokovice, type: city}
+  model: proso_flashcards.term
+  pk: 9
+- fields: {identifier: Trinec, item: 10, lang: en, name: "T\u0159inec", type: city}
+  model: proso_flashcards.term
+  pk: 10
+- fields: {identifier: Trinec, item: 10, lang: cs, name: "T\u0159inec", type: city}
+  model: proso_flashcards.term
+  pk: 11
+- fields: {identifier: Trinec, item: 10, lang: es, name: "T\u0159inec", type: city}
+  model: proso_flashcards.term
+  pk: 12
+- fields: {identifier: Klasterec_nad_Ohri, item: 11, lang: en, name: "Kl\xE1\u0161\
+      terec nad Oh\u0159\xED", type: city}
+  model: proso_flashcards.term
+  pk: 13
+- fields: {identifier: Klasterec_nad_Ohri, item: 11, lang: cs, name: "Kl\xE1\u0161\
+      terec nad Oh\u0159\xED", type: city}
+  model: proso_flashcards.term
+  pk: 14
+- fields: {identifier: Klasterec_nad_Ohri, item: 11, lang: es, name: "Kl\xE1\u0161\
+      terec nad Oh\u0159\xED", type: city}
+  model: proso_flashcards.term
+  pk: 15
+- fields: {identifier: Pelhrimov, item: 12, lang: en, name: "Pelh\u0159imov", type: city}
+  model: proso_flashcards.term
+  pk: 16
+- fields: {identifier: Pelhrimov, item: 12, lang: cs, name: "Pelh\u0159imov", type: city}
+  model: proso_flashcards.term
+  pk: 17
+- fields: {identifier: Pelhrimov, item: 12, lang: es, name: "Pelh\u0159imov", type: city}
+  model: proso_flashcards.term
+  pk: 18
+- fields: {identifier: Chrudim, item: 13, lang: en, name: Chrudim, type: city}
+  model: proso_flashcards.term
+  pk: 19
+- fields: {identifier: Chrudim, item: 13, lang: cs, name: Chrudim, type: city}
+  model: proso_flashcards.term
+  pk: 20
+- fields: {identifier: Chrudim, item: 13, lang: es, name: Chrudim, type: city}
+  model: proso_flashcards.term
+  pk: 21
+- fields: {identifier: Pardubice, item: 14, lang: en, name: Pardubice, type: city}
+  model: proso_flashcards.term
+  pk: 22
+- fields: {identifier: Pardubice, item: 14, lang: cs, name: Pardubice, type: city}
+  model: proso_flashcards.term
+  pk: 23
+- fields: {identifier: Pardubice, item: 14, lang: es, name: Pardubice, type: city}
+  model: proso_flashcards.term
+  pk: 24
+- fields: {identifier: Hradec_Kralove, item: 15, lang: en, name: "Hradec Kr\xE1lov\xE9",
+    type: city}
+  model: proso_flashcards.term
+  pk: 25
+- fields: {identifier: Hradec_Kralove, item: 15, lang: cs, name: "Hradec Kr\xE1lov\xE9",
+    type: city}
+  model: proso_flashcards.term
+  pk: 26
+- fields: {identifier: Hradec_Kralove, item: 15, lang: es, name: "Hradec Kr\xE1lov\xE9",
+    type: city}
+  model: proso_flashcards.term
+  pk: 27
+- fields: {identifier: Havlickuv_Brod, item: 16, lang: en, name: "Havl\xED\u010Dk\u016F\
+      v Brod", type: city}
+  model: proso_flashcards.term
+  pk: 28
+- fields: {identifier: Havlickuv_Brod, item: 16, lang: cs, name: "Havl\xED\u010Dk\u016F\
+      v Brod", type: city}
+  model: proso_flashcards.term
+  pk: 29
+- fields: {identifier: Havlickuv_Brod, item: 16, lang: es, name: "Havl\xED\u010Dk\u016F\
+      v Brod", type: city}
+  model: proso_flashcards.term
+  pk: 30
+- fields: {identifier: Lisbon, item: 17, lang: en, name: Lisbon, type: city}
+  model: proso_flashcards.term
+  pk: 31
+- fields: {identifier: Lisbon, item: 17, lang: cs, name: Lisabon, type: city}
+  model: proso_flashcards.term
+  pk: 32
+- fields: {identifier: Lisbon, item: 17, lang: es, name: Lisbon, type: city}
+  model: proso_flashcards.term
+  pk: 33
+- fields: {identifier: Kiev, item: 18, lang: en, name: Kiev, type: city}
+  model: proso_flashcards.term
+  pk: 34
+- fields: {identifier: Kiev, item: 18, lang: cs, name: Kyjev, type: city}
+  model: proso_flashcards.term
+  pk: 35
+- fields: {identifier: Kiev, item: 18, lang: es, name: Kiev, type: city}
+  model: proso_flashcards.term
+  pk: 36
+- fields: {identifier: Madrid, item: 19, lang: en, name: Madrid, type: city}
+  model: proso_flashcards.term
+  pk: 37
+- fields: {identifier: Madrid, item: 19, lang: cs, name: Madrid, type: city}
+  model: proso_flashcards.term
+  pk: 38
+- fields: {identifier: Madrid, item: 19, lang: es, name: Madrid, type: city}
+  model: proso_flashcards.term
+  pk: 39
+- fields: {identifier: Berlin, item: 20, lang: en, name: Berlin, type: city}
+  model: proso_flashcards.term
+  pk: 40
+- fields: {identifier: Berlin, item: 20, lang: cs, name: "Berl\xEDn", type: city}
+  model: proso_flashcards.term
+  pk: 41
+- fields: {identifier: Berlin, item: 20, lang: es, name: Berlin, type: city}
+  model: proso_flashcards.term
+  pk: 42
+- fields: {identifier: Athens, item: 21, lang: en, name: Athens, type: city}
+  model: proso_flashcards.term
+  pk: 43
+- fields: {identifier: Athens, item: 21, lang: cs, name: "Ath\xE9ny", type: city}
+  model: proso_flashcards.term
+  pk: 44
+- fields: {identifier: Athens, item: 21, lang: es, name: Athens, type: city}
+  model: proso_flashcards.term
+  pk: 45
+- fields: {identifier: Vienna, item: 22, lang: en, name: Vienna, type: city}
+  model: proso_flashcards.term
+  pk: 46
+- fields: {identifier: Vienna, item: 22, lang: cs, name: "V\xEDde\u0148", type: city}
+  model: proso_flashcards.term
+  pk: 47
+- fields: {identifier: Vienna, item: 22, lang: es, name: Vienna, type: city}
+  model: proso_flashcards.term
+  pk: 48
+- fields: {identifier: London, item: 23, lang: en, name: London, type: city}
+  model: proso_flashcards.term
+  pk: 49
+- fields: {identifier: London, item: 23, lang: cs, name: "Lond\xFDn", type: city}
+  model: proso_flashcards.term
+  pk: 50
+- fields: {identifier: London, item: 23, lang: es, name: London, type: city}
+  model: proso_flashcards.term
+  pk: 51
+- fields: {identifier: Moscow, item: 24, lang: en, name: Moscow, type: city}
+  model: proso_flashcards.term
+  pk: 52
+- fields: {identifier: Moscow, item: 24, lang: cs, name: Moskva, type: city}
+  model: proso_flashcards.term
+  pk: 53
+- fields: {identifier: Moscow, item: 24, lang: es, name: Moscow, type: city}
+  model: proso_flashcards.term
+  pk: 54
+- fields: {identifier: Rome, item: 25, lang: en, name: Rome, type: city}
+  model: proso_flashcards.term
+  pk: 55
+- fields: {identifier: Rome, item: 25, lang: cs, name: "\u0158\xEDm", type: city}
+  model: proso_flashcards.term
+  pk: 56
+- fields: {identifier: Rome, item: 25, lang: es, name: Rome, type: city}
+  model: proso_flashcards.term
+  pk: 57
+- fields: {identifier: Paris, item: 26, lang: en, name: Paris, type: city}
+  model: proso_flashcards.term
+  pk: 58
+- fields: {identifier: Paris, item: 26, lang: cs, name: "Pa\u0159\xED\u017E", type: city}
+  model: proso_flashcards.term
+  pk: 59
+- fields: {identifier: Paris, item: 26, lang: es, name: Paris, type: city}
+  model: proso_flashcards.term
+  pk: 60
+- fields: {identifier: al, item: 27, lang: en, name: Albania, type: state}
+  model: proso_flashcards.term
+  pk: 61
+- fields: {identifier: al, item: 27, lang: cs, name: "Alb\xE1nie", type: state}
+  model: proso_flashcards.term
+  pk: 62
+- fields: {identifier: al, item: 27, lang: es, name: Albania, type: state}
+  model: proso_flashcards.term
+  pk: 63
+- fields: {identifier: af, item: 28, lang: en, name: Afghanistan, type: state}
+  model: proso_flashcards.term
+  pk: 64
+- fields: {identifier: af, item: 28, lang: cs, name: "Afgh\xE1nist\xE1n", type: state}
+  model: proso_flashcards.term
+  pk: 65
+- fields: {identifier: af, item: 28, lang: es, name: Afghanistan, type: state}
+  model: proso_flashcards.term
+  pk: 66
+- fields: {identifier: ar, item: 29, lang: en, name: Argentina, type: state}
+  model: proso_flashcards.term
+  pk: 67
+- fields: {identifier: ar, item: 29, lang: cs, name: Argentina, type: state}
+  model: proso_flashcards.term
+  pk: 68
+- fields: {identifier: ar, item: 29, lang: es, name: Argentina, type: state}
+  model: proso_flashcards.term
+  pk: 69
+- fields: {identifier: am, item: 30, lang: en, name: Armenia, type: state}
+  model: proso_flashcards.term
+  pk: 70
+- fields: {identifier: am, item: 30, lang: cs, name: "Arm\xE9nie", type: state}
+  model: proso_flashcards.term
+  pk: 71
+- fields: {identifier: am, item: 30, lang: es, name: Armenia, type: state}
+  model: proso_flashcards.term
+  pk: 72
+- fields: {identifier: au, item: 31, lang: en, name: Australia, type: state}
+  model: proso_flashcards.term
+  pk: 73
+- fields: {identifier: au, item: 31, lang: cs, name: "Austr\xE1lie", type: state}
+  model: proso_flashcards.term
+  pk: 74
+- fields: {identifier: au, item: 31, lang: es, name: Australia, type: state}
+  model: proso_flashcards.term
+  pk: 75
+- fields: {identifier: az, item: 32, lang: en, name: Azerbaijan, type: state}
+  model: proso_flashcards.term
+  pk: 76
+- fields: {identifier: az, item: 32, lang: cs, name: "\xC1zerb\xE1jd\u017E\xE1n",
+    type: state}
+  model: proso_flashcards.term
+  pk: 77
+- fields: {identifier: az, item: 32, lang: es, name: Azerbaijan, type: state}
+  model: proso_flashcards.term
+  pk: 78
+- fields: {identifier: bs, item: 33, lang: en, name: Bahamas, type: state}
+  model: proso_flashcards.term
+  pk: 79
+- fields: {identifier: bs, item: 33, lang: cs, name: Bahamy, type: state}
+  model: proso_flashcards.term
+  pk: 80
+- fields: {identifier: bs, item: 33, lang: es, name: Bahamas, type: state}
+  model: proso_flashcards.term
+  pk: 81
+- fields: {identifier: bd, item: 34, lang: en, name: Bangladesh, type: state}
+  model: proso_flashcards.term
+  pk: 82
+- fields: {identifier: bd, item: 34, lang: cs, name: "Banglad\xE9\u0161", type: state}
+  model: proso_flashcards.term
+  pk: 83
+- fields: {identifier: bd, item: 34, lang: es, name: Bangladesh, type: state}
+  model: proso_flashcards.term
+  pk: 84
+- fields: {identifier: be, item: 35, lang: en, name: Belgium, type: state}
+  model: proso_flashcards.term
+  pk: 85
+- fields: {identifier: be, item: 35, lang: cs, name: Belgie, type: state}
+  model: proso_flashcards.term
+  pk: 86
+- fields: {identifier: be, item: 35, lang: es, name: Belgium, type: state}
+  model: proso_flashcards.term
+  pk: 87
+- fields: {identifier: bz, item: 36, lang: en, name: Belize, type: state}
+  model: proso_flashcards.term
+  pk: 88
+- fields: {identifier: bz, item: 36, lang: cs, name: Belize, type: state}
+  model: proso_flashcards.term
+  pk: 89
+- fields: {identifier: bz, item: 36, lang: es, name: Belize, type: state}
+  model: proso_flashcards.term
+  pk: 90
+- fields: {identifier: Bir_Lehlou, item: 37, lang: en, name: Bir Lehlou, type: city}
+  model: proso_flashcards.term
+  pk: 91
+- fields: {identifier: Bir_Lehlou, item: 37, lang: cs, name: 'Bir Lehlou ', type: city}
+  model: proso_flashcards.term
+  pk: 92
+- fields: {identifier: Bir_Lehlou, item: 37, lang: es, name: Bir Lehlou, type: city}
+  model: proso_flashcards.term
+  pk: 93
+- fields: {identifier: Moroni, item: 38, lang: en, name: Moroni, type: city}
+  model: proso_flashcards.term
+  pk: 94
+- fields: {identifier: Moroni, item: 38, lang: cs, name: 'Moroni ', type: city}
+  model: proso_flashcards.term
+  pk: 95
+- fields: {identifier: Moroni, item: 38, lang: es, name: Moroni, type: city}
+  model: proso_flashcards.term
+  pk: 96
+- fields: {identifier: Kigali, item: 39, lang: en, name: Kigali, type: city}
+  model: proso_flashcards.term
+  pk: 97
+- fields: {identifier: Kigali, item: 39, lang: cs, name: 'Kigali ', type: city}
+  model: proso_flashcards.term
+  pk: 98
+- fields: {identifier: Kigali, item: 39, lang: es, name: Kigali, type: city}
+  model: proso_flashcards.term
+  pk: 99
+- fields: {identifier: Mbabane, item: 40, lang: en, name: Mbabane, type: city}
+  model: proso_flashcards.term
+  pk: 100
+- fields: {identifier: Mbabane, item: 40, lang: cs, name: 'Mbabane ', type: city}
+  model: proso_flashcards.term
+  pk: 101
+- fields: {identifier: Mbabane, item: 40, lang: es, name: Mbabane, type: city}
+  model: proso_flashcards.term
+  pk: 102
+- fields: {identifier: Juba, item: 41, lang: en, name: Juba, type: city}
+  model: proso_flashcards.term
+  pk: 103
+- fields: {identifier: Juba, item: 41, lang: cs, name: 'Juba ', type: city}
+  model: proso_flashcards.term
+  pk: 104
+- fields: {identifier: Juba, item: 41, lang: es, name: Juba, type: city}
+  model: proso_flashcards.term
+  pk: 105
+- fields: {identifier: Dodoma, item: 42, lang: en, name: Dodoma, type: city}
+  model: proso_flashcards.term
+  pk: 106
+- fields: {identifier: Dodoma, item: 42, lang: cs, name: 'Dodoma ', type: city}
+  model: proso_flashcards.term
+  pk: 107
+- fields: {identifier: Dodoma, item: 42, lang: es, name: Dodoma, type: city}
+  model: proso_flashcards.term
+  pk: 108
+- fields: {identifier: Laayoune, item: 43, lang: en, name: Laayoune, type: city}
+  model: proso_flashcards.term
+  pk: 109
+- fields: {identifier: Laayoune, item: 43, lang: cs, name: Laayoune, type: city}
+  model: proso_flashcards.term
+  pk: 110
+- fields: {identifier: Laayoune, item: 43, lang: es, name: Laayoune, type: city}
+  model: proso_flashcards.term
+  pk: 111
+- fields: {identifier: Djibouti, item: 44, lang: en, name: Djibouti, type: city}
+  model: proso_flashcards.term
+  pk: 112
+- fields: {identifier: Djibouti, item: 44, lang: cs, name: "D\u017Eibuti ", type: city}
+  model: proso_flashcards.term
+  pk: 113
+- fields: {identifier: Djibouti, item: 44, lang: es, name: Djibouti, type: city}
+  model: proso_flashcards.term
+  pk: 114
+- fields: {identifier: Banjul, item: 45, lang: en, name: Banjul, type: city}
+  model: proso_flashcards.term
+  pk: 115
+- fields: {identifier: Banjul, item: 45, lang: cs, name: 'Banjul ', type: city}
+  model: proso_flashcards.term
+  pk: 116
+- fields: {identifier: Banjul, item: 45, lang: es, name: Banjul, type: city}
+  model: proso_flashcards.term
+  pk: 117
+- fields: {identifier: Porto-Novo, item: 46, lang: en, name: Porto-Novo, type: city}
+  model: proso_flashcards.term
+  pk: 118
+- fields: {identifier: Porto-Novo, item: 46, lang: cs, name: 'Porto-Novo ', type: city}
+  model: proso_flashcards.term
+  pk: 119
+- fields: {identifier: Porto-Novo, item: 46, lang: es, name: Porto-Novo, type: city}
+  model: proso_flashcards.term
+  pk: 120
+- fields: {identifier: dz, item: 47, lang: en, name: Algeria, type: state}
+  model: proso_flashcards.term
+  pk: 121
+- fields: {identifier: dz, item: 47, lang: cs, name: "Al\u017E\xEDrsko", type: state}
+  model: proso_flashcards.term
+  pk: 122
+- fields: {identifier: dz, item: 47, lang: es, name: Algeria, type: state}
+  model: proso_flashcards.term
+  pk: 123
+- fields: {identifier: ao, item: 48, lang: en, name: Angola, type: state}
+  model: proso_flashcards.term
+  pk: 124
+- fields: {identifier: ao, item: 48, lang: cs, name: Angola, type: state}
+  model: proso_flashcards.term
+  pk: 125
+- fields: {identifier: ao, item: 48, lang: es, name: Angola, type: state}
+  model: proso_flashcards.term
+  pk: 126
+- fields: {identifier: bj, item: 49, lang: en, name: Benin, type: state}
+  model: proso_flashcards.term
+  pk: 127
+- fields: {identifier: bj, item: 49, lang: cs, name: Benin, type: state}
+  model: proso_flashcards.term
+  pk: 128
+- fields: {identifier: bj, item: 49, lang: es, name: Benin, type: state}
+  model: proso_flashcards.term
+  pk: 129
+- fields: {identifier: bw, item: 50, lang: en, name: Botswana, type: state}
+  model: proso_flashcards.term
+  pk: 130
+- fields: {identifier: bw, item: 50, lang: cs, name: Botswana, type: state}
+  model: proso_flashcards.term
+  pk: 131
+- fields: {identifier: bw, item: 50, lang: es, name: Botswana, type: state}
+  model: proso_flashcards.term
+  pk: 132
+- fields: {identifier: bf, item: 51, lang: en, name: Burkina Faso, type: state}
+  model: proso_flashcards.term
+  pk: 133
+- fields: {identifier: bf, item: 51, lang: cs, name: Burkina Faso, type: state}
+  model: proso_flashcards.term
+  pk: 134
+- fields: {identifier: bf, item: 51, lang: es, name: Burkina Faso, type: state}
+  model: proso_flashcards.term
+  pk: 135
+- fields: {identifier: bi, item: 52, lang: en, name: Burundi, type: state}
+  model: proso_flashcards.term
+  pk: 136
+- fields: {identifier: bi, item: 52, lang: cs, name: Burundi, type: state}
+  model: proso_flashcards.term
+  pk: 137
+- fields: {identifier: bi, item: 52, lang: es, name: Burundi, type: state}
+  model: proso_flashcards.term
+  pk: 138
+- fields: {identifier: td, item: 53, lang: en, name: Chad, type: state}
+  model: proso_flashcards.term
+  pk: 139
+- fields: {identifier: td, item: 53, lang: cs, name: "\u010Cad", type: state}
+  model: proso_flashcards.term
+  pk: 140
+- fields: {identifier: td, item: 53, lang: es, name: Chad, type: state}
+  model: proso_flashcards.term
+  pk: 141
+- fields: {identifier: cd, item: 54, lang: en, name: Dem. Rep. Congo, type: state}
+  model: proso_flashcards.term
+  pk: 142
+- fields: {identifier: cd, item: 54, lang: cs, name: "Demokratick\xE1 republika Kongo",
+    type: state}
+  model: proso_flashcards.term
+  pk: 143
+- fields: {identifier: cd, item: 54, lang: es, name: Dem. Rep. Congo, type: state}
+  model: proso_flashcards.term
+  pk: 144
+- fields: {identifier: dj, item: 55, lang: en, name: Djibouti, type: state}
+  model: proso_flashcards.term
+  pk: 145
+- fields: {identifier: dj, item: 55, lang: cs, name: "D\u017Eibutsko", type: state}
+  model: proso_flashcards.term
+  pk: 146
+- fields: {identifier: dj, item: 55, lang: es, name: Djibouti, type: state}
+  model: proso_flashcards.term
+  pk: 147
+- fields: {identifier: eg, item: 56, lang: en, name: Egypt, type: state}
+  model: proso_flashcards.term
+  pk: 148
+- fields: {identifier: eg, item: 56, lang: cs, name: Egypt, type: state}
+  model: proso_flashcards.term
+  pk: 149
+- fields: {identifier: eg, item: 56, lang: es, name: Egypt, type: state}
+  model: proso_flashcards.term
+  pk: 150
+- fields: {content: africa.svg, identifier: africa, item: 4, lang: en, name: Africa}
+  model: proso_flashcards.context
+  pk: 1
+- fields: {content: africa.svg, identifier: africa, item: 4, lang: cs, name: Afrika}
+  model: proso_flashcards.context
+  pk: 2
+- fields: {content: africa.svg, identifier: africa, item: 4, lang: es, name: Africa}
+  model: proso_flashcards.context
+  pk: 3
+- fields: {content: cz.svg, identifier: cz, item: 5, lang: en, name: Czech Rep.}
+  model: proso_flashcards.context
+  pk: 4
+- fields: {content: cz.svg, identifier: cz, item: 5, lang: cs, name: "\u010Cesk\xE1\
+      \ republika"}
+  model: proso_flashcards.context
+  pk: 5
+- fields: {content: cz.svg, identifier: cz, item: 5, lang: es, name: Czech Rep.}
+  model: proso_flashcards.context
+  pk: 6
+- fields: {content: world.svg, identifier: world, item: 6, lang: en, name: World}
+  model: proso_flashcards.context
+  pk: 7
+- fields: {content: world.svg, identifier: world, item: 6, lang: cs, name: "Sv\u011B\
+      t"}
+  model: proso_flashcards.context
+  pk: 8
+- fields: {content: world.svg, identifier: world, item: 6, lang: es, name: World}
+  model: proso_flashcards.context
+  pk: 9
+- fields: {context: 7, description: al, identifier: world-al, item: 57, lang: en,
+    term: 61}
+  model: proso_flashcards.flashcard
+  pk: 1
+- fields: {context: 8, description: al, identifier: world-al, item: 57, lang: cs,
+    term: 62}
+  model: proso_flashcards.flashcard
+  pk: 2
+- fields: {context: 9, description: al, identifier: world-al, item: 57, lang: es,
+    term: 63}
+  model: proso_flashcards.flashcard
+  pk: 3
+- fields: {context: 7, description: af, identifier: world-af, item: 58, lang: en,
+    term: 64}
+  model: proso_flashcards.flashcard
+  pk: 4
+- fields: {context: 8, description: af, identifier: world-af, item: 58, lang: cs,
+    term: 65}
+  model: proso_flashcards.flashcard
+  pk: 5
+- fields: {context: 9, description: af, identifier: world-af, item: 58, lang: es,
+    term: 66}
+  model: proso_flashcards.flashcard
+  pk: 6
+- fields: {context: 7, description: dz, identifier: world-dz, item: 59, lang: en,
+    term: 121}
+  model: proso_flashcards.flashcard
+  pk: 7
+- fields: {context: 8, description: dz, identifier: world-dz, item: 59, lang: cs,
+    term: 122}
+  model: proso_flashcards.flashcard
+  pk: 8
+- fields: {context: 9, description: dz, identifier: world-dz, item: 59, lang: es,
+    term: 123}
+  model: proso_flashcards.flashcard
+  pk: 9
+- fields: {context: 1, description: dz, identifier: africa-dz, item: 60, lang: en,
+    term: 121}
+  model: proso_flashcards.flashcard
+  pk: 10
+- fields: {context: 2, description: dz, identifier: africa-dz, item: 60, lang: cs,
+    term: 122}
+  model: proso_flashcards.flashcard
+  pk: 11
+- fields: {context: 3, description: dz, identifier: africa-dz, item: 60, lang: es,
+    term: 123}
+  model: proso_flashcards.flashcard
+  pk: 12
+- fields: {context: 7, description: ao, identifier: world-ao, item: 61, lang: en,
+    term: 124}
+  model: proso_flashcards.flashcard
+  pk: 13
+- fields: {context: 8, description: ao, identifier: world-ao, item: 61, lang: cs,
+    term: 125}
+  model: proso_flashcards.flashcard
+  pk: 14
+- fields: {context: 9, description: ao, identifier: world-ao, item: 61, lang: es,
+    term: 126}
+  model: proso_flashcards.flashcard
+  pk: 15
+- fields: {context: 1, description: ao, identifier: africa-ao, item: 62, lang: en,
+    term: 124}
+  model: proso_flashcards.flashcard
+  pk: 16
+- fields: {context: 2, description: ao, identifier: africa-ao, item: 62, lang: cs,
+    term: 125}
+  model: proso_flashcards.flashcard
+  pk: 17
+- fields: {context: 3, description: ao, identifier: africa-ao, item: 62, lang: es,
+    term: 126}
+  model: proso_flashcards.flashcard
+  pk: 18
+- fields: {context: 7, description: ar, identifier: world-ar, item: 63, lang: en,
+    term: 67}
+  model: proso_flashcards.flashcard
+  pk: 19
+- fields: {context: 8, description: ar, identifier: world-ar, item: 63, lang: cs,
+    term: 68}
+  model: proso_flashcards.flashcard
+  pk: 20
+- fields: {context: 9, description: ar, identifier: world-ar, item: 63, lang: es,
+    term: 69}
+  model: proso_flashcards.flashcard
+  pk: 21
+- fields: {context: 7, description: am, identifier: world-am, item: 64, lang: en,
+    term: 70}
+  model: proso_flashcards.flashcard
+  pk: 22
+- fields: {context: 8, description: am, identifier: world-am, item: 64, lang: cs,
+    term: 71}
+  model: proso_flashcards.flashcard
+  pk: 23
+- fields: {context: 9, description: am, identifier: world-am, item: 64, lang: es,
+    term: 72}
+  model: proso_flashcards.flashcard
+  pk: 24
+- fields: {context: 7, description: au, identifier: world-au, item: 65, lang: en,
+    term: 73}
+  model: proso_flashcards.flashcard
+  pk: 25
+- fields: {context: 8, description: au, identifier: world-au, item: 65, lang: cs,
+    term: 74}
+  model: proso_flashcards.flashcard
+  pk: 26
+- fields: {context: 9, description: au, identifier: world-au, item: 65, lang: es,
+    term: 75}
+  model: proso_flashcards.flashcard
+  pk: 27
+- fields: {context: 7, description: az, identifier: world-az, item: 66, lang: en,
+    term: 76}
+  model: proso_flashcards.flashcard
+  pk: 28
+- fields: {context: 8, description: az, identifier: world-az, item: 66, lang: cs,
+    term: 77}
+  model: proso_flashcards.flashcard
+  pk: 29
+- fields: {context: 9, description: az, identifier: world-az, item: 66, lang: es,
+    term: 78}
+  model: proso_flashcards.flashcard
+  pk: 30
+- fields: {context: 7, description: bs, identifier: world-bs, item: 67, lang: en,
+    term: 79}
+  model: proso_flashcards.flashcard
+  pk: 31
+- fields: {context: 8, description: bs, identifier: world-bs, item: 67, lang: cs,
+    term: 80}
+  model: proso_flashcards.flashcard
+  pk: 32
+- fields: {context: 9, description: bs, identifier: world-bs, item: 67, lang: es,
+    term: 81}
+  model: proso_flashcards.flashcard
+  pk: 33
+- fields: {context: 7, description: bd, identifier: world-bd, item: 68, lang: en,
+    term: 82}
+  model: proso_flashcards.flashcard
+  pk: 34
+- fields: {context: 8, description: bd, identifier: world-bd, item: 68, lang: cs,
+    term: 83}
+  model: proso_flashcards.flashcard
+  pk: 35
+- fields: {context: 9, description: bd, identifier: world-bd, item: 68, lang: es,
+    term: 84}
+  model: proso_flashcards.flashcard
+  pk: 36
+- fields: {context: 7, description: be, identifier: world-be, item: 69, lang: en,
+    term: 85}
+  model: proso_flashcards.flashcard
+  pk: 37
+- fields: {context: 8, description: be, identifier: world-be, item: 69, lang: cs,
+    term: 86}
+  model: proso_flashcards.flashcard
+  pk: 38
+- fields: {context: 9, description: be, identifier: world-be, item: 69, lang: es,
+    term: 87}
+  model: proso_flashcards.flashcard
+  pk: 39
+- fields: {context: 7, description: bz, identifier: world-bz, item: 70, lang: en,
+    term: 88}
+  model: proso_flashcards.flashcard
+  pk: 40
+- fields: {context: 8, description: bz, identifier: world-bz, item: 70, lang: cs,
+    term: 89}
+  model: proso_flashcards.flashcard
+  pk: 41
+- fields: {context: 9, description: bz, identifier: world-bz, item: 70, lang: es,
+    term: 90}
+  model: proso_flashcards.flashcard
+  pk: 42
+- fields: {context: 1, description: bj, identifier: africa-bj, item: 71, lang: en,
+    term: 127}
+  model: proso_flashcards.flashcard
+  pk: 43
+- fields: {context: 2, description: bj, identifier: africa-bj, item: 71, lang: cs,
+    term: 128}
+  model: proso_flashcards.flashcard
+  pk: 44
+- fields: {context: 3, description: bj, identifier: africa-bj, item: 71, lang: es,
+    term: 129}
+  model: proso_flashcards.flashcard
+  pk: 45
+- fields: {context: 7, description: bj, identifier: world-bj, item: 72, lang: en,
+    term: 127}
+  model: proso_flashcards.flashcard
+  pk: 46
+- fields: {context: 8, description: bj, identifier: world-bj, item: 72, lang: cs,
+    term: 128}
+  model: proso_flashcards.flashcard
+  pk: 47
+- fields: {context: 9, description: bj, identifier: world-bj, item: 72, lang: es,
+    term: 129}
+  model: proso_flashcards.flashcard
+  pk: 48
+- fields: {context: 7, description: bw, identifier: world-bw, item: 73, lang: en,
+    term: 130}
+  model: proso_flashcards.flashcard
+  pk: 49
+- fields: {context: 8, description: bw, identifier: world-bw, item: 73, lang: cs,
+    term: 131}
+  model: proso_flashcards.flashcard
+  pk: 50
+- fields: {context: 9, description: bw, identifier: world-bw, item: 73, lang: es,
+    term: 132}
+  model: proso_flashcards.flashcard
+  pk: 51
+- fields: {context: 1, description: bw, identifier: africa-bw, item: 74, lang: en,
+    term: 130}
+  model: proso_flashcards.flashcard
+  pk: 52
+- fields: {context: 2, description: bw, identifier: africa-bw, item: 74, lang: cs,
+    term: 131}
+  model: proso_flashcards.flashcard
+  pk: 53
+- fields: {context: 3, description: bw, identifier: africa-bw, item: 74, lang: es,
+    term: 132}
+  model: proso_flashcards.flashcard
+  pk: 54
+- fields: {context: 7, description: bf, identifier: world-bf, item: 75, lang: en,
+    term: 133}
+  model: proso_flashcards.flashcard
+  pk: 55
+- fields: {context: 8, description: bf, identifier: world-bf, item: 75, lang: cs,
+    term: 134}
+  model: proso_flashcards.flashcard
+  pk: 56
+- fields: {context: 9, description: bf, identifier: world-bf, item: 75, lang: es,
+    term: 135}
+  model: proso_flashcards.flashcard
+  pk: 57
+- fields: {context: 1, description: bf, identifier: africa-bf, item: 76, lang: en,
+    term: 133}
+  model: proso_flashcards.flashcard
+  pk: 58
+- fields: {context: 2, description: bf, identifier: africa-bf, item: 76, lang: cs,
+    term: 134}
+  model: proso_flashcards.flashcard
+  pk: 59
+- fields: {context: 3, description: bf, identifier: africa-bf, item: 76, lang: es,
+    term: 135}
+  model: proso_flashcards.flashcard
+  pk: 60
+- fields: {context: 1, description: bi, identifier: africa-bi, item: 77, lang: en,
+    term: 136}
+  model: proso_flashcards.flashcard
+  pk: 61
+- fields: {context: 2, description: bi, identifier: africa-bi, item: 77, lang: cs,
+    term: 137}
+  model: proso_flashcards.flashcard
+  pk: 62
+- fields: {context: 3, description: bi, identifier: africa-bi, item: 77, lang: es,
+    term: 138}
+  model: proso_flashcards.flashcard
+  pk: 63
+- fields: {context: 7, description: bi, identifier: world-bi, item: 78, lang: en,
+    term: 136}
+  model: proso_flashcards.flashcard
+  pk: 64
+- fields: {context: 8, description: bi, identifier: world-bi, item: 78, lang: cs,
+    term: 137}
+  model: proso_flashcards.flashcard
+  pk: 65
+- fields: {context: 9, description: bi, identifier: world-bi, item: 78, lang: es,
+    term: 138}
+  model: proso_flashcards.flashcard
+  pk: 66
+- fields: {context: 7, description: td, identifier: world-td, item: 79, lang: en,
+    term: 139}
+  model: proso_flashcards.flashcard
+  pk: 67
+- fields: {context: 8, description: td, identifier: world-td, item: 79, lang: cs,
+    term: 140}
+  model: proso_flashcards.flashcard
+  pk: 68
+- fields: {context: 9, description: td, identifier: world-td, item: 79, lang: es,
+    term: 141}
+  model: proso_flashcards.flashcard
+  pk: 69
+- fields: {context: 1, description: td, identifier: africa-td, item: 80, lang: en,
+    term: 139}
+  model: proso_flashcards.flashcard
+  pk: 70
+- fields: {context: 2, description: td, identifier: africa-td, item: 80, lang: cs,
+    term: 140}
+  model: proso_flashcards.flashcard
+  pk: 71
+- fields: {context: 3, description: td, identifier: africa-td, item: 80, lang: es,
+    term: 141}
+  model: proso_flashcards.flashcard
+  pk: 72
+- fields: {context: 7, description: cd, identifier: world-cd, item: 81, lang: en,
+    term: 142}
+  model: proso_flashcards.flashcard
+  pk: 73
+- fields: {context: 8, description: cd, identifier: world-cd, item: 81, lang: cs,
+    term: 143}
+  model: proso_flashcards.flashcard
+  pk: 74
+- fields: {context: 9, description: cd, identifier: world-cd, item: 81, lang: es,
+    term: 144}
+  model: proso_flashcards.flashcard
+  pk: 75
+- fields: {context: 1, description: cd, identifier: africa-cd, item: 82, lang: en,
+    term: 142}
+  model: proso_flashcards.flashcard
+  pk: 76
+- fields: {context: 2, description: cd, identifier: africa-cd, item: 82, lang: cs,
+    term: 143}
+  model: proso_flashcards.flashcard
+  pk: 77
+- fields: {context: 3, description: cd, identifier: africa-cd, item: 82, lang: es,
+    term: 144}
+  model: proso_flashcards.flashcard
+  pk: 78
+- fields: {context: 1, description: dj, identifier: africa-dj, item: 83, lang: en,
+    term: 145}
+  model: proso_flashcards.flashcard
+  pk: 79
+- fields: {context: 2, description: dj, identifier: africa-dj, item: 83, lang: cs,
+    term: 146}
+  model: proso_flashcards.flashcard
+  pk: 80
+- fields: {context: 3, description: dj, identifier: africa-dj, item: 83, lang: es,
+    term: 147}
+  model: proso_flashcards.flashcard
+  pk: 81
+- fields: {context: 7, description: dj, identifier: world-dj, item: 84, lang: en,
+    term: 145}
+  model: proso_flashcards.flashcard
+  pk: 82
+- fields: {context: 8, description: dj, identifier: world-dj, item: 84, lang: cs,
+    term: 146}
+  model: proso_flashcards.flashcard
+  pk: 83
+- fields: {context: 9, description: dj, identifier: world-dj, item: 84, lang: es,
+    term: 147}
+  model: proso_flashcards.flashcard
+  pk: 84
+- fields: {context: 7, description: eg, identifier: world-eg, item: 85, lang: en,
+    term: 148}
+  model: proso_flashcards.flashcard
+  pk: 85
+- fields: {context: 8, description: eg, identifier: world-eg, item: 85, lang: cs,
+    term: 149}
+  model: proso_flashcards.flashcard
+  pk: 86
+- fields: {context: 9, description: eg, identifier: world-eg, item: 85, lang: es,
+    term: 150}
+  model: proso_flashcards.flashcard
+  pk: 87
+- fields: {context: 1, description: eg, identifier: africa-eg, item: 86, lang: en,
+    term: 148}
+  model: proso_flashcards.flashcard
+  pk: 88
+- fields: {context: 2, description: eg, identifier: africa-eg, item: 86, lang: cs,
+    term: 149}
+  model: proso_flashcards.flashcard
+  pk: 89
+- fields: {context: 3, description: eg, identifier: africa-eg, item: 86, lang: es,
+    term: 150}
+  model: proso_flashcards.flashcard
+  pk: 90
+- fields: {context: 7, description: Lisbon, identifier: world-Lisbon, item: 87, lang: en,
+    term: 31}
+  model: proso_flashcards.flashcard
+  pk: 91
+- fields: {context: 8, description: Lisbon, identifier: world-Lisbon, item: 87, lang: cs,
+    term: 32}
+  model: proso_flashcards.flashcard
+  pk: 92
+- fields: {context: 9, description: Lisbon, identifier: world-Lisbon, item: 87, lang: es,
+    term: 33}
+  model: proso_flashcards.flashcard
+  pk: 93
+- fields: {context: 7, description: Kiev, identifier: world-Kiev, item: 88, lang: en,
+    term: 34}
+  model: proso_flashcards.flashcard
+  pk: 94
+- fields: {context: 8, description: Kiev, identifier: world-Kiev, item: 88, lang: cs,
+    term: 35}
+  model: proso_flashcards.flashcard
+  pk: 95
+- fields: {context: 9, description: Kiev, identifier: world-Kiev, item: 88, lang: es,
+    term: 36}
+  model: proso_flashcards.flashcard
+  pk: 96
+- fields: {context: 7, description: Madrid, identifier: world-Madrid, item: 89, lang: en,
+    term: 37}
+  model: proso_flashcards.flashcard
+  pk: 97
+- fields: {context: 8, description: Madrid, identifier: world-Madrid, item: 89, lang: cs,
+    term: 38}
+  model: proso_flashcards.flashcard
+  pk: 98
+- fields: {context: 9, description: Madrid, identifier: world-Madrid, item: 89, lang: es,
+    term: 39}
+  model: proso_flashcards.flashcard
+  pk: 99
+- fields: {context: 7, description: Berlin, identifier: world-Berlin, item: 90, lang: en,
+    term: 40}
+  model: proso_flashcards.flashcard
+  pk: 100
+- fields: {context: 8, description: Berlin, identifier: world-Berlin, item: 90, lang: cs,
+    term: 41}
+  model: proso_flashcards.flashcard
+  pk: 101
+- fields: {context: 9, description: Berlin, identifier: world-Berlin, item: 90, lang: es,
+    term: 42}
+  model: proso_flashcards.flashcard
+  pk: 102
+- fields: {context: 7, description: Athens, identifier: world-Athens, item: 91, lang: en,
+    term: 43}
+  model: proso_flashcards.flashcard
+  pk: 103
+- fields: {context: 8, description: Athens, identifier: world-Athens, item: 91, lang: cs,
+    term: 44}
+  model: proso_flashcards.flashcard
+  pk: 104
+- fields: {context: 9, description: Athens, identifier: world-Athens, item: 91, lang: es,
+    term: 45}
+  model: proso_flashcards.flashcard
+  pk: 105
+- fields: {context: 7, description: Vienna, identifier: world-Vienna, item: 92, lang: en,
+    term: 46}
+  model: proso_flashcards.flashcard
+  pk: 106
+- fields: {context: 8, description: Vienna, identifier: world-Vienna, item: 92, lang: cs,
+    term: 47}
+  model: proso_flashcards.flashcard
+  pk: 107
+- fields: {context: 9, description: Vienna, identifier: world-Vienna, item: 92, lang: es,
+    term: 48}
+  model: proso_flashcards.flashcard
+  pk: 108
+- fields: {context: 7, description: London, identifier: world-London, item: 93, lang: en,
+    term: 49}
+  model: proso_flashcards.flashcard
+  pk: 109
+- fields: {context: 8, description: London, identifier: world-London, item: 93, lang: cs,
+    term: 50}
+  model: proso_flashcards.flashcard
+  pk: 110
+- fields: {context: 9, description: London, identifier: world-London, item: 93, lang: es,
+    term: 51}
+  model: proso_flashcards.flashcard
+  pk: 111
+- fields: {context: 7, description: Moscow, identifier: world-Moscow, item: 94, lang: en,
+    term: 52}
+  model: proso_flashcards.flashcard
+  pk: 112
+- fields: {context: 8, description: Moscow, identifier: world-Moscow, item: 94, lang: cs,
+    term: 53}
+  model: proso_flashcards.flashcard
+  pk: 113
+- fields: {context: 9, description: Moscow, identifier: world-Moscow, item: 94, lang: es,
+    term: 54}
+  model: proso_flashcards.flashcard
+  pk: 114
+- fields: {context: 7, description: Rome, identifier: world-Rome, item: 95, lang: en,
+    term: 55}
+  model: proso_flashcards.flashcard
+  pk: 115
+- fields: {context: 8, description: Rome, identifier: world-Rome, item: 95, lang: cs,
+    term: 56}
+  model: proso_flashcards.flashcard
+  pk: 116
+- fields: {context: 9, description: Rome, identifier: world-Rome, item: 95, lang: es,
+    term: 57}
+  model: proso_flashcards.flashcard
+  pk: 117
+- fields: {context: 7, description: Paris, identifier: world-Paris, item: 96, lang: en,
+    term: 58}
+  model: proso_flashcards.flashcard
+  pk: 118
+- fields: {context: 8, description: Paris, identifier: world-Paris, item: 96, lang: cs,
+    term: 59}
+  model: proso_flashcards.flashcard
+  pk: 119
+- fields: {context: 9, description: Paris, identifier: world-Paris, item: 96, lang: es,
+    term: 60}
+  model: proso_flashcards.flashcard
+  pk: 120
+- fields: {context: 4, description: Jihlava, identifier: cz-Jihlava, item: 97, lang: en,
+    term: 1}
+  model: proso_flashcards.flashcard
+  pk: 121
+- fields: {context: 5, description: Jihlava, identifier: cz-Jihlava, item: 97, lang: cs,
+    term: 2}
+  model: proso_flashcards.flashcard
+  pk: 122
+- fields: {context: 6, description: Jihlava, identifier: cz-Jihlava, item: 97, lang: es,
+    term: 3}
+  model: proso_flashcards.flashcard
+  pk: 123
+- fields: {context: 4, description: Plzen, identifier: cz-Plzen, item: 98, lang: en,
+    term: 4}
+  model: proso_flashcards.flashcard
+  pk: 124
+- fields: {context: 5, description: Plzen, identifier: cz-Plzen, item: 98, lang: cs,
+    term: 5}
+  model: proso_flashcards.flashcard
+  pk: 125
+- fields: {context: 6, description: Plzen, identifier: cz-Plzen, item: 98, lang: es,
+    term: 6}
+  model: proso_flashcards.flashcard
+  pk: 126
+- fields: {context: 4, description: Otrokovice, identifier: cz-Otrokovice, item: 99,
+    lang: en, term: 7}
+  model: proso_flashcards.flashcard
+  pk: 127
+- fields: {context: 5, description: Otrokovice, identifier: cz-Otrokovice, item: 99,
+    lang: cs, term: 8}
+  model: proso_flashcards.flashcard
+  pk: 128
+- fields: {context: 6, description: Otrokovice, identifier: cz-Otrokovice, item: 99,
+    lang: es, term: 9}
+  model: proso_flashcards.flashcard
+  pk: 129
+- fields: {context: 4, description: Trinec, identifier: cz-Trinec, item: 100, lang: en,
+    term: 10}
+  model: proso_flashcards.flashcard
+  pk: 130
+- fields: {context: 5, description: Trinec, identifier: cz-Trinec, item: 100, lang: cs,
+    term: 11}
+  model: proso_flashcards.flashcard
+  pk: 131
+- fields: {context: 6, description: Trinec, identifier: cz-Trinec, item: 100, lang: es,
+    term: 12}
+  model: proso_flashcards.flashcard
+  pk: 132
+- fields: {context: 4, description: Klasterec_nad_Ohri, identifier: cz-Klasterec_nad_Ohri,
+    item: 101, lang: en, term: 13}
+  model: proso_flashcards.flashcard
+  pk: 133
+- fields: {context: 5, description: Klasterec_nad_Ohri, identifier: cz-Klasterec_nad_Ohri,
+    item: 101, lang: cs, term: 14}
+  model: proso_flashcards.flashcard
+  pk: 134
+- fields: {context: 6, description: Klasterec_nad_Ohri, identifier: cz-Klasterec_nad_Ohri,
+    item: 101, lang: es, term: 15}
+  model: proso_flashcards.flashcard
+  pk: 135
+- fields: {context: 4, description: Pelhrimov, identifier: cz-Pelhrimov, item: 102,
+    lang: en, term: 16}
+  model: proso_flashcards.flashcard
+  pk: 136
+- fields: {context: 5, description: Pelhrimov, identifier: cz-Pelhrimov, item: 102,
+    lang: cs, term: 17}
+  model: proso_flashcards.flashcard
+  pk: 137
+- fields: {context: 6, description: Pelhrimov, identifier: cz-Pelhrimov, item: 102,
+    lang: es, term: 18}
+  model: proso_flashcards.flashcard
+  pk: 138
+- fields: {context: 4, description: Chrudim, identifier: cz-Chrudim, item: 103, lang: en,
+    term: 19}
+  model: proso_flashcards.flashcard
+  pk: 139
+- fields: {context: 5, description: Chrudim, identifier: cz-Chrudim, item: 103, lang: cs,
+    term: 20}
+  model: proso_flashcards.flashcard
+  pk: 140
+- fields: {context: 6, description: Chrudim, identifier: cz-Chrudim, item: 103, lang: es,
+    term: 21}
+  model: proso_flashcards.flashcard
+  pk: 141
+- fields: {context: 4, description: Pardubice, identifier: cz-Pardubice, item: 104,
+    lang: en, term: 22}
+  model: proso_flashcards.flashcard
+  pk: 142
+- fields: {context: 5, description: Pardubice, identifier: cz-Pardubice, item: 104,
+    lang: cs, term: 23}
+  model: proso_flashcards.flashcard
+  pk: 143
+- fields: {context: 6, description: Pardubice, identifier: cz-Pardubice, item: 104,
+    lang: es, term: 24}
+  model: proso_flashcards.flashcard
+  pk: 144
+- fields: {context: 4, description: Hradec_Kralove, identifier: cz-Hradec_Kralove,
+    item: 105, lang: en, term: 25}
+  model: proso_flashcards.flashcard
+  pk: 145
+- fields: {context: 5, description: Hradec_Kralove, identifier: cz-Hradec_Kralove,
+    item: 105, lang: cs, term: 26}
+  model: proso_flashcards.flashcard
+  pk: 146
+- fields: {context: 6, description: Hradec_Kralove, identifier: cz-Hradec_Kralove,
+    item: 105, lang: es, term: 27}
+  model: proso_flashcards.flashcard
+  pk: 147
+- fields: {context: 4, description: Havlickuv_Brod, identifier: cz-Havlickuv_Brod,
+    item: 106, lang: en, term: 28}
+  model: proso_flashcards.flashcard
+  pk: 148
+- fields: {context: 5, description: Havlickuv_Brod, identifier: cz-Havlickuv_Brod,
+    item: 106, lang: cs, term: 29}
+  model: proso_flashcards.flashcard
+  pk: 149
+- fields: {context: 6, description: Havlickuv_Brod, identifier: cz-Havlickuv_Brod,
+    item: 106, lang: es, term: 30}
+  model: proso_flashcards.flashcard
+  pk: 150
+- fields: {context: 1, description: Bir_Lehlou, identifier: africa-Bir_Lehlou, item: 107,
+    lang: en, term: 91}
+  model: proso_flashcards.flashcard
+  pk: 151
+- fields: {context: 2, description: Bir_Lehlou, identifier: africa-Bir_Lehlou, item: 107,
+    lang: cs, term: 92}
+  model: proso_flashcards.flashcard
+  pk: 152
+- fields: {context: 3, description: Bir_Lehlou, identifier: africa-Bir_Lehlou, item: 107,
+    lang: es, term: 93}
+  model: proso_flashcards.flashcard
+  pk: 153
+- fields: {context: 1, description: Moroni, identifier: africa-Moroni, item: 108,
+    lang: en, term: 94}
+  model: proso_flashcards.flashcard
+  pk: 154
+- fields: {context: 2, description: Moroni, identifier: africa-Moroni, item: 108,
+    lang: cs, term: 95}
+  model: proso_flashcards.flashcard
+  pk: 155
+- fields: {context: 3, description: Moroni, identifier: africa-Moroni, item: 108,
+    lang: es, term: 96}
+  model: proso_flashcards.flashcard
+  pk: 156
+- fields: {context: 1, description: Kigali, identifier: africa-Kigali, item: 109,
+    lang: en, term: 97}
+  model: proso_flashcards.flashcard
+  pk: 157
+- fields: {context: 2, description: Kigali, identifier: africa-Kigali, item: 109,
+    lang: cs, term: 98}
+  model: proso_flashcards.flashcard
+  pk: 158
+- fields: {context: 3, description: Kigali, identifier: africa-Kigali, item: 109,
+    lang: es, term: 99}
+  model: proso_flashcards.flashcard
+  pk: 159
+- fields: {context: 1, description: Mbabane, identifier: africa-Mbabane, item: 110,
+    lang: en, term: 100}
+  model: proso_flashcards.flashcard
+  pk: 160
+- fields: {context: 2, description: Mbabane, identifier: africa-Mbabane, item: 110,
+    lang: cs, term: 101}
+  model: proso_flashcards.flashcard
+  pk: 161
+- fields: {context: 3, description: Mbabane, identifier: africa-Mbabane, item: 110,
+    lang: es, term: 102}
+  model: proso_flashcards.flashcard
+  pk: 162
+- fields: {context: 1, description: Juba, identifier: africa-Juba, item: 111, lang: en,
+    term: 103}
+  model: proso_flashcards.flashcard
+  pk: 163
+- fields: {context: 2, description: Juba, identifier: africa-Juba, item: 111, lang: cs,
+    term: 104}
+  model: proso_flashcards.flashcard
+  pk: 164
+- fields: {context: 3, description: Juba, identifier: africa-Juba, item: 111, lang: es,
+    term: 105}
+  model: proso_flashcards.flashcard
+  pk: 165
+- fields: {context: 1, description: Dodoma, identifier: africa-Dodoma, item: 112,
+    lang: en, term: 106}
+  model: proso_flashcards.flashcard
+  pk: 166
+- fields: {context: 2, description: Dodoma, identifier: africa-Dodoma, item: 112,
+    lang: cs, term: 107}
+  model: proso_flashcards.flashcard
+  pk: 167
+- fields: {context: 3, description: Dodoma, identifier: africa-Dodoma, item: 112,
+    lang: es, term: 108}
+  model: proso_flashcards.flashcard
+  pk: 168
+- fields: {context: 1, description: Laayoune, identifier: africa-Laayoune, item: 113,
+    lang: en, term: 109}
+  model: proso_flashcards.flashcard
+  pk: 169
+- fields: {context: 2, description: Laayoune, identifier: africa-Laayoune, item: 113,
+    lang: cs, term: 110}
+  model: proso_flashcards.flashcard
+  pk: 170
+- fields: {context: 3, description: Laayoune, identifier: africa-Laayoune, item: 113,
+    lang: es, term: 111}
+  model: proso_flashcards.flashcard
+  pk: 171
+- fields: {context: 1, description: Djibouti, identifier: africa-Djibouti, item: 114,
+    lang: en, term: 112}
+  model: proso_flashcards.flashcard
+  pk: 172
+- fields: {context: 2, description: Djibouti, identifier: africa-Djibouti, item: 114,
+    lang: cs, term: 113}
+  model: proso_flashcards.flashcard
+  pk: 173
+- fields: {context: 3, description: Djibouti, identifier: africa-Djibouti, item: 114,
+    lang: es, term: 114}
+  model: proso_flashcards.flashcard
+  pk: 174
+- fields: {context: 1, description: Banjul, identifier: africa-Banjul, item: 115,
+    lang: en, term: 115}
+  model: proso_flashcards.flashcard
+  pk: 175
+- fields: {context: 2, description: Banjul, identifier: africa-Banjul, item: 115,
+    lang: cs, term: 116}
+  model: proso_flashcards.flashcard
+  pk: 176
+- fields: {context: 3, description: Banjul, identifier: africa-Banjul, item: 115,
+    lang: es, term: 117}
+  model: proso_flashcards.flashcard
+  pk: 177
+- fields: {context: 1, description: Porto-Novo, identifier: africa-Porto-Novo, item: 116,
+    lang: en, term: 118}
+  model: proso_flashcards.flashcard
+  pk: 178
+- fields: {context: 2, description: Porto-Novo, identifier: africa-Porto-Novo, item: 116,
+    lang: cs, term: 119}
+  model: proso_flashcards.flashcard
+  pk: 179
+- fields: {context: 3, description: Porto-Novo, identifier: africa-Porto-Novo, item: 116,
+    lang: es, term: 120}
+  model: proso_flashcards.flashcard
+  pk: 180
+- fields:
+    contexts: []
+    flashcards: []
+    identifier: world
+    item: 1
+    lang: es
+    name: World
+    not_in_model: false
+    subcategories: []
+    terms: [33, 36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84,
+      87, 90, 123, 126, 129, 132, 135, 138, 141, 144, 147, 150]
+    type: null
+  model: proso_flashcards.category
+  pk: 1
+- fields:
+    contexts: []
+    flashcards: []
+    identifier: world
+    item: 1
+    lang: en
+    name: World
+    not_in_model: false
+    subcategories: []
+    terms: [31, 34, 37, 40, 43, 46, 49, 52, 55, 58, 61, 64, 67, 70, 73, 76, 79, 82,
+      85, 88, 121, 124, 127, 130, 133, 136, 139, 142, 145, 148]
+    type: null
+  model: proso_flashcards.category
+  pk: 2
+- fields:
+    contexts: []
+    flashcards: []
+    identifier: world
+    item: 1
+    lang: cs
+    name: "Sv\u011Bt"
+    not_in_model: false
+    subcategories: []
+    terms: [32, 35, 38, 41, 44, 47, 50, 53, 56, 59, 62, 65, 68, 71, 74, 77, 80, 83,
+      86, 89, 122, 125, 128, 131, 134, 137, 140, 143, 146, 149]
+    type: null
+  model: proso_flashcards.category
+  pk: 3
+- fields:
+    contexts: []
+    flashcards: []
+    identifier: africa
+    item: 2
+    lang: es
+    name: Africa
+    not_in_model: false
+    subcategories: []
+    terms: [93, 96, 99, 102, 105, 108, 111, 114, 117, 120, 123, 126, 129, 132, 135,
+      138, 141, 144, 147, 150]
+    type: null
+  model: proso_flashcards.category
+  pk: 4
+- fields:
+    contexts: []
+    flashcards: []
+    identifier: africa
+    item: 2
+    lang: en
+    name: Africa
+    not_in_model: false
+    subcategories: []
+    terms: [91, 121, 94, 97, 100, 103, 106, 109, 112, 115, 118, 124, 127, 130, 133,
+      136, 139, 142, 145, 148]
+    type: null
+  model: proso_flashcards.category
+  pk: 5
+- fields:
+    contexts: []
+    flashcards: []
+    identifier: africa
+    item: 2
+    lang: cs
+    name: Afrika
+    not_in_model: false
+    subcategories: []
+    terms: [92, 95, 98, 101, 104, 107, 110, 113, 116, 119, 122, 125, 128, 131, 134,
+      137, 140, 143, 146, 149]
+    type: null
+  model: proso_flashcards.category
+  pk: 6
+- fields:
+    contexts: []
+    flashcards: []
+    identifier: cz
+    item: 3
+    lang: es
+    name: Czech Rep.
+    not_in_model: false
+    subcategories: []
+    terms: [3, 6, 9, 12, 15, 18, 21, 24, 27, 30]
+    type: null
+  model: proso_flashcards.category
+  pk: 7
+- fields:
+    contexts: []
+    flashcards: []
+    identifier: cz
+    item: 3
+    lang: en
+    name: Czech Rep.
+    not_in_model: false
+    subcategories: []
+    terms: [1, 4, 7, 10, 13, 16, 19, 22, 25, 28]
+    type: null
+  model: proso_flashcards.category
+  pk: 8
+- fields:
+    contexts: []
+    flashcards: []
+    identifier: cz
+    item: 3
+    lang: cs
+    name: "\u010Cesk\xE1 republika"
+    not_in_model: false
+    subcategories: []
+    terms: [2, 5, 8, 11, 14, 17, 20, 23, 26, 29]
+    type: null
+  model: proso_flashcards.category
+  pk: 9

@@ -1,0 +1,4 @@
+- fields: {app_name: null, content: '{"class": "proso.models.prediction.PriorCurrentPredictiveModel"}',
+    content_hash: e12270448da44a3c74f58676819aaa2bb2ad89f5, key: null}
+  model: proso_common.config
+  pk: 1
