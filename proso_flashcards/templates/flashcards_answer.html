@@ -69,7 +69,7 @@
             $scope.submit = function(){
                 $http.post('', {answer: $scope.answer}).
                     success(function(data, status, headers, config){
-                        $window.location.href = "answer/" + data[0] + location.search;
+                        $window.location.href = "/flashcards/answer/" + data[0] + location.search;
                     }).
                     error(function(data, status, headers, config){
                         $scope.error_msg = data;
