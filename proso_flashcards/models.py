@@ -173,7 +173,7 @@ class Flashcard(models.Model):
     lang = models.CharField(max_length=2)
     term = models.ForeignKey(Term, related_name="flashcards")
     context = models.ForeignKey(Context, related_name="flashcards")
-    description = models.TextField(null=True)
+    description = models.TextField(null=True, blank=True)
     active = models.BooleanField(default=True)
 
     objects = FlashcardManager()
