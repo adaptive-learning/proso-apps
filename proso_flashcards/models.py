@@ -149,7 +149,7 @@ class Flashcard(models.Model):
             "description": self.description
         }
         if hasattr(self, "options"):
-            data["options"] = map(lambda o: o.to_json(), self.options)
+            data["options"] = map(lambda o: o.to_json(nested=True), self.options)
         if hasattr(self, "direction"):
             data["direction"] = self.direction
         if not nested and categories:
