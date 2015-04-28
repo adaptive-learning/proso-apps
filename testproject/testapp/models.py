@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from proso_flashcards.models import Term, Context, Flashcard
+from proso.django.util import disable_for_loaddata
 
 
 class ExtendedTerm(Term):
@@ -39,5 +40,6 @@ settings.PROSO_FLASHCARDS["context_extension"] = ExtendedContext
 
 @receiver(pre_save, sender=ExtendedTerm)
 @receiver(pre_save, sender=ExtendedContext)
+@disable_for_loaddata
 def create_items(sender, instance, **kwargs):
     pre_save.send(sender=sender.__bases__[0], instance=instance)

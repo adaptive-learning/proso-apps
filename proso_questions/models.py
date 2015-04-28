@@ -10,6 +10,7 @@ from proso_models.models import get_environment
 from collections import defaultdict
 import abc
 from proso.django.config import instantiate_from_config
+from proso.django.util import disable_for_loaddata
 
 
 def get_test_evaluator():
@@ -399,6 +400,7 @@ class CategoryTestEvaluator(TestEvaluator):
 @receiver(pre_save, sender=Set)
 @receiver(pre_save, sender=Category)
 @receiver(pre_save, sender=Question)
+@disable_for_loaddata
 def sort_items(sender, instance, **kwargs):
     if instance.item_id is None and instance.item is None:
         item = Item()
@@ -407,6 +409,7 @@ def sort_items(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Category)
+@disable_for_loaddata
 def question_parents(sender, **kwargs):
     environment = get_environment()
     category = kwargs['instance']
@@ -447,6 +450,7 @@ def question_parents(sender, **kwargs):
 
 
 @receiver(post_delete, sender=Image)
+@disable_for_loaddata
 def image_delete(sender, instance, **kwargs):
     if instance.file:
         instance.file.delete(False)

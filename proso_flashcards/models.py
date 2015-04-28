@@ -6,6 +6,7 @@ import itertools
 from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector
 from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
+from proso.django.util import disable_for_loaddata
 
 CACHE_EXPIRATION = 60 * 60 * 24 * 30
 
@@ -267,6 +268,7 @@ class FlashcardAnswer(Answer):
 @receiver(pre_save, sender=Context)
 @receiver(pre_save, sender=Flashcard)
 @receiver(pre_save, sender=Category)
+@disable_for_loaddata
 def create_items(sender, instance, **kwargs):
     if instance.item_id is None and instance.item is None:
         item = Item()
@@ -281,6 +283,7 @@ PROSO_MODELS_TO_EXPORT = [Category, Flashcard, FlashcardAnswer,
 
 @receiver(m2m_changed, sender=Category.terms.through)
 @receiver(m2m_changed, sender=Category.subcategories.through)
+@disable_for_loaddata
 def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
     environment = get_environment()
     parent_items = []
@@ -324,6 +327,7 @@ def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
 
 
 @receiver(post_save, sender=Flashcard)
+@disable_for_loaddata
 def add_parent(sender, instance, **kwargs):
     environment = get_environment()
     parent = instance.term.item_id
@@ -333,6 +337,7 @@ def add_parent(sender, instance, **kwargs):
 
 
 @receiver(pre_delete, sender=Flashcard)
+@disable_for_loaddata
 def delete_parent(sender, instance, **kwargs):
     environment = get_environment()
     parent = instance.term.item_id

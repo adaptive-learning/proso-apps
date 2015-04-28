@@ -9,6 +9,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 import datetime
 from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social, name_lazy_user
+from proso.django.util import disable_for_loaddata
 
 
 def get_content_hash(content):
@@ -207,6 +208,7 @@ def init_content_hash(instance):
 
 
 @receiver(pre_save, sender=Session)
+@disable_for_loaddata
 def init_session_location(sender, instance, **kwargs):
     if instance.location is None:
         current_request = get_current_request(force=False)
@@ -216,6 +218,7 @@ def init_session_location(sender, instance, **kwargs):
 
 
 @receiver(pre_save, sender=Session)
+@disable_for_loaddata
 def init_session_http_user_agent(sender, instance, **kwargs):
     if instance.http_user_agent is None:
         current_request = get_current_request(force=False)
@@ -224,16 +227,19 @@ def init_session_http_user_agent(sender, instance, **kwargs):
 
 
 @receiver(pre_save, sender=HttpUserAgent)
+@disable_for_loaddata
 def init_content_hash_http_user_agent(sender, instance, **kwargs):
     init_content_hash(instance)
 
 
 @receiver(pre_save, sender=TimeZone)
+@disable_for_loaddata
 def init_content_hash_time_zone(sender, instance, **kwargs):
     init_content_hash(instance)
 
 
 @receiver(pre_save, sender=User)
+@disable_for_loaddata
 def init_user_profile(sender, instance, created=False, **kwargs):
     if is_user_real(instance):
         if is_user_lazy(instance):
@@ -242,6 +248,7 @@ def init_user_profile(sender, instance, created=False, **kwargs):
 
 
 @receiver(converted)
+@disable_for_loaddata
 def init_username(sender, user, **kwargs):
     if is_user_social(user):
         name_lazy_user(user, save=False)

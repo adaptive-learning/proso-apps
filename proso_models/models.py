@@ -19,6 +19,7 @@ import json
 from django.core.cache import cache
 from proso.django.cache import get_request_cache, is_cache_prepared
 from django.db import transaction
+from proso.django.util import disable_for_loaddata
 
 
 ENVIRONMENT_INFO_CACHE_EXPIRATION = 30 * 60
@@ -794,6 +795,7 @@ class Audit(models.Model):
 ################################################################################
 
 @receiver(pre_save)
+@disable_for_loaddata
 def init_session(sender, instance, **kwargs):
     if not issubclass(sender, Answer):
         return
@@ -802,6 +804,7 @@ def init_session(sender, instance, **kwargs):
 
 
 @receiver(pre_save)
+@disable_for_loaddata
 def init_config(sender, instance, **kwargs):
     if not issubclass(sender, Answer):
         return
@@ -810,6 +813,7 @@ def init_config(sender, instance, **kwargs):
 
 
 @receiver(post_save)
+@disable_for_loaddata
 def update_predictive_model(sender, instance, **kwargs):
     if not issubclass(sender, Answer):
         return
@@ -826,6 +830,7 @@ def update_predictive_model(sender, instance, **kwargs):
 
 
 @receiver(post_save)
+@disable_for_loaddata
 def insert_ab_values(sender, instance, **kwargs):
     if not issubclass(sender, Answer):
         return
@@ -837,6 +842,7 @@ def insert_ab_values(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Variable)
+@disable_for_loaddata
 def log_audit(sender, instance, **kwargs):
     if instance.audit:
         audit = Audit(
