@@ -13,7 +13,7 @@ import re
 import os.path
 from decorator import cache_environment_for_item
 from collections import defaultdict
-from proso.django.config import instantiate_from_config, get_global_config
+from proso.django.config import instantiate_from_config, get_global_config, get_config
 from proso_common.models import Config
 import json
 from django.core.cache import cache
@@ -41,7 +41,12 @@ def get_active_environment_info():
             return cached
     cached = cache.get(ENVIRONMENT_INFO_CACHE_KEY)
     if cached is None:
-        cached = EnvironmentInfo.objects.select_related('config').get(status=EnvironmentInfo.STATUS_ACTIVE).to_json()
+        try:
+            active_envinfo = EnvironmentInfo.objects.select_related('config').get(status=EnvironmentInfo.STATUS_ACTIVE)
+        except EnvironmentInfo.DoesNotExist:
+            config = Config.objects.from_content(get_config('proso_models', 'predictive_model', default={}))
+            active_envinfo, _ = EnvironmentInfo.objects.get_or_create(config=config, status=EnvironmentInfo.STATUS_ACTIVE, revision=0)
+        cached = active_envinfo.to_json()
         if is_cache_prepared():
             get_request_cache().set(ENVIRONMENT_INFO_CACHE_KEY, cached)
         if EnvironmentInfo.objects.filter(status=EnvironmentInfo.STATUS_LOADING).count() == 0:

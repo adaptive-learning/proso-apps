@@ -24,10 +24,6 @@ To run tests:
 
 	make test
 
-Before you run the server you need to setup active environment info:
-
-	./manage.py recompute_model --initial --finish
-
 ## Release
 
 In case of milestone:
