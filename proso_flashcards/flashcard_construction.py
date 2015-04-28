@@ -38,14 +38,19 @@ class EmptyOptionSet(OptionSet):
 class ContextOptionSet(OptionSet):
     def get_option_for_flashcards(self, flashcards):
         contexts = set()
+        types = set()
         for flashcard in flashcards:
             contexts.add(flashcard.context_id)
+            types.add(flashcard.term.type)
 
+        options_filter = {'context_id__in': contexts}
+        if types:
+            options_filter['term__type__in'] = types
         option_sets = defaultdict(set)
-        for context, item in Flashcard.objects.filter(context_id__in=contexts).values_list("context", "item_id"):
-            option_sets[context].add(item)
+        for context, term_type, item in Flashcard.objects.filter(**options_filter).values_list("context", "term__type", "item_id"):
+            option_sets[context, term_type].add(item)
 
-        return dict(map(lambda fc: (fc.item_id, list(option_sets[fc.context_id])), flashcards))
+        return dict(map(lambda fc: (fc.item_id, list(option_sets[fc.context_id, fc.term.type])), flashcards))
 
 
 class Direction():
