@@ -24,7 +24,7 @@ class RandomItemSelection(ItemSelection):
         self._predictive_model = predictive_model
 
     def select(self, environment, user, items, time, n, **kwargs):
-        candidates = random.sample(items, n)
+        candidates = random.sample(items, min(n, len(items)))
         return candidates
 
     def __str__(self):
