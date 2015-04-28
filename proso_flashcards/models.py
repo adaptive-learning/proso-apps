@@ -22,6 +22,7 @@ class Term(models.Model):
     def to_json(self, nested=False):
         json = {
             "id": self.pk,
+            "identifier": self.identifier,
             "item_id": self.item_id,
             "object_type": "fc_term",
             "lang": self.lang,
@@ -47,6 +48,7 @@ class Context(models.Model):
     def to_json(self, nested=False):
         json = {
             "id": self.pk,
+            "identifier": self.identifier,
             "item_id": self.item_id,
             "object_type": "fc_context",
             "lang": self.lang,
@@ -142,6 +144,7 @@ class Flashcard(models.Model):
     def to_json(self, nested=False, categories=True, contexts=True):
         data = {
             "id": self.pk,
+            "identifier": self.identifier,
             "item_id": self.item_id,
             "object_type": "fc_flashcard",
             "lang": self.lang,
@@ -230,6 +233,7 @@ class Category(models.Model):
     def to_json(self, nested=False):
         return {
             "id": self.pk,
+            "identifier": self.identifier,
             "item_id": self.item_id,
             "object_type": "fc_category",
             "lang": self.lang,
