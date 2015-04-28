@@ -22,7 +22,8 @@
       "id": "0004",
       "term": "0003",
       "context": "0002",
-      "categories": ["0006"]
+      "categories": ["0006"],
+      "active": true
     }
   ]
 }

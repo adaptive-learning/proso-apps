@@ -1197,15 +1197,15 @@
   model: proso_flashcards.flashcard
   pk: 177
 - fields: {context: 1, description: Porto-Novo, identifier: africa-Porto-Novo, item: 116,
-    lang: en, term: 118}
+    lang: en, term: 118, active: false}
   model: proso_flashcards.flashcard
   pk: 178
 - fields: {context: 2, description: Porto-Novo, identifier: africa-Porto-Novo, item: 116,
-    lang: cs, term: 119}
+    lang: cs, term: 119, active: false}
   model: proso_flashcards.flashcard
   pk: 179
 - fields: {context: 3, description: Porto-Novo, identifier: africa-Porto-Novo, item: 116,
-    lang: es, term: 120}
+    lang: es, term: 120, active: false}
   model: proso_flashcards.flashcard
   pk: 180
 - fields:

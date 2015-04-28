@@ -222,6 +222,8 @@ class Command(BaseCommand):
                 db_flashcard.context = context
                 if "description" in flashcard:
                     db_flashcard.description = flashcard["description"]
+                if "active" in flashcard:
+                    db_flashcard.active = flashcard["active"]
                 if db_flashcard.identifier in item_mapping:
                     db_flashcard.item_id = item_mapping[db_flashcard.identifier]
                     db_flashcard.save()

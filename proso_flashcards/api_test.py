@@ -73,6 +73,11 @@ class PracticeAPITest(TestCase):
         for a in avoid:
             self.assertFalse(a in found, "There is no flashcard with avoided id.")
 
+    def test_deactivated_flashcards(self):
+        content = self._get_practice(language='en', limit=100)
+        found = map(lambda f: f['id'], content['data']['flashcards'])
+        self.assertFalse(178 in found, "There is no flashcard which is not active.")
+
     def _get_practice(self, **kwargs):
         kwargs_str = '&'.join(map(lambda (key, val): '%s=%s' % (key, val), kwargs.items()))
         url = '/flashcards/practice/?%s' % kwargs_str

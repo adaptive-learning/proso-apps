@@ -60,6 +60,8 @@ def show_more(request, object_class, should_cache=True):
         if object_class == FlashcardAnswer:
             user_id = get_user_id(request)
             objs = objs.filter(user_id=user_id).order_by('-time')
+        if object_class == Flashcard:
+            objs = objs.filter(active=True)
         return objs
 
     return proso_common.views.show_more(

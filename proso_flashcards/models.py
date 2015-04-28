@@ -65,7 +65,7 @@ class Context(models.Model):
 
 class FlashcardManager(models.Manager):
     def candidates(self, categories, contexts, types, avoid):
-        qs = self.filter(~Q(id__in=avoid))
+        qs = self.filter(Q(active=True) & ~Q(id__in=avoid))
         if isinstance(contexts, list) and len(contexts) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
                     Q(context_id=id) if isinstance(id, int) else Q(context__identifier=id), contexts)))
@@ -138,6 +138,7 @@ class Flashcard(models.Model):
     term = models.ForeignKey(Term, related_name="flashcards")
     context = models.ForeignKey(Context, related_name="flashcards")
     description = models.TextField(null=True)
+    active = models.BooleanField(default=True)
 
     objects = FlashcardManager()
 
@@ -147,6 +148,7 @@ class Flashcard(models.Model):
             "identifier": self.identifier,
             "item_id": self.item_id,
             "object_type": "fc_flashcard",
+            "active": self.active,
             "lang": self.lang,
             "term": self.get_term().to_json(nested=True),
             "description": self.description
