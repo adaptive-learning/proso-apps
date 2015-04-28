@@ -95,9 +95,7 @@ TEMPLATE_DIRS = (
     os.path.join(BASE_DIR, '..', 'proso_questions_client', 'templates'),
 )
 
-# Da
-import sys
-if 'test' in sys.argv:
+if TESTING:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
