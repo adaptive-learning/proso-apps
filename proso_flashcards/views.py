@@ -173,7 +173,6 @@ def practice(request):
     avoid = json.loads(request.GET.get("avoid", "[]"))
     with_contexts = "without_contexts" not in request.GET
     language = request.GET.get("language", request.LANGUAGE_CODE)
-    print language
 
     time_before_practice = time_lib()
     candidates = Flashcard.objects.candidates(categories, contexts, types, avoid)
