@@ -10,6 +10,7 @@ from django.db import transaction
 from django.contrib.auth.models import User
 from django.middleware.csrf import get_token
 import json
+from django.utils.translation import ugettext as _
 
 
 @allow_lazy_user
@@ -89,12 +90,12 @@ def login(request):
         )
         if user is None:
             return render_json(request, {
-                'error': 'Password or username does not match.',
+                'error': _('Password or username does not match.'),
                 'error_type': 'password_username_not_match'
             }, template='user_json.html', status=401)
         if not user.is_active:
             return render_json(request, {
-                'error': 'The account has not been activated.',
+                'error': _('The account has not been activated.'),
                 'error_type': 'account_not_activated'
             }, template='user_json.html', status=401)
         auth.login(request, user)
@@ -138,7 +139,7 @@ def signup(request):
     elif request.method == 'POST':
         if request.user.is_authenticated() and hasattr(request.user, "userprofile"):
             return render_json(request, {
-                'error': 'User already logged in',
+                'error': _('User already logged in'),
                 'error_type': 'username_logged'
             }, template='user_json.html', status=400)
         credentials = json_body(request.body)
@@ -246,33 +247,33 @@ def _to_json(request, value):
 def _check_credentials(credentials, new=False):
     if new and not credentials.get('username'):
         return {
-            'error': 'There is no username',
+            'error': _('There is no username'),
             'error_type': 'username_empty'
         }
     if new and not credentials.get('email'):
         return {
-            'error': 'There is no e-mail',
+            'error': _('There is no e-mail'),
             'error_type': 'email_empty'
         }
     if new and not credentials.get('password'):
         return {
-            'error': 'There is no password',
+            'error': _('There is no password'),
             'error_type': 'password_empty'
         }
 
     if credentials.get('password') and credentials['password'] != credentials.get('password_check'):
         return {
-            'error': 'Passwords do not match.',
+            'error': _('Passwords do not match.'),
             'error_type': 'password_not_match'
         }
     if credentials.get('username') and _user_exists(username=credentials['username']):
         return {
-            'error': 'There is already a user with the given username.',
+            'error': _('There is already a user with the given username.'),
             'error_type': 'username_exists'
         }
     if new and _user_exists(email=credentials['email']):
         return {
-            'error': 'There is already a user with the given e-mail.',
+            'error': _('There is already a user with the given e-mail.'),
             'error_type': 'email_exists'
         }
     return None
