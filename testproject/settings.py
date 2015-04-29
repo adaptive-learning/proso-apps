@@ -178,9 +178,6 @@ SOCIAL_AUTH_ASSOCIATION_SERVER_URL_LENGTH = 135
 SOCIAL_AUTH_ASSOCIATION_HANDLE_LENGTH = 125
 
 
-# http://stackoverflow.com/questions/4882377/django-manage-py-test-fails-table-already-exists
-SOUTH_TESTS_MIGRATE = False
-
 try:
     from hashes import HASHES
 except ImportError:
