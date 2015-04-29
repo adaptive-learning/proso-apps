@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.utils.translation import activate
 from proso.django.test import TestCase
 from proso_flashcards.models import Term, Flashcard, Category, Context
 import json
