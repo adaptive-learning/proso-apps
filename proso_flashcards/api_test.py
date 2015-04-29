@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.utils.translation import activate
 from proso.django.test import TestCase
 from proso_flashcards.models import Term, Flashcard, Category, Context
 import json
@@ -19,8 +21,13 @@ class PracticeAPITest(TestCase):
         self._flashcards = dict(map(lambda f: ((f.identifier, f.lang), f), Flashcard.objects.select_related('term', 'context').all()))
 
     def test_language(self):
-        for lang in ['cs', 'en', 'es']:
-            content = self._get_practice(language=lang)
+        for lang in [None, 'cs', 'en', 'es']:
+            if lang is not None:
+                content = self._get_practice(language=lang)
+            else:
+                content = self._get_practice()
+                lang = settings.LANGUAGE_CODE[:2]
+
             for flashcard in content['data']['flashcards']:
                 self.assertEqual(flashcard['lang'], lang, 'The flashcard has an expected language.')
                 self.assertEqual(flashcard['term']['lang'], lang, 'The term has an expected language.')
