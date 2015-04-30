@@ -2,10 +2,11 @@ default:
     proso_models:
         predictive_model:
             class: proso.models.prediction.PriorCurrentPredictiveModel
-        item_selector:
-            class: proso.models.item_selection.RandomItemSelection
         option_selector:
-            class: proso.models.option_selection.RandomOptionSelection
+            class: proso.models.option_selection.ConfusingOptionSelection
+            parameters:
+              max_options: 3
+              allow_zero_options_restriction: True
     proso_feedback:
         domain: localhost
         to:

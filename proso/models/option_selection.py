@@ -1,7 +1,10 @@
 import abc
+from collections import defaultdict
 import logging
 import random
+
 from proso.models.item_selection import adjust_target_probability
+
 
 LOGGER = logging.getLogger('django.request')
 
@@ -34,8 +37,18 @@ class RandomOptionSelection(OptionSelection):
 
 
 class ConfusingOptionSelection(OptionSelection):
+    def __init__(self, item_selector, max_options=6, allow_zero_options_restriction=False, **kwargs):
+        super(ConfusingOptionSelection, self).__init__(item_selector, **kwargs)
+        self.max_options = max_options
+        self.allow_zero_options_restriction = allow_zero_options_restriction
 
-    def select_options(self, environment, user, item, time, options, **kwargs):
+    def select_options_more_items(self, environment, user, items, time, options, allow_zero_options=None, **kwargs):
+        if allow_zero_options is None:
+            allow_zero_options = defaultdict(lambda: True)
+        return [self.select_options(environment, user, item, time, options[item],
+                                    allow_zero_options=allow_zero_options[item], **kwargs) for item in items]
+
+    def select_options(self, environment, user, item, time, options, allow_zero_options=True, **kwargs):
         rolling_success = self._item_selector.get_rolling_success()
         target_probability = self._item_selector.get_target_probability()
         prediction = self._item_selector.get_prediction_for_selected_item(item)
@@ -48,9 +61,12 @@ class ConfusingOptionSelection(OptionSelection):
         prob_target = adjust_target_probability(target_probability, rolling_success)
         g = min(0.5, max(0, prob_target - prob_real) / max(0.001, 1 - prob_real))
         k = round_fun(1.0 / g) if g != 0 else 1
-        number_of_options = int(0 if (k > 6 or k == 0) else (k - 1))
+        number_of_options = int(0 if (k > self.max_options or k == 0) else (k - 1))
         if number_of_options == 0:
-            return []
+            if not self.allow_zero_options_restriction or allow_zero_options:
+                return []
+            else:
+                number_of_options = self.max_options
         # confusing places
         confusing_factor = environment.confusing_factor_more_items(item, options)
         confusing_places = map(

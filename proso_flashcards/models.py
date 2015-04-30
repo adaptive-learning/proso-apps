@@ -94,19 +94,26 @@ class FlashcardManager(models.Manager):
             flashcards = flashcards.filter(lang=language)
         flashcards = sorted(flashcards, key=lambda fc: selected_items.index(fc.item_id))
 
-        # select options
         from proso_flashcards.flashcard_construction import get_option_set, get_direction
 
+        # select direction
+        direction = get_direction()
+        allow_zero_option = {}
+        for flashcard in flashcards:
+            flashcard.direction = direction.get_direction(flashcard)
+            allow_zero_option[flashcard.item_id] = flashcard.direction == FlashcardAnswer.FROM_TERM
+
+        # select options
         optionSets = get_option_set().get_option_for_flashcards(flashcards)
-        options = option_selector.select_options_more_items(environment, user, selected_items, time, optionSets)
+        options = option_selector.select_options_more_items(environment, user, selected_items, time, optionSets,
+                                                allow_zero_options=allow_zero_option)
         all_options = {}
         for option in Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options))) \
                 .prefetch_related("term", "context"):
             all_options[option.item_id] = option
         options = dict(zip(selected_items, options))
-        direction = get_direction()
+
         for flashcard in flashcards:
-            flashcard.direction = direction.get_direction(flashcard)
             if len(options[flashcard.item_id]) > 0:
                 flashcard.options = map(lambda id: all_options[id], options[flashcard.item_id])
 
