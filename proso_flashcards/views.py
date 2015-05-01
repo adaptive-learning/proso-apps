@@ -265,7 +265,7 @@ def _to_json(request, value):
         json = value
     LOGGER.debug("converting value to simple JSON took %s seconds", (time_lib() - time_start))
     common_json_enrich.enrich_by_predicate(request, json, common_json_enrich.url, lambda x: True,
-                                           ignore_get=['filter_column', 'filter_value', 'categories', 'contexts'])
+                                       ignore_get=['filter_column', 'filter_value', 'categories', 'contexts', 'types'])
     if 'environment' in request.GET:
         common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
                                                  ["fc_term"],

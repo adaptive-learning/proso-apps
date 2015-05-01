@@ -70,10 +70,15 @@ class FlashcardManager(models.Manager):
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
                     Q(context_id=id) if isinstance(id, int) else Q(context__identifier=id), contexts)))
         if isinstance(categories, list) and len(categories) > 0:
-            f = []
-            for id, type in zip(categories, Category.objects.children_types(categories)):
-                f.append(self._get_filter(id, type))
-            qs = qs.filter(reduce(lambda a, b: a | b, f))
+            if not isinstance(categories[0], list):
+                categories = [categories]
+            intersection = []
+            for cats in categories:
+                union = []
+                for id, type in zip(cats, Category.objects.children_types(cats)):
+                    union.append(self._get_filter(id, type))
+                intersection.append(reduce(lambda a, b: a | b, union))
+            qs = qs.filter(reduce(lambda a, b: a & b, intersection))
         if isinstance(types, list) and len(types) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda type: Q(term__type=type), types)))
         return qs
@@ -256,7 +261,7 @@ class CategoryManager(models.Manager):
                 types.append(self.filter(pk=id).values_list("children_type", flat=True))
             else:
                 types.append(self.filter(identifier=id).values_list("children_type", flat=True))
-        types =  map(lambda l: l[0] if len(l) > 0 else None, types)
+        types = map(lambda l: l[0] if len(l) > 0 else None, types)
         cache.set(key, types, CACHE_EXPIRATION)
         return types
 
