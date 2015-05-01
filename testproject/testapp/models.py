@@ -19,6 +19,10 @@ class ExtendedTerm(Term):
         if 'extra-info' in data:
             term.extra_info = data["extra-info"]
 
+    def dump_data(self, term):
+        if self.extra_info:
+            term["extra-info"] = self.extra_info
+
 
 class ExtendedContext(Context):
     extra_info = models.TextField()
@@ -32,6 +36,10 @@ class ExtendedContext(Context):
     def load_data(data, context):
         if 'extra-info' in data:
             context.extra_info = data["extra-info"]
+
+    def dump_data(self, context):
+        if self.extra_info:
+            context["extra-info"] = self.extra_info
 
 
 settings.PROSO_FLASHCARDS["term_extension"] = ExtendedTerm
