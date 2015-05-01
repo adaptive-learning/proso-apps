@@ -70,10 +70,10 @@ class FlashcardManager(models.Manager):
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
                     Q(context_id=id) if isinstance(id, int) else Q(context__identifier=id), contexts)))
         if isinstance(categories, list) and len(categories) > 0:
-            qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
-                Q(term__parents__id=id) | Q(categories__id=id) | Q(context__categories__id=id) if isinstance(id, int)
-                else Q(term__parents__identifier=id) | Q(categories__identifier=id) |
-                Q(context__categories__identifier=id), categories)))
+            f = []
+            for id, type in zip(categories, Category.objects.children_types(categories)):
+                f.append(self._get_filter(id, type))
+            qs = qs.filter(reduce(lambda a, b: a | b, f))
         if isinstance(types, list) and len(types) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda type: Q(term__type=type), types)))
         return qs
@@ -108,8 +108,11 @@ class FlashcardManager(models.Manager):
         options = option_selector.select_options_more_items(environment, user, selected_items, time, optionSets,
                                                 allow_zero_options=allow_zero_option)
         all_options = {}
-        for option in Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options))) \
-                .prefetch_related("term", "context"):
+        db_options = Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options)))
+        db_options = db_options.prefetch_related(Flashcard.related_term(), "context")
+        if with_contexts:
+            db_options = db_options.prefetch_related(Flashcard.related_context())
+        for option in db_options:
             all_options[option.item_id] = option
         options = dict(zip(selected_items, options))
 
@@ -135,6 +138,27 @@ class FlashcardManager(models.Manager):
             Q(context__pk__in=Category.objects.subcontexts(all_categories)) |
             Q(term__pk__in=Category.objects.subterms(all_categories))
         )
+
+    def _get_filter(self, id, type):
+        if type is None:
+            return Q()
+
+        if isinstance(id, int):
+            if type == Category.TERMS:
+                return Q(term__parents__id=id)
+            if type == Category.FLASHCARDS:
+                return Q(categories__id=id)
+            if type == Category.CONTEXTS:
+                return Q(context__categories__id=id)
+        else:
+            if type == Category.TERMS:
+                return Q(term__parents__identifier=id)
+            if type == Category.FLASHCARDS:
+                return Q(categories__identifier=id)
+            if type == Category.CONTEXTS:
+                return Q(context__categories__identifier=id)
+
+        return Q()
 
 
 class Flashcard(models.Model):
@@ -219,6 +243,22 @@ class CategoryManager(models.Manager):
 
     def subterms(self, categories):
         return Term.objects.filter(parents__pk__in=categories)
+
+    def children_types(self, category_ids):
+        key = "fc: category_types:" + ";".join(map(str, category_ids))
+        types = cache.get(key)
+        if types is not None:
+            return types
+
+        types = []
+        for id in category_ids:
+            if isinstance(id, int):
+                types.append(self.filter(pk=id).values_list("children_type", flat=True))
+            else:
+                types.append(self.filter(identifier=id).values_list("children_type", flat=True))
+        types =  map(lambda l: l[0] if len(l) > 0 else None, types)
+        cache.set(key, types, CACHE_EXPIRATION)
+        return types
 
 
 class Category(models.Model):

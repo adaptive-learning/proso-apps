@@ -1219,6 +1219,7 @@
     subcategories: []
     terms: [33, 36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84,
       87, 90, 123, 126, 129, 132, 135, 138, 141, 144, 147, 150]
+    children_type: t
     type: null
   model: proso_flashcards.category
   pk: 1
@@ -1233,6 +1234,7 @@
     subcategories: []
     terms: [31, 34, 37, 40, 43, 46, 49, 52, 55, 58, 61, 64, 67, 70, 73, 76, 79, 82,
       85, 88, 121, 124, 127, 130, 133, 136, 139, 142, 145, 148]
+    children_type: t
     type: null
   model: proso_flashcards.category
   pk: 2
@@ -1247,6 +1249,7 @@
     subcategories: []
     terms: [32, 35, 38, 41, 44, 47, 50, 53, 56, 59, 62, 65, 68, 71, 74, 77, 80, 83,
       86, 89, 122, 125, 128, 131, 134, 137, 140, 143, 146, 149]
+    children_type: t
     type: null
   model: proso_flashcards.category
   pk: 3
@@ -1261,6 +1264,7 @@
     subcategories: []
     terms: [93, 96, 99, 102, 105, 108, 111, 114, 117, 120, 123, 126, 129, 132, 135,
       138, 141, 144, 147, 150]
+    children_type: t
     type: null
   model: proso_flashcards.category
   pk: 4
@@ -1275,6 +1279,7 @@
     subcategories: []
     terms: [91, 121, 94, 97, 100, 103, 106, 109, 112, 115, 118, 124, 127, 130, 133,
       136, 139, 142, 145, 148]
+    children_type: t
     type: null
   model: proso_flashcards.category
   pk: 5
@@ -1289,6 +1294,7 @@
     subcategories: []
     terms: [92, 95, 98, 101, 104, 107, 110, 113, 116, 119, 122, 125, 128, 131, 134,
       137, 140, 143, 146, 149]
+    children_type: t
     type: null
   model: proso_flashcards.category
   pk: 6
@@ -1302,6 +1308,7 @@
     not_in_model: false
     subcategories: []
     terms: [3, 6, 9, 12, 15, 18, 21, 24, 27, 30]
+    children_type: t
     type: null
   model: proso_flashcards.category
   pk: 7
@@ -1314,6 +1321,7 @@
     name: Czech Rep.
     not_in_model: false
     subcategories: []
+    children_type: t
     terms: [1, 4, 7, 10, 13, 16, 19, 22, 25, 28]
     type: null
   model: proso_flashcards.category
@@ -1327,6 +1335,7 @@
     name: "\u010Cesk\xE1 republika"
     not_in_model: false
     subcategories: []
+    children_type: t
     terms: [2, 5, 8, 11, 14, 17, 20, 23, 26, 29]
     type: null
   model: proso_flashcards.category
