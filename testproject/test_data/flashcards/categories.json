@@ -9,8 +9,7 @@
     {
       "id": "0002",
       "name-en": "global category",
-      "name-cs": "globalni kategorie",
-      "parent-categories": ["0001"]
+      "name-cs": "globalni kategorie"
     },
     {
       "id": "0003",
@@ -31,7 +30,7 @@
       "name-en": "subsubcategory",
       "name-cs": "podpodkategorie",
       "type": "special",
-      "parent-categories": ["0004"]
+      "parent-categories": ["0003"]
     },
     {
       "id": "0006",

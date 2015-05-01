@@ -225,6 +225,17 @@ class Category(models.Model):
     class Meta:
         verbose_name_plural = "categories"
 
+    CATEGORIES = "c"
+    TERMS = "t"
+    FLASHCARDS = "f"
+    CONTEXTS = "x"
+    TYPES = (
+        (CATEGORIES, "categories"),
+        (TERMS, "terms"),
+        (FLASHCARDS, "flashcards"),
+        (CONTEXTS, "contexts"),
+    )
+
     identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_categories")
 
@@ -236,6 +247,7 @@ class Category(models.Model):
     flashcards = models.ManyToManyField(Flashcard, related_name="categories")
     contexts = models.ManyToManyField(Context, related_name="categories")
     not_in_model = models.BooleanField(default=False)
+    children_type = models.CharField(max_length=1, choices=TYPES, null=True, verbose_name="Category of")
 
     objects = CategoryManager()
 

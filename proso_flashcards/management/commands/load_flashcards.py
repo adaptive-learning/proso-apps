@@ -34,6 +34,7 @@ class Command(BaseCommand):
                     self._load_terms(data["terms"])
                 if "flashcards" in data:
                     self._load_flashcards(data["flashcards"])
+                check_and_set_category_type(Category)
                 check_db_integrity()
 
     def _load_categories(self, data=None):
@@ -260,3 +261,29 @@ def check_db_integrity():
         if len(bad_objects) > 0:
             raise CommandError(" -- {}s with wrong number of languages: {}".format(model.__name__, bad_objects))
     print " -- OK"
+
+
+def check_and_set_category_type(dbCategory):
+    for category in dbCategory.objects.all():
+        terms = category.terms.all().count()
+        flashcards = category.flashcards.all().count()
+        contexts = category.contexts.all().count()
+        subcategories = category.subcategories.all().count()
+        all = terms + flashcards + contexts + subcategories
+        if all == 0:
+            print "Info: Category {} have no children".format(category.identifier)
+
+        category.children_type = None
+        if terms == all:
+            category.children_type = Category.TERMS
+        if flashcards == all:
+            category.children_type = Category.FLASHCARDS
+        if contexts == all:
+            category.children_type = Category.CONTEXTS
+        if subcategories == all:
+            category.children_type = Category.CATEGORIES
+
+        if category.children_type is None:
+            raise AttributeError("Category {} have more types of children".format(category.identifier))
+
+        category.save()
