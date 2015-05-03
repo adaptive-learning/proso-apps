@@ -1,4 +1,5 @@
 import json
+from optparse import make_option
 
 from clint.textui import progress
 from django.conf import settings
@@ -14,6 +15,14 @@ from proso_flashcards.models import Category, Context, Term, Flashcard
 
 class Command(BaseCommand):
     help = u"Load flashcards from JSON file"
+    option_list = BaseCommand.option_list + (
+        make_option(
+            '--skip-category-check',
+            dest='skip_category_check',
+            default=False,
+            action="store_true",
+            help='Do not check if categories children are only of one type. Also correct type of categories is not set.'),
+    )
 
     def handle(self, *args, **options):
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "schema.json"), "r") as schema_file:
@@ -34,7 +43,8 @@ class Command(BaseCommand):
                     self._load_terms(data["terms"])
                 if "flashcards" in data:
                     self._load_flashcards(data["flashcards"])
-                check_and_set_category_type(Category)
+                if not options["skip_category_check"]:
+                    check_and_set_category_type(Category)
                 check_db_integrity()
 
     def _load_categories(self, data=None):
