@@ -623,7 +623,9 @@ class DatabaseEnvironment(CommonEnvironment):
             return DATABASE_TRUE, []
 
     def _ensure_is_datetime(self, value):
-        if isinstance(value, datetime) or value is None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
             return value.replace(tzinfo=None)
         else:
             matched = re.match(r'([\d -\:]*)\.\d+', value)
