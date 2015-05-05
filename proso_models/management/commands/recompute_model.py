@@ -124,7 +124,7 @@ class Command(BaseCommand):
                     user,
                     item,
                     asked == answered,
-                    time,
+                    time.replace(tzinfo=None),
                     item_answered=answered,
                     item_asked=asked)
                 environment.process_answer(user, item, asked, answered, time, response_time, guess)

@@ -127,7 +127,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                     )
                 ''', [self._info_id])
             for row in cursor:
-                self._prefetched[row[0], row[1], row[2], row[3]] = (row[4], row[5], row[6])
+                self._prefetched[row[0], row[1], row[2], row[3]] = (row[4].replace(tzinfo=None), row[5], row[6])
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         prefetched = self._get_prefetched(key, user, item, item_secondary, symmetric)
