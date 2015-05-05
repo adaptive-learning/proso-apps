@@ -321,13 +321,13 @@ class DatabaseEnvironment(CommonEnvironment):
                     'SELECT updated FROM proso_models_variable WHERE ' + where,
                     where_params)
                 fetched = cursor.fetchone()
-                return None if fetched is None else fetched[0]
+                return None if fetched is None else self._ensure_is_datetime(fetched[0])
             else:
                 audit = self.audit(key, user, item, item_secondary, limit=1)
                 if len(audit) == 0:
                     return None
                 else:
-                    return audit[0][0]
+                    return self._ensure_is_datetime(audit[0][0])
 
     def time_more_items(self, key, items, user=None, item=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
@@ -624,7 +624,7 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def _ensure_is_datetime(self, value):
         if isinstance(value, datetime) or value is None:
-            return value
+            return value.replace(tzinfo=None)
         else:
             matched = re.match(r'([\d -\:]*)\.\d+', value)
             if matched is not None:
