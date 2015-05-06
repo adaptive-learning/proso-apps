@@ -1,0 +1,53 @@
+<style>
+    #config-bar-show-button{
+        position: fixed;
+        right: -2.5rem;
+        top: 300px;
+        width: 6rem;
+        transform: rotate(-90deg);
+        -webkit-transform: rotate(-90deg);
+        border: solid #808080 1px;
+        margin: 0;
+        padding: 10px;
+        text-transform: capitalize;
+        font-weight: bold;
+        background-color: rgba(255, 255, 255, 0.8);
+        transition: all 0.2s;
+        cursor: move;
+    }
+
+    #config-bar-show-button:hover{
+        background-color: grey;
+        color: white;
+    }
+
+
+    #config-bar{
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 20rem;
+        border-left: solid #808080 1px;
+        padding: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    #config-bar > #hide{
+        text-align: right;
+        width: 20rem;
+        border-bottom: solid #808080 1px;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div id="config-bar-show-button" ng-click="opened = !opened" ng-hide="opened"> proso bar </div>
+
+<div id="config-bar" ng-cloak ng-show="opened">
+    <div id="hide" ng-click="opened = !opened">Close</div>
+    Debug <input type="checkbox" ng-model="debug" ng-change="override('debug', debug)" />
+    <br/>
+
+    <input type="number" ng-model="user" placeholder="User" ng-change="override('user', user)" />
+    <span ng-click="removeOverridden('user'); user = null">X</span>
+</div>
