@@ -61,7 +61,11 @@ def show_more(request, object_class, should_cache=True):
             user_id = get_user_id(request)
             objs = objs.filter(user_id=user_id).order_by('-time')
         if object_class == Flashcard:
-            objs = objs.filter(active=True)
+            categories = json.loads(request.GET.get("categories", "[]"))
+            contexts = json.loads(request.GET.get("contexts", "[]"))
+            types = json.loads(request.GET.get("types", "[]"))
+            avoid = json.loads(request.GET.get("avoid", "[]"))
+            objs = objs.filter_fc(categories, contexts, types, avoid)
         if object_class == Flashcard or object_class == settings.PROSO_FLASHCARDS.get("term_extension", Term) or \
                 object_class == settings.PROSO_FLASHCARDS.get("context_extension", Context) or object_class == Category:
             language = request.GET.get("language", request.LANGUAGE_CODE)
@@ -179,7 +183,7 @@ def practice(request):
     language = request.GET.get("language", request.LANGUAGE_CODE)
 
     time_before_practice = time_lib()
-    candidates = Flashcard.objects.candidates(categories, contexts, types, avoid)
+    candidates = Flashcard.objects.all().filter_fc(categories, contexts, types, avoid)
     flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates, language, with_contexts)
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))
     data = _to_json(request, {

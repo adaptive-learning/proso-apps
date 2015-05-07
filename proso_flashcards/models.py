@@ -63,12 +63,12 @@ class Context(models.Model):
         return u"{0.lang} - {0.name}".format(self)
 
 
-class FlashcardManager(models.Manager):
-    def candidates(self, categories, contexts, types, avoid):
+class FlashcardQuerySet(models.query.QuerySet):
+    def filter_fc(self, categories, contexts, types, avoid):
         qs = self.filter(Q(active=True) & ~Q(id__in=avoid))
         if isinstance(contexts, list) and len(contexts) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
-                    Q(context_id=id) if isinstance(id, int) else Q(context__identifier=id), contexts)))
+                                  Q(context_id=id) if isinstance(id, int) else Q(context__identifier=id), contexts)))
         if isinstance(categories, list) and len(categories) > 0:
             if not isinstance(categories[0], list):
                 categories = [categories]
@@ -82,6 +82,32 @@ class FlashcardManager(models.Manager):
         if isinstance(types, list) and len(types) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda type: Q(term__type=type), types)))
         return qs
+
+    def _get_filter(self, id, type):
+        if type is None:
+            return Q()
+
+        if isinstance(id, int):
+            if type == Category.TERMS:
+                return Q(term__parents__id=id)
+            if type == Category.FLASHCARDS:
+                return Q(categories__id=id)
+            if type == Category.CONTEXTS:
+                return Q(context__categories__id=id)
+        else:
+            if type == Category.TERMS:
+                return Q(term__parents__identifier=id)
+            if type == Category.FLASHCARDS:
+                return Q(categories__identifier=id)
+            if type == Category.CONTEXTS:
+                return Q(context__categories__identifier=id)
+
+        return Q()
+
+
+class FlashcardManager(models.Manager):
+    def get_queryset(self):
+        return FlashcardQuerySet(self.model, using=self._db)
 
     def practice(self, environment, user, time, limit, flashcard_qs, language=None, with_contexts=True):
         # prepare
@@ -143,27 +169,6 @@ class FlashcardManager(models.Manager):
             Q(context__pk__in=Category.objects.subcontexts(all_categories)) |
             Q(term__pk__in=Category.objects.subterms(all_categories))
         )
-
-    def _get_filter(self, id, type):
-        if type is None:
-            return Q()
-
-        if isinstance(id, int):
-            if type == Category.TERMS:
-                return Q(term__parents__id=id)
-            if type == Category.FLASHCARDS:
-                return Q(categories__id=id)
-            if type == Category.CONTEXTS:
-                return Q(context__categories__id=id)
-        else:
-            if type == Category.TERMS:
-                return Q(term__parents__identifier=id)
-            if type == Category.FLASHCARDS:
-                return Q(categories__identifier=id)
-            if type == Category.CONTEXTS:
-                return Q(context__categories__identifier=id)
-
-        return Q()
 
 
 class Flashcard(models.Model):
