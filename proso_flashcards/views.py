@@ -16,7 +16,7 @@ import proso_common.views
 import proso_common.json_enrich as common_json_enrich
 import proso_models.json_enrich as models_json_enrich
 import proso_flashcards.json_enrich as flashcards_json_enrich
-from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context
+from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
 from proso_models.models import get_environment
 
 
@@ -62,6 +62,10 @@ def show_more(request, object_class, should_cache=True):
             objs = objs.filter(user_id=user_id).order_by('-time')
         if object_class == Flashcard:
             objs = objs.filter(active=True)
+        if object_class == Flashcard or object_class == settings.PROSO_FLASHCARDS.get("term_extension", Term) or \
+                object_class == settings.PROSO_FLASHCARDS.get("context_extension", Context) or object_class == Category:
+            language = request.GET.get("language", request.LANGUAGE_CODE)
+            objs = objs.filter(lang=language)
         return objs
 
     return proso_common.views.show_more(
