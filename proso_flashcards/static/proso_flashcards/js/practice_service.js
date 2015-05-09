@@ -11,12 +11,7 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
     var config = {};
     var current = 0;
     var setId = 0;
-    var summary = {
-        flashcards: [],
-        answers: [],
-        correct: 0,
-        count: 0
-    };
+    var summary = {};
 
     var contexts = {};
 
@@ -35,6 +30,12 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
         self.clearQueue();
         deferredFC = null;
         setId++;
+        summary = {
+            flashcards: [],
+            answers: [],
+            correct: 0,
+            count: 0
+        };
     };
 
     self.setFilter = function(filter){
