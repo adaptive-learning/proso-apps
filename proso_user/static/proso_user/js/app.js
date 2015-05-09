@@ -110,7 +110,7 @@
         var rangeIncrease = 0;
         for (var i = 1; true; i++) {
           levelEnd += levelRange;
-          if (user.points < levelEnd) {
+          if ((user.points || 0) < levelEnd) {
             return {
               level : i,
               form : levelEnd - levelRange,
