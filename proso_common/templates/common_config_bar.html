@@ -23,7 +23,7 @@
         });
         app.controller("demo", function($scope, $http){
             $scope.test = function() {
-                $http.get("/common/config/").success(function (result) {
+                $http.get("/flashcards/practice/").success(function (result) {
                     console.log(result);
                 })
             }
