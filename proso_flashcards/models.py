@@ -1,7 +1,8 @@
+from collections import defaultdict
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Count
 import itertools
 from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector
 from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delete
@@ -193,6 +194,13 @@ class FlashcardManager(models.Manager):
 
     def in_contexts(self, contexts):
         return self.filter(context__in=contexts)
+
+    def number_of_answers(self, flashcards_ids, user):
+        counts = defaultdict(lambda: 0)
+        for f in self.filter(pk__in=flashcards_ids, item__item_answers__user=user) \
+                .annotate(answer_count=Count("item__item_answers")).values_list("pk", "answer_count"):
+            counts[f[0]] = f[1]
+        return counts
 
 
 class Flashcard(models.Model):
