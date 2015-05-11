@@ -6,9 +6,19 @@ m.directive('configBar', function() {
         },
         // TODO handle template better
         templateUrl: "/static/proso_common/js/config_bar.html",
-        controller: function($scope, configService) {
+        controller: function($scope, configService, loggingService) {
             $scope.override = configService.override;
             $scope.removeOverridden = configService.removeOverridden;
+            $scope.debugLog = [];
+            $scope.debug = true;
+            $scope.opened = true;
+            $scope.loggingOpened = true;
+            $scope.override('debug', true);
+            loggingService.addDebugLogListener(function(events) {
+                events.forEach(function(e) {
+                    $scope.debugLog.unshift(e);
+                });
+            });
         }
     };
 });

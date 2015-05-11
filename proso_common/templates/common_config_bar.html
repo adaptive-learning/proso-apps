@@ -15,6 +15,7 @@
     <script src="{% static "proso_common/angular/angular.min.js" %}"></script>
     <script src="{% static "proso_common/js/config_bar.js" %}"></script>
     <script src="{% static "proso_common/js/config_service.js" %}"></script>
+    <script src="{% static "proso_common/js/logging_service.js" %}"></script>
     <script>
         var app = angular.module('proso', ["proso_apps.services", "proso_apps.directives"]);
         app.run(function(configService){
