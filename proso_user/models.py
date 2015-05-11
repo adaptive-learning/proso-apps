@@ -3,7 +3,7 @@ import hashlib
 from ipware.ip import get_ip
 import user_agents
 from proso.django.request import get_current_request
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from lazysignup.signals import converted
 from django.dispatch import receiver
 from django.contrib.auth.models import User
@@ -240,10 +240,15 @@ def init_content_hash_time_zone(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=User)
 @disable_for_loaddata
+def drop_lazy_user(sender, instance, created=False, **kwargs):
+    if is_user_real(instance) and is_user_lazy(instance):
+        convert_lazy_user(instance)
+
+
+@receiver(post_save, sender=User)
+@disable_for_loaddata
 def init_user_profile(sender, instance, created=False, **kwargs):
-    if is_user_real(instance):
-        if is_user_lazy(instance):
-            convert_lazy_user(instance)
+    if is_user_real(instance) and not is_user_lazy(instance):
         UserProfile.objects.get_or_create(user=instance)
 
 

@@ -24,6 +24,7 @@ def get_unused_username(user):
 
 def convert_lazy_user(user):
     LazyUser.objects.filter(user=user).delete()
+    LazyUser.objects.update()
     converted.send(None, user=user)
 
 
