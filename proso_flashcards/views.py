@@ -288,6 +288,6 @@ def _to_json(request, value):
         common_json_enrich.enrich_by_object_type(
             request, json, models_json_enrich.prediction, ['fc_flashcard', 'fc_term'])
         common_json_enrich.enrich_by_object_type(
-            request, json, flashcards_json_enrich.avg_prediction, ['fc_category'])
+            request, json, flashcards_json_enrich.avg_prediction, ['fc_category', 'fc_term', 'fc_context'])
     LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
     return json

@@ -170,6 +170,30 @@ class FlashcardManager(models.Manager):
             Q(term__pk__in=Category.objects.subterms(all_categories))
         )
 
+    def under_terms_as_items(self, terms):
+        key = "fc: term_subitems:" + ",".join(map(str, sorted(terms)))
+        items = cache.get(key)
+        if items is None:
+            items = list(self.under_terms(terms).values_list("item_id", flat=True))
+            cache.set(key, items, CACHE_EXPIRATION)
+
+        return items
+
+    def under_terms(self, terms):
+        return self.filter(term__in=terms)
+
+    def in_contexts_as_items(self, contexts):
+        key = "fc: context_subitems:" + ",".join(map(str, sorted(contexts)))
+        items = cache.get(key)
+        if items is None:
+            items = list(self.in_contexts(contexts).values_list("item_id", flat=True))
+            cache.set(key, items, CACHE_EXPIRATION)
+
+        return items
+
+    def in_contexts(self, contexts):
+        return self.filter(context__in=contexts)
+
 
 class Flashcard(models.Model):
     identifier = models.SlugField()
