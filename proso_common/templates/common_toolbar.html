@@ -123,22 +123,23 @@
 </style>
 
 <script src="{% static "proso_common/angular/angular.min.js" %}"></script>
+<script src="{% static "proso_common/angular/angular-cookies.min.js" %}"></script>
 <script src="{% static "proso_common/js/config_service.js" %}"></script>
 <script src="{% static "proso_common/js/logging_service.js" %}"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 
 
 <script>
-    var app = angular.module('proso_toolbar', ["proso_apps.services"]);
+    var app = angular.module('proso_toolbar', ["proso_apps.services", "ngCookies"]);
     app.run(function(configService){
         configService.processConfig({{ config_json | safe }});
     });
-    app.controller("toolbar", function($scope, configService, loggingService){
+    app.controller("toolbar", function($scope, $cookies, configService, loggingService){
         $scope.override = configService.override;
         $scope.removeOverridden = configService.removeOverridden;
         $scope.debugLog = [];
         $scope.debug = true;
-        $scope.opened = true;
+        $scope.opened = $cookies["toolbar:opened"] === "true";
         $scope.loggingOpened = true;
         $scope.override('debug', true);
         loggingService.addDebugLogListener(function(events) {
@@ -147,6 +148,10 @@
                     $scope.debugLog.unshift(e);
                 });
             });
+        });
+
+        $scope.$watch("opened", function(n, o){
+            $cookies["toolbar:opened"] = n;
         });
     });
 </script>
