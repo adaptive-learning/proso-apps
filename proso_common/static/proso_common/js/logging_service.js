@@ -1,3 +1,8 @@
+var loggingServiceLoaded;
+if (loggingServiceLoaded){
+    throw "LoggingService already loaded";
+}
+loggingServiceLoaded = true;
 try{ m = angular.module('proso_apps.services'); } catch (err) { m = angular.module('proso_apps.services', []); }
 
 m.factory("loggingService", ["$window", function($window) {

@@ -138,10 +138,10 @@
         $scope.override = configService.override;
         $scope.removeOverridden = configService.removeOverridden;
         $scope.debugLog = [];
-        $scope.debug = true;
         $scope.opened = $cookies["toolbar:opened"] === "true";
         $scope.loggingOpened = true;
         $scope.override('debug', true);
+        $scope.overridden = configService.getOverridden();
         loggingService.addDebugLogListener(function(events) {
             $scope.$apply(function(){
                 events.forEach(function (e) {
@@ -165,11 +165,8 @@
         </div>
         <ul id="config-bar-content">
             <li>
-                <input type="checkbox" ng-model="debug" ng-change="override('debug', debug)" id="config-bar-debug"/><label for="config-bar-debug">Debug</label>
-            </li>
-            <li>
-                <span ng-click="removeOverridden('user'); user = null" class="reset">X</span>
-                <input type="number" ng-model="user" placeholder="User" ng-change="override('user', user)" />
+                <span ng-click="removeOverridden('user'); overridden.user = null;" class="reset">X</span>
+                <input type="number" ng-model="overridden.user" placeholder="User" ng-change="override('user', overridden.user)" />
             </li>
             <div class='section' ng-click="loggingOpened = !loggingOpened">Logging</div>
             <ul id="config-bar-logging" ng-cloak ng-show="loggingOpened">

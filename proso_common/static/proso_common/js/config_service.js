@@ -1,6 +1,11 @@
+var configServiceLoaded;
+if (configServiceLoaded){
+    throw "ConfigService already loaded";
+}
+configServiceLoaded = true;
 try{ m = angular.module('proso_apps.services'); } catch (err) { m = angular.module('proso_apps.services', []); }
 
-m.factory("configService", ["$http", "$window", function($http, $window){
+m.factory("configService", ["$http", "$window", "$cookieStore", function($http, $window, $cookieStore){
     if (!!$window.configService){
         return $window.configService;
     }
@@ -68,20 +73,19 @@ m.factory("configService", ["$http", "$window", function($http, $window){
         config = angular.copy(data);
     };
 
-    // Overriding
-    var overridden = {};
-
     self.override = function (key, value) {
         overridden[key] = value;
-        // todo save to cookies
+        $cookieStore.put("configService:overridden", overridden);
     };
 
     self.removeOverridden = function (key) {
         delete overridden[key];
+        $cookieStore.put("configService:overridden", overridden);
     };
 
     self.resetOverridden = function () {
         overridden = {};
+        $cookieStore.put("configService:overridden", overridden);
     };
 
     self.getOverridden = function () {
@@ -94,6 +98,7 @@ m.factory("configService", ["$http", "$window", function($http, $window){
 
     parseGET();
 
+    var overridden = $cookieStore.get("configService:overridden") || {};
     $window.configService = self;
     return self;
 }]);
