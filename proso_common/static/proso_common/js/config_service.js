@@ -1,83 +1,101 @@
 try{ m = angular.module('proso_apps.services'); } catch (err) { m = angular.module('proso_apps.services', []); }
 
-m.service("configService", ["$http", function($http){
+m.factory("configService", ["$http", "$window", function($http, $window){
+    if (!!$window.configService){
+        return $window.configService;
+    }
+
     var self = this;
     var config = null;
     var GET;
 
-    self.getConfig = function(appName, key, defaultValue){
+    self.getConfig = function (appName, key, defaultValue) {
         if (GET[appName + "." + key]) {
             variable = GET[appName + "." + key];
-            if (GET.debug) { console.log(appName + "." + key, "fake from url", variable); }
+            if (GET.debug) {
+                console.log(appName + "." + key, "fake from url", variable);
+            }
             return variable;
         }
 
         if (overridden[appName + "." + key]) {
             variable = overridden[appName + "." + key];
-            if (GET.debug) { console.log(appName + "." + key, "overridden", variable); }
+            if (GET.debug) {
+                console.log(appName + "." + key, "overridden", variable);
+            }
             return variable;
         }
 
-        if (config === null){
+        if (config === null) {
             console.error("Config not loaded");
             return;
         }
 
         var variable = config[appName];
-        var path =  key.split(".");
-        for (var i=0; i < path.length; i++){
-            if (typeof variable === 'undefined'){
-                if (GET.debug) { console.log(appName + "." + key, "use default", defaultValue); }
+        var path = key.split(".");
+        for (var i = 0; i < path.length; i++) {
+            if (typeof variable === 'undefined') {
+                if (GET.debug) {
+                    console.log(appName + "." + key, "use default", defaultValue);
+                }
                 return defaultValue;
             }
             variable = variable[path[i]];
         }
-        if (typeof variable === 'undefined'){
-            if (GET.debug) { console.log(appName + "." + key, "use default", defaultValue); }
-            return defaultValue;}
-        if (GET.debug) { console.log(appName + "." + key, "from config", variable); }
+        if (typeof variable === 'undefined') {
+            if (GET.debug) {
+                console.log(appName + "." + key, "use default", defaultValue);
+            }
+            return defaultValue;
+        }
+        if (GET.debug) {
+            console.log(appName + "." + key, "from config", variable);
+        }
         return variable;
     };
 
-    self.loadConfig = function(){
+    self.loadConfig = function () {
         return $http.get("/common/config/")
-            .success(function(response){
+            .success(function (response) {
                 self.processConfig(response.data);
             })
-            .error(function(){
+            .error(function () {
                 console.error("Problem while loading config from server");
             });
     };
 
-    self.processConfig = function(data){
+    self.processConfig = function (data) {
         config = angular.copy(data);
     };
 
     // Overriding
     var overridden = {};
 
-    self.override = function(key, value){
+    self.override = function (key, value) {
         overridden[key] = value;
         // todo save to cookies
     };
 
-    self.removeOverridden = function(key){
+    self.removeOverridden = function (key) {
         delete overridden[key];
     };
 
-    self.resetOverridden = function(){
+    self.resetOverridden = function () {
         overridden = {};
     };
 
-    self.getOverridden = function(){
+    self.getOverridden = function () {
         return angular.copy(overridden);
     };
 
-    var parseGET = function(){
+    var parseGET = function () {
         GET = getUrlVars();
     };
 
     parseGET();
+
+    $window.configService = self;
+    return self;
 }]);
 
 m.config(['$httpProvider', function($httpProvider) {
