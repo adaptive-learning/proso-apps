@@ -12,20 +12,11 @@ m.factory("configService", ["$http", "$window", "$cookieStore", function($http, 
 
     var self = this;
     var config = null;
-    var GET;
 
     self.getConfig = function (appName, key, defaultValue) {
-        if (GET[appName + "." + key]) {
-            variable = GET[appName + "." + key];
-            if (GET.debug) {
-                console.log(appName + "." + key, "fake from url", variable);
-            }
-            return variable;
-        }
-
-        if (overridden[appName + "." + key]) {
+        if (typeof overridden[appName + "." + key] !== 'undefined') {
             variable = overridden[appName + "." + key];
-            if (GET.debug) {
+            if (self.isDebug()) {
                 console.log(appName + "." + key, "overridden", variable);
             }
             return variable;
@@ -40,7 +31,7 @@ m.factory("configService", ["$http", "$window", "$cookieStore", function($http, 
         var path = key.split(".");
         for (var i = 0; i < path.length; i++) {
             if (typeof variable === 'undefined') {
-                if (GET.debug) {
+                if (self.isDebug()) {
                     console.log(appName + "." + key, "use default", defaultValue);
                 }
                 return defaultValue;
@@ -48,15 +39,19 @@ m.factory("configService", ["$http", "$window", "$cookieStore", function($http, 
             variable = variable[path[i]];
         }
         if (typeof variable === 'undefined') {
-            if (GET.debug) {
+            if (self.isDebug()) {
                 console.log(appName + "." + key, "use default", defaultValue);
             }
             return defaultValue;
         }
-        if (GET.debug) {
+        if (self.isDebug()) {
             console.log(appName + "." + key, "from config", variable);
         }
         return variable;
+    };
+
+    self.isDebug = function() {
+        return overridden.debug === true;
     };
 
     self.loadConfig = function () {
@@ -74,6 +69,16 @@ m.factory("configService", ["$http", "$window", "$cookieStore", function($http, 
     };
 
     self.override = function (key, value) {
+        if (value === 'true') {
+            console.log('bool: true');
+            value = true;
+        } else if (value === 'false') {
+            console.log('bool: false');
+            value = false;
+        } else if ($.isNumeric(value)) {
+            console.log('numeric');
+            value = parseFloat(value);
+        }
         overridden[key] = value;
         $cookieStore.put("configService:overridden", overridden);
     };
@@ -91,12 +96,6 @@ m.factory("configService", ["$http", "$window", "$cookieStore", function($http, 
     self.getOverridden = function () {
         return angular.copy(overridden);
     };
-
-    var parseGET = function () {
-        GET = getUrlVars();
-    };
-
-    parseGET();
 
     var overridden = $cookieStore.get("configService:overridden") || {};
     $window.configService = self;
@@ -123,18 +122,6 @@ m.config(['$httpProvider', function($httpProvider) {
         };
     });
 }]);
-
-
-function getUrlVars() {
-    var vars = [], hash;
-    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-    for(var i = 0; i < hashes.length; i++) {
-        hash = hashes[i].split('=');
-        vars.push(hash[0]);
-        vars[hash[0]] = hash[1];
-    }
-    return vars;
-}
 
 function obj2get(obj, prefix, ignore_prefix_keys){
     var str = "";
