@@ -65,7 +65,7 @@
     #config-bar-content > li:hover {
         background: #E9F4FB;
     }
-    #config-bar-content .reset {
+    #config-bar-content .reset, #config-bar-content .add-to-override {
         cursor: pointer;
         font-weight: bolder;
     }
@@ -100,24 +100,44 @@
     #config-bar-logging .level {
         display: block;
         float: left;
-        width: 15%;
+        width: 10%;
         font-weight: bold;
+    }
+    #config-bar-logging .url {
+        font-weight: bold;
+        margin-left: 10px;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 50%;
+        float: left;
     }
     #config-bar-logging .filename {
         display: block;
-        float: left;
-        width: 65%;
-        font-weight: bold;
-    }
-    #config-bar-logging .line-number {
-        display: block;
         float: right;
-        width: 20%;
         text-align: right;
+        width: 30%;
         font-weight: bold;
     }
     #config-bar-logging .message {
         display: block;
+        clear: both;
+        margin-top: 20px;
+        margin-bottom: 5px;
+    }
+    #config-bar-content input {
+        font-size: 14px;
+    }
+    #config-bar-content .property-name {
+        width: 70%;
+    }
+    #config-bar-content .property-value {
+        width: 10%;
+        text-align: center;
+    }
+    #config-bar-property-name {
+        width: 70%;
     }
 </style>
 
@@ -152,6 +172,23 @@
         $scope.$watch("opened", function(n, o){
             $cookies["toolbar:opened"] = n;
         });
+
+        $scope.addToOverride = function(name) {
+            if (!name) {
+                return;
+            }
+            configService.override(name, '');
+        };
+
+        $scope.getOverridden = function() {
+            var overridden = configService.getOverridden()
+            Object.keys(overridden).filter(function(k) {
+                return (k === 'user' || k === 'debug');
+            }).forEach(function (k) {
+                delete overridden[k];
+            });
+            return overridden;
+        };
     });
 </script>
 {% verbatim %}
@@ -164,15 +201,24 @@
         </div>
         <ul id="config-bar-content">
             <li>
+                <span ng-click="addToOverride(propertyToOverride)" class="add-to-override">+</span>
+                <input type="text" ng-model="propertyToOverride" id="config-bar-property-name" placeholder="Property Name" />
+            </li>
+            <li>
                 <span ng-click="removeOverridden('user'); overridden.user = null;" class="reset">X</span>
                 <input type="number" ng-model="overridden.user" placeholder="User" ng-change="override('user', overridden.user)" />
+            </li>
+            <li ng-repeat="(name, value) in getOverridden() track by name">
+                <span class="reset" ng-click="removeOverridden(name)">X</span>
+                <input type="text" disabled class="property-name" ng-model="name" />
+                <input type="text" class="property-value" placeholder="Value" ng-model="value" ng-change="override(name, value)" />
             </li>
             <div class='section' ng-click="loggingOpened = !loggingOpened">Logging</div>
             <ul id="config-bar-logging" ng-cloak ng-show="loggingOpened">
                 <li ng-repeat="event in debugLog|limitTo:100" class="logging-event">
                     <span class="level">{{ event.level }}</span>
-                    <span class="filename">{{ event.filename }}</span>
-                    <span class="line-number">{{ event.line_number }}</span>
+                    <span class="url">{{ event.url }}</span>
+                    <span class="filename">{{ event.filename }}:{{ event.line_number }}</span>
                     <span class="message">{{ event.message }}</span>
                 </li>
             </ul>

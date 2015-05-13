@@ -18,8 +18,9 @@ m.factory("loggingService", ["$window", function($window) {
         return debugLog;
     };
 
-    self.extendDebugLog = function(events) {
+    self.extendDebugLog = function(url, events) {
         events.forEach(function(e) {
+            e.url = url;
             debugLog.push(e);
         });
         debugLogListeners.forEach(function(listener) {
@@ -42,7 +43,7 @@ m.config(['$httpProvider', function($httpProvider) {
             response: function(response) {
                 loggingService = loggingService || $injector.get("loggingService");
                 if (response.data instanceof Object && 'debug_log' in response.data) {
-                    loggingService.extendDebugLog(response.data.debug_log);
+                    loggingService.extendDebugLog(response.config.url, response.data.debug_log);
                 }
                 return response;
             }
