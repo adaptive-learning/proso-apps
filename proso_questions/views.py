@@ -9,7 +9,7 @@ from django.db import transaction
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
 import proso_models.json_enrich as models_json_enrich
-from proso.django.request import is_time_overriden, get_time, get_user_id
+from proso.django.request import is_time_overridden, get_time, get_user_id
 from proso_models.models import get_environment, get_item_selector
 import logging
 from time import time as time_lib
@@ -115,7 +115,7 @@ def practice(request):
     time = get_time(request)
     environment = get_environment()
     item_selector = get_item_selector()
-    if is_time_overriden(request):
+    if is_time_overridden(request):
         environment.shift_time(time)
     category = request.GET.get('category', None)
     questions = None

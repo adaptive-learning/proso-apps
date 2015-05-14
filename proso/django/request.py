@@ -60,18 +60,18 @@ def _store_body_value(key_string, value, result):
     return result
 
 
-def is_user_id_overriden(request):
+def is_user_id_overridden(request):
     return 'user' in request.GET and request.user.is_staff
 
 
 def get_user_id(request):
-    if is_user_id_overriden(request):
+    if is_user_id_overridden(request):
         return int(request.GET['user'])
     else:
         return request.user.id
 
 
-def is_time_overriden(request):
+def is_time_overridden(request):
     return 'time' in request.GET
 
 

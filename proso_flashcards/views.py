@@ -10,7 +10,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 
 from proso.django.cache import cache_page_conditional
-from proso.django.request import get_user_id, get_time, is_time_overriden
+from proso.django.request import get_user_id, get_time, is_time_overridden
 from proso.django.response import render, render_json
 import proso_common.views
 import proso_common.json_enrich as common_json_enrich
@@ -162,7 +162,7 @@ def practice(request):
     user = get_user_id(request)
     time = get_time(request)
     environment = get_environment()
-    if is_time_overriden(request):
+    if is_time_overridden(request):
         environment.shift_time(time)
 
     # save answers

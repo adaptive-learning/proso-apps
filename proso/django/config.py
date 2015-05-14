@@ -12,13 +12,13 @@ DEFAULT_PATH = os.path.join(settings.BASE_DIR, 'proso_config.yaml')
 
 _config_name = {}
 _config = {}
-_overriden = {}
+_overridden = {}
 
 
 class ConfigMiddleware(object):
 
     def process_request(self, request):
-        reset_overriden()
+        reset_overridden()
         if not request.user.is_staff:
             return
         for key, value in request.GET.iteritems():
@@ -40,15 +40,15 @@ def override(app_name_key, value):
         raise Exception("The value can not be None.")
     if isinstance(value, dict) or isinstance(value, list):
         raise Exception("The value has to be scalar.")
-    _overriden[app_name_key] = value
+    _overridden[app_name_key] = value
 
 
-def reset_overriden():
-    global _overriden
-    _overriden = {}
+def reset_overridden():
+    global _overridden
+    _overridden = {}
 
-def is_any_overriden():
-    return len(_overriden) > 0
+def is_any_overridden():
+    return len(_overridden) > 0
 
 
 def set_default_config_name(config_name):
@@ -117,7 +117,7 @@ def _load_config():
 
 
 def _override_value_all(app_name, key, value):
-    if not is_any_overriden():
+    if not is_any_overridden():
         return value
     if app_name is None and key is None:
         app_name_key = None
@@ -125,7 +125,7 @@ def _override_value_all(app_name, key, value):
         app_name_key = '{}.{}'.format(app_name, key)
     if isinstance(value, dict):
         value = copy.deepcopy(value)
-    for override_key, override_value in _overriden.iteritems():
+    for override_key, override_value in _overridden.iteritems():
         value = _override_value(app_name_key, value, override_key, override_value)
     return value
 
@@ -139,7 +139,7 @@ def _override_value(app_name_key, value, override_key, override_value):
         else:
             return value
     if app_name_key == override_key:
-        raise Exception("The dict can not be overriden by scalar.")
+        raise Exception("The dict can not be overridden by scalar.")
     if app_name_key is not None:
         override_key = override_key.replace('{}.'.format(app_name_key), '')
     override_keys = override_key.split('.')

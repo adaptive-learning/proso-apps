@@ -1,5 +1,5 @@
 from django.http import HttpResponseBadRequest
-from proso.django.request import is_time_overriden, get_time, get_user_id
+from proso.django.request import is_time_overridden, get_time, get_user_id
 from proso.django.response import render_json
 from models import get_environment, get_active_environment_info, Item
 import numpy
@@ -13,7 +13,7 @@ def status(request):
     user_id = get_user_id(request)
     time = get_time(request)
     environment = get_environment()
-    if is_time_overriden(request):
+    if is_time_overridden(request):
         environment.shift_time(time)
     return render_json(request, _to_json(request, {
         'object_type': 'status',
@@ -55,7 +55,7 @@ def audit(request, key):
     item_secondary = int(request.GET['item_secondary']) if 'item_secondary' in request.GET else None
     time = get_time(request)
     environment = get_environment()
-    if is_time_overriden(request):
+    if is_time_overridden(request):
         environment.shift_time(time)
     values = environment.audit(
         key, user=user, item=item, item_secondary=item_secondary, limit=limit)
@@ -83,7 +83,7 @@ def read(request, key):
     item_secondary = int(request.GET['item_secondary']) if 'item_secondary' in request.GET else None
     time = get_time(request)
     environment = get_environment()
-    if is_time_overriden(request):
+    if is_time_overridden(request):
         environment.shift_time(time)
     value = environment.read(key, user=user, item=item, item_secondary=item_secondary)
     if value is None:

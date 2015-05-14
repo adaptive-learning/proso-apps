@@ -1,6 +1,6 @@
 from proso.django.response import pass_get_parameters
 from django.core.urlresolvers import reverse
-from proso.django.request import is_time_overriden, get_time, get_user_id
+from proso.django.request import is_time_overridden, get_time, get_user_id
 import models
 import numpy
 
@@ -77,7 +77,7 @@ def audit_url(request, json, nested):
 
 def _environment(request):
     environment = models.get_environment()
-    if is_time_overriden(request):
+    if is_time_overridden(request):
         time = get_time(request)
         environment.shift_time(time)
     return environment
