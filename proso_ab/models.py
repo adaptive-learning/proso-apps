@@ -24,19 +24,20 @@ class ABMiddleware:
 class ExperimentManager(models.Manager):
 
     def init_request(self, request):
-        if request.user.is_anonymous():
+        user = getattr(request, 'user', None)
+        if user is None or user.is_anonymous():
             self.clear_session(request.session)
             self._init_request_cache(request)
             return
         if 'ab_experiment_values_modified' in request.session:
-            if request.user.id is None:
+            if user.id is None:
                 self.clear_session(request.session)
-            if request.user.id != request.session.get('ab_experiment_values_user'):
+            if user.id != request.session.get('ab_experiment_values_user'):
                 self.clear_session(request.session)
             if 'ab_experiment_reset' in request.GET:
                 self.clear_session(request.session)
         override = {}
-        if request.user.is_staff:
+        if user.is_staff:
             for key, value in request.GET.items():
                 if key.startswith('ab_value_'):
                     override[key.replace('ab_value_', '')] = value
@@ -48,15 +49,15 @@ class ExperimentManager(models.Manager):
                 return
         if 'ab_experiment_values' not in request.session:
             request.session['ab_experiment_values'] = {}
-            request.session['ab_experiment_values_user'] = request.user.id
+            request.session['ab_experiment_values_user'] = user.id
         request.session['ab_experiment_values_modified'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         for k, v in override.iteritems():
             request.session['ab_experiment_values'][k] = v
-        for name, value in UserValue.objects.for_user(request.user).iteritems():
+        for name, value in UserValue.objects.for_user(user).iteritems():
             if name in override:
                 continue
             request.session['ab_experiment_values'][name] = value
-        LOGGER.debug('initialized AB experiments for user %s: %s' % (str(request.user.id), str(request.session.get('ab_experiment_values', []))))
+        LOGGER.debug('initialized AB experiments for user %s: %s' % (str(user.id), str(request.session.get('ab_experiment_values', []))))
         self._init_request_cache(request)
         return request
 
@@ -96,12 +97,13 @@ class ExperimentManager(models.Manager):
         return _request_cache.get(currentThread(), [])
 
     def _init_request_cache(self, request):
+        user = getattr(request, 'user', None)
         global _request_cache_initialized
         _request_cache_initialized = True
         _request_cache[currentThread()] = list(Value.objects.filter(
             id__in=map(lambda d: d['id'],
             request.session.get('ab_experiment_values', {}).values())))
-        LOGGER.debug('initialized request cache for AB experiments, user %s' % (str(request.user.id)))
+        LOGGER.debug('initialized request cache for AB experiments, user %s' % (str(None if user is None else user.id)))
 
 
 class Experiment(models.Model):
