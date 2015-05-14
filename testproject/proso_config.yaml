@@ -8,6 +8,7 @@ default:
               max_options: 3
               allow_zero_options_restriction: True
     proso_feedback:
+        send_emails: false
         domain: localhost
         to:
             - root@localhost

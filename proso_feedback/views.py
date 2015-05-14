@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 from proso.django.request import json_body
-from proso.django.response import render
+from proso.django.response import render, render_json
 from django.template.loader import render_to_string
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.mail import EmailMultiAlternatives
 from logging import getLogger
-from models import Rating
+from models import Rating, Comment
 from proso_user.models import Session
 from lazysignup.decorators import allow_lazy_user
 from proso.django.config import get_config
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.utils.translation import ugettext as _
 
 
 LOGGER = getLogger(__name__)
@@ -38,36 +41,49 @@ def feedback(request):
     if request.method == 'GET':
         return render(request, 'feedback_feedback.html', {}, help_text=feedback.__doc__)
     if request.method == 'POST':
-        feedback_domain = get_config('proso_feedback', 'domain', required=True)
-        feedback_to = get_config('proso_feedback', 'to', required=True)
         feedback_data = json_body(request.body)
-        feedback_data['user_agent'] = Session.objects.get_current_session()['http_user_agent']
+        feedback_data['user_agent'] = Session.objects.get_current_session().http_user_agent.content
         if not feedback_data.get('username'):
             feedback_data['username'] = request.user.username
         if not feedback_data.get('email'):
             feedback_data['email'] = request.user.email
-        if is_likely_worthless(feedback_data):
-            mail_from = 'spam@' + feedback_domain
         else:
-            mail_from = 'feedback@' + feedback_domain
-
-        text_content = render_to_string("emails/feedback.plain.txt", {
-            "feedback": feedback_data,
-            "user": request.user,
-        })
-        html_content = render_to_string("emails/feedback.html", {
-            "feedback": feedback_data,
-            "user": request.user,
-        })
-        mail = EmailMultiAlternatives(
-            feedback_domain + ' feedback',
-            text_content,
-            mail_from,
-            feedback_to,
-        )
-        mail.attach_alternative(html_content, "text/html")
-        mail.send()
-        LOGGER.debug("email sent %s\n", text_content)
+            try:
+                validate_email(feedback_data['email'])
+            except ValidationError:
+                return render_json(
+                    request,
+                    {'error': _('The given e-mail address is not valid.'), 'error_type': 'invalid_email'},
+                    template='feedback_json.html', status=400
+                )
+        Comment.objects.create(
+            username=feedback_data['username'],
+            email=feedback_data['email'],
+            text=feedback_data['text'])
+        if get_config('proso_feedback', 'send_emails', default=True):
+            feedback_domain = get_config('proso_feedback', 'domain', required=True)
+            feedback_to = get_config('proso_feedback', 'to', required=True)
+            if is_likely_worthless(feedback_data):
+                mail_from = 'spam@' + feedback_domain
+            else:
+                mail_from = 'feedback@' + feedback_domain
+            text_content = render_to_string("emails/feedback.plain.txt", {
+                "feedback": feedback_data,
+                "user": request.user,
+            })
+            html_content = render_to_string("emails/feedback.html", {
+                "feedback": feedback_data,
+                "user": request.user,
+            })
+            mail = EmailMultiAlternatives(
+                feedback_domain + ' feedback',
+                text_content,
+                mail_from,
+                feedback_to,
+            )
+            mail.attach_alternative(html_content, "text/html")
+            mail.send()
+            LOGGER.debug("email sent %s\n", text_content)
         return HttpResponse('ok', status=201)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
