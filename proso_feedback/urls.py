@@ -9,6 +9,6 @@ admin.autodiscover()
 urlpatterns = patterns(
     'proso_feedback.views',
     url(r'^(|home)$', ensure_csrf_cookie(TemplateView.as_view(template_name="feedback_home.html")), name='home'),
-    url(r'^feedback$', 'feedback', name='feedback'),
-    url(r'^rating$', 'rating', name='rating'),
+    url(r'^feedback/$', 'feedback', name='feedback'),
+    url(r'^rating/$', 'rating', name='rating'),
 )
