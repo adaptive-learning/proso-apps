@@ -34,7 +34,8 @@ class UserProfile(models.Model):
                 'first_name': self.user.first_name,
                 'last_name': self.user.last_name,
                 'username': self.user.username,
-                'email': self.user.email
+                'email': self.user.email,
+                'staff': self.user.is_staff,
             }
         }
 
