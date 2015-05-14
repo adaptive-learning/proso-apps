@@ -127,7 +127,6 @@ def _override_value_all(app_name, key, value):
         value = copy.deepcopy(value)
     for override_key, override_value in _overriden.iteritems():
         value = _override_value(app_name_key, value, override_key, override_value)
-    print _overriden
     return value
 
 
