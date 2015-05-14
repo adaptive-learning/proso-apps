@@ -1,6 +1,5 @@
 from lazysignup.models import LazyUser
 from django.contrib.auth.models import User
-from lazysignup.utils import is_lazy_user
 from social_auth.db.django_models import UserSocialAuth
 from lazysignup.signals import converted
 from django.template.defaultfilters import slugify
@@ -37,7 +36,9 @@ def name_lazy_user(user, save=True):
 
 
 def is_user_lazy(user):
-    return is_lazy_user(user)
+    if user.is_anonymous():
+        return False
+    return LazyUser.objects.filter(user=user).exists()
 
 
 def is_user_named(user):
