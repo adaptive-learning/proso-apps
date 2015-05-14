@@ -109,6 +109,12 @@ def rating(request):
         return render(request, 'feedback_rating.html', {}, help_text=rating.__doc__)
     if request.method == 'POST':
         data = json_body(request.body)
+        if data['value'] not in range(1, 4):
+            return render_json(
+                request,
+                {'error': _('The given value is not valid.'), 'error_type': 'invalid_value'},
+                template='feedback_json.html', status=400
+            )
         rating_object = Rating(
             user=request.user,
             value=data['value'],
