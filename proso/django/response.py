@@ -49,6 +49,8 @@ def render_json(request, json, template=None, status=None, help_text=None, versi
     time_start = time()
     if status is None or status / 100 == 2:
         json = {'data': json, 'version': version}
+    if 'error' in json and 'error_type' in json:
+        LOGGER.warning('%s: %s', json['error_type'], json['error'])
     if 'debug' in request.GET and request.user.is_staff and proso.django.log.is_log_prepared():
         json['debug_log'] = proso.django.log.get_request_log()
     if 'html' in request.GET:
