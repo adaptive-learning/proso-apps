@@ -25,7 +25,8 @@ class UserAPITest(TestCase):
                 "last_name": "",
                 "object_type": "user",
                 "email": "new_user@domain.com",
-                "id": 1
+                "id": 1,
+                "staff": False,
             },
             "object_type": "user_profile",
             "id": 1,
