@@ -1,6 +1,9 @@
 from collections import defaultdict
 from django.conf import settings
+from django.dispatch import receiver
+from django.db.models.signals import pre_save
 from threading import currentThread
+from django.contrib.sessions.models import Session
 import json
 import yaml
 import proso.util
@@ -14,6 +17,7 @@ DEFAULT_PATH = os.path.join(settings.BASE_DIR, 'proso_config.yaml')
 _config_name = {}
 _config = {}
 _overridden = defaultdict(dict)
+_is_overriden_from_url = {}
 
 
 class ConfigMiddleware(object):
@@ -24,6 +28,7 @@ class ConfigMiddleware(object):
             return
         for key, value in request.GET.iteritems():
             if key.startswith('config.'):
+                _is_overriden_from_url[currentThread()] = True
                 key = key.replace('config.', '')
                 if value.isdigit():
                     value = int(value)
@@ -44,9 +49,15 @@ def override(app_name_key, value):
     _overridden[currentThread()][app_name_key] = value
 
 
+def is_overridden_from_url():
+    return _is_overriden_from_url.get(currentThread(), False)
+
+
 def reset_overridden():
     global _overridden
+    global _is_overriden_from_url
     _overridden[currentThread()] = {}
+    _is_overriden_from_url[currentThread()] = False
 
 def is_any_overridden():
     return len(_overridden[currentThread()]) > 0
@@ -153,3 +164,9 @@ def _override_value(app_name_key, value, override_key, override_value):
     return value
 
 
+@receiver(pre_save)
+def example(sender, instance, **kwargs):
+    if is_overridden_from_url():
+        if isinstance(instance, Session):
+            return
+        raise Exception("Nothing can be saved when the configuration is overridden from URL.")
