@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.conf import settings
 from threading import currentThread
 import json
@@ -12,7 +13,7 @@ DEFAULT_PATH = os.path.join(settings.BASE_DIR, 'proso_config.yaml')
 
 _config_name = {}
 _config = {}
-_overridden = {}
+_overridden = defaultdict(dict)
 
 
 class ConfigMiddleware(object):
@@ -40,15 +41,15 @@ def override(app_name_key, value):
         raise Exception("The value can not be None.")
     if isinstance(value, dict) or isinstance(value, list):
         raise Exception("The value has to be scalar.")
-    _overridden[app_name_key] = value
+    _overridden[currentThread()][app_name_key] = value
 
 
 def reset_overridden():
     global _overridden
-    _overridden = {}
+    _overridden[currentThread()] = {}
 
 def is_any_overridden():
-    return len(_overridden) > 0
+    return len(_overridden[currentThread()]) > 0
 
 
 def set_default_config_name(config_name):
@@ -125,7 +126,7 @@ def _override_value_all(app_name, key, value):
         app_name_key = '{}.{}'.format(app_name, key)
     if isinstance(value, dict):
         value = copy.deepcopy(value)
-    for override_key, override_value in _overridden.iteritems():
+    for override_key, override_value in _overridden[currentThread()].iteritems():
         value = _override_value(app_name_key, value, override_key, override_value)
     return value
 
