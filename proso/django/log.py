@@ -27,6 +27,7 @@ class RequestHandler(Handler):
 
     def emit(self, record):
         if _should_log:
+            self.format(record)
             get_request_log().append({
                 'message': record.message,
                 'pathname': record.pathname,
