@@ -42,8 +42,7 @@ m.service("practiceService", ["$http", "$q", "configService", "$cookies", functi
         config.filter = {
             contexts: [],
             categories: [],
-            types: [],
-            language: "en"
+            types: []
         };
         angular.extend(config.filter, filter);
     };
