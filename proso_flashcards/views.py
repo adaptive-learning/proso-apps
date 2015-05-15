@@ -77,6 +77,14 @@ def show_more(request, object_class, should_cache=True):
         should_cache=should_cache, template='flashcards_json.html')
 
 
+def user_stats(request):
+    """
+    Get user statistics for selected flashcards groups
+
+    """
+    return render_json(request, [], template='flashcards_json.html', help_text=user_stats.__doc__)
+
+
 @allow_lazy_user
 @transaction.atomic
 def answer(request):
