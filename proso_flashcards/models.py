@@ -1,15 +1,12 @@
 from collections import defaultdict
 from django.conf import settings
-from django.core.cache import cache
 from django.db import models
 from django.db.models import Q, Count
 import itertools
 from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector
 from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
-from proso.django.util import disable_for_loaddata
-
-CACHE_EXPIRATION = 60 * 60 * 24 * 30
+from proso.django.util import disable_for_loaddata, cache_pure
 
 
 class Term(models.Model):
@@ -160,14 +157,9 @@ class FlashcardManager(models.Manager):
 
         return flashcards
 
+    @cache_pure
     def under_categories_as_items(self, categories):
-        key = "fc: category_subitems:" + ",".join(map(str, sorted(categories)))
-        items = cache.get(key)
-        if items is None:
-            items = list(self.under_categories(categories).values_list("item_id", flat=True))
-            cache.set(key, items, CACHE_EXPIRATION)
-
-        return items
+        return list(self.under_categories(categories).values_list("item_id", flat=True))
 
     def under_categories(self, categories):
         all_categories = Category.objects.subcategories(categories)
@@ -177,26 +169,16 @@ class FlashcardManager(models.Manager):
             Q(term__pk__in=Category.objects.subterms(all_categories))
         )
 
+    @cache_pure
     def under_terms_as_items(self, terms):
-        key = "fc: term_subitems:" + ",".join(map(str, sorted(terms)))
-        items = cache.get(key)
-        if items is None:
-            items = list(self.under_terms(terms).values_list("item_id", flat=True))
-            cache.set(key, items, CACHE_EXPIRATION)
-
-        return items
+        return list(self.under_terms(terms).values_list("item_id", flat=True))
 
     def under_terms(self, terms):
         return self.filter(term__in=terms)
 
+    @cache_pure
     def in_contexts_as_items(self, contexts):
-        key = "fc: context_subitems:" + ",".join(map(str, sorted(contexts)))
-        items = cache.get(key)
-        if items is None:
-            items = list(self.in_contexts(contexts).values_list("item_id", flat=True))
-            cache.set(key, items, CACHE_EXPIRATION)
-
-        return items
+        return list(self.in_contexts(contexts).values_list("item_id", flat=True))
 
     def in_contexts(self, contexts):
         return self.filter(context__in=contexts)
@@ -292,12 +274,8 @@ class CategoryManager(models.Manager):
     def subterms(self, categories):
         return Term.objects.filter(parents__pk__in=categories)
 
+    @cache_pure
     def children_types(self, category_ids):
-        key = "fc: category_types:" + ";".join(map(str, category_ids))
-        types = cache.get(key)
-        if types is not None:
-            return types
-
         types = []
         for id in category_ids:
             if isinstance(id, int):
@@ -305,7 +283,6 @@ class CategoryManager(models.Manager):
             else:
                 types.append(self.filter(identifier=id).values_list("children_type", flat=True))
         types = map(lambda l: l[0] if len(l) > 0 else None, types)
-        cache.set(key, types, CACHE_EXPIRATION)
         return types
 
 
