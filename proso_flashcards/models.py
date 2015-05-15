@@ -65,8 +65,10 @@ class Context(models.Model):
 
 
 class FlashcardQuerySet(models.query.QuerySet):
-    def filter_fc(self, categories, contexts, types, avoid):
+    def filter_fc(self, categories, contexts, types, avoid, language=None):
         qs = self.filter(Q(active=True) & ~Q(id__in=avoid))
+        if language is not None:
+            qs = qs.filter(lang=language)
         if isinstance(contexts, list) and len(contexts) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
                                   Q(context_id=id) if isinstance(id, int) else Q(context__identifier=id), contexts)))
@@ -110,11 +112,15 @@ class FlashcardManager(models.Manager):
     def get_queryset(self):
         return FlashcardQuerySet(self.model, using=self._db)
 
-    def practice(self, environment, user, time, limit, flashcard_qs, language=None, with_contexts=True):
+    def filtered_items(self, categories, contexts, types, avoid, language):
+        return list(
+            self.get_queryset().filter_fc(categories, contexts, types, avoid, language).order_by("?")[:100].values_list(
+                "item_id", flat=True))
+
+    def practice(self, environment, user, time, limit, items, language=None, with_contexts=True):
         # prepare
         item_selector = get_item_selector()
         option_selector = get_option_selector(item_selector)
-        items = list(flashcard_qs.filter(lang=language).order_by("?")[:100].values_list("item_id", flat=True))
 
         selected_items = item_selector.select(environment, user, items, time, limit)
 
@@ -138,7 +144,7 @@ class FlashcardManager(models.Manager):
         # select options
         optionSets = get_option_set().get_option_for_flashcards(flashcards)
         options = option_selector.select_options_more_items(environment, user, selected_items, time, optionSets,
-                                                allow_zero_options=allow_zero_option)
+                                                            allow_zero_options=allow_zero_option)
         all_options = {}
         db_options = Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options)))
         db_options = db_options.prefetch_related(Flashcard.related_term(), "context")

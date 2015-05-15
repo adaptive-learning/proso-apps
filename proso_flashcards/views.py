@@ -183,7 +183,7 @@ def practice(request):
     language = request.GET.get("language", request.LANGUAGE_CODE)
 
     time_before_practice = time_lib()
-    candidates = Flashcard.objects.all().filter_fc(categories, contexts, types, avoid)
+    candidates = Flashcard.objects.filtered_items(categories, contexts, types, avoid, language)
     flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates, language, with_contexts)
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))
     data = _to_json(request, {
