@@ -13,7 +13,7 @@ import re
 import os.path
 from decorator import cache_environment_for_item
 from collections import defaultdict
-from proso.django.config import instantiate_from_config, get_global_config, get_config
+from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
 from proso_common.models import Config
 import json
 from django.core.cache import cache
@@ -63,7 +63,8 @@ def get_environment():
 
 
 def get_predictive_model():
-    return instantiate_from_config('proso_models', 'predictive_model')
+    # predictive model is configured by active environment info
+    return instantiate_from_json(get_active_environment_info()['config'])
 
 
 def get_item_selector():

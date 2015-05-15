@@ -81,14 +81,23 @@ def get_config_path():
     return settings.PROSO_CONFIG.get('path', DEFAULT_PATH)
 
 
-def instantiate_from_config(app_name, key, default_class=None, default_parameters=None, pass_parameters=None, config_name=None):
+def instantiate_from_json(json, default_class=None, default_parameters=None, pass_parameters=None):
     if pass_parameters is None:
         pass_parameters = []
-    config = get_config(app_name, key, config_name=config_name, required=(default_class is None), default={})
     return proso.util.instantiate(
-        config.get('class', default_class),
+        json.get('class', default_class),
         *pass_parameters,
-        **config.get('parameters', default_parameters if default_parameters else {})
+        **json.get('parameters', default_parameters if default_parameters else {})
+    )
+
+
+def instantiate_from_config(app_name, key, default_class=None, default_parameters=None, pass_parameters=None, config_name=None):
+    config = get_config(app_name, key, config_name=config_name, required=(default_class is None), default={})
+    return instantiate_from_json(
+        config,
+        default_class=default_class,
+        default_parameters=default_parameters,
+        pass_parameters=pass_parameters
     )
 
 
