@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from proso.django.config import reset_overridden
 from proso.django.test import TestCase
 import json
 
@@ -11,6 +12,7 @@ class CommonAPITest(TestCase):
 
     def tearDown(self):
         self.client.logout()
+        reset_overridden()
 
     def testConfig(self):
         response = self.client.get('/common/config/?config.my.super.property=true')
