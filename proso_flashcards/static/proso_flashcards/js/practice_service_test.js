@@ -23,6 +23,10 @@ var configServiceMock = function(){
         }
         return variable;
     };
+
+    self.getOverridden = function () {
+        return {};
+    };
 };
 
 describe("Practice Service - flashcards", function() {

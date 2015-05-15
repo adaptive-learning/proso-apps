@@ -58,6 +58,7 @@ m.factory("configService", ["$http", "$window", "$cookieStore", function($http, 
         return $http.get("/common/config/")
             .success(function (response) {
                 self.processConfig(response.data);
+                console.log(response);
             })
             .error(function () {
                 console.error("Problem while loading config from server");

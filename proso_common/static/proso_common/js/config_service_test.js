@@ -16,15 +16,16 @@ var config = {
 describe("Config Service", function() {
     var $httpBackend, $configService;
 
-    beforeEach(module('proso_apps.services'));
+    beforeEach(module('proso_apps.services', "ngCookies"));
 
     beforeEach(inject(function($injector) {
         $httpBackend = $injector.get('$httpBackend');
         $configService = $injector.get('configService');
     }));
 
-    beforeEach(function(){
-    });
+    beforeEach(inject(function($window){
+        $window.configService = null;
+    }));
 
     afterEach(function() {
         $httpBackend.verifyNoOutstandingExpectation();
