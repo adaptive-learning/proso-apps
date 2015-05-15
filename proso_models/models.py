@@ -20,6 +20,7 @@ from django.core.cache import cache
 from proso.django.cache import get_request_cache, is_cache_prepared
 from django.db import transaction
 from proso.django.util import disable_for_loaddata
+import hashlib
 
 
 ENVIRONMENT_INFO_CACHE_EXPIRATION = 30 * 60
@@ -522,23 +523,35 @@ class DatabaseEnvironment(CommonEnvironment):
             return cursor.fetchone()[0]
 
     def confusing_factor_more_items(self, item, items, user=None):
-        with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({
-                'item_asked_id': item,
-                'item_answered_id': items,
-                'user_id': user
-            }, force_null=False, for_answers=True)
-            cursor.execute(
-                '''
-                SELECT
-                    item_answered_id,
-                    COUNT(id) AS confusing_factor
-                FROM
-                    proso_models_answer
-                WHERE guess=0 AND
-                ''' + where + ' GROUP BY item_answered_id', where_params)
-            wrongs = dict(cursor.fetchall())
-            return map(lambda i: wrongs.get(i, 0), items)
+        cache_hash = hashlib.sha1('{}_{}_{}'.format(item, sorted(items), user)).hexdigest()
+        cache_key = 'confusing_factor_{}'.format(cache_hash)
+        cached_json = cache.get(cache_key)
+        if cached_json is None:
+            with closing(connection.cursor()) as cursor:
+                where, where_params = self._where({
+                    'item_asked_id': item,
+                    'item_answered_id': items,
+                    'user_id': user
+                }, force_null=False, for_answers=True)
+                cursor.execute(
+                    '''
+                    SELECT
+                        item_answered_id,
+                        COUNT(id) AS confusing_factor
+                    FROM
+                        proso_models_answer
+                    WHERE guess=0 AND
+                    ''' + where + ' GROUP BY item_answered_id', where_params)
+                wrongs = dict(cursor.fetchall())
+                result = map(lambda i: wrongs.get(i, 0), items)
+                cache.set(
+                    cache_key,
+                    json.dumps(result),
+                    get_config('proso_models', 'confusing_factor.cache_expiration', default=24 * 60 * 60)
+                )
+                return result
+        else:
+            return json.loads(cached_json)
 
     def export_values():
         pass
