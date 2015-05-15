@@ -21,7 +21,6 @@ _is_overriden_from_url = {}
 
 
 class ConfigMiddleware(object):
-
     def process_request(self, request):
         reset_overridden()
         if not request.user.is_staff:
@@ -59,6 +58,7 @@ def reset_overridden():
     _overridden[currentThread()] = {}
     _is_overriden_from_url[currentThread()] = False
 
+
 def is_any_overridden():
     return len(_overridden[currentThread()]) > 0
 
@@ -91,7 +91,8 @@ def instantiate_from_json(json, default_class=None, default_parameters=None, pas
     )
 
 
-def instantiate_from_config(app_name, key, default_class=None, default_parameters=None, pass_parameters=None, config_name=None):
+def instantiate_from_config(app_name, key, default_class=None, default_parameters=None, pass_parameters=None,
+                            config_name=None):
     config = get_config(app_name, key, config_name=config_name, required=(default_class is None), default={})
     return instantiate_from_json(
         config,
@@ -174,8 +175,9 @@ def _override_value(app_name_key, value, override_key, override_value):
 
 
 @receiver(pre_save)
-def example(sender, instance, **kwargs):
+def check_overridden_and_persistence(sender, instance, **kwargs):
     if is_overridden_from_url():
         if isinstance(instance, Session):
             return
-        raise Exception("Nothing can be saved when the configuration is overridden from URL.")
+        raise Exception("Nothing ({}) can be saved when the configuration is overridden ({}) from URL.".format(
+            instance.__class__, _overridden[currentThread()]))
