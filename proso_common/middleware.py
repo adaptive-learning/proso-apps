@@ -11,7 +11,7 @@ class ToolbarMiddleware(object):
 
     def process_response(self, request, response):
 
-        if not request.user.is_staff:
+        if not hasattr(request, "user") or not request.user.is_staff:
             return response
 
         # Check for responses where the config_bar can't be inserted.
