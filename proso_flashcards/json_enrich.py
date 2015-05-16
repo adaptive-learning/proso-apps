@@ -37,6 +37,6 @@ def avg_prediction(request, json_list, nested):
 def practiced(request, json_list, nested):
     flashcards_ids = [json["id"] for json in json_list if json["object_type"] == "fc_flashcard"]
     user = get_user_id(request)
-    counts = Flashcard.objects.number_of_answers(flashcards_ids, user)
+    counts = Flashcard.objects.number_of_answers_per_fc(flashcards_ids, user)
     for json in json_list:
         json["practiced"] = counts[json["id"]] > 0

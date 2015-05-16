@@ -18,15 +18,12 @@ def cache_pure(f, expiration=60*60*24*30):
     """ Cache decorator for functions taking one or more arguments. """
     @wraps(f)
     def wrapper(*args, **kwargs):
-        print args
         key = "{}:args:{}-kwargs:{}".format(f.__name__, repr(args), repr(kwargs))
         hash = hashlib.sha1(key).hexdigest()
         if hash in cache:
             value = cache.get(hash)
             LOGGER.debug("loaded function result (%s) form CACHE; key: %s, hash %s", value, key, hash)
             return value
-
-        print key, args
 
         value = f(*args, **kwargs)
         LOGGER.debug("saved function result (%s) to CACHE; key: %s, hash %s", value, key, hash)
