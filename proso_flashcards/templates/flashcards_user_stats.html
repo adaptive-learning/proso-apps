@@ -1,0 +1,65 @@
+{% extends 'flashcards_base.html' %}
+
+{% load jsonify staticfiles %}
+
+{% block header_block %}
+    <script src="{% static "proso_common/angular/angular.min.js" %}"></script>
+    <script src="{% static "proso_common/angular/angular-cookies.min.js" %}"></script>
+    <script src="{% static "proso_flashcards/js/user_stats_service.js" %}"></script>
+    <script>
+        var app = angular.module('proso', ["proso_apps.services", "ngCookies"]);
+        app.controller("demo", function($scope, userStatsService){
+            $scope.service = userStatsService;
+            $scope.add = function(){
+                userStatsService.addGroup($scope.id, $scope.filter);
+                delete $scope.filter;
+                delete $scope.context;
+                delete $scope.types;
+                delete $scope.categories;
+                delete $scope.id;
+            };
+
+            $scope.parse = function(str){
+                try {
+                    return JSON.parse(str);
+                }catch(e){}
+            };
+
+            $scope.send = function(){
+                userStatsService.getStats().then(function(result){
+                    $scope.json = result.data;
+                });
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <hr/>
+    <div ng-app="proso" ng-controller="demo">
+    <h2>JSON object</h2>
+        <code>{{ json|obj2richjson }}</code>
+        {% verbatim %}
+        <pre>{{ json | json:4}}</pre>
+        <hr/>
+        <form>
+            <input type="text" ng-model="id" placeholder="Identifier of group"/>
+            <input type="text" ng-change="filter.categories = parse(categories)"  ng-model="categories" placeholder="Categories (list or list of lists)"/>
+            <input type="text" ng-change="filter.context = parse(context)" ng-model="context" placeholder="Categories (list)"/>
+            <input type="text" ng-change="filter.types = parse(types)" ng-model="types" placeholder="Categories (list)"/>
+            <input type="text" ng-model="filter.language" placeholder="Language"/>
+            <input type="button" class="pure-button pure-button-primary" value="Add" ng-click="add()">
+        </form>
+        <pre>{{ filter | json:4 }}</pre>
+        <br/>
+        <hr/>
+        <pre>{{ service.getGroups() | json:4 }}</pre>
+        <input type="button" class="pure-button pure-button-primary" value="Get Stats" ng-click="send()">
+        <input type="button" class="pure-button pure-button-primary" value="Clear" ng-click="service.clean()">
+    {% endverbatim %}
+    </div>
+{% endblock %}

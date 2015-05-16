@@ -1,9 +1,10 @@
 from collections import defaultdict
 from django.conf import settings
 from django.db import models
-from django.db.models import Q, Count
+from django.db.models import Q, Count, F
 import itertools
-from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector
+from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector, \
+    get_predictive_model, MASTERY_TRESHOLD
 from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
 from proso.django.util import disable_for_loaddata, cache_pure
@@ -109,10 +110,18 @@ class FlashcardManager(models.Manager):
     def get_queryset(self):
         return FlashcardQuerySet(self.model, using=self._db)
 
-    def filtered_items(self, categories, contexts, types, avoid, language):
+    def candidates_to_practice(self, categories, contexts, types, avoid, language):
         return list(
             self.get_queryset().filter_fc(categories, contexts, types, avoid, language).order_by("?")[:100].values_list(
                 "item_id", flat=True))
+
+    @cache_pure
+    def filtered_ids(self, categories, contexts, types, avoid, language):
+        i = tuple(zip(*self.get_queryset().filter_fc(
+            categories, contexts, types, avoid, language).values_list("pk", "item_id")))
+        if len(i) != 2:
+            return [], []
+        return i
 
     def practice(self, environment, user, time, limit, items, language=None, with_contexts=True):
         # prepare
@@ -183,12 +192,30 @@ class FlashcardManager(models.Manager):
     def in_contexts(self, contexts):
         return self.filter(context__in=contexts)
 
-    def number_of_answers(self, flashcards_ids, user):
+    def number_of_answers_per_fc(self, flashcards_ids, user):
         counts = defaultdict(lambda: 0)
         for f in self.filter(pk__in=flashcards_ids, item__item_answers__user=user) \
                 .annotate(answer_count=Count("item__item_answers")).values_list("pk", "answer_count"):
             counts[f[0]] = f[1]
         return counts
+
+    def number_of_answers(self, flashcards_ids, user, time):
+        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user).count()
+
+    def number_of_correct_answers(self, flashcards_ids, user, time):
+        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user,
+                           item__item_answers__item_asked=F("item__item_answers__item_answered")).count()
+
+    def number_of_practiced(self, flashcards_ids, user, time):
+        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user) \
+            .annotate(answer_count=Count("item__item_answers")).filter(answer_count__gt=0).count()
+
+    def number_of_mastered(self, flashcards_ids, user, time, is_time_overridden):
+        environment = get_environment()
+        if is_time_overridden:
+            environment.shift_time(time)
+        return sum(map(lambda p: p >= MASTERY_TRESHOLD,
+                       get_predictive_model().predict_more_items(environment, user, flashcards_ids, time)))
 
 
 class Flashcard(models.Model):

@@ -26,6 +26,8 @@ import hashlib
 ENVIRONMENT_INFO_CACHE_EXPIRATION = 30 * 60
 ENVIRONMENT_INFO_CACHE_KEY = 'proso_models_env_info'
 
+MASTERY_TRESHOLD=0.95
+
 
 # This is hack to emulate TRUE value on both psql and sqlite
 DATABASE_TRUE = '1 = 1'

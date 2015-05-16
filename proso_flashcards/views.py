@@ -77,6 +77,63 @@ def show_more(request, object_class, should_cache=True):
         should_cache=should_cache, template='flashcards_json.html')
 
 
+def user_stats(request):
+    """
+    Get user statistics for selected flashcards groups
+
+    time:
+      time in format '%Y-%m-%d_%H:%M:%S' used for practicing
+    user:
+      identifier for the practicing user (only for stuff users)
+    filters:                -- use this or body
+      json as in BODY
+
+    BODY
+      json in following format:
+      {
+        "#identifier":          -- custom identifier (str)
+          {
+            "categories": [],   -- list of ids (int) or identifiers (str) of categories
+                                -- for union of multiple category intersections use list of lists
+            "contexts": [],     -- list of ids (int) or identifiers (str) of contexts
+            "types": [],        -- list of names (str) of types of terms
+            "language": ,       -- language (str)
+          },
+        ...
+      }
+    """
+
+    response = {}
+    data = None
+    if request.method == "POST":
+        data = json.loads(request.body)
+
+    if "filters" in request.GET:
+        data = json.loads(request.GET["filters"])
+
+    if data is not None:
+        for identifier, filter in data.items():
+            categories = filter.get("categories", [])
+            contexts = filter.get("contexts", [])
+            types = filter.get("types", [])
+            language = filter.get("language", request.LANGUAGE_CODE)
+            ids, items = Flashcard.objects.filtered_ids(categories, contexts, types, [], language)
+            time = get_time(request) if is_time_overridden(request) else None
+
+            user = get_user_id(request)
+            response[identifier] = {
+                "filter": filter,
+                "number_of_flashcards": len(ids),
+                "number_of_practiced_flashcards": Flashcard.objects.number_of_practiced(ids, user, time),
+                "number_of_mastered_flashcards":
+                    Flashcard.objects.number_of_mastered(items, user, get_time(request), is_time_overridden(request)),
+                "number_of_answers": Flashcard.objects.number_of_answers(ids, user, time),
+                "number_of_correct_answers": Flashcard.objects.number_of_correct_answers(ids, user, time),
+            }
+
+    return render_json(request, [response], template='flashcards_user_stats.html', help_text=user_stats.__doc__)
+
+
 @allow_lazy_user
 @transaction.atomic
 def answer(request):
@@ -134,6 +191,7 @@ def practice(request):
         list of ids (int) or identifiers (str) of contexts to which flashcards selection will be restricted
       categories:
         list of ids (int) or identifiers (str) of categories to which flashcards selection will be restricted
+        for union of multiple category intersections use list of lists
       types:
         list of names (str) of types of terms to which flashcards selection will be restricted
       language:
@@ -183,7 +241,7 @@ def practice(request):
     language = request.GET.get("language", request.LANGUAGE_CODE)
 
     time_before_practice = time_lib()
-    candidates = Flashcard.objects.filtered_items(categories, contexts, types, avoid, language)
+    candidates = Flashcard.objects.candidates_to_practice(categories, contexts, types, avoid, language)
     flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates, language, with_contexts)
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))
     data = _to_json(request, {

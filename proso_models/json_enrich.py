@@ -5,9 +5,6 @@ import models
 import numpy
 
 
-MASTERY_TRESHOLD=0.95
-
-
 def prediction(request, json_list, nested):
     object_item_ids = map(lambda x: x['item_id'], json_list)
     user = get_user_id(request)
@@ -19,7 +16,7 @@ def prediction(request, json_list, nested):
         time)
     for object_json, prediction in zip(json_list, predictions):
         object_json['prediction'] = float("{0:.2f}".format(prediction))
-        object_json['mastered'] = prediction >= MASTERY_TRESHOLD
+        object_json['mastered'] = prediction >= models.MASTERY_TRESHOLD
     return json_list
 
 
