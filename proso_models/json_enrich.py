@@ -9,14 +9,15 @@ def prediction(request, json_list, nested):
     object_item_ids = map(lambda x: x['item_id'], json_list)
     user = get_user_id(request)
     time = get_time(request)
-    predictions = _predictive_model().predict_more_items(
-        _environment(request),
-        user,
-        object_item_ids,
-        time)
+    predictions = _predictive_model().predict_more_items(_environment(request), user, object_item_ids, time)
     for object_json, prediction in zip(json_list, predictions):
         object_json['prediction'] = float("{0:.2f}".format(prediction))
         object_json['mastered'] = prediction >= models.MASTERY_TRESHOLD
+    if "new_user_predictions" in request.GET:
+        user = -1
+        predictions = _predictive_model().predict_more_items(_environment(request), user, object_item_ids, time)
+        for object_json, prediction in zip(json_list, predictions):
+            object_json['new_user_prediction'] = float("{0:.2f}".format(prediction))
     return json_list
 
 
