@@ -32,8 +32,11 @@ class UserAPITest(TestCase):
             "id": 1,
             "public": False
         }
+        response = json.loads(response.content)['data']
+        expected_profile["user"]["id"] = response["user"]["id"]
+        expected_profile["id"] = response["id"]
         self.assertEqual(
-            json.loads(response.content)['data'], expected_profile,
+            response, expected_profile,
             'The given profile has been created.'
         )
         # check profile
