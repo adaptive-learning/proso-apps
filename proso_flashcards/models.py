@@ -200,14 +200,23 @@ class FlashcardManager(models.Manager):
         return counts
 
     def number_of_answers(self, flashcards_ids, user, time):
-        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user).count()
+        if time is None:
+            return self.filter(pk__in=flashcards_ids, item__item_answers__user=user).count()
+        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user,
+                           item__item_answers__time__lte=time).count()
 
     def number_of_correct_answers(self, flashcards_ids, user, time):
-        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user,
+        if time is None:
+            return self.filter(pk__in=flashcards_ids, item__item_answers__user=user,
                            item__item_answers__item_asked=F("item__item_answers__item_answered")).count()
+        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user, item__item_answers__time__lte=time,
+                       item__item_answers__item_asked=F("item__item_answers__item_answered")).count()
 
     def number_of_practiced(self, flashcards_ids, user, time):
-        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user) \
+        if time is None:
+            return self.filter(pk__in=flashcards_ids, item__item_answers__user=user) \
+                .annotate(answer_count=Count("item__item_answers")).filter(answer_count__gt=0).count()
+        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user, item__item_answers__time__lte=time) \
             .annotate(answer_count=Count("item__item_answers")).filter(answer_count__gt=0).count()
 
     def number_of_mastered(self, flashcards_ids, user, time, is_time_overridden):

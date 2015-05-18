@@ -13,7 +13,7 @@
             $scope.add = function(){
                 userStatsService.addGroup($scope.id, $scope.filter);
                 delete $scope.filter;
-                delete $scope.context;
+                delete $scope.contexts;
                 delete $scope.types;
                 delete $scope.categories;
                 delete $scope.id;
@@ -49,8 +49,8 @@
         <form>
             <input type="text" ng-model="id" placeholder="Identifier of group"/>
             <input type="text" ng-change="filter.categories = parse(categories)"  ng-model="categories" placeholder="Categories (list or list of lists)"/>
-            <input type="text" ng-change="filter.context = parse(context)" ng-model="context" placeholder="Categories (list)"/>
-            <input type="text" ng-change="filter.types = parse(types)" ng-model="types" placeholder="Categories (list)"/>
+            <input type="text" ng-change="filter.contexts = parse(contexts)" ng-model="contexts" placeholder="Contexts (list)"/>
+            <input type="text" ng-change="filter.types = parse(types)" ng-model="types" placeholder="Types (list)"/>
             <input type="text" ng-model="filter.language" placeholder="Language"/>
             <input type="button" class="pure-button pure-button-primary" value="Add" ng-click="add()">
         </form>
