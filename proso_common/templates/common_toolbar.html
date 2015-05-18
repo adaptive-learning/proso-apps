@@ -156,6 +156,7 @@
     app.controller("toolbar", function($scope, $cookies, configService, loggingService){
         $scope.override = configService.override;
         $scope.removeOverridden = configService.removeOverridden;
+        $scope.date = new Date();
         $scope.debugLog = [];
         $scope.opened = $cookies["toolbar:opened"] === "true";
         $scope.loggingOpened = true;
@@ -181,9 +182,9 @@
         };
 
         $scope.getOverridden = function() {
-            var overridden = configService.getOverridden()
+            var overridden = configService.getOverridden();
             Object.keys(overridden).filter(function(k) {
-                return (k === 'user' || k === 'debug');
+                return (k === 'user' || k === 'debug' || k === 'time');
             }).forEach(function (k) {
                 delete overridden[k];
             });
@@ -207,6 +208,11 @@
             <li>
                 <span ng-click="removeOverridden('user'); overridden.user = null;" class="reset">X</span>
                 <input type="number" ng-model="overridden.user" placeholder="User" ng-change="override('user', overridden.user)" />
+            </li>
+            <li>
+                <span ng-click="removeOverridden('time'); overridden.time= null;" class="reset">X</span>
+                <input type="text" ng-model="overridden.time" placeholder="Time" ng-change="override('time', overridden.time)" />
+                <i>{{date | date:'yyyy-MM-dd_HH:mm:ss'}}</i>
             </li>
             <li ng-repeat="(name, value) in getOverridden() track by name">
                 <span class="reset" ng-click="removeOverridden(name)">X</span>

@@ -71,13 +71,10 @@ m.factory("configService", ["$http", "$window", "$cookieStore", function($http, 
 
     self.override = function (key, value) {
         if (value === 'true') {
-            console.log('bool: true');
             value = true;
         } else if (value === 'false') {
-            console.log('bool: false');
             value = false;
         } else if ($.isNumeric(value)) {
-            console.log('numeric');
             value = parseFloat(value);
         }
         overridden[key] = value;
