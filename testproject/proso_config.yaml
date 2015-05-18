@@ -1,5 +1,6 @@
 default:
     proso_models:
+        mastery_threshold: 0.9
         predictive_model:
             class: proso.models.prediction.PriorCurrentPredictiveModel
         option_selector:

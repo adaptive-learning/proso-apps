@@ -1,3 +1,4 @@
+from proso.django.config import get_config
 from proso.django.response import pass_get_parameters
 from django.core.urlresolvers import reverse
 from proso.django.request import is_time_overridden, get_time, get_user_id
@@ -12,7 +13,7 @@ def prediction(request, json_list, nested):
     predictions = _predictive_model().predict_more_items(_environment(request), user, object_item_ids, time)
     for object_json, prediction in zip(json_list, predictions):
         object_json['prediction'] = float("{0:.2f}".format(prediction))
-        object_json['mastered'] = prediction >= models.MASTERY_TRESHOLD
+        object_json['mastered'] = prediction >= get_config("proso_models", "mastery_threshold", default=0.9)
     if "new_user_predictions" in request.GET:
         user = -1
         predictions = _predictive_model().predict_more_items(_environment(request), user, object_item_ids, time)

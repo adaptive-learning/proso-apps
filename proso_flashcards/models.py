@@ -3,8 +3,9 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q, Count, F
 import itertools
+from proso.django.config import get_config
 from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector, \
-    get_predictive_model, MASTERY_TRESHOLD
+    get_predictive_model
 from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
 from proso.django.util import disable_for_loaddata, cache_pure
@@ -223,7 +224,7 @@ class FlashcardManager(models.Manager):
         environment = get_environment()
         if is_time_overridden:
             environment.shift_time(time)
-        return sum(map(lambda p: p >= MASTERY_TRESHOLD,
+        return sum(map(lambda p: p >= get_config("proso_models", "mastery_threshold", default=0.9),
                        get_predictive_model().predict_more_items(environment, user, flashcards_ids, time)))
 
 
