@@ -33,6 +33,9 @@ reinstall: check uninstall install
 develop: check
 	python setup.py develop
 
+bower:
+	cd testproject; bower install -f
+
 install: check
 	python setup.py sdist
 	pip install dist/proso-apps-$(VERSION_FULL)*

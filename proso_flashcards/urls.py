@@ -19,7 +19,6 @@ urlpatterns = patterns(
     url(r'^user_stats/', 'user_stats', name='flashcard_user_stats'),
     url(r'^ngService/', ensure_csrf_cookie(TemplateView.as_view(template_name="practice_service.html")),
         name='practice_service'),
-    url(r'^ngServicee_test/', TemplateView.as_view(template_name="practice_service_test.html"), name='practice_service_test'),
 )
 
 for model in MODELS:

@@ -16,9 +16,9 @@ To install/reinstall the project:
 
 	make install|reinstall
 
-If you want to build UI javascript, you have to run Grunt:
+If you want to build download javascript dependencies, you have to run Bower:
 
-	make grunt
+	make bower
 
 To run tests:
 

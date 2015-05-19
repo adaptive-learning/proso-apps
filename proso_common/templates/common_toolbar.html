@@ -140,16 +140,10 @@
         width: 70%;
     }
 </style>
-
-<script src="{% static "proso_common/angular/angular.min.js" %}"></script>
-<script src="{% static "proso_common/angular/angular-cookies.min.js" %}"></script>
-<script src="{% static "proso_common/js/config_service.js" %}"></script>
-<script src="{% static "proso_common/js/logging_service.js" %}"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 
-
 <script>
-    var app = angular.module('proso_toolbar', ["proso_apps.services", "ngCookies"]);
+    var app = angular.module('proso_toolbar', ["proso.apps", "ngCookies"]);
     app.run(function(configService){
         configService.processConfig({{ config_json | safe }});
     });
