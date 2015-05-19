@@ -1,7 +1,6 @@
 from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.contrib import admin
-import proso_questions_client.urls
 
 
 admin.autodiscover()
@@ -14,7 +13,6 @@ urlpatterns = patterns(
         }
     ),
     url(r'^user/', include('proso_user.urls')),
-    url(r'^questions/', include('proso_questions.urls')),
     url(r'^models/', include('proso_models.urls')),
     url(r'^ab/', include('proso_ab.urls')),
     url(r'^common/', include('proso_common.urls')),
@@ -23,4 +21,4 @@ urlpatterns = patterns(
     url(r'^feedback/', include('proso_feedback.urls')),
     url(r'^flashcards/', include('proso_flashcards.urls')),
     url(r'', include('social_auth.urls')),
-) + proso_questions_client.urls.urlpatterns
+)

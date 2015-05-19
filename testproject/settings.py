@@ -59,7 +59,6 @@ INSTALLED_APPS = (
     'proso_common',
     'proso_models',
     'proso_questions',
-    'proso_questions_client',
     'proso_user',
     'proso_feedback',
     'proso_flashcards',
