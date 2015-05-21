@@ -21,8 +21,39 @@ import proso_models.json_enrich as models_json_enrich
 import proso_flashcards.json_enrich as flashcards_json_enrich
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
 from proso_models.models import get_environment, get_predictive_model
+import proso.svg
+
 
 LOGGER = logging.getLogger('django.request')
+
+
+def practice_image(request):
+    user_id = get_user_id(request)
+    limit = min(int(request.GET.get('limit', 10)), 100)
+    item_ids = _candidates_to_practice(request, limit=100)
+    answers = FlashcardAnswer.objects.filter(user_id=user_id).filter(item_asked_id__in=item_ids).order_by('-id')[:limit]
+    predictive_model = get_predictive_model()
+    environment = get_environment()
+    predictions = predictive_model.predict_more_items(environment, user=-1, items=item_ids, time=datetime.now())
+    items_in_order = zip(*sorted(zip(predictions, item_ids), reverse=True))[1] if len(item_ids) > 1 else []
+    item_prediction = dict(zip(item_ids, predictions))
+    item_position = dict(zip(items_in_order, range(len(item_ids))))
+    svg = proso.svg.Printer()
+    answers = sorted(list(answers), key=lambda a: a.id)
+    SQUARE_SIZE = 15
+    OFFSET_X = SQUARE_SIZE * 10
+    OFFSET_Y = SQUARE_SIZE * 3
+    for i, item in enumerate(items_in_order):
+        svg.print_square(OFFSET_X + SQUARE_SIZE * i, OFFSET_Y - SQUARE_SIZE, SQUARE_SIZE, int(255 * item_prediction[item]))
+    for i, answer in enumerate(answers):
+        for j in xrange(len(items_in_order)):
+            svg.print_square(OFFSET_X + SQUARE_SIZE * j, OFFSET_Y + SQUARE_SIZE * i, SQUARE_SIZE, 255, border_color=200)
+        color = 'green' if answer.item_asked_id == answer.item_answered_id else 'red'
+        svg.print_square(
+            OFFSET_X + SQUARE_SIZE * item_position[answer.item_asked_id],
+            OFFSET_Y + SQUARE_SIZE * i, SQUARE_SIZE, color, border_color=0)
+        svg.print_text(SQUARE_SIZE, OFFSET_Y + SQUARE_SIZE * i + 0.8 * SQUARE_SIZE, answer.time.strftime('%Y-%m-%d %H:%M:%S'))
+    return HttpResponse(str(svg), content_type="image/svg+xml")
 
 
 @cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
@@ -273,18 +304,12 @@ def practice(request):
         if not isinstance(saved_answers, list):
             return saved_answers
 
-    # select
-    categories = json.loads(request.GET.get("categories", "[]"))
-    contexts = json.loads(request.GET.get("contexts", "[]"))
-    types = json.loads(request.GET.get("types", "[]"))
-    avoid = json.loads(request.GET.get("avoid", "[]"))
-    with_contexts = "without_contexts" not in request.GET
-    language = request.GET.get("language", request.LANGUAGE_CODE)
-
     time_before_candidates = time_lib()
-    candidates = Flashcard.objects.candidates_to_practice(categories, contexts, types, avoid, language)
+    candidates = _candidates_to_practice(request, 100)
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_candidates))
     time_before_practice = time_lib()
+    language = request.GET.get("language", request.LANGUAGE_CODE)
+    with_contexts = "without_contexts" not in request.GET
     flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates, language, with_contexts)
     LOGGER.debug('choosing items for practice took %s seconds', (time_lib() - time_before_practice))
     data = _to_json(request, {
@@ -399,3 +424,12 @@ def _to_json(request, value):
             request, json, flashcards_json_enrich.avg_prediction, ['fc_category', 'fc_term', 'fc_context'], skip_nested=True)
     LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
     return json
+
+
+def _candidates_to_practice(request, limit):
+    categories = json.loads(request.GET.get("categories", "[]"))
+    contexts = json.loads(request.GET.get("contexts", "[]"))
+    types = json.loads(request.GET.get("types", "[]"))
+    avoid = json.loads(request.GET.get("avoid", "[]"))
+    language = request.GET.get("language", request.LANGUAGE_CODE)
+    return Flashcard.objects.candidates_to_practice(categories, contexts, types, avoid, language, limit=limit)
