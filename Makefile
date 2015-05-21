@@ -30,11 +30,17 @@ test:
 
 reinstall: check uninstall install
 
+develop-js:
+	rm -rf testproject/testapp/static/bower/proso-apps-js; \
+	ln -s ../../../../../proso-apps-js/dist testproject/testapp/static/bower/proso-apps-js;
+
 develop: check
 	python setup.py develop
 
 bower:
 	cd testproject; bower install -f
+
+bower-develop: bower develop-js
 
 install: check
 	python setup.py sdist

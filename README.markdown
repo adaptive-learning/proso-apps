@@ -16,9 +16,13 @@ To install/reinstall the project:
 
 	make install|reinstall
 
-If you want to build download javascript dependencies, you have to run Bower:
+If you want to download javascript dependencies, you have to run Bower:
 
 	make bower
+
+If you want to download javascript dependencies and create a symbolic link to clone of proso-apps-js repository, you have to run Bower (develop):
+
+	make bower-develop
 
 To run tests:
 
