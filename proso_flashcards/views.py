@@ -87,6 +87,8 @@ def user_stats(request):
       identifier for the practicing user (only for stuff users)
     filters:                -- use this or body
       json as in BODY
+    mastered:
+      use model to compute number of mastered FC - can be slowed
 
     BODY
       json in following format:
@@ -125,11 +127,12 @@ def user_stats(request):
                 "filter": filter,
                 "number_of_flashcards": len(ids),
                 "number_of_practiced_flashcards": Flashcard.objects.number_of_practiced(ids, user, time),
-                "number_of_mastered_flashcards":
-                    Flashcard.objects.number_of_mastered(items, user, get_time(request), is_time_overridden(request)),
                 "number_of_answers": Flashcard.objects.number_of_answers(ids, user, time),
                 "number_of_correct_answers": Flashcard.objects.number_of_correct_answers(ids, user, time),
             }
+            if request.GET.get("mastered"):
+                response[identifier]["number_of_mastered_flashcards"] = \
+                    Flashcard.objects.number_of_mastered(items, user, get_time(request), is_time_overridden(request)),
 
     return render_json(request, [response], template='flashcards_user_stats.html', help_text=user_stats.__doc__)
 
