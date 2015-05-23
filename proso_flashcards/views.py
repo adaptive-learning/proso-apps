@@ -134,7 +134,7 @@ def user_stats(request):
                 response[identifier]["number_of_mastered_flashcards"] = \
                     Flashcard.objects.number_of_mastered(items, user, get_time(request), is_time_overridden(request)),
 
-    return render_json(request, [response], template='flashcards_user_stats.html', help_text=user_stats.__doc__)
+    return render_json(request, response, template='flashcards_user_stats.html', help_text=user_stats.__doc__)
 
 
 @allow_lazy_user
