@@ -3,9 +3,6 @@
 {% load jsonify staticfiles %}
 
 {% block header_block %}
-    <script src="{% static "proso_common/angular/angular.min.js" %}"></script>
-    <script src="{% static "proso_common/angular/angular-cookies.min.js" %}"></script>
-    <script src="{% static "proso_flashcards/js/user_stats_service.js" %}"></script>
     <script>
         var app = angular.module('proso', ["proso.apps", "ngCookies"]);
         app.controller("demo", function($scope, userStatsService){
