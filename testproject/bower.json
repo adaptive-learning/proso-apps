@@ -2,6 +2,6 @@
   "name": "proso-apps-testproject",
   "version": "dummy",
   "dependencies": {
-    "proso-apps-js": "git@github.com:adaptive-learning/proso-apps-js-bower.git"
+    "proso-apps-js": "https://github.com/adaptive-learning/proso-apps-js-bower.git"
   }
 }
