@@ -4,6 +4,7 @@
 
 {% block header_block %}
     <script>
+        angular.module("proso.apps", ["proso.apps.common-config","proso.apps.common-logging","proso.apps.common-toolbar", "proso.apps.flashcards-userStats"]);
         var app = angular.module('proso', ["proso.apps", "ngCookies"]);
         app.controller("demo", function($scope, userStatsService){
             $scope.service = userStatsService;
@@ -23,7 +24,8 @@
             };
 
             $scope.send = function(){
-                userStatsService.getStats().then(function(result){
+                f = $scope.post ? userStatsService.getStatsPost($scope.mastered) : userStatsService.getStats($scope.mastered);
+                f.then(function(result){
                     $scope.json = result.data;
                 });
             }
@@ -55,6 +57,8 @@
         <br/>
         <hr/>
         <pre>{{ service.getGroups() | json:4 }}</pre>
+        <input type="checkbox" ng-model="mastered"/> number of mastered
+        <input type="checkbox" ng-model="post"/> POST
         <input type="button" class="pure-button pure-button-primary" value="Get Stats" ng-click="send()">
         <input type="button" class="pure-button pure-button-primary" value="Clear" ng-click="service.clean()">
     {% endverbatim %}

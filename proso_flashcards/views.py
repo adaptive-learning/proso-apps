@@ -132,7 +132,7 @@ def user_stats(request):
             }
             if request.GET.get("mastered"):
                 response[identifier]["number_of_mastered_flashcards"] = \
-                    Flashcard.objects.number_of_mastered(items, user, get_time(request), is_time_overridden(request)),
+                    Flashcard.objects.number_of_mastered(items, user, get_time(request), is_time_overridden(request))
 
     return render_json(request, response, template='flashcards_user_stats.html', help_text=user_stats.__doc__)
 
