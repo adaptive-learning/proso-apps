@@ -25,12 +25,14 @@ def enrich(request, json, fun, nested=False, top_level=True):
     return result
 
 
-def enrich_by_predicate(request, json, fun, predicate, **kwargs):
+def enrich_by_predicate(request, json, fun, predicate, skip_nested=False, **kwargs):
     time_start = time()
     collected = []
     memory = {'nested': False}
 
     def _collect(json_inner, nested):
+        if nested and skip_nested:
+            return
         if isinstance(json_inner, list):
             map(lambda x: _collect(x, nested), json_inner)
         elif isinstance(json_inner, dict):
@@ -46,12 +48,12 @@ def enrich_by_predicate(request, json, fun, predicate, **kwargs):
     return json
 
 
-def enrich_by_object_type(request, json, fun, object_type, **kwargs):
+def enrich_by_object_type(request, json, fun, object_type, skip_nested=False, **kwargs):
     if isinstance(object_type, list):
         f = lambda x: 'object_type' in x and x['object_type'] in object_type
     else:
         f = lambda x: 'object_type' in x and x['object_type'] == object_type
-    return enrich_by_predicate(request, json, fun, f, **kwargs)
+    return enrich_by_predicate(request, json, fun, f, skip_nested=skip_nested, **kwargs)
 
 
 def url(request, json_list, nested, url_name='show_{}', ignore_get=None):

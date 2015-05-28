@@ -338,19 +338,22 @@ def _to_json(request, value):
     if 'environment' in request.GET:
         common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
                                                  ["fc_term"],
+                                                 skip_nested=True,
                                                  variable_type=[("parent", None, True), ("child", None, True)])
         common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
                                                  ["fc_category"],
+                                                 skip_nested=True,
                                                  variable_type=[("parent", None, True), ("child", None, True)])
         common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
                                                  ["fc_flashcard"],
+                                                 skip_nested=True,
                                                  variable_type=[("parent", None, True)])
     if 'stats' in request.GET:
         common_json_enrich.enrich_by_object_type(
-            request, json, models_json_enrich.prediction, ['fc_flashcard', 'fc_term'])
+            request, json, models_json_enrich.prediction, ['fc_flashcard', 'fc_term'], skip_nested=True)
         common_json_enrich.enrich_by_object_type(
-            request, json, flashcards_json_enrich.practiced, ['fc_flashcard'])
+            request, json, flashcards_json_enrich.practiced, ['fc_flashcard'], skip_nested=True)
         common_json_enrich.enrich_by_object_type(
-            request, json, flashcards_json_enrich.avg_prediction, ['fc_category', 'fc_term', 'fc_context'])
+            request, json, flashcards_json_enrich.avg_prediction, ['fc_category', 'fc_term', 'fc_context'], skip_nested=True)
     LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
     return json
