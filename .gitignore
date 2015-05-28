@@ -15,3 +15,5 @@ local_settings.py
 testproject/data
 testproject/media
 testproject/testapp/static
+bower_components
+node_modules

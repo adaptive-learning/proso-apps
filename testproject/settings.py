@@ -226,4 +226,5 @@ CACHES = {
     }
 }
 
+PROSO_JS_FILES = ['dist/js/bower-libs.js']
 PROSO_FLASHCARDS = {}

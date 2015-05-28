@@ -42,6 +42,13 @@ bower:
 
 bower-develop: bower develop-js
 
+grunt:
+	cd testproject; grunt
+
+build-js: bower grunt
+
+build-js-develop: bower-develop grunt
+
 install: check
 	python setup.py sdist
 	pip install dist/proso-apps-$(VERSION_FULL)*
@@ -51,14 +58,6 @@ uninstall:
 
 check:
 	flake8 --ignore=E501,E225,E123,E128 --exclude=*/migrations/*.py,*/static/bower_components proso_models $(APPS)
-
-grunt:
-	for APP in $(GRUNT_APPS); do \
-		cd $${APP}; \
-		npm install; \
-		grunt deploy; \
-		cd -; \
-	done;
 
 
 ################################################################################
