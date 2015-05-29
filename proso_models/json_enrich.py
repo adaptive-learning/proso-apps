@@ -11,9 +11,10 @@ def prediction(request, json_list, nested):
     user = get_user_id(request)
     time = get_time(request)
     predictions = _predictive_model().predict_more_items(_environment(request), user, object_item_ids, time)
+    mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
     for object_json, prediction in zip(json_list, predictions):
         object_json['prediction'] = float("{0:.2f}".format(prediction))
-        object_json['mastered'] = prediction >= get_config("proso_models", "mastery_threshold", default=0.9)
+        object_json['mastered'] = prediction >= mastery_threshold
     if "new_user_predictions" in request.GET:
         user = -1
         predictions = _predictive_model().predict_more_items(_environment(request), user, object_item_ids, time)
