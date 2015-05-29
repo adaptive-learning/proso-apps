@@ -123,16 +123,22 @@ def user_stats(request):
             time = get_time(request) if is_time_overridden(request) else None
 
             user = get_user_id(request)
-            response[identifier] = {
-                "filter": filter,
-                "number_of_flashcards": len(ids),
-                "number_of_practiced_flashcards": Flashcard.objects.number_of_practiced(ids, user, time),
-                "number_of_answers": Flashcard.objects.number_of_answers(ids, user, time),
-                "number_of_correct_answers": Flashcard.objects.number_of_correct_answers(ids, user, time),
-            }
-            if request.GET.get("mastered"):
-                response[identifier]["number_of_mastered_flashcards"] = \
-                    Flashcard.objects.number_of_mastered(items, user, get_time(request), is_time_overridden(request))
+            if len(ids) == 0:
+                response[identifier] = {
+                    "filter": filter,
+                    "number_of_flashcards": 0,
+                }
+            else:
+                response[identifier] = {
+                    "filter": filter,
+                    "number_of_flashcards": len(ids),
+                    "number_of_practiced_flashcards": Flashcard.objects.number_of_practiced(ids, user, time),
+                    "number_of_answers": Flashcard.objects.number_of_answers(ids, user, time),
+                    "number_of_correct_answers": Flashcard.objects.number_of_correct_answers(ids, user, time),
+                }
+                if request.GET.get("mastered"):
+                    response[identifier]["number_of_mastered_flashcards"] = \
+                        Flashcard.objects.number_of_mastered(items, user, get_time(request), is_time_overridden(request))
 
     return render_json(request, response, template='flashcards_user_stats.html', help_text=user_stats.__doc__)
 
