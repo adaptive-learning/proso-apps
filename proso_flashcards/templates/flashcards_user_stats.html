@@ -4,7 +4,6 @@
 
 {% block header_block %}
     <script>
-        angular.module("proso.apps", ["proso.apps.common-config","proso.apps.common-logging","proso.apps.common-toolbar", "proso.apps.flashcards-userStats"]);
         var app = angular.module('proso', ["proso.apps", "ngCookies"]);
         app.controller("demo", function($scope, userStatsService){
             $scope.service = userStatsService;
