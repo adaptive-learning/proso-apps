@@ -10,6 +10,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 
 from proso.django.cache import cache_page_conditional
+from proso.django.config import get_config
 from proso.django.request import get_user_id, get_time, is_time_overridden
 from proso.django.response import render, render_json
 import proso_common.views
@@ -76,6 +77,7 @@ def show_more(request, object_class, should_cache=True):
         should_cache=should_cache, template='flashcards_json.html')
 
 
+@allow_lazy_user
 def user_stats(request):
     """
     Get user statistics for selected flashcards groups
@@ -104,52 +106,57 @@ def user_stats(request):
       }
     """
 
+    time_start = time_lib()
     response = {}
     data = None
     if request.method == "POST":
         data = json.loads(request.body)
-
     if "filters" in request.GET:
         data = json.loads(request.GET["filters"])
+    if data is None:
+        return render_json(request, {}, template='flashcards_user_stats.html', help_text=user_stats.__doc__)
 
-    if data is not None:
-        all_ids = []
-        ids_map = {}
-        user = get_user_id(request)
-        for identifier, filter in data.items():
-            categories = filter.get("categories", [])
-            contexts = filter.get("contexts", [])
-            types = filter.get("types", [])
-            language = filter.get("language", request.LANGUAGE_CODE)
-            ids, items = Flashcard.objects.filtered_ids(categories, contexts, types, [], language)
-            ids_map[identifier] = ids
-            time = get_time(request) if is_time_overridden(request) else None
-            all_ids += ids
+    environment = get_environment()
+    if is_time_overridden(request):
+        environment.shift_time(get_time(request))
+    user = get_user_id(request)
+    LOGGER.debug("user_stats - initialization took %s seconds", (time_lib() - time_start))
 
-            if len(ids) == 0:
-                response[identifier] = {
-                    "filter": filter,
-                    "number_of_flashcards": 0,
-                }
-            else:
-                response[identifier] = {
-                    "filter": filter,
-                    "number_of_flashcards": len(ids),
-                    "number_of_practiced_flashcards": Flashcard.objects.number_of_practiced(ids, user, time),
-                    "number_of_answers": Flashcard.objects.number_of_answers(ids, user, time),
-                    "number_of_correct_answers": Flashcard.objects.number_of_correct_answers(ids, user, time),
-                }
+    time_start = time_lib()
+    all_items, items_map = Flashcard.objects.filtered_ids_group(data, request.LANGUAGE_CODE)
+    LOGGER.debug("user_stats - getting flashcards in groups took %s seconds", (time_lib() - time_start))
+
+    time_start = time_lib()
+    answers = dict(zip(all_items, environment.number_of_answers_more_items(all_items, user)))
+    correct_answers = dict(zip(all_items, environment.number_of_correct_answers_more_items(all_items, user)))
+    LOGGER.debug("user_stats - getting number of answers took %s seconds", (time_lib() - time_start))
+
+    if request.GET.get("mastered"):
+        time_start = time_lib()
+        mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
+        predictions = get_predictive_model().predict_more_items(environment, user, all_items, get_time(request))
+        mastered = dict(zip(all_items, map(lambda p: p >= mastery_threshold, predictions)))
+        LOGGER.debug("user_stats - getting predictions for flashcards took %s seconds", (time_lib() - time_start))
+
+    time_start = time_lib()
+    for identifier, items in items_map.items():
+        if len(items) == 0:
+            response[identifier] = {
+                "filter": data[identifier],
+                "number_of_flashcards": 0,
+            }
+        else:
+            response[identifier] = {
+                "filter": data[identifier],
+                "number_of_flashcards": len(items),
+                "number_of_practiced_flashcards": sum(answers[i] > 0 for i in items),
+                "number_of_answers": sum(answers[i] for i in items),
+                "number_of_correct_answers": sum(correct_answers[i] for i in items),
+            }
 
         if request.GET.get("mastered"):
-            all_ids = list(set(all_ids))
-            environment = get_environment()
-            if is_time_overridden(request):
-                environment.shift_time(get_time(request))
-            predictions = dict(zip(all_ids,
-                           get_predictive_model().predict_more_items(environment, user, all_ids, get_time(request))))
-            for identifier in data:
-                response[identifier]["number_of_mastered_flashcards"]\
-                    = Flashcard.objects.number_of_mastered_from_predictions(ids_map[identifier], predictions)
+            response[identifier]["number_of_mastered_flashcards"]= sum(mastered[i] for i in items)
+    LOGGER.debug("user_stats - extraction information to groups took %s seconds", (time_lib() - time_start))
 
     return render_json(request, response, template='flashcards_user_stats.html', help_text=user_stats.__doc__)
 

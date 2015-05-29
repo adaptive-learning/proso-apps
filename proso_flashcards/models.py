@@ -1,11 +1,9 @@
 from collections import defaultdict
 from django.conf import settings
 from django.db import models
-from django.db.models import Q, Count, F
+from django.db.models import Q, Count
 import itertools
-from proso.django.config import get_config
-from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector, \
-    get_predictive_model
+from proso_models.models import Item, Answer, get_environment, get_item_selector, get_option_selector
 from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
 from proso.django.util import disable_for_loaddata, cache_pure
@@ -124,6 +122,23 @@ class FlashcardManager(models.Manager):
             return [], []
         return i
 
+    @cache_pure
+    def filtered_ids_group(self, data, language):
+        all_items = []
+        items_map = {}
+        for identifier, filter in data.items():
+            categories = filter.get("categories", [])
+            contexts = filter.get("contexts", [])
+            types = filter.get("types", [])
+            language = filter.get("language", language)
+            _, items = Flashcard.objects.filtered_ids(categories, contexts, types, [], language)
+            if len(items) > 0:
+                items_map[identifier] = items
+                all_items += items
+
+        all_items = list(set(all_items))
+        return all_items, items_map
+
     def practice(self, environment, user, time, limit, items, language=None, with_contexts=True):
         # prepare
         item_selector = get_item_selector()
@@ -199,39 +214,6 @@ class FlashcardManager(models.Manager):
                 .annotate(answer_count=Count("item__item_answers")).values_list("pk", "answer_count"):
             counts[f[0]] = f[1]
         return counts
-
-    def number_of_answers(self, flashcards_ids, user, time):
-        if time is None:
-            return self.filter(pk__in=flashcards_ids, item__item_answers__user=user).count()
-        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user,
-                           item__item_answers__time__lte=time).count()
-
-    def number_of_correct_answers(self, flashcards_ids, user, time):
-        if time is None:
-            return self.filter(pk__in=flashcards_ids, item__item_answers__user=user,
-                           item__item_answers__item_asked=F("item__item_answers__item_answered")).count()
-        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user, item__item_answers__time__lte=time,
-                       item__item_answers__item_asked=F("item__item_answers__item_answered")).count()
-
-    def number_of_practiced(self, flashcards_ids, user, time):
-        if time is None:
-            return self.filter(pk__in=flashcards_ids, item__item_answers__user=user) \
-                .annotate(answer_count=Count("item__item_answers")).filter(answer_count__gt=0).count()
-        return self.filter(pk__in=flashcards_ids, item__item_answers__user=user, item__item_answers__time__lte=time) \
-            .annotate(answer_count=Count("item__item_answers")).filter(answer_count__gt=0).count()
-
-    def number_of_mastered(self, flashcards_ids, user, time, is_time_overridden):
-        environment = get_environment()
-        if is_time_overridden:
-            environment.shift_time(time)
-        mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
-        return sum(map(lambda p: p >= mastery_threshold,
-                       get_predictive_model().predict_more_items(environment, user, flashcards_ids, time)))
-
-    def number_of_mastered_from_predictions(self, flashcards_ids, predictions):
-        mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
-        return sum(map(lambda p: p >= mastery_threshold,
-                       [predictions[i] for i in flashcards_ids]))
 
 
 class Flashcard(models.Model):
