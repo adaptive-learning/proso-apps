@@ -31,11 +31,11 @@ def cache_pure(f, expiration=60 * 60 * 24 * 30):
         hash = hashlib.sha1(key).hexdigest()
         if hash in cache:
             value = cache.get(hash)
-            LOGGER.debug("loaded function result (%s...) form CACHE; key: %s, hash %s", str(value)[:300], key, hash)
+            LOGGER.debug("loaded function result (%s...) form CACHE; key: %s..., hash %s", str(value)[:300], key[:300], hash)
             return value
 
         value = f(*args, **kwargs)
-        LOGGER.debug("saved function result (%s...) to CACHE; key: %s, hash %s", str(value)[:300], key, hash)
+        LOGGER.debug("saved function result (%s...) to CACHE; key: %s..., hash %s", str(value)[:300], key[:300], hash)
         cache.set(hash, value, expiration)
 
         return value
