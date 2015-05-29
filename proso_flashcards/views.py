@@ -17,8 +17,7 @@ import proso_common.json_enrich as common_json_enrich
 import proso_models.json_enrich as models_json_enrich
 import proso_flashcards.json_enrich as flashcards_json_enrich
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
-from proso_models.models import get_environment
-
+from proso_models.models import get_environment, get_predictive_model
 
 LOGGER = logging.getLogger('django.request')
 
@@ -114,15 +113,19 @@ def user_stats(request):
         data = json.loads(request.GET["filters"])
 
     if data is not None:
+        all_ids = []
+        ids_map = {}
+        user = get_user_id(request)
         for identifier, filter in data.items():
             categories = filter.get("categories", [])
             contexts = filter.get("contexts", [])
             types = filter.get("types", [])
             language = filter.get("language", request.LANGUAGE_CODE)
             ids, items = Flashcard.objects.filtered_ids(categories, contexts, types, [], language)
+            ids_map[identifier] = ids
             time = get_time(request) if is_time_overridden(request) else None
+            all_ids += ids
 
-            user = get_user_id(request)
             if len(ids) == 0:
                 response[identifier] = {
                     "filter": filter,
@@ -136,9 +139,17 @@ def user_stats(request):
                     "number_of_answers": Flashcard.objects.number_of_answers(ids, user, time),
                     "number_of_correct_answers": Flashcard.objects.number_of_correct_answers(ids, user, time),
                 }
-                if request.GET.get("mastered"):
-                    response[identifier]["number_of_mastered_flashcards"] = \
-                        Flashcard.objects.number_of_mastered(items, user, get_time(request), is_time_overridden(request))
+
+        if request.GET.get("mastered"):
+            all_ids = list(set(all_ids))
+            environment = get_environment()
+            if is_time_overridden(request):
+                environment.shift_time(get_time(request))
+            predictions = dict(zip(all_ids,
+                           get_predictive_model().predict_more_items(environment, user, all_ids, get_time(request))))
+            for identifier in data:
+                response[identifier]["number_of_mastered_flashcards"]\
+                    = Flashcard.objects.number_of_mastered_from_predictions(ids_map[identifier], predictions)
 
     return render_json(request, response, template='flashcards_user_stats.html', help_text=user_stats.__doc__)
 

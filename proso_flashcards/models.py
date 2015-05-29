@@ -224,8 +224,14 @@ class FlashcardManager(models.Manager):
         environment = get_environment()
         if is_time_overridden:
             environment.shift_time(time)
-        return sum(map(lambda p: p >= get_config("proso_models", "mastery_threshold", default=0.9),
+        mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
+        return sum(map(lambda p: p >= mastery_threshold,
                        get_predictive_model().predict_more_items(environment, user, flashcards_ids, time)))
+
+    def number_of_mastered_from_predictions(self, flashcards_ids, predictions):
+        mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
+        return sum(map(lambda p: p >= mastery_threshold,
+                       [predictions[i] for i in flashcards_ids]))
 
 
 class Flashcard(models.Model):
