@@ -87,7 +87,7 @@ class FlashcardQuerySet(models.query.QuerySet):
 
     def _get_filter(self, id, type):
         if type is None:
-            return Q()
+            return Q(pk=False)
 
         if isinstance(id, int):
             if type == Category.TERMS:
