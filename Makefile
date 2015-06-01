@@ -31,8 +31,8 @@ test:
 reinstall: check uninstall install
 
 develop-js:
-	rm -rf testproject/testapp/static/bower/proso-apps-js; \
-	ln -s ../../../../../proso-apps-js/dist testproject/testapp/static/bower/proso-apps-js;
+	rm -rf testproject/bower_components/proso-apps-js; \
+	ln -s ../../../proso-apps-js/dist testproject/bower_components/proso-apps-js;
 
 develop: check
 	python setup.py develop
