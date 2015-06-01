@@ -1,8 +1,9 @@
+from django.core.exceptions import ObjectDoesNotExist
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
 from proso.django.request import get_user_id, json_body
 from models import Session, UserProfile, TimeZone
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from django.shortcuts import get_object_or_404
@@ -23,6 +24,8 @@ def profile(request, status=200):
     GET parameters:
         html
             turn on the HTML version of the API
+        username:
+            username of user (only for users with public profile)
 
     POST parameters (JSON):
         send_emails:
@@ -40,8 +43,14 @@ def profile(request, status=200):
                 user's last name
     """
     if request.method == 'GET':
-        user_id = get_user_id(request)
-        user_profile = get_object_or_404(UserProfile, user_id=user_id)
+        if request.GET.get("username", False):
+            try:
+                user_profile = User.objects.get(username=request.GET.get("username"), userprofile__public=True).userprofile
+            except ObjectDoesNotExist:
+                return Http404("user not found or have not public profile")
+        else:
+            user_id = get_user_id(request)
+            user_profile = get_object_or_404(UserProfile, user_id=user_id)
         return render_json(
             request, _to_json(request, user_profile), status=status,
             template='user_profile.html', help_text=profile.__doc__)
