@@ -4,6 +4,8 @@ from time import time as time_lib
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -85,7 +87,9 @@ def user_stats(request):
     time:
       time in format '%Y-%m-%d_%H:%M:%S' used for practicing
     user:
-      identifier for the practicing user (only for stuff users)
+      identifier of the user (only for stuff users)
+    username:
+      username of user (only for users with public profile)
     filters:                -- use this or body
       json as in BODY
     mastered:
@@ -119,7 +123,13 @@ def user_stats(request):
     environment = get_environment()
     if is_time_overridden(request):
         environment.shift_time(get_time(request))
-    user = get_user_id(request)
+    if request.GET.get("username", False):
+        try:
+            user = User.objects.get(username=request.GET.get("username"), userprofile__public=True).id
+        except ObjectDoesNotExist:
+            return HttpResponseBadRequest("user not found or have not public profile")
+    else:
+        user = get_user_id(request)
     LOGGER.debug("user_stats - initialization took %s seconds", (time_lib() - time_start))
 
     time_start = time_lib()
