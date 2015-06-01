@@ -26,6 +26,8 @@ def profile(request, status=200):
             turn on the HTML version of the API
         username:
             username of user (only for users with public profile)
+        stats:
+            attache addition user statistics
 
     POST parameters (JSON):
         send_emails:
@@ -45,14 +47,15 @@ def profile(request, status=200):
     if request.method == 'GET':
         if request.GET.get("username", False):
             try:
-                user_profile = User.objects.get(username=request.GET.get("username"), userprofile__public=True).userprofile
+                user_profile = User.objects.get(username=request.GET.get("username"),
+                                                userprofile__public=True).userprofile
             except ObjectDoesNotExist:
                 return Http404("user not found or have not public profile")
         else:
             user_id = get_user_id(request)
             user_profile = get_object_or_404(UserProfile, user_id=user_id)
         return render_json(
-            request, _to_json(request, user_profile), status=status,
+            request, _to_json(request, user_profile, stats=request.GET.get("stats", False)), status=status,
             template='user_profile.html', help_text=profile.__doc__)
     elif request.method == 'POST':
         to_save = json_body(request.body)
@@ -243,11 +246,11 @@ def initmobile_view(request):
     return HttpResponse(json.dumps(response))
 
 
-def _to_json(request, value):
+def _to_json(request, value, **kwargs):
     if isinstance(value, list):
-        json = map(lambda x: x if isinstance(x, dict) else x.to_json(), value)
+        json = map(lambda x: x if isinstance(x, dict) else x.to_json(**kwargs), value)
     elif not isinstance(value, dict):
-        json = value.to_json()
+        json = value.to_json(**kwargs)
     else:
         json = value
     return json

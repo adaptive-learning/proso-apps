@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import F
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from proso.models.environment import CommonEnvironment, InMemoryEnvironment
@@ -702,6 +703,15 @@ class Item(models.Model):
         app_label = 'proso_models'
 
 
+class AnswerManager(models.Manager):
+
+    def count(self, user):
+        return self.filter(user=user).count()
+
+    def correct_count(self, user):
+        return self.filter(user=user, item_asked=F("item_answered")).count()
+
+
 class Answer(models.Model):
 
     user = models.ForeignKey(User)
@@ -720,6 +730,8 @@ class Answer(models.Model):
     ab_values_initialized = models.BooleanField(default=False)
     guess = models.FloatField(default=0)
     config = models.ForeignKey(Config, null=True, blank=True, default=None)
+
+    objects = AnswerManager()
 
     class Meta:
         app_label = 'proso_models'

@@ -22,8 +22,8 @@ class UserProfile(models.Model):
     send_emails = models.BooleanField(default=True)
     public = models.BooleanField(default=False)
 
-    def to_json(self, nested=False):
-        return {
+    def to_json(self, nested=False, stats=False):
+        data = {
             'id': self.id,
             'object_type': 'user_profile',
             'send_emails': self.send_emails,
@@ -38,6 +38,11 @@ class UserProfile(models.Model):
                 'staff': self.user.is_staff,
             }
         }
+        if stats:
+            from proso_models.models import Answer
+            data["number_of_answers"] = Answer.objects.count(self.user)
+            data["number_of_correct_answers"] = Answer.objects.correct_count(self.user)
+        return data
 
 
 class HttpUserAgentManager(models.Manager):
