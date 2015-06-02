@@ -22,13 +22,13 @@ class ToolbarMiddleware(object):
 
         # Insert the toolbar in the response.
         content = force_text(response.content, encoding=settings.DEFAULT_CHARSET)
-        insert_after = '</html>'
-        pattern = re.escape(insert_after)
-        bits = re.split(pattern, content, flags=re.IGNORECASE)
-        if len(bits) > 1:
-            bits[-1] += render_to_string("common_toolbar.html")
-            response.content = insert_after.join(bits)
-
+        insert_before = '</html>'
+        pattern = re.escape(insert_before)
+        response.content = re.sub(
+            pattern,
+            render_to_string('common_toolbar.html') + insert_before,
+            content,
+            flags=re.IGNORECASE)
         if response.get('Content-Length', None):
             response['Content-Length'] = len(response.content)
         return response

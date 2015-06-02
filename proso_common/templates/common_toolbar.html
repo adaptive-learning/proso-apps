@@ -1,6 +1,9 @@
 <div id="proso-toolbar">
     <toolbar></toolbar>
 </div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script>
-    angular.bootstrap($("#proso-toolbar"), ["proso.apps"]);
+    if (!$('html[data-ng-app]') && !$('html[ng-app]')) {
+        angular.bootstrap($("#proso-toolbar"), ["proso.apps"]);
+    }
 </script>
