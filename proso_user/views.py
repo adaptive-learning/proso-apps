@@ -50,7 +50,7 @@ def profile(request, status=200):
                 user_profile = User.objects.get(username=request.GET.get("username"),
                                                 userprofile__public=True).userprofile
             except ObjectDoesNotExist:
-                return Http404("user not found or have not public profile")
+                raise Http404("user not found or have not public profile")
         else:
             user_id = get_user_id(request)
             user_profile = get_object_or_404(UserProfile, user_id=user_id)
