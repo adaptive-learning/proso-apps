@@ -89,7 +89,7 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
         objs = objs[page * limit:(page + 1) * limit]
     cache_key = 'proso_common_sql_json_%s' % hashlib.sha1(str(objs.query).decode('utf-8')).hexdigest()
     cached = cache.get(cache_key)
-    if not should_cache and cached:
+    if should_cache and cached:
         list_objs = json_lib.loads(cached)
     else:
         list_objs = map(lambda x: x.to_json(), list(objs))
