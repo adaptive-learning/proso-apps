@@ -36,7 +36,7 @@ def show_one(request, post_process_fun, object_class, id, template='common_json.
     return render_json(request, json, template=template, help_text=show_one.__doc__)
 
 
-def show_more(request, post_process_fun, get_fun, object_class, should_cache=True, template='common_json.html'):
+def show_more(request, post_process_fun, get_fun, object_class, should_cache=True, template='common_json.html', to_json_kwargs=None):
     """
     Return list of objects of the given type.
 
@@ -79,6 +79,8 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
             'error': "Can't get all objects, because the caching for this type of object is turned off. See the documentation."
             },
             template='questions_json.html', help_text=show_more.__doc__, status=501)
+    if to_json_kwargs is None:
+        to_json_kwargs = {}
     time_start = time_lib()
     limit = min(int(request.GET.get('limit', 10)), 100)
     page = int(request.GET.get('page', 0))
@@ -87,12 +89,12 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
         objs = objs.order_by(('-' if 'desc' in request.GET else '') + request.GET['db_orderby'])
     if 'all' not in request.GET and 'json_orderby' not in request.GET:
         objs = objs[page * limit:(page + 1) * limit]
-    cache_key = 'proso_common_sql_json_%s' % hashlib.sha1(str(objs.query).decode('utf-8')).hexdigest()
+    cache_key = 'proso_common_sql_json_%s' % hashlib.sha1(str(objs.query).decode('utf-8') + str(to_json_kwargs)).hexdigest()
     cached = cache.get(cache_key)
     if should_cache and cached:
         list_objs = json_lib.loads(cached)
     else:
-        list_objs = map(lambda x: x.to_json(), list(objs))
+        list_objs = map(lambda x: x.to_json(**to_json_kwargs), list(objs))
         if should_cache:
             cache.set(cache_key, json_lib.dumps(list_objs), 60 * 60 * 24 * 30)
     LOGGER.debug('loading objects in show_more view took %s seconds', (time_lib() - time_start))

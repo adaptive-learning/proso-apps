@@ -35,6 +35,10 @@ def show_one(request, object_class, id):
     condition=lambda request: 'stats' not in request.GET)
 def show_more(request, object_class, should_cache=True):
 
+    to_json_kwargs = {}
+    if object_class == Flashcard and "without_contexts" in request.GET:
+        to_json_kwargs['contexts'] = False
+
     def _load_objects(request, object_class):
         select_related_all = {
             Flashcard: [Flashcard.related_term(), Flashcard.related_context()]
