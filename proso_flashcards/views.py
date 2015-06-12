@@ -80,7 +80,7 @@ def show_more(request, object_class, should_cache=True):
 
     return proso_common.views.show_more(
         request, _to_json, _load_objects, object_class,
-        should_cache=should_cache, template='flashcards_json.html')
+        should_cache=should_cache, template='flashcards_json.html', to_json_kwargs=to_json_kwargs)
 
 
 @allow_lazy_user
