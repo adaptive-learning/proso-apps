@@ -41,7 +41,8 @@ class ContextOptionSet(OptionSet):
         types = set()
         for flashcard in flashcards:
             contexts.add(flashcard.context_id)
-            types.add(flashcard.term.type)
+            if flashcard.term.type is not None:
+                types.add(flashcard.term.type)
 
         options_filter = {'context_id__in': contexts}
         if types:
