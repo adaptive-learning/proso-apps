@@ -501,8 +501,8 @@ class DatabaseEnvironment(CommonEnvironment):
                 LIMIT %s
                 ''', [user, window_size])
             fetched = map(lambda x: True if x[0] else False, cursor.fetchall())
-            if len(fetched) == 0:
-                return 1.0
+            if len(fetched) < window_size:
+                return None
             else:
                 return sum(fetched) / float(len(fetched))
 

@@ -168,6 +168,8 @@ class ScoreItemSelection(ItemSelection):
 
 
 def adjust_target_probability(target_probability, rolling_success):
+    if rolling_success is None:
+        return target_probability
     norm = 1 - target_probability if rolling_success > target_probability else target_probability
     correction = ((target_probability - rolling_success) / max(0.001, norm)) * (1 - norm)
     return target_probability + correction

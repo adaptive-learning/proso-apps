@@ -283,8 +283,8 @@ class InMemoryEnvironment(CommonEnvironment):
     def rolling_success(self, user, window_size=10):
         audit = self.audit(self.LAST_CORRECTNESS, user=user, limit=window_size)
         audit = map(lambda (x, y): y, audit)
-        if len(audit) == 0:
-            return 1.0
+        if len(audit) < window_size:
+            return None
         else:
             return sum(audit) / float(len(audit))
 
@@ -530,8 +530,8 @@ class TestCommonEnvironment(TestEnvironment):
         user_1 = self.generate_user()
         user_2 = self.generate_user()
         items = [self.generate_item() for i in range(10)]
-        self.assertEqual(env.rolling_success(user_1), 1.0)
-        self.assertEqual(env.rolling_success(user_2), 1.0)
+        self.assertIsNone(env.rolling_success(user_1))
+        self.assertIsNone(env.rolling_success(user_2))
         diff = 0
         for u in [user_1, user_2]:
             for i in items:
