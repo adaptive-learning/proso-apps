@@ -20,7 +20,7 @@ import json
 from django.core.cache import cache
 from proso.django.cache import get_request_cache, is_cache_prepared
 from django.db import transaction
-from proso.django.util import disable_for_loaddata
+from proso.django.util import disable_for_loaddata, is_on_postgresql
 import hashlib
 
 
@@ -627,7 +627,19 @@ class DatabaseEnvironment(CommonEnvironment):
                 value = filter(lambda x: x is not None, value)
             null_contains_return = (column + ' IS NULL OR ') if contains_null else ''
             if len(value) > 0:
-                return '(' + null_contains_return + column + ' IN (' + ','.join(['%s' for i in value]) + '))', sorted(value)
+                sorted_values = sorted(value)
+                if is_on_postgresql():
+                    return '({} {} = ANY(VALUES {}))'.format(
+                        null_contains_return,
+                        column,
+                        ','.join(['(%s)' for i in value])
+                    ), sorted_values
+                else:
+                    return '({} {} IN ({}))'.format(
+                        null_contains_return,
+                        column,
+                        ','.join(['%s' for i in value])
+                    ), sorted_values
             else:
                 return '(' + null_contains_return + DATABASE_TRUE + ')', []
         elif value is not None:

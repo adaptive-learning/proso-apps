@@ -3,6 +3,7 @@ import hashlib
 import logging
 import re
 from django.core.cache import cache
+from django.db import connection
 
 LOGGER = logging.getLogger('django.request')
 
@@ -41,3 +42,7 @@ def cache_pure(f, expiration=60 * 60 * 24 * 30):
         return value
 
     return wrapper
+
+
+def is_on_postgresql():
+    return connection.settings_dict['ENGINE'] == 'django.db.backends.postgresql_psycopg2'
