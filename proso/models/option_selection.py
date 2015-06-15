@@ -2,6 +2,8 @@ import abc
 from collections import defaultdict
 import logging
 import random
+import unittest
+from mock import MagicMock
 
 from proso.models.item_selection import adjust_target_probability
 
@@ -88,3 +90,36 @@ class ConfusingOptionSelection(OptionSelection):
                     confusing_factor_total -= conf_factor
                     break
         return result_options + [item]
+
+
+################################################################################
+# Tests
+################################################################################
+
+class TestOptionSelection(unittest.TestCase):
+
+    def test_questions_with_one_option_are_forbidden(self):
+        # setup
+        options = range(1, 101)
+        confusing_factors = [0] * 100
+        # mock item selector
+        item_selector = MagicMock()
+        item_selector.get_rolling_success.return_value = 0.5
+        item_selector.get_target_probability.return_value = 0.75
+        item_selector.get_prediction_for_selected_item.return_value = 0.5
+        # mock environment
+        environment = MagicMock()
+        environment.confusing_factor_more_items.return_value = confusing_factors
+        # test
+        option_selector = self.get_option_selector(item_selector)
+        selected = option_selector.select_options(environment, 0, 0, None, options)
+        self.assertNotEqual(1, len(selected), 'There is no question with one option.')
+        selected = option_selector.select_options_more_items(
+            environment, 0, range(100, 110), None, dict(zip(range(100, 110), ([options] * 10))))
+        for opts in selected:
+            self.assertNotEqual(1, len(opts), 'There is no question with one option.')
+
+
+    @abc.abstractmethod
+    def get_option_selector(self, item_selector):
+        pass

@@ -61,6 +61,7 @@ setup(
         'PyYAML==3.11',
         'ua-parser==0.3.6',
         'user-agents==0.3.1',
+        'mock==1.0.1',
     ],
     license='MIT',
 )
