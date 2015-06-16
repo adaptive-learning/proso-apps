@@ -6,11 +6,12 @@ _timers = {}
 
 
 def timer(name):
-    now = time.clock()
+    now = time.time()
+    diff = None
     if name in _timers:
         diff = now - _timers[name]
-        return diff
     _timers[name] = now
+    return diff
 
 
 def instantiate(classname, *args, **kwargs):
