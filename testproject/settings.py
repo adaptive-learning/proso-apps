@@ -21,27 +21,14 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/media/'
 
 
-ON_PRODUCTION = False
-ON_STAGING = False
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
-if 'PROSO_ON_PRODUCTION' in os.environ:
-    ON_PRODUCTION = True
-if 'PROSO_ON_STAGING' in os.environ:
-    ON_STAGING = True
-    DEBUG_TOOLBAR_PATCH_SETTINGS = False
-
-if ON_PRODUCTION:
-    DEBUG = False
-else:
-    DEBUG = True
+DEBUG = True
 
 TEMPLATE_DEBUG = DEBUG
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'really secret key'
-if ON_PRODUCTION or ON_STAGING:
-    SECRET_KEY = os.environ['PROSO_SECRET_KEY']
 
 # Application definition
 
