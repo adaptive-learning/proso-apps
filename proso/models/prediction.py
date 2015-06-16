@@ -199,7 +199,10 @@ class PriorCurrentPredictiveModel(PredictiveModel):
         else:
             seconds_ago = (time - data['last_time']).total_seconds() if data['last_time'] else 315460000
             skill = data['current_skill'] + self._time_shift / max(seconds_ago, 0.001)
-        return predict_simple(skill, len(kwargs['options']) if 'options' in kwargs else 0)[0]
+        return predict_simple(
+            skill,
+            number_of_options=len(kwargs['options']) if 'options' in kwargs else 0,
+            guess=kwargs.get('guess'))[0]
 
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
         preds = []
@@ -265,7 +268,10 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
     def predict_phase(self, data, user, item, time, **kwargs):
         skill = self._load_skill(item, data)
         difficulty = data['difficulties'][item]
-        return predict_simple(skill - difficulty, len(kwargs['options']) if 'options' in kwargs else 0)[0]
+        return predict_simple(
+            self._load_skill(parent, data) - difficulty,
+            number_of_options=len(kwargs['options']) if 'options' in kwargs else 0,
+            guess=kwargs.get('guess'))[0]
 
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
         return map(lambda i: self.predict_phase(data, user, i, time, **kwargs), items)
@@ -287,7 +293,8 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
             for parent in parents:
                 parent_prediction = predict_simple(
                     self._load_skill(parent, data) - difficulty,
-                    len(kwargs['options']) if 'options' in kwargs else 0)[0]
+                    number_of_options=len(kwargs['options']) if 'options' in kwargs else 0,
+                    guess=kwargs.get('guess'))[0]
                 data['skills'][parent] += level_decay(level) * update_const * (correct - parent_prediction)
                 environment.write('skill', data['skills'][parent], item=parent, user=user, time=time)
 
@@ -352,10 +359,13 @@ class ShiftedPredictiveModel(PredictiveModel):
             super(ShiftedPredictiveModel, self).predict_more_items(environment, user, items, time, **kwargs))
 
 
-def predict_simple(skill_asked, number_of_options):
-    guess = 0.0
-    if number_of_options:
-        guess = 1.0 / number_of_options
+def predict_simple(skill_asked, number_of_options=None, guess=None):
+    if guess is None and number_of_options is None:
+        raise Exception('Either guess parameter or number of options has to be specified.')
+    if guess is None:
+        guess = 0.0
+        if number_of_options:
+            guess = 1.0 / number_of_options
     return (guess + (1 - guess) * _sigmoid(skill_asked), [])
 
 

@@ -126,7 +126,8 @@ class Command(BaseCommand):
                     asked == answered,
                     time.replace(tzinfo=None),
                     item_answered=answered,
-                    item_asked=asked)
+                    item_asked=asked,
+                    guess=guess)
                 environment.process_answer(user, item, asked, answered, time, response_time, guess)
         print ' -- model phase, time:', timer('recompute_model'), 'seconds'
         timer('recompute_flush')
