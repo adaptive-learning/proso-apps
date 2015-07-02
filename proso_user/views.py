@@ -159,6 +159,7 @@ def signup(request):
         if error is not None:
             return render_json(request, error, template='user_json.html', status=400)
         else:
+            auth.login(request, request.user)
             request.method = "GET"
             return profile(request, status=201)
     else:
