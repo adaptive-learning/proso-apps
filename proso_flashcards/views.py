@@ -353,6 +353,8 @@ def _save_answer(request, answers):
             db_answer.options.add(flashcard)
             for option in a["option_ids"]:
                 db_answer.options.add(flashcards[option])
+            if len(a['option_ids']) != 0:
+                db_answer.guess = 1.0 / (len(a['option_ids']) + 1)
             db_answer.save()
 
         saved_answers.append(db_answer)
