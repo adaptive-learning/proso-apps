@@ -549,7 +549,7 @@ class DatabaseEnvironment(CommonEnvironment):
                     found[i] = found.get(i, 0)
                 for item_secondary, count in found.iteritems():
                     _items = sorted([item, item_secondary])
-                    cache_key = 'confusing_factor_per_item_{}_{}'.format(_items[0], _items[1])
+                    cache_key = 'confusing_factor_per_item_{}_{}_{}'.format(_items[0], _items[1], user)
                     cache.set(
                         cache_key,
                         count,
