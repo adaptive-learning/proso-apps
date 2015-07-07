@@ -111,7 +111,7 @@ class FlashcardManager(models.Manager):
         return FlashcardQuerySet(self.model, using=self._db)
 
     def candidates_to_practice(self, categories, contexts, types, avoid, language, limit=100):
-        item_ids = self.filtered_ids(categories, contexts, types, avoid, language)[1]
+        item_ids = list(self.filtered_ids(categories, contexts, types, avoid, language)[1])
         if len(item_ids) > limit:
             return random.sample(item_ids, limit)
         else:
