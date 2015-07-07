@@ -85,7 +85,7 @@ class ConfusingOptionSelection(OptionSelection):
                 if i in result_options or i == item:
                     continue
                 prob_sum += conf_factor
-                if random_dice > prob_sum:
+                if random_dice >= prob_sum:
                     result_options.append(i)
                     confusing_factor_total -= conf_factor
                     break
