@@ -71,17 +71,17 @@ class ConfusingOptionSelection(OptionSelection):
                 number_of_options = self.max_options - 1
         # confusing places
         confusing_factor = environment.confusing_factor_more_items(item, options)
-        confusing_places = map(
+        confusing_items = map(
             lambda (a, b): (b, a + 1),
             sorted(zip(confusing_factor, options), reverse=True)
         )
-        confusing_factor_total = float(sum(confusing_factor) + len(confusing_places))
+        confusing_factor_total = float(sum(confusing_factor) + len(confusing_items))
         # options
         result_options = []
         for i in range(number_of_options):
             prob_sum = 0
             random_dice = random.uniform(1, confusing_factor_total)
-            for i, conf_factor in confusing_places:
+            for i, conf_factor in confusing_items:
                 if i in result_options or i == item:
                     continue
                 prob_sum += conf_factor
@@ -90,7 +90,7 @@ class ConfusingOptionSelection(OptionSelection):
                     confusing_factor_total -= conf_factor
                     break
         if len(result_options) == 0:
-            raise Exception('There are no options for multiple-choice question! Number of options set to: {}, confusing factors {}'.format(number_of_options, confusing_places))
+            raise Exception('There are no options for multiple-choice question! Number of options set to: {}, confusing factors {}'.format(number_of_options, confusing_items))
         return result_options + [item]
 
 
