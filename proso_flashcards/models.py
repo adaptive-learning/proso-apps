@@ -7,6 +7,7 @@ from proso_models.models import Item, Answer, get_environment, get_item_selector
 from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
 from proso.django.util import disable_for_loaddata, cache_pure
+import random
 
 
 class Term(models.Model):
@@ -109,10 +110,12 @@ class FlashcardManager(models.Manager):
     def get_queryset(self):
         return FlashcardQuerySet(self.model, using=self._db)
 
-    def candidates_to_practice(self, categories, contexts, types, avoid, language):
-        return list(
-            self.get_queryset().filter_fc(categories, contexts, types, avoid, language).order_by("?")[:100].values_list(
-                "item_id", flat=True))
+    def candidates_to_practice(self, categories, contexts, types, avoid, language, limit=100):
+        item_ids = self.filtered_ids(categories, contexts, types, avoid, language)[1]
+        if len(item_ids) > limit:
+            return random.sample(item_ids, limit)
+        else:
+            return item_ids
 
     @cache_pure
     def filtered_ids(self, categories, contexts, types, avoid, language):
