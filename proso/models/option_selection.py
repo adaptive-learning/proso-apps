@@ -80,12 +80,12 @@ class ConfusingOptionSelection(OptionSelection):
         result_options = []
         for i in range(number_of_options):
             prob_sum = 0
-            random_dice = random.uniform(0, confusing_factor_total)
+            random_dice = random.uniform(1, confusing_factor_total)
             for i, conf_factor in confusing_places:
                 if i in result_options or i == item:
                     continue
                 prob_sum += conf_factor
-                if random_dice >= prob_sum:
+                if random_dice <= prob_sum:
                     result_options.append(i)
                     confusing_factor_total -= conf_factor
                     break
