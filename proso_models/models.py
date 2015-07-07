@@ -514,13 +514,13 @@ class DatabaseEnvironment(CommonEnvironment):
         cached_all = {}
         for item_secondary in items:
             _items = sorted([item, item_secondary])
-            cache_key = 'confusing_factor_per_item_{}_{}'.format(_items[0], _items[1])
+            cache_key = 'confusing_factor_per_item_{}_{}_{}'.format(_items[0], _items[1], user)
             cached_item = cache.get(cache_key)
             if cached_item:
                 cached_all[item_secondary] = int(cached_item)
         to_find = filter(lambda i: i not in cached_all.keys(), items)
         if len(to_find) != 0:
-            LOGGER.debug('cache miss for confusing factor, {} items'.format(len(to_find)))
+            LOGGER.debug('cache miss for confusing factor, item {}, {} other items and user {}'.format(item, len(to_find), user))
             where, where_params = self._where({
                 'item_answered_id': to_find,
                 'item_asked_id': to_find,
