@@ -543,6 +543,8 @@ class DatabaseEnvironment(CommonEnvironment):
                         found[item_answered] = found.get(item_answered, 0) + count
                     else:
                         found[item_asked] = found.get(item_asked, 0) + count
+                for i in to_find:
+                    found[i] = found.get(i, 0)
                 for item_secondary, count in found.iteritems():
                     _items = sorted([item, item_secondary])
                     cache_key = 'confusing_factor_per_item_{}_{}'.format(_items[0], _items[1])
@@ -552,7 +554,7 @@ class DatabaseEnvironment(CommonEnvironment):
                         get_config('proso_models', 'confusing_factor.cache_expiration', default=24 * 60 * 60)
                     )
                     cached_all[item_secondary] = count
-        return map(lambda i: cached_all.get(i, 0), items)
+        return map(lambda i: cached_all[i], items)
 
     def export_values():
         pass
