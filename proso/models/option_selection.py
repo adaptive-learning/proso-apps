@@ -82,7 +82,7 @@ class ConfusingOptionSelection(OptionSelection):
             prob_sum = 0
             random_dice = random.uniform(1, confusing_factor_total)
             for i, conf_factor in confusing_items:
-                if i in result_options or i == item:
+                if i in result_options:
                     continue
                 prob_sum += conf_factor
                 if random_dice <= prob_sum:
@@ -91,6 +91,8 @@ class ConfusingOptionSelection(OptionSelection):
                     break
         if len(result_options) == 0:
             raise Exception('There are no options for multiple-choice question! Number of options set to: {}, confusing factors {}'.format(number_of_options, confusing_items))
+        if len(set(result_options)) != len(result_options):
+            raise Exception('There are some options more times for multiple-choice question! Number of options set to: {}, confusing factors {}'.format(number_of_options, confusing_items))
         return result_options + [item]
 
 
