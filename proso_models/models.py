@@ -21,9 +21,10 @@ from django.core.cache import cache
 from proso.django.cache import get_request_cache, is_cache_prepared
 from django.db import transaction
 from proso.django.util import disable_for_loaddata, is_on_postgresql
-import hashlib
+import logging
 
 
+LOGGER = logging.getLogger('django.request')
 ENVIRONMENT_INFO_CACHE_EXPIRATION = 30 * 60
 ENVIRONMENT_INFO_CACHE_KEY = 'proso_models_env_info'
 
@@ -507,52 +508,51 @@ class DatabaseEnvironment(CommonEnvironment):
                 return sum(fetched) / float(len(fetched))
 
     def confusing_factor(self, item, item_secondary, user=None):
-        with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({
-                'item_asked_id': item,
-                'item_answered_id': item_secondary,
-                'user_id': user
-            }, force_null=False, for_answers=True)
-            cursor.execute(
-                '''
-                SELECT
-                    COUNT(proso_models_answer.id) AS confusing_factor
-                FROM
-                    proso_models_answer
-                WHERE guess=0 AND
-                ''' + where, where_params)
-            return cursor.fetchone()[0]
+        return self.confusing_factor_more_items(item, [item_secondary], user=user)[0]
 
     def confusing_factor_more_items(self, item, items, user=None):
-        cache_hash = hashlib.sha1('{}_{}_{}'.format(item, sorted(items), user)).hexdigest()
-        cache_key = 'confusing_factor_{}'.format(cache_hash)
-        cached_json = cache.get(cache_key)
-        if cached_json is None:
+        cached_all = {}
+        for item_secondary in items:
+            _items = sorted([item, item_secondary])
+            cache_key = 'confusing_factor_per_item_{}_{}'.format(_items[0], _items[1])
+            cached_item = cache.get(cache_key)
+            if cached_item:
+                cached_all[item_secondary] = int(cached_item)
+        to_find = filter(lambda i: i not in cached_all.keys(), items)
+        if len(to_find) != 0:
+            LOGGER.debug('cache miss for confusing factor, {} items'.format(len(to_find)))
+            where, where_params = self._where({
+                'item_answered_id': to_find,
+                'item_asked_id': to_find,
+            }, force_null=False, for_answers=True, conjuction=False)
+            user_where, user_params = self._column_comparison('user_id', user, force_null=False)
             with closing(connection.cursor()) as cursor:
-                where, where_params = self._where({
-                    'item_asked_id': item,
-                    'item_answered_id': items,
-                    'user_id': user
-                }, force_null=False, for_answers=True)
                 cursor.execute(
                     '''
                     SELECT
+                        item_asked_id,
                         item_answered_id,
                         COUNT(id) AS confusing_factor
                     FROM
                         proso_models_answer
-                    WHERE guess=0 AND
-                    ''' + where + ' GROUP BY item_answered_id', where_params)
-                wrongs = dict(cursor.fetchall())
-                result = map(lambda i: wrongs.get(i, 0), items)
-                cache.set(
-                    cache_key,
-                    json.dumps(result),
-                    get_config('proso_models', 'confusing_factor.cache_expiration', default=24 * 60 * 60)
-                )
-                return result
-        else:
-            return json.loads(cached_json)
+                    WHERE guess = 0 AND (item_asked_id = %s OR item_asked_id = %s) AND
+                    ''' + user_where + ' AND (' + where + ') GROUP BY item_asked_id, item_answered_id', [item, item] + user_params + where_params)
+                found = {}
+                for item_asked, item_answered, count in cursor:
+                    if item_asked == item:
+                        found[item_answered] = found.get(item_answered, 0) + count
+                    else:
+                        found[item_asked] = found.get(item_asked, 0) + count
+                for item_secondary, count in found.iteritems():
+                    _items = sorted([item, item_secondary])
+                    cache_key = 'confusing_factor_per_item_{}_{}'.format(_items[0], _items[1])
+                    cache.set(
+                        cache_key,
+                        count,
+                        get_config('proso_models', 'confusing_factor.cache_expiration', default=24 * 60 * 60)
+                    )
+                    cached_all[item_secondary] = count
+        return map(lambda i: cached_all.get(i, 0), items)
 
     def export_values():
         pass
@@ -596,7 +596,7 @@ class DatabaseEnvironment(CommonEnvironment):
             'item is secondary': cond_secondary
         }, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
 
-    def _where(self, condition, force_null=True, top_most=True, time_shift=True, for_answers=False):
+    def _where(self, condition, force_null=True, top_most=True, time_shift=True, for_answers=False, conjuction=True):
         if isinstance(condition, tuple):
             result_cond, result_params = self._column_comparison(
                 condition[0], condition[1], force_null=force_null)
@@ -604,7 +604,7 @@ class DatabaseEnvironment(CommonEnvironment):
             conds, params = zip(*map(
                 lambda x: self._where(x, force_null, top_most=False, for_answers=for_answers), condition.items()))
             params = [p for ps in params for p in ps]
-            operator = ' AND '
+            operator = ' AND ' if conjuction else ' OR '
             if any(map(lambda x: isinstance(x, dict), condition)):
                 operator = ' OR '
             result_cond, result_params = operator.join(conds), params
