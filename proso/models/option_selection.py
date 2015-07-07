@@ -51,6 +51,7 @@ class ConfusingOptionSelection(OptionSelection):
                                     allow_zero_options=allow_zero_options[item], **kwargs) for item in items]
 
     def select_options(self, environment, user, item, time, options, allow_zero_options=True, **kwargs):
+        options = filter(lambda i: i != item, options)
         rolling_success = self._item_selector.get_rolling_success()
         target_probability = self._item_selector.get_target_probability()
         prediction = self._item_selector.get_prediction_for_selected_item(item)
