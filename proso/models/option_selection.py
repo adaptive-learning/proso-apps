@@ -68,7 +68,7 @@ class ConfusingOptionSelection(OptionSelection):
             if not self.allow_zero_options_restriction or allow_zero_options:
                 return []
             else:
-                number_of_options = self.max_options
+                number_of_options = self.max_options - 1
         # confusing places
         confusing_factor = environment.confusing_factor_more_items(item, options)
         confusing_places = map(
