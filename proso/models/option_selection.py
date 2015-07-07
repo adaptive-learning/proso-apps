@@ -90,7 +90,7 @@ class ConfusingOptionSelection(OptionSelection):
                     confusing_factor_total -= conf_factor
                     break
         if len(result_options) == 0:
-            raise Exception('There are no options for multiple-choice question!')
+            raise Exception('There are no options for multiple-choice question! Number of options set to: {}, confusing factors {}'.format(number_of_options, confusing_places))
         return result_options + [item]
 
 
