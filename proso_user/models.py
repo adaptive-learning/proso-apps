@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 import datetime
 from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social, name_lazy_user
 from proso.django.util import disable_for_loaddata
+from django.db import transaction
 
 
 def get_content_hash(content):
@@ -48,27 +49,28 @@ class UserProfile(models.Model):
 class HttpUserAgentManager(models.Manager):
 
     def from_content(self, content):
-        try:
-            content_hash = get_content_hash(content)
-            return self.get(content_hash=content_hash)
-        except HttpUserAgent.DoesNotExist:
-            user_agent = user_agents.parse(content)
-            http_user_agent = HttpUserAgent(
-                content=content,
-                content_hash=content_hash,
-                device_family=user_agent.device.family,
-                os_family=user_agent.os.family,
-                os_version=user_agent.os.version_string,
-                browser_family=user_agent.browser.family,
-                browser_version=user_agent.browser.version_string)
-            http_user_agent.save()
-            return http_user_agent
+        with transaction.atomic():
+            try:
+                content_hash = get_content_hash(content)
+                return self.get(content_hash=content_hash)
+            except HttpUserAgent.DoesNotExist:
+                user_agent = user_agents.parse(content)
+                http_user_agent = HttpUserAgent(
+                    content=content,
+                    content_hash=content_hash,
+                    device_family=user_agent.device.family,
+                    os_family=user_agent.os.family,
+                    os_version=user_agent.os.version_string,
+                    browser_family=user_agent.browser.family,
+                    browser_version=user_agent.browser.version_string)
+                http_user_agent.save()
+                return http_user_agent
 
 
 class HttpUserAgent(models.Model):
 
     content = models.TextField(null=False, blank=False)
-    content_hash = models.CharField(max_length=40, null=False, blank=False, db_index=True)
+    content_hash = models.CharField(max_length=40, null=False, blank=False, db_index=True, unique=True)
     device_family = models.CharField(max_length=50, null=True, blank=True, default=None)
     os_family = models.CharField(max_length=39, null=True, blank=True, default=None)
     os_version = models.CharField(max_length=39, null=True, blank=True, default=None)
@@ -93,13 +95,14 @@ class HttpUserAgent(models.Model):
 class TimeZoneManager(models.Manager):
 
     def from_content(self, content):
-        try:
-            content_hash = get_content_hash(content)
-            return self.get(content_hash=content_hash)
-        except TimeZone.DoesNotExist:
-            time_zone = TimeZone(content=content, content_hash=content_hash)
-            time_zone.save()
-            return time_zone
+        with transaction.atomic():
+            try:
+                content_hash = get_content_hash(content)
+                return self.get(content_hash=content_hash)
+            except TimeZone.DoesNotExist:
+                time_zone = TimeZone(content=content, content_hash=content_hash)
+                time_zone.save()
+                return time_zone
 
 
 class LocationManager(models.Manager):
@@ -130,7 +133,7 @@ class Location(models.Model):
 class TimeZone(models.Model):
 
     content = models.TextField(null=False, blank=False)
-    content_hash = models.CharField(max_length=40, null=False, blank=False, db_index=True)
+    content_hash = models.CharField(max_length=40, null=False, blank=False, db_index=True, unique=True)
 
     objects = TimeZoneManager()
 
