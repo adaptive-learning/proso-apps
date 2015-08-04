@@ -89,26 +89,34 @@ class FlashcardQuerySet(models.query.QuerySet):
         return qs
 
     def _get_filter(self, id, type):
+        q = None
         if type is None:
-            return Q(pk=False)
-
+            q = Q(pk=False)
         if isinstance(id, int):
+            negation = id < 0
+            id = abs(id)
             if type == Category.TERMS:
-                return Q(term__parents__id=id)
-            if type == Category.FLASHCARDS:
-                return Q(categories__id=id)
+                q = Q(term__parents__id=id)
+            elif type == Category.FLASHCARDS:
+                q = Q(categories__id=id)
             if type == Category.CONTEXTS:
-                return Q(context__categories__id=id)
+                q = Q(context__categories__id=id)
         else:
+            if id.startswith("-"):
+                negation = True
+                id = id[1:]
+            else:
+                negation = False
             if type == Category.TERMS:
-                return Q(term__parents__identifier=id)
+                q = Q(term__parents__identifier=id)
             if type == Category.FLASHCARDS:
-                return Q(categories__identifier=id)
+                q = Q(categories__identifier=id)
             if type == Category.CONTEXTS:
-                return Q(context__categories__identifier=id)
-
-        LOGGER.warn('Trying to filter by a category of categories, which is not supported. Returning FALSE condition.')
-        return Q(id=-1)
+                q = Q(context__categories__identifier=id)
+        if q is None:
+            LOGGER.warn('Trying to filter by a category of categories, which is not supported. Returning FALSE condition.')
+            q = Q(pk=False)
+        return ~q if negation else q
 
 
 class FlashcardManager(models.Manager):
@@ -312,8 +320,11 @@ class CategoryManager(models.Manager):
         types = []
         for id in category_ids:
             if isinstance(id, int):
+                id = abs(id)
                 types.append(self.filter(pk=id).values_list("children_type", flat=True))
             else:
+                if id.startswith('-'):
+                    id = id[1:]
                 types.append(self.filter(identifier=id).values_list("children_type", flat=True))
         types = map(lambda l: l[0] if len(l) > 0 else None, types)
         return types
