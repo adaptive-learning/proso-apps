@@ -3,7 +3,8 @@
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script>
-    if (!$('html[data-ng-app]') && !$('html[ng-app]')) {
+    if ((!$('html[data-ng-app]') || $('html[data-ng-app]').length == 0)
+            && (!$('html[ng-app]') || $('html[ng-app]').length == 0)) {
         angular.bootstrap($("#proso-toolbar"), ["proso.apps"]);
     }
 </script>
