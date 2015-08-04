@@ -8,6 +8,10 @@ from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delet
 from django.dispatch import receiver
 from proso.django.util import disable_for_loaddata, cache_pure
 import random
+import logging
+
+
+LOGGER = logging.getLogger('django.request')
 
 
 class Term(models.Model):
@@ -103,7 +107,8 @@ class FlashcardQuerySet(models.query.QuerySet):
             if type == Category.CONTEXTS:
                 return Q(context__categories__identifier=id)
 
-        return Q()
+        LOGGER.warn('Trying to filter by a category of categories, which is not supported. Returning FALSE condition.')
+        return Q(id=-1)
 
 
 class FlashcardManager(models.Manager):
