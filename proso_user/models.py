@@ -11,6 +11,11 @@ import datetime
 from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social, name_lazy_user
 from proso.django.util import disable_for_loaddata
 from django.db import transaction
+from social_auth.models import UserSocialAuth
+import logging
+
+
+LOGGER = logging.getLogger('django.request')
 
 
 def get_content_hash(content):
@@ -205,6 +210,27 @@ class Session(models.Model):
         if self.http_user_agent:
             result['http_user_agent'] = self.http_user_agent.to_json(nested=True)
         return result
+
+
+def migrate_google_openid_user(user):
+    with transaction.atomic():
+        if user and is_user_lazy(user):
+            return None
+        try:
+            new_social = UserSocialAuth.objects.get(user_id=user.id, provider='google-oauth2')
+        except UserSocialAuth.DoesNotExist:
+            return None
+        try:
+            old_social = UserSocialAuth.objects.get(uid=user.email, provider='google')
+            new_user = new_social.user
+            new_social.user = old_social.user
+            new_social.save()
+            new_user.delete()
+            old_social.delete()
+            LOGGER.info('Migrating user "{}" from Google OpenID to OAauth2'.format(user.email))
+            return old_social.user
+        except UserSocialAuth.DoesNotExist:
+            return None
 
 
 ################################################################################

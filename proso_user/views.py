@@ -2,7 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
 from proso.django.request import get_user_id, json_body
-from models import Session, UserProfile, TimeZone
+from models import Session, UserProfile, TimeZone, migrate_google_openid_user
 from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
@@ -12,10 +12,10 @@ from django.contrib.auth.models import User
 from django.middleware.csrf import get_token
 import json
 from django.utils.translation import ugettext as _
+from proso.django.config import get_config
 
 
 @allow_lazy_user
-@transaction.atomic
 def profile(request, status=200):
     """
     Get the user's profile. If the user has no assigned profile, the HTTP 404
@@ -53,24 +53,31 @@ def profile(request, status=200):
                 raise Http404("user not found or have not public profile")
         else:
             user_id = get_user_id(request)
+            if get_config('proso_user', 'google.openid.migration', default=True):
+                migrated_user = migrate_google_openid_user(request.user)
+                if migrated_user is not None:
+                    auth.logout(request)
+                    migrated_user.backend = 'social_auth.backends.google.GoogleOAuth2Backend'
+                    auth.login(request, migrated_user)
             user_profile = get_object_or_404(UserProfile, user_id=user_id)
         return render_json(
             request, _to_json(request, user_profile, stats=request.GET.get("stats", False)), status=status,
             template='user_profile.html', help_text=profile.__doc__)
     elif request.method == 'POST':
-        to_save = json_body(request.body)
-        user_id = get_user_id(request)
-        user_profile = get_object_or_404(UserProfile, user_id=user_id)
-        user = to_save.get('user', None)
-        if 'send_emails' in to_save:
-            user_profile.send_emails = bool(to_save['send_emails'])
-        if 'public' in to_save:
-            user_profile.public = bool(to_save['public'])
-        if user:
-            error = _save_user(request, user, new=False)
-            if error:
-                return render_json(request, error, template='user_json.html', status=400)
-        user_profile.save()
+        with transaction.atomic():
+            to_save = json_body(request.body)
+            user_id = get_user_id(request)
+            user_profile = get_object_or_404(UserProfile, user_id=user_id)
+            user = to_save.get('user', None)
+            if 'send_emails' in to_save:
+                user_profile.send_emails = bool(to_save['send_emails'])
+            if 'public' in to_save:
+                user_profile.public = bool(to_save['public'])
+            if user:
+                error = _save_user(request, user, new=False)
+                if error:
+                    return render_json(request, error, template='user_json.html', status=400)
+            user_profile.save()
         request.method = "GET"
         return profile(request, status=202)
     else:
