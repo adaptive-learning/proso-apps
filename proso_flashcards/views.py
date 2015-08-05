@@ -376,7 +376,7 @@ def _save_answer(request, answers, practice_context_content):
             response_time=response_time,
             direction=direction,
             context=practice_context,
-            meta=a["meta"] if "meta" in a else None,
+            metainfo=a["meta"] if "meta" in a else None,
         )
         if "time_gap" in a:
             db_answer.time = datetime.now() - timedelta(seconds=a["time_gap"])

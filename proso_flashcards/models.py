@@ -379,12 +379,10 @@ class FlashcardAnswer(Answer):
 
     direction = models.CharField(choices=DIRECTIONS, max_length=3)
     options = models.ManyToManyField(Flashcard, related_name="answers_with_this_as_option")
-    meta = models.TextField(null=True, blank=True)
 
     def to_json(self, nested=False):
         json = Answer.to_json(self)
         json['direction'] = self.direction
-        json['meta'] = self.meta
         json['object_type'] = "fc_answer"
         if not nested:
             json["options"] = [flashcard.to_json(nested=True) for flashcard in self.options.all()]
