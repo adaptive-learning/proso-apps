@@ -89,34 +89,27 @@ class FlashcardQuerySet(models.query.QuerySet):
         return qs
 
     def _get_filter(self, id, type):
-        q = None
-        if type is None:
-            q = Q(pk=False)
-        if isinstance(id, int):
-            negation = id < 0
-            id = abs(id)
-            if type == Category.TERMS:
-                q = Q(term__parents__id=id)
-            elif type == Category.FLASHCARDS:
-                q = Q(categories__id=id)
-            if type == Category.CONTEXTS:
-                q = Q(context__categories__id=id)
-        else:
-            if id.startswith("-"):
-                negation = True
-                id = id[1:]
-            else:
-                negation = False
-            if type == Category.TERMS:
-                q = Q(term__parents__identifier=id)
-            if type == Category.FLASHCARDS:
-                q = Q(categories__identifier=id)
-            if type == Category.CONTEXTS:
-                q = Q(context__categories__identifier=id)
-        if q is None:
+        if type is None or type not in [Category.TERMS, Category.FLASHCARDS, Category.CONTEXTS]:
             LOGGER.warn('Trying to filter by a category of categories, which is not supported. Returning FALSE condition.')
             q = Q(pk=False)
-        return ~q if negation else q
+            _, negation = _get_value_without_negation(id)
+            return ~q if negation else q
+        if isinstance(id, int):
+            if type == Category.TERMS:
+                return _create_q('term__parents__id', id)
+            elif type == Category.FLASHCARDS:
+                return _create_q('categories__id', id)
+            if type == Category.CONTEXTS:
+                return _create_q('context__categories__id', id)
+        else:
+            if type == Category.TERMS:
+                return _create_q('term__parents__identifier', id)
+            if type == Category.FLASHCARDS:
+                return _create_q('categories__identifier', id)
+            if type == Category.CONTEXTS:
+                return _create_q('context__categories__identifier', id)
+        if q is None:
+            q = Q(pk=False)
 
 
 class FlashcardManager(models.Manager):
@@ -458,6 +451,22 @@ def update_parents(sender, instance, action, reverse, model, pk_set, **kwargs):
                 environment.delete("child", item=parent_item, item_secondary=child_item, symmetric=False)
                 environment.delete("parent", item=child_item, item_secondary=parent_item, symmetric=False)
         return
+
+
+def _get_value_without_negation(value):
+    if isinstance(value, int):
+        return abs(value), value < 0
+    else:
+        if value.startswith('-'):
+            return value[1:], True
+        else:
+            return value, False
+
+
+def _create_q(column, value):
+    value, negation = _get_value_without_negation(value)
+    q = Q(**{column: value})
+    return ~q if negation else q
 
 
 @receiver(post_save, sender=Flashcard)
