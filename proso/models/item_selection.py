@@ -61,7 +61,7 @@ class ScoreItemSelection(ItemSelection):
         # items provides only an under-approximation of the real state.
         last_answer_time_parents = self._last_answer_time_for_parents(environment, parents, last_answer_time)
         answers_num_parents = self._answers_num_for_parents(environment, parents, answers_num)
-        self._rolling_success = rolling_success = environment.rolling_success(user=user)
+        self._rolling_success = rolling_success = environment.rolling_success(user=user, context=practice_context)
         prob_target = adjust_target_probability(self._target_probability, rolling_success)
 
         if proso.django.log.is_active():
