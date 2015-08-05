@@ -148,12 +148,12 @@ class FlashcardManager(models.Manager):
         all_items = list(set(all_items))
         return all_items, items_map
 
-    def practice(self, environment, user, time, limit, items, language=None, with_contexts=True):
+    def practice(self, environment, user, time, limit, items, practice_context, language=None, with_contexts=True):
         # prepare
         item_selector = get_item_selector()
         option_selector = get_option_selector(item_selector)
 
-        selected_items = item_selector.select(environment, user, items, time, limit)
+        selected_items = item_selector.select(environment, user, items, time, practice_context, limit)
 
         # get selected flashcards
         flashcards = Flashcard.objects.filter(item_id__in=selected_items).prefetch_related(Flashcard.related_term())

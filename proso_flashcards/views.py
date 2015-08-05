@@ -296,15 +296,15 @@ def practice(request):
     if is_time_overridden(request):
         environment.shift_time(time)
 
-    practice_context_content = None
+    practice_context_content = _load_practice_context_content(request)
+    practice_context = PracticeContext.objects.from_content(json.dumps(practice_context_content))
 
     # save answers
     if request.method == 'POST':
         answers = _get_answers(request)
         if not isinstance(answers, list):
             return answers
-        practice_context_content = _load_practice_context_content(request)
-        saved_answers = _save_answer(request, answers, practice_context_content)
+        saved_answers = _save_answer(request, answers, practice_context)
         if not isinstance(saved_answers, list):
             return saved_answers
 
@@ -314,7 +314,7 @@ def practice(request):
     time_before_practice = time_lib()
     language = request.GET.get("language", request.LANGUAGE_CODE)
     with_contexts = "without_contexts" not in request.GET
-    flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates, language, with_contexts)
+    flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates, practice_context.id, language, with_contexts)
     LOGGER.debug('choosing items for practice took %s seconds', (time_lib() - time_before_practice))
     data = _to_json(request, {
         'flashcards': map(lambda x: x.to_json(categories=False, contexts=with_contexts), flashcards)
@@ -334,7 +334,7 @@ def _get_answers(request):
     return answers
 
 
-def _save_answer(request, answers, practice_context_content):
+def _save_answer(request, answers, practice_context):
     time_start = time_lib()
     saved_answers = []
     try:
@@ -351,7 +351,6 @@ def _save_answer(request, answers, practice_context_content):
     if len(flashcard_ids) != len(flashcards):
         return HttpResponseBadRequest("Invalid flashcard id (asked, answered or as option)")
 
-    practice_context = PracticeContext.objects.from_content(json.dumps(practice_context_content))
     for a in answers:
         flashcard = flashcards[a["flashcard_id"]]
         flashcard_answered = flashcards[a["flashcard_answered_id"]] if a["flashcard_answered_id"] is not None else None

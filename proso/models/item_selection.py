@@ -14,7 +14,7 @@ class ItemSelection:
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def select(self, environment, user, items, time, n, **kwargs):
+    def select(self, environment, user, items, time, practice_context, n, **kwargs):
         pass
 
 
@@ -23,7 +23,7 @@ class RandomItemSelection(ItemSelection):
     def __init__(self, predictive_model):
         self._predictive_model = predictive_model
 
-    def select(self, environment, user, items, time, n, **kwargs):
+    def select(self, environment, user, items, time, practice_context, n, **kwargs):
         candidates = random.sample(items, min(n, len(items)))
         return candidates
 
@@ -48,7 +48,7 @@ class ScoreItemSelection(ItemSelection):
         self._probability = None
         self._rolling_success = None
 
-    def select(self, environment, user, items, time, n, **kwargs):
+    def select(self, environment, user, items, time, practice_context, n, **kwargs):
         answers_num = dict(zip(items, environment.number_of_answers_more_items(user=user, items=items)))
         last_answer_time = dict(zip(items, environment.last_answer_time_more_items(user=user, items=items)))
         self._probability = probability = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
