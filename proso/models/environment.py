@@ -119,7 +119,7 @@ class CommonEnvironment(Environment):
         pass
 
     @abc.abstractmethod
-    def number_of_correct_answers(self, user=None, item=None):
+    def number_of_correct_answers_more_items(self, user=None, item=None):
         pass
 
     @abc.abstractmethod
