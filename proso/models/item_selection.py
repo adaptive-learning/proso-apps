@@ -15,6 +15,10 @@ class ItemSelection:
 
     @abc.abstractmethod
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
+        """
+        Returns a list of items chosen to practice and a list of JSONs (or
+        Nones) providing meta info about the selection.
+        """
         pass
 
 
@@ -25,7 +29,7 @@ class RandomItemSelection(ItemSelection):
 
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
         candidates = random.sample(items, min(n, len(items)))
-        return candidates
+        return candidates, [None for _ in candidates]
 
     def __str__(self):
         return 'RANDOM ITEM SELECTION'
@@ -111,7 +115,7 @@ class ScoreItemSelection(ItemSelection):
         else:
             candidates = map(lambda ((score, r), i): i, sorted(scored, reverse=True)[:min(len(scored), n)])
 
-        return candidates
+        return candidates, [None for _ in candidates]
 
     def get_prediction_for_selected_item(self, item):
         return self._probability[item]

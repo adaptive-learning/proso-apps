@@ -153,7 +153,7 @@ class FlashcardManager(models.Manager):
         item_selector = get_item_selector()
         option_selector = get_option_selector(item_selector)
 
-        selected_items = item_selector.select(environment, user, items, time, practice_context, limit)
+        selected_items, _ = item_selector.select(environment, user, items, time, practice_context, limit)
 
         # get selected flashcards
         flashcards = Flashcard.objects.filter(item_id__in=selected_items).prefetch_related(Flashcard.related_term())
