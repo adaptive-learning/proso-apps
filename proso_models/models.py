@@ -411,33 +411,41 @@ class DatabaseEnvironment(CommonEnvironment):
         except Variable.DoesNotExist:
             pass
 
-    def number_of_answers(self, user=None, item=None):
+    def number_of_answers(self, user=None, item=None, context=None):
+        if item is not None and context is not None:
+            raise Exception('Either item or context has to be unspecified')
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
+            where, where_params = self._where({'user_id': user, 'item_id': item, 'context_id': context}, False, for_answers=True)
             cursor.execute(
                 'SELECT COUNT(id) FROM proso_models_answer WHERE '
                 + where, where_params)
             return cursor.fetchone()[0]
 
-    def number_of_correct_answers(self, user=None, item=None):
+    def number_of_correct_answers(self, user=None, item=None, context=None):
+        if item is not None and context is not None:
+            raise Exception('Either item or context has to be unspecified')
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
+            where, where_params = self._where({'user_id': user, 'item_id': item, 'context_id': context}, False, for_answers=True)
             cursor.execute(
                 'SELECT COUNT(id) FROM proso_models_answer WHERE item_asked_id = item_answered_id AND '
                 + where, where_params)
             return cursor.fetchone()[0]
 
-    def number_of_first_answers(self, user=None, item=None):
+    def number_of_first_answers(self, user=None, item=None, context=None):
+        if item is not None and context is not None:
+            raise Exception('Either item or context has to be unspecified')
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
+            where, where_params = self._where({'user_id': user, 'item_id': item, 'context_id': context}, False, for_answers=True)
             cursor.execute(
                 'SELECT COUNT(1) FROM (SELECT 1 FROM proso_models_answer WHERE '
                 + where + ' GROUP BY user_id, item_id) AS t', where_params)
             return cursor.fetchone()[0]
 
-    def last_answer_time(self, user=None, item=None):
+    def last_answer_time(self, user=None, item=None, context=None):
+        if item is not None and context is not None:
+            raise Exception('Either item or context has to be unspecified')
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
+            where, where_params = self._where({'user_id': user, 'item_id': item, 'context_id': context}, False, for_answers=True)
             cursor.execute(
                 'SELECT MAX(time) FROM proso_models_answer WHERE '
                 + where, where_params)
@@ -492,16 +500,19 @@ class DatabaseEnvironment(CommonEnvironment):
     def shift_time(self, new_time):
         self._time = new_time
 
-    def rolling_success(self, user, window_size=10):
+    def rolling_success(self, user, window_size=10, context=None):
+        where, where_params = self._where({'user_id': user, 'context_id': context}, False, for_answers=True)
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
                 SELECT item_asked_id = item_answered_id
                 FROM proso_models_answer
-                WHERE user_id = %s
+                WHERE
+                ''' + where +
+                '''
                 ORDER BY id DESC
                 LIMIT %s
-                ''', [user, window_size])
+                ''', where_params + [window_size])
             fetched = map(lambda x: True if x[0] else False, cursor.fetchall())
             if len(fetched) < window_size:
                 return None
