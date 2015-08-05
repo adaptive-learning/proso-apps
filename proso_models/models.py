@@ -22,6 +22,7 @@ from proso.django.cache import get_request_cache, is_cache_prepared
 from django.db import transaction
 from proso.django.util import disable_for_loaddata, is_on_postgresql
 import logging
+import hashlib
 
 
 LOGGER = logging.getLogger('django.request')
@@ -719,6 +720,36 @@ class Item(models.Model):
         app_label = 'proso_models'
 
 
+class PracticeContextManager(models.Manager):
+
+    def get_content_hash(self, content):
+        return hashlib.sha1(content).hexdigest()
+
+    def from_content(self, content):
+        with transaction.atomic():
+            try:
+                content_hash = self.get_content_hash(content)
+                return self.get(content_hash=content_hash)
+            except PracticeContext.DoesNotExist:
+                practice_context = PracticeContext(content=content, content_hash=content_hash)
+                practice_context.save()
+                return practice_context
+
+
+class PracticeContext(models.Model):
+
+    content = models.TextField(null=False, blank=False)
+    content_hash = models.CharField(max_length=40, null=False, blank=False, db_index=True, unique=True)
+
+    objects = PracticeContextManager()
+
+    def to_json(self, nested=False):
+        return {
+            'content': self.content,
+            'content_hash': self.content_hash,
+        }
+
+
 class AnswerManager(models.Manager):
 
     def count(self, user):
@@ -746,14 +777,18 @@ class Answer(models.Model):
     ab_values_initialized = models.BooleanField(default=False)
     guess = models.FloatField(default=0)
     config = models.ForeignKey(Config, null=True, blank=True, default=None)
+    context = models.ForeignKey(PracticeContext, null=True, blank=True, default=None)
 
     objects = AnswerManager()
 
     class Meta:
         app_label = 'proso_models'
+        index_together = [
+            ['user', 'context'],
+        ]
 
     def to_json(self):
-        return {
+        result = {
             'id': self.pk,
             'object_type': 'answer',
             'question_item_id': self.item_id,
@@ -761,8 +796,11 @@ class Answer(models.Model):
             'item_answered_id': self.item_answered_id,
             'user_id': self.user_id,
             'time': self.time.strftime('%Y-%m-%d %H:%M:%S'),
-            'response_time': self.response_time,
+            'response_time': self.response_time
         }
+        if self.context is not None:
+            result['context'] = self.context.to_json(nested=True)
+        return result
 
 
 class Variable(models.Model):
@@ -842,6 +880,17 @@ class Audit(models.Model):
 ################################################################################
 # Signals
 ################################################################################
+
+def init_content_hash(instance):
+    if instance.content is not None and instance.content_hash is None:
+        instance.content_hash = get_content_hash(instance.content)
+
+
+@receiver(pre_save, sender=PracticeContext)
+@disable_for_loaddata
+def init_content_hash_practice_context(sender, instance, **kwargs):
+    init_content_hash(instance)
+
 
 @receiver(pre_save)
 @disable_for_loaddata
