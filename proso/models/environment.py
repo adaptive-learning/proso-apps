@@ -142,6 +142,10 @@ class CommonEnvironment(Environment):
     def confusing_factor_more_items(self, item, items, user=None):
         pass
 
+    @abc.abstractmethod
+    def rolling_success(self, user, window_size=10):
+        pass
+
 
 ################################################################################
 # Implementation
