@@ -173,8 +173,8 @@ class FlashcardManager(models.Manager):
             allow_zero_option[flashcard.item_id] = flashcard.direction == FlashcardAnswer.FROM_TERM
 
         # select options
-        optionSets = get_option_set().get_option_for_flashcards(flashcards)
-        options = option_selector.select_options_more_items(environment, user, selected_items, time, optionSets,
+        option_sets = get_option_set().get_option_for_flashcards(flashcards)
+        options = option_selector.select_options_more_items(environment, user, selected_items, time, option_sets,
                                                             allow_zero_options=allow_zero_option)
         all_options = {}
         db_options = Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options)))
