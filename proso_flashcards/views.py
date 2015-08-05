@@ -13,7 +13,7 @@ from lazysignup.decorators import allow_lazy_user
 
 from proso.django.cache import cache_page_conditional
 from proso.django.config import get_config
-from proso.django.request import get_user_id, get_time, is_time_overridden
+from proso.django.request import get_user_id, get_time, is_time_overridden, load_query_json
 from proso.django.response import render, render_json
 import proso_common.views
 import proso_common.json_enrich as common_json_enrich
@@ -67,10 +67,10 @@ def show_more(request, object_class, should_cache=True):
             user_id = get_user_id(request)
             objs = objs.filter(user_id=user_id).order_by('-time')
         if object_class == Flashcard:
-            categories = json.loads(request.GET.get("categories", "[]"))
-            contexts = json.loads(request.GET.get("contexts", "[]"))
-            types = json.loads(request.GET.get("types", "[]"))
-            avoid = json.loads(request.GET.get("avoid", "[]"))
+            categories = load_query_json(request.GET, "categories", "[]")
+            contexts = load_query_json(request.GET, "contexts", "[]")
+            types = load_query_json(request.GET, "types", "[]")
+            avoid = load_query_json(request.GET, "avoid", "[]")
             objs = objs.filter_fc(categories, contexts, types, avoid)
         if object_class == Flashcard or object_class == settings.PROSO_FLASHCARDS.get("term_extension", Term) or \
                 object_class == settings.PROSO_FLASHCARDS.get("context_extension", Context) or object_class == Category:
@@ -120,7 +120,7 @@ def user_stats(request):
     if request.method == "POST":
         data = json.loads(request.body)
     if "filters" in request.GET:
-        data = json.loads(request.GET["filters"])
+        data = load_query_json(request.GET, "filters")
     if data is None:
         return render_json(request, {}, template='flashcards_user_stats.html', help_text=user_stats.__doc__)
 
@@ -274,10 +274,10 @@ def practice(request):
             return saved_answers
 
     # select
-    categories = json.loads(request.GET.get("categories", "[]"))
-    contexts = json.loads(request.GET.get("contexts", "[]"))
-    types = json.loads(request.GET.get("types", "[]"))
-    avoid = json.loads(request.GET.get("avoid", "[]"))
+    categories = load_query_json(request.GET, "categories", "[]")
+    contexts = load_query_json(request.GET, "contexts", "[]")
+    types = load_query_json(request.GET, "types", "[]")
+    avoid = load_query_json(request.GET, "avoid", "[]")
     with_contexts = "without_contexts" not in request.GET
     language = request.GET.get("language", request.LANGUAGE_CODE)
 

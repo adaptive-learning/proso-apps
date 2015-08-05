@@ -4,6 +4,15 @@ import datetime
 import importlib
 import json as simplejson
 import re
+import urllib
+
+
+def load_query_json(query_dict, key, default_json=None):
+    value =  query_dict.get(key, default_json)
+    try:
+        return simplejson.loads(value)
+    except ValueError:
+        return simplejson.loads(urllib.unquote(value))
 
 
 def json_body(body):
