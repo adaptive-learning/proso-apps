@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
-from proso.django.request import get_user_id, json_body
+from proso.django.request import get_user_id, json_body, is_user_id_overridden
 from models import Session, UserProfile, TimeZone, migrate_google_openid_user
 from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -53,7 +53,7 @@ def profile(request, status=200):
                 raise Http404("user not found or have not public profile")
         else:
             user_id = get_user_id(request)
-            if get_config('proso_user', 'google.openid.migration', default=True):
+            if get_config('proso_user', 'google.openid.migration', default=True) and not is_user_id_overridden(request):
                 migrated_user = migrate_google_openid_user(request.user)
                 if migrated_user is not None:
                     auth.logout(request)
