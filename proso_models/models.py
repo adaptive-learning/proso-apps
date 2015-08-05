@@ -720,15 +720,39 @@ class Item(models.Model):
         app_label = 'proso_models'
 
 
-class PracticeContextManager(models.Manager):
-
-    def get_content_hash(self, content):
-        return hashlib.sha1(content).hexdigest()
+class AnswerMetaManager(models.Manager):
 
     def from_content(self, content):
         with transaction.atomic():
             try:
-                content_hash = self.get_content_hash(content)
+                content_hash = get_content_hash(content)
+                return self.get(content_hash=content_hash)
+            except AnswerMeta.DoesNotExist:
+                answer_meta = AnswerMeta(content=content, content_hash=content_hash)
+                answer_meta.save()
+                return answer_meta
+
+
+class AnswerMeta(models.Model):
+
+    content = models.TextField(null=False, blank=False)
+    content_hash = models.CharField(max_length=40, null=False, blank=False, db_index=True, unique=True)
+
+    objects = AnswerMetaManager()
+
+    def to_json(self, nested=False):
+        return {
+            'content': self.content,
+            'content_hash': self.content_hash,
+        }
+
+
+class PracticeContextManager(models.Manager):
+
+    def from_content(self, content):
+        with transaction.atomic():
+            try:
+                content_hash = get_content_hash(content)
                 return self.get(content_hash=content_hash)
             except PracticeContext.DoesNotExist:
                 practice_context = PracticeContext(content=content, content_hash=content_hash)
@@ -778,6 +802,7 @@ class Answer(models.Model):
     guess = models.FloatField(default=0)
     config = models.ForeignKey(Config, null=True, blank=True, default=None)
     context = models.ForeignKey(PracticeContext, null=True, blank=True, default=None)
+    metainfo = models.ForeignKey(AnswerMeta, null=True, blank=True, default=None)
 
     objects = AnswerManager()
 
@@ -800,6 +825,8 @@ class Answer(models.Model):
         }
         if self.context is not None:
             result['context'] = self.context.to_json(nested=True)
+        if self.metainfo is not None:
+            result['meta'] = self.metainfo.to_json(nested=True)
         return result
 
 
@@ -877,6 +904,10 @@ class Audit(models.Model):
         ]
 
 
+def get_content_hash(content):
+    return hashlib.sha1(content).hexdigest()
+
+
 ################################################################################
 # Signals
 ################################################################################
@@ -884,6 +915,12 @@ class Audit(models.Model):
 def init_content_hash(instance):
     if instance.content is not None and instance.content_hash is None:
         instance.content_hash = get_content_hash(instance.content)
+
+
+@receiver(pre_save, sender=AnswerMeta)
+@disable_for_loaddata
+def init_content_hash_answer_meta(sender, instance, **kwargs):
+    init_content_hash(instance)
 
 
 @receiver(pre_save, sender=PracticeContext)
