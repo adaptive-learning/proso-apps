@@ -739,6 +739,8 @@ class Item(models.Model):
 class AnswerMetaManager(models.Manager):
 
     def from_content(self, content):
+        if not isinstance(content, str):
+            content = json.dumps(content, sort_keys=True)
         with transaction.atomic():
             try:
                 content_hash = get_content_hash(content)
@@ -766,6 +768,8 @@ class AnswerMeta(models.Model):
 class PracticeContextManager(models.Manager):
 
     def from_content(self, content):
+        if not isinstance(content, str):
+            content = json.dumps(content, sort_keys=True)
         with transaction.atomic():
             try:
                 content_hash = get_content_hash(content)

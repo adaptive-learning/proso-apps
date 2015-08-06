@@ -26,7 +26,7 @@ class ConfigManager(models.Manager):
 
     def from_content(self, content, app_name=None, key=None):
         try:
-            content = json.dumps(content)
+            content = json.dumps(content, sort_keys=True)
             content_hash = get_content_hash(content)
             return self.get(content_hash=content_hash, app_name=app_name, key=key)
         except Config.DoesNotExist:
