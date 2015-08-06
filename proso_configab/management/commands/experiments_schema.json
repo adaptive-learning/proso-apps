@@ -1,0 +1,68 @@
+{
+  "description": "Schema for data file containing experiments",
+  "definitions": {
+    "experiment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "paused": {
+          "type": "boolean"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/variable"
+          }
+        }
+      },
+      "required": ["id"]
+    },
+    "variable": {
+      "type": "object",
+      "properties": {
+        "app_name": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/possible_value"
+          }
+        }
+      },
+      "required": ["app_name", "name", "values"]
+    },
+    "possible_value": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "probability": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": ["value", "probability"]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "experiments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/experiment"
+      }
+    }
+  },
+  "required": ["experiments"]
+}
