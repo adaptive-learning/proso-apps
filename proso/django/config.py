@@ -29,14 +29,6 @@ class ConfigMiddleware(object):
             if key.startswith('config.'):
                 _is_overriden_from_url[currentThread()] = True
                 key = key.replace('config.', '')
-                if value.isdigit():
-                    value = int(value)
-                elif value.lower() == 'true':
-                    value = True
-                elif value.lower() == 'false':
-                    value = False
-                elif value.replace('.', '').isdigit():
-                    value = float(value)
                 override(key, value)
 
 
@@ -45,6 +37,15 @@ def override(app_name_key, value):
         raise Exception("The value can not be None.")
     if isinstance(value, dict) or isinstance(value, list):
         raise Exception("The value has to be scalar.")
+    if isinstance(value, str) or isinstance(value, unicode):
+        if value.isdigit():
+            value = int(value)
+        elif value.lower() == 'true':
+            value = True
+        elif value.lower() == 'false':
+            value = False
+        elif value.replace('.', '').isdigit():
+            value = float(value)
     _overridden[currentThread()][app_name_key] = value
 
 
