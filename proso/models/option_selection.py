@@ -52,9 +52,9 @@ class ConfusingOptionSelection(OptionSelection):
 
     def select_options(self, environment, user, item, time, options, allow_zero_options=True, **kwargs):
         options = filter(lambda i: i != item, options)
-        rolling_success = self._item_selector.get_rolling_success()
+        rolling_success = self._item_selector.get_rolling_success(environment, user, None)
         target_probability = self._item_selector.get_target_probability()
-        prediction = self._item_selector.get_prediction_for_selected_item(item)
+        prediction = self._item_selector.get_predictions(environment)[item]
         if prediction is None:
             raise ValueError("Prediction is missing")
 
@@ -111,7 +111,6 @@ class TestOptionSelection(unittest.TestCase):
         item_selector = MagicMock()
         item_selector.get_rolling_success.return_value = 0.5
         item_selector.get_target_probability.return_value = 0.75
-        item_selector.get_prediction_for_selected_item.return_value = 0.5
         # mock environment
         environment = MagicMock()
         environment.confusing_factor_more_items.return_value = confusing_factors
