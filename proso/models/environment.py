@@ -103,15 +103,15 @@ class Environment:
 class CommonEnvironment(Environment):
 
     @abc.abstractmethod
-    def number_of_answers(self, user=None, item=None):
+    def number_of_answers(self, user=None, item=None, context=None):
         pass
 
     @abc.abstractmethod
-    def number_of_correct_answers(self, user=None, item=None):
+    def number_of_correct_answers(self, user=None, item=None, context=None):
         pass
 
     @abc.abstractmethod
-    def number_of_first_answers(self, user=None, item=None):
+    def number_of_first_answers(self, user=None, item=None, context=None):
         pass
 
     @abc.abstractmethod
@@ -119,7 +119,7 @@ class CommonEnvironment(Environment):
         pass
 
     @abc.abstractmethod
-    def number_of_correct_answers(self, user=None, item=None):
+    def number_of_correct_answers_more_items(self, user=None, item=None):
         pass
 
     @abc.abstractmethod
@@ -127,7 +127,7 @@ class CommonEnvironment(Environment):
         pass
 
     @abc.abstractmethod
-    def last_answer_time(self, user=None, item=None):
+    def last_answer_time(self, user=None, item=None, context=None):
         pass
 
     @abc.abstractmethod
@@ -140,6 +140,10 @@ class CommonEnvironment(Environment):
 
     @abc.abstractmethod
     def confusing_factor_more_items(self, item, items, user=None):
+        pass
+
+    @abc.abstractmethod
+    def rolling_success(self, user, window_size=10):
         pass
 
 
@@ -256,16 +260,24 @@ class InMemoryEnvironment(CommonEnvironment):
             lambda i: self.time(key, user, i, item, symmetric),
             items)
 
-    def number_of_answers(self, user=None, item=None):
+    def number_of_answers(self, user=None, item=None, context=None):
+        if context is not None:
+            raise Exception('Using context is not supported.')
         return self.read(self.NUMBER_OF_ANSWERS, user=user, item=item, default=0)
 
-    def number_of_correct_answers(self, user=None, item=None):
+    def number_of_correct_answers(self, user=None, item=None, context=None):
+        if context is not None:
+            raise Exception('Using context is not supported.')
         return self.read(self.NUMBER_OF_CORRECT_ANSWERS, user=user, item=item, default=0)
 
-    def number_of_first_answers(self, user=None, item=None):
+    def number_of_first_answers(self, user=None, item=None, context=None):
+        if context is not None:
+            raise Exception('Using context is not supported.')
         return self.read(self.NUMBER_OF_FIRST_ANSWERS, user=user, item=item, default=0)
 
-    def last_answer_time(self, user=None, item=None):
+    def last_answer_time(self, user=None, item=None, context=None):
+        if context is not None:
+            raise Exception('Using context is not supported.')
         return self.time(self.NUMBER_OF_ANSWERS, user=user, item=item)
 
     def number_of_answers_more_items(self, items, user=None):
@@ -280,7 +292,9 @@ class InMemoryEnvironment(CommonEnvironment):
     def last_answer_time_more_items(self, items, user=None):
         return self.time_more_items(self.NUMBER_OF_ANSWERS, items, user=user)
 
-    def rolling_success(self, user, window_size=10):
+    def rolling_success(self, user, window_size=10, context=None):
+        if context is not None:
+            raise Exception('Using context is not supported.')
         audit = self.audit(self.LAST_CORRECTNESS, user=user, limit=window_size)
         audit = map(lambda (x, y): y, audit)
         if len(audit) < window_size:

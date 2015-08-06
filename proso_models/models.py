@@ -4,6 +4,7 @@ from django.db.models import F
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from proso.models.environment import CommonEnvironment, InMemoryEnvironment
+from proso.models.item_selection import TestWrapperItemSelection
 from datetime import datetime
 from contextlib import closing
 from django.db import connection
@@ -22,6 +23,7 @@ from proso.django.cache import get_request_cache, is_cache_prepared
 from django.db import transaction
 from proso.django.util import disable_for_loaddata, is_on_postgresql
 import logging
+import hashlib
 
 
 LOGGER = logging.getLogger('django.request')
@@ -71,11 +73,15 @@ def get_predictive_model():
 
 
 def get_item_selector():
-    return instantiate_from_config(
+    item_selector = instantiate_from_config(
         'proso_models', 'item_selector',
         default_class='proso.models.item_selection.ScoreItemSelection',
         pass_parameters=[get_predictive_model()]
     )
+    nth = get_config('proso_models', 'random_test.nth')
+    if nth is not None and nth > 0:
+        item_selector = TestWrapperItemSelection(item_selector, nth)
+    return item_selector
 
 
 def get_option_selector(item_selector):
@@ -410,33 +416,41 @@ class DatabaseEnvironment(CommonEnvironment):
         except Variable.DoesNotExist:
             pass
 
-    def number_of_answers(self, user=None, item=None):
+    def number_of_answers(self, user=None, item=None, context=None):
+        if item is not None and context is not None:
+            raise Exception('Either item or context has to be unspecified')
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
+            where, where_params = self._where({'user_id': user, 'item_id': item, 'context_id': context}, False, for_answers=True)
             cursor.execute(
                 'SELECT COUNT(id) FROM proso_models_answer WHERE '
                 + where, where_params)
             return cursor.fetchone()[0]
 
-    def number_of_correct_answers(self, user=None, item=None):
+    def number_of_correct_answers(self, user=None, item=None, context=None):
+        if item is not None and context is not None:
+            raise Exception('Either item or context has to be unspecified')
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
+            where, where_params = self._where({'user_id': user, 'item_id': item, 'context_id': context}, False, for_answers=True)
             cursor.execute(
                 'SELECT COUNT(id) FROM proso_models_answer WHERE item_asked_id = item_answered_id AND '
                 + where, where_params)
             return cursor.fetchone()[0]
 
-    def number_of_first_answers(self, user=None, item=None):
+    def number_of_first_answers(self, user=None, item=None, context=None):
+        if item is not None and context is not None:
+            raise Exception('Either item or context has to be unspecified')
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
+            where, where_params = self._where({'user_id': user, 'item_id': item, 'context_id': context}, False, for_answers=True)
             cursor.execute(
                 'SELECT COUNT(1) FROM (SELECT 1 FROM proso_models_answer WHERE '
                 + where + ' GROUP BY user_id, item_id) AS t', where_params)
             return cursor.fetchone()[0]
 
-    def last_answer_time(self, user=None, item=None):
+    def last_answer_time(self, user=None, item=None, context=None):
+        if item is not None and context is not None:
+            raise Exception('Either item or context has to be unspecified')
         with closing(connection.cursor()) as cursor:
-            where, where_params = self._where({'user_id': user, 'item_id': item}, False, for_answers=True)
+            where, where_params = self._where({'user_id': user, 'item_id': item, 'context_id': context}, False, for_answers=True)
             cursor.execute(
                 'SELECT MAX(time) FROM proso_models_answer WHERE '
                 + where, where_params)
@@ -491,16 +505,19 @@ class DatabaseEnvironment(CommonEnvironment):
     def shift_time(self, new_time):
         self._time = new_time
 
-    def rolling_success(self, user, window_size=10):
+    def rolling_success(self, user, window_size=10, context=None):
+        where, where_params = self._where({'user_id': user, 'context_id': context}, False, for_answers=True)
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
                 SELECT item_asked_id = item_answered_id
                 FROM proso_models_answer
-                WHERE user_id = %s
+                WHERE
+                ''' + where +
+                '''
                 ORDER BY id DESC
                 LIMIT %s
-                ''', [user, window_size])
+                ''', where_params + [window_size])
             fetched = map(lambda x: True if x[0] else False, cursor.fetchall())
             if len(fetched) < window_size:
                 return None
@@ -719,6 +736,60 @@ class Item(models.Model):
         app_label = 'proso_models'
 
 
+class AnswerMetaManager(models.Manager):
+
+    def from_content(self, content):
+        with transaction.atomic():
+            try:
+                content_hash = get_content_hash(content)
+                return self.get(content_hash=content_hash)
+            except AnswerMeta.DoesNotExist:
+                answer_meta = AnswerMeta(content=content, content_hash=content_hash)
+                answer_meta.save()
+                return answer_meta
+
+
+class AnswerMeta(models.Model):
+
+    content = models.TextField(null=False, blank=False)
+    content_hash = models.CharField(max_length=40, null=False, blank=False, db_index=True, unique=True)
+
+    objects = AnswerMetaManager()
+
+    def to_json(self, nested=False):
+        return {
+            'content': self.content,
+            'content_hash': self.content_hash,
+        }
+
+
+class PracticeContextManager(models.Manager):
+
+    def from_content(self, content):
+        with transaction.atomic():
+            try:
+                content_hash = get_content_hash(content)
+                return self.get(content_hash=content_hash)
+            except PracticeContext.DoesNotExist:
+                practice_context = PracticeContext(content=content, content_hash=content_hash)
+                practice_context.save()
+                return practice_context
+
+
+class PracticeContext(models.Model):
+
+    content = models.TextField(null=False, blank=False)
+    content_hash = models.CharField(max_length=40, null=False, blank=False, db_index=True, unique=True)
+
+    objects = PracticeContextManager()
+
+    def to_json(self, nested=False):
+        return {
+            'content': self.content,
+            'content_hash': self.content_hash,
+        }
+
+
 class AnswerManager(models.Manager):
 
     def count(self, user):
@@ -746,14 +817,19 @@ class Answer(models.Model):
     ab_values_initialized = models.BooleanField(default=False)
     guess = models.FloatField(default=0)
     config = models.ForeignKey(Config, null=True, blank=True, default=None)
+    context = models.ForeignKey(PracticeContext, null=True, blank=True, default=None)
+    metainfo = models.ForeignKey(AnswerMeta, null=True, blank=True, default=None)
 
     objects = AnswerManager()
 
     class Meta:
         app_label = 'proso_models'
+        index_together = [
+            ['user', 'context'],
+        ]
 
     def to_json(self):
-        return {
+        result = {
             'id': self.pk,
             'object_type': 'answer',
             'question_item_id': self.item_id,
@@ -761,8 +837,13 @@ class Answer(models.Model):
             'item_answered_id': self.item_answered_id,
             'user_id': self.user_id,
             'time': self.time.strftime('%Y-%m-%d %H:%M:%S'),
-            'response_time': self.response_time,
+            'response_time': self.response_time
         }
+        if self.context is not None:
+            result['context'] = self.context.to_json(nested=True)
+        if self.metainfo is not None:
+            result['meta'] = self.metainfo.to_json(nested=True)
+        return result
 
 
 class Variable(models.Model):
@@ -839,9 +920,30 @@ class Audit(models.Model):
         ]
 
 
+def get_content_hash(content):
+    return hashlib.sha1(content).hexdigest()
+
+
 ################################################################################
 # Signals
 ################################################################################
+
+def init_content_hash(instance):
+    if instance.content is not None and instance.content_hash is None:
+        instance.content_hash = get_content_hash(instance.content)
+
+
+@receiver(pre_save, sender=AnswerMeta)
+@disable_for_loaddata
+def init_content_hash_answer_meta(sender, instance, **kwargs):
+    init_content_hash(instance)
+
+
+@receiver(pre_save, sender=PracticeContext)
+@disable_for_loaddata
+def init_content_hash_practice_context(sender, instance, **kwargs):
+    init_content_hash(instance)
+
 
 @receiver(pre_save)
 @disable_for_loaddata

@@ -13,9 +13,34 @@ class ItemSelection:
 
     __metaclass__ = abc.ABCMeta
 
+    def __init__(self, predictive_model, target_probability):
+        self._predictive_model = predictive_model
+        self._target_probability = target_probability
+        self._predictios_cache = None
+        self._rolling_success = None
+
     @abc.abstractmethod
-    def select(self, environment, user, items, time, n, **kwargs):
+    def select(self, environment, user, items, time, practice_context, n, **kwargs):
+        """
+        Returns a list of items chosen to practice and a list of JSONs (or
+        Nones) providing meta info about the selection.
+        """
         pass
+
+    def get_predictions(self, environment, user=None, items=None, time=None):
+        if self._predictios_cache is None:
+            if user is None or items is None or time is None:
+                raise Exception('Can not compute predictions without user, items and time.')
+            self._predictios_cache = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
+        return self._predictios_cache
+
+    def get_target_probability(self):
+        return self._target_probability
+
+    def get_rolling_success(self, environment, user, practice_context=None):
+        if self._rolling_success is None:
+            self._rolling_success = environment.rolling_success(user=user, context=practice_context)
+        return self._rolling_success
 
 
 class RandomItemSelection(ItemSelection):
@@ -23,12 +48,46 @@ class RandomItemSelection(ItemSelection):
     def __init__(self, predictive_model):
         self._predictive_model = predictive_model
 
-    def select(self, environment, user, items, time, n, **kwargs):
+    def select(self, environment, user, items, time, practice_context, n, **kwargs):
         candidates = random.sample(items, min(n, len(items)))
-        return candidates
+        # HACK: option selector needs predictions already prepared
+        self.get_predictions(environment, user, items, time)
+        return candidates, [None for _ in candidates]
 
     def __str__(self):
         return 'RANDOM ITEM SELECTION'
+
+
+class TestWrapperItemSelection(ItemSelection):
+
+    def __init__(self, item_selector, nth=10):
+        self._item_selector = item_selector
+        self._nth = nth
+
+    def select(self, environment, user, items, time, practice_context, n, **kwargs):
+        if self._nth < n:
+            raise Exception('Number of items ({}) to select has to be lower than or equal to the "nth" ({}) parameter.'.format(n, self._nth))
+        items_in_queue = kwargs.get('items_in_queue', 0)
+        number_of_answers = environment.number_of_answers(user=user, context=practice_context) + items_in_queue
+        test_position = number_of_answers % self._nth
+        if test_position >= n:
+            return self._item_selector.select(environment, user, items, time, practice_context, n, **kwargs)
+        LOGGER.debug('Providing random test item on position {}, items in queue {}'.format(test_position, items_in_queue))
+        # HACK: option selector needs predictions already prepared
+        self.get_predictions(environment, user, items, time)
+        test_item = random.choice(items)
+        test_meta = {'test': 'random_without_options'}
+        items, meta = self._item_selector.select(environment, user, items, time, practice_context, n - 1, **kwargs) if n - 1 > 0 else ([], [])
+        return items[:test_position] + [test_item] + items[test_position:], meta[:test_position] + [test_meta] + meta[test_position:]
+
+    def get_predictions(self, environment, user=None, items=None, time=None):
+        return self._item_selector.get_predictions(environment, user=user, items=items, time=time)
+
+    def get_target_probability(self):
+        return self._item_selector.get_target_probability()
+
+    def get_rolling_success(self, environment, user, practice_context=None):
+        return self._item_selector.get_rolling_success(environment, user, practice_context=practice_context)
 
 
 class ScoreItemSelection(ItemSelection):
@@ -37,7 +96,7 @@ class ScoreItemSelection(ItemSelection):
             self, predictive_model, weight_probability=10.0, weight_number_of_answers=5.0,
             weight_time_ago=120, weight_parent_time_ago=120, weight_parent_number_of_answers=2.5,
             target_probability=0.8, recompute_parent_score=True):
-        self._predictive_model = predictive_model
+        ItemSelection.__init__(self, predictive_model, target_probability)
         self._weight_probability = weight_probability
         self._weight_number_of_answers = weight_number_of_answers
         self._weight_time_ago = weight_time_ago
@@ -45,20 +104,17 @@ class ScoreItemSelection(ItemSelection):
         self._weight_parent_time_ago = weight_parent_time_ago
         self._weight_parent_number_of_answers = weight_parent_number_of_answers
         self._recompute_parent_score = recompute_parent_score
-        self._probability = None
-        self._rolling_success = None
 
-    def select(self, environment, user, items, time, n, **kwargs):
+    def select(self, environment, user, items, time, practice_context, n, **kwargs):
         answers_num = dict(zip(items, environment.number_of_answers_more_items(user=user, items=items)))
         last_answer_time = dict(zip(items, environment.last_answer_time_more_items(user=user, items=items)))
-        self._probability = probability = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
+        probability = self.get_predictions(environment, user, items, time)
         parents = dict(zip(items, environment.get_items_with_values_more_items('parent', items=items)))
         # The current implementation of retrieving features for the parent
         # items provides only an under-approximation of the real state.
         last_answer_time_parents = self._last_answer_time_for_parents(environment, parents, last_answer_time)
         answers_num_parents = self._answers_num_for_parents(environment, parents, answers_num)
-        self._rolling_success = rolling_success = environment.rolling_success(user=user)
-        prob_target = adjust_target_probability(self._target_probability, rolling_success)
+        prob_target = adjust_target_probability(self._target_probability, self.get_rolling_success(environment, user, practice_context))
 
         if proso.django.log.is_active():
             for item in items:
@@ -111,16 +167,7 @@ class ScoreItemSelection(ItemSelection):
         else:
             candidates = map(lambda ((score, r), i): i, sorted(scored, reverse=True)[:min(len(scored), n)])
 
-        return candidates
-
-    def get_prediction_for_selected_item(self, item):
-        return self._probability[item]
-
-    def get_target_probability(self):
-        return self._target_probability
-
-    def get_rolling_success(self):
-        return self._rolling_success
+        return candidates, [None for _ in candidates]
 
     def _score_answers_num(self, answers_num):
         return 1.0 / max(math.sqrt(answers_num), 0.001)

@@ -20,7 +20,7 @@ import proso_common.json_enrich as common_json_enrich
 import proso_models.json_enrich as models_json_enrich
 import proso_flashcards.json_enrich as flashcards_json_enrich
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
-from proso_models.models import get_environment, get_predictive_model
+from proso_models.models import get_environment, get_predictive_model, PracticeContext, AnswerMeta
 import proso.svg
 
 
@@ -72,7 +72,8 @@ def show_more(request, object_class, should_cache=True):
 
     def _load_objects(request, object_class):
         select_related_all = {
-            Flashcard: [Flashcard.related_term(), Flashcard.related_context()]
+            Flashcard: [Flashcard.related_term(), Flashcard.related_context()],
+            FlashcardAnswer: ['context'],
         }
         prefetch_related_all = {
             settings.PROSO_FLASHCARDS.get("term_extension", Term): ["parents"],
@@ -240,7 +241,9 @@ def answer(request):
         answers = _get_answers(request)
         if not isinstance(answers, list):
             return answers
-        saved_answers = _save_answer(request, answers)
+        practice_context_content = _load_practice_context_content(request)
+        practice_context = PracticeContext.objects.from_content(json.dumps(practice_context_content))
+        saved_answers = _save_answer(request, answers, practice_context)
         if not isinstance(saved_answers, list):
             return saved_answers
 
@@ -295,22 +298,28 @@ def practice(request):
     if is_time_overridden(request):
         environment.shift_time(time)
 
+    practice_context_content = _load_practice_context_content(request)
+    practice_context = PracticeContext.objects.from_content(json.dumps(practice_context_content))
+
     # save answers
     if request.method == 'POST':
         answers = _get_answers(request)
         if not isinstance(answers, list):
             return answers
-        saved_answers = _save_answer(request, answers)
+        saved_answers = _save_answer(request, answers, practice_context)
         if not isinstance(saved_answers, list):
             return saved_answers
 
     time_before_candidates = time_lib()
-    candidates = _candidates_to_practice(request, 100)
+    candidates = _candidates_to_practice(request, 100, practice_context_content)
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_candidates))
     time_before_practice = time_lib()
     language = request.GET.get("language", request.LANGUAGE_CODE)
     with_contexts = "without_contexts" not in request.GET
-    flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates, language, with_contexts)
+    flashcards = Flashcard.objects.practice(
+        environment, user, time, limit, candidates, practice_context.id,
+        language, with_contexts,
+        items_in_queue=len(load_query_json(request.GET, "avoid", "[]")))
     LOGGER.debug('choosing items for practice took %s seconds', (time_lib() - time_before_practice))
     data = _to_json(request, {
         'flashcards': map(lambda x: x.to_json(categories=False, contexts=with_contexts), flashcards)
@@ -330,7 +339,7 @@ def _get_answers(request):
     return answers
 
 
-def _save_answer(request, answers):
+def _save_answer(request, answers, practice_context):
     time_start = time_lib()
     saved_answers = []
     try:
@@ -363,6 +372,8 @@ def _save_answer(request, answers):
         else:
             return HttpResponseBadRequest("direction not found")
 
+        answer_meta = None if 'meta' not in a else AnswerMeta.objects.from_content(json.dumps(a['meta']))
+
         db_answer = FlashcardAnswer(
             user_id=request.user.id,
             item_id=flashcard.item_id,
@@ -370,7 +381,8 @@ def _save_answer(request, answers):
             item_answered_id=flashcard_answered.item_id if flashcard_answered else None,
             response_time=response_time,
             direction=direction,
-            meta=a["meta"] if "meta" in a else None,
+            context=practice_context,
+            metainfo=answer_meta,
         )
         if "time_gap" in a:
             db_answer.time = datetime.now() - timedelta(seconds=a["time_gap"])
@@ -426,10 +438,21 @@ def _to_json(request, value):
     return json
 
 
-def _candidates_to_practice(request, limit):
-    categories = load_query_json(request.GET, "categories", "[]")
-    contexts = load_query_json(request.GET, "contexts", "[]")
-    types = load_query_json(request.GET, "types", "[]")
-    avoid = load_query_json(request.GET, "avoid", "[]")
+def _load_practice_context_content(request):
+    return {
+        'categories': load_query_json(request.GET, "categories", "[]"),
+        'contexts': load_query_json(request.GET, "contexts", "[]"),
+        'types': load_query_json(request.GET, "types", "[]"),
+    }
+
+
+def _candidates_to_practice(request, limit, context_content=None):
+    if context_content is None:
+        context_content = _load_practice_context_content(request)
     language = request.GET.get("language", request.LANGUAGE_CODE)
-    return Flashcard.objects.candidates_to_practice(categories, contexts, types, avoid, language, limit=limit)
+    avoid = load_query_json(request.GET, "avoid", "[]")
+    return Flashcard.objects.candidates_to_practice(
+        context_content['categories'],
+        context_content['contexts'],
+        context_content['types'],
+        avoid, language, limit=limit)
