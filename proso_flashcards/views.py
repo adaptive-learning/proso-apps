@@ -316,7 +316,10 @@ def practice(request):
     time_before_practice = time_lib()
     language = request.GET.get("language", request.LANGUAGE_CODE)
     with_contexts = "without_contexts" not in request.GET
-    flashcards = Flashcard.objects.practice(environment, user, time, limit, candidates, practice_context.id, language, with_contexts)
+    flashcards = Flashcard.objects.practice(
+        environment, user, time, limit, candidates, practice_context.id,
+        language, with_contexts,
+        items_in_queue=len(load_query_json(request.GET, "avoid", "[]")))
     LOGGER.debug('choosing items for practice took %s seconds', (time_lib() - time_before_practice))
     data = _to_json(request, {
         'flashcards': map(lambda x: x.to_json(categories=False, contexts=with_contexts), flashcards)

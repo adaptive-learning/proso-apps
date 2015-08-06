@@ -67,11 +67,12 @@ class TestWrapperItemSelection(ItemSelection):
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
         if self._nth < n:
             raise Exception('Number of items ({}) to select has to be lower than or equal to the "nth" ({}) parameter.'.format(n, self._nth))
-        number_of_answers = environment.number_of_answers(user=user, context=practice_context)
+        items_in_queue = kwargs.get('items_in_queue', 0)
+        number_of_answers = environment.number_of_answers(user=user, context=practice_context) + items_in_queue
         test_position = number_of_answers % self._nth
         if test_position >= n:
             return self._item_selector.select(environment, user, items, time, practice_context, n, **kwargs)
-        LOGGER.debug('Providing random test item on position {}.'.format(test_position))
+        LOGGER.debug('Providing random test item on position {}, items in queue {}'.format(test_position, items_in_queue))
         # HACK: option selector needs predictions already prepared
         self.get_predictions(environment, user, items, time)
         test_item = random.choice(items)
