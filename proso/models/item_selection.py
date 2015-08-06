@@ -58,6 +58,37 @@ class RandomItemSelection(ItemSelection):
         return 'RANDOM ITEM SELECTION'
 
 
+class TestWrapperItemSelection(ItemSelection):
+
+    def __init__(self, item_selector, nth=10):
+        self._item_selector = item_selector
+        self._nth = nth
+
+    def select(self, environment, user, items, time, practice_context, n, **kwargs):
+        if self._nth < n:
+            raise Exception('Number of items ({}) to select has to be lower than or equal to the "nth" ({}) parameter.'.format(n, self._nth))
+        number_of_answers = environment.number_of_answers(user=user, context=practice_context)
+        test_position = number_of_answers % self._nth
+        if test_position >= n:
+            return self._item_selector.select(environment, user, items, time, practice_context, n, **kwargs)
+        LOGGER.debug('Providing random test item on position {}.'.format(test_position))
+        # HACK: option selector needs predictions already prepared
+        self.get_predictions(environment, user, items, time)
+        test_item = random.choice(items)
+        test_meta = {'test': 'random_without_options'}
+        items, meta = self._item_selector.select(environment, user, items, time, practice_context, n - 1, **kwargs) if n - 1 > 0 else ([], [])
+        return items[:test_position] + [test_item] + items[test_position:], meta[:test_position] + [test_meta] + meta[test_position:]
+
+    def get_predictions(self, environment, user=None, items=None, time=None):
+        return self._item_selector.get_predictions(environment, user=user, items=items, time=time)
+
+    def get_target_probability(self):
+        return self._item_selector.get_target_probability()
+
+    def get_rolling_success(self, environment, user, practice_context=None):
+        return self._item_selector.get_rolling_success(environment, user, practice_context=practice_context)
+
+
 class ScoreItemSelection(ItemSelection):
 
     def __init__(

@@ -4,6 +4,7 @@ from django.db.models import F
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from proso.models.environment import CommonEnvironment, InMemoryEnvironment
+from proso.models.item_selection import TestWrapperItemSelection
 from datetime import datetime
 from contextlib import closing
 from django.db import connection
@@ -72,11 +73,15 @@ def get_predictive_model():
 
 
 def get_item_selector():
-    return instantiate_from_config(
+    item_selector = instantiate_from_config(
         'proso_models', 'item_selector',
         default_class='proso.models.item_selection.ScoreItemSelection',
         pass_parameters=[get_predictive_model()]
     )
+    nth = get_config('proso_models', 'random_test.nth')
+    if nth is not None:
+        item_selector = TestWrapperItemSelection(item_selector, nth)
+    return item_selector
 
 
 def get_option_selector(item_selector):
