@@ -79,7 +79,7 @@ def get_item_selector():
         pass_parameters=[get_predictive_model()]
     )
     nth = get_config('proso_models', 'random_test.nth')
-    if nth is not None:
+    if nth is not None and nth > 0:
         item_selector = TestWrapperItemSelection(item_selector, nth)
     return item_selector
 

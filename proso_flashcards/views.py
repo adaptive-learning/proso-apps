@@ -20,7 +20,7 @@ import proso_common.json_enrich as common_json_enrich
 import proso_models.json_enrich as models_json_enrich
 import proso_flashcards.json_enrich as flashcards_json_enrich
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
-from proso_models.models import get_environment, get_predictive_model, PracticeContext
+from proso_models.models import get_environment, get_predictive_model, PracticeContext, AnswerMeta
 import proso.svg
 
 
@@ -241,7 +241,9 @@ def answer(request):
         answers = _get_answers(request)
         if not isinstance(answers, list):
             return answers
-        saved_answers = _save_answer(request, answers, _load_practice_context_content(request))
+        practice_context_content = _load_practice_context_content(request)
+        practice_context = PracticeContext.objects.from_content(json.dumps(practice_context_content))
+        saved_answers = _save_answer(request, answers, practice_context)
         if not isinstance(saved_answers, list):
             return saved_answers
 
@@ -367,6 +369,8 @@ def _save_answer(request, answers, practice_context):
         else:
             return HttpResponseBadRequest("direction not found")
 
+        answer_meta = None if 'meta' not in a else AnswerMeta.objects.from_content(json.dumps(a['meta']))
+
         db_answer = FlashcardAnswer(
             user_id=request.user.id,
             item_id=flashcard.item_id,
@@ -375,7 +379,7 @@ def _save_answer(request, answers, practice_context):
             response_time=response_time,
             direction=direction,
             context=practice_context,
-            metainfo=a["meta"] if "meta" in a else None,
+            metainfo=answer_meta,
         )
         if "time_gap" in a:
             db_answer.time = datetime.now() - timedelta(seconds=a["time_gap"])
