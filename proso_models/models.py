@@ -9,7 +9,6 @@ from datetime import datetime
 from contextlib import closing
 from django.db import connection
 from django.conf import settings
-from proso_ab.models import Value as ABValue, Experiment as ABExperiment
 from proso_user.models import Session
 import re
 import os.path
@@ -817,8 +816,6 @@ class Answer(models.Model):
         related_name='item_answered_answers')
     time = models.DateTimeField(default=datetime.now)
     response_time = models.IntegerField(null=False, blank=False)
-    ab_values = models.ManyToManyField(ABValue)
-    ab_values_initialized = models.BooleanField(default=False)
     guess = models.FloatField(default=0)
     config = models.ForeignKey(Config, null=True, blank=True, default=None)
     context = models.ForeignKey(PracticeContext, null=True, blank=True, default=None)
@@ -982,18 +979,6 @@ def update_predictive_model(sender, instance, **kwargs):
         instance.time,
         item_answered=instance.item_answered_id,
         item_asked=instance.item_asked_id)
-
-
-@receiver(post_save)
-@disable_for_loaddata
-def insert_ab_values(sender, instance, **kwargs):
-    if not issubclass(sender, Answer):
-        return
-    if not instance.ab_values_initialized:
-        instance.ab_values_initialized = True
-        for value in ABExperiment.objects.get_values(force=False):
-            instance.ab_values.add(value)
-        instance.save()
 
 
 @receiver(post_save, sender=Variable)
