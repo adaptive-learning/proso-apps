@@ -153,7 +153,7 @@ class FlashcardManager(models.Manager):
         item_selector = get_item_selector()
         option_selector = get_option_selector(item_selector)
 
-        selected_items, _ = item_selector.select(environment, user, items, time, practice_context, limit)
+        selected_items, meta = item_selector.select(environment, user, items, time, practice_context, limit)
 
         # get selected flashcards
         flashcards = Flashcard.objects.filter(item_id__in=selected_items).prefetch_related(Flashcard.related_term())
@@ -162,34 +162,29 @@ class FlashcardManager(models.Manager):
         if language is not None:
             flashcards = flashcards.filter(lang=language)
         flashcards = sorted(flashcards, key=lambda fc: selected_items.index(fc.item_id))
+        for f, m in zip(flashcards, meta):
+            if m is not None:
+                f.practice_meta = m
 
-        from proso_flashcards.flashcard_construction import get_option_set, get_direction
-
-        # select direction
-        direction = get_direction()
-        allow_zero_option = {}
-        for flashcard in flashcards:
-            flashcard.direction = direction.get_direction(flashcard)
-            allow_zero_option[flashcard.item_id] = flashcard.direction == FlashcardAnswer.FROM_TERM
-
-        # select options
-        option_sets = get_option_set().get_option_for_flashcards(flashcards)
-        options = option_selector.select_options_more_items(environment, user, selected_items, time, option_sets,
-                                                            allow_zero_options=allow_zero_option)
-        all_options = {}
-        db_options = Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options)))
-        db_options = db_options.prefetch_related(Flashcard.related_term(), "context")
-        if with_contexts:
-            db_options = db_options.prefetch_related(Flashcard.related_context())
-        for option in db_options:
-            all_options[option.item_id] = option
-        options = dict(zip(selected_items, options))
-
-        for flashcard in flashcards:
-            if len(options[flashcard.item_id]) > 0:
-                flashcard.options = map(lambda id: all_options[id], options[flashcard.item_id])
-
-        return flashcards
+        test_position = self._test_index(meta)
+        if test_position is None:
+            return self._load_options(
+                option_selector, selected_items, flashcards, environment,
+                user, time, limit, items, practice_context, language,
+                with_contexts)
+        else:
+            selected_items.pop(test_position)
+            test_flashcard = flashcards.pop(test_position)
+            test_flashcard.direction = FlashcardAnswer.FROM_TERM
+            test_flashcard.options = []
+            if len(selected_items) > 0:
+                other = self._load_options(
+                    option_selector, selected_items, flashcards, environment,
+                    user, time, limit, items, practice_context, language,
+                    with_contexts)
+            else:
+                other = []
+            return other[:test_position] + [test_flashcard] + other[test_position:]
 
     @cache_pure
     def under_categories_as_items(self, categories):
@@ -224,6 +219,39 @@ class FlashcardManager(models.Manager):
             counts[f[0]] = f[1]
         return counts
 
+    def _load_options(self, option_selector, selected_items, flashcards, environment, user, time, limit, items, practice_context, language, with_contexts):
+        from proso_flashcards.flashcard_construction import get_option_set, get_direction
+
+        # select direction
+        direction = get_direction()
+        allow_zero_option = {}
+        for flashcard in flashcards:
+            flashcard.direction = direction.get_direction(flashcard)
+            allow_zero_option[flashcard.item_id] = flashcard.direction == FlashcardAnswer.FROM_TERM
+
+        # select options
+        option_sets = get_option_set().get_option_for_flashcards(flashcards)
+        options = option_selector.select_options_more_items(environment, user, selected_items, time, option_sets,
+                                                            allow_zero_options=allow_zero_option)
+        all_options = {}
+        db_options = Flashcard.objects.filter(lang=language, item_id__in=set(itertools.chain(*options)))
+        db_options = db_options.prefetch_related(Flashcard.related_term(), "context")
+        if with_contexts:
+            db_options = db_options.prefetch_related(Flashcard.related_context())
+        for option in db_options:
+            all_options[option.item_id] = option
+        options = dict(zip(selected_items, options))
+
+        for flashcard in flashcards:
+            if len(options[flashcard.item_id]) > 0:
+                flashcard.options = map(lambda id: all_options[id], options[flashcard.item_id])
+
+        return flashcards
+
+    def _test_index(self, meta):
+        check = map(lambda m: m is not None and 'without_options' in m.get('test', ''), meta)
+        return check.index(True) if any(check) else None
+
 
 class Flashcard(models.Model):
     identifier = models.SlugField()
@@ -252,6 +280,8 @@ class Flashcard(models.Model):
             data["options"] = map(lambda o: o.to_json(nested=True), sorted(self.options, key=lambda f: f.term.name))
         if hasattr(self, "direction"):
             data["direction"] = self.direction
+        if hasattr(self, 'practice_meta'):
+            data['practice_meta'] = self.practice_meta
         if not nested and categories:
             data["categories"] = [category.to_json(nested=True) for category in self.categories.all()]
         if not nested and contexts:
