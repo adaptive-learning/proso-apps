@@ -970,7 +970,7 @@ def init_config(sender, instance, **kwargs):
 @receiver(post_save)
 @disable_for_loaddata
 def update_predictive_model(sender, instance, **kwargs):
-    if not issubclass(sender, Answer):
+    if not issubclass(sender, Answer) or not kwargs['created']:
         return
     environment = get_environment()
     predictive_model = get_predictive_model()
