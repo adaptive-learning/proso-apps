@@ -50,7 +50,7 @@ def audit(request, key):
         user = None
     limit = 100
     if request.user.is_staff:
-        limit = request.GET.get(limit, limit)
+        limit = request.GET.get('limit', limit)
     item = int(request.GET['item']) if 'item' in request.GET else None
     item_secondary = int(request.GET['item_secondary']) if 'item_secondary' in request.GET else None
     time = get_time(request)
