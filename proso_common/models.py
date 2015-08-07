@@ -1,8 +1,31 @@
 from django.conf import settings
 from django.db import models
+from threading import currentThread
+from proso.django.request import is_user_id_overridden, is_time_overridden
+from django.dispatch import receiver
+from django.db.models.signals import pre_save
 import hashlib
 import importlib
 import json
+
+_is_user_overriden_from_url = {}
+_is_time_overriden_from_url = {}
+
+
+def reset_url_overridden():
+    global _is_user_overriden_from_url
+    global _is_time_overriden_from_url
+    _is_user_overriden_from_url[currentThread()] = False
+    _is_time_overriden_from_url[currentThread()] = False
+
+
+class CommonMiddleware(object):
+    def process_request(self, request):
+        reset_url_overridden()
+        global _is_user_overriden_from_url
+        global _is_time_overriden_from_url
+        _is_user_overriden_from_url[currentThread()] = is_user_id_overridden(request)
+        _is_time_overriden_from_url[currentThread()] = is_time_overridden(request)
 
 
 def get_content_hash(content):
@@ -54,3 +77,11 @@ class Config(models.Model):
             'key': self.key,
             'app_name': self.app_name,
         }
+
+
+@receiver(pre_save)
+def check_user_or_time_overridden(sender, instance, **kwargs):
+    if _is_user_overriden_from_url.get(currentThread(), False):
+        raise Exception("Nothing can be saved when the user is overridden from URL.")
+    if _is_time_overriden_from_url.get(currentThread(), False):
+        raise Exception("Nothing can be saved when the time is overridden from URL.")
