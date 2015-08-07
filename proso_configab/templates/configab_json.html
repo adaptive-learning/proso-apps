@@ -1,0 +1,14 @@
+{% extends 'configab_base.html' %}
+
+{% load jsonify %}
+
+{% block header_block %}{% endblock %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <h2>JSON object</h2>
+    {{ json|obj2richjson }}
+{% endblock %}

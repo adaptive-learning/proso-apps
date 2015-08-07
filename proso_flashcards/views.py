@@ -242,7 +242,7 @@ def answer(request):
         if not isinstance(answers, list):
             return answers
         practice_context_content = _load_practice_context_content(request)
-        practice_context = PracticeContext.objects.from_content(json.dumps(practice_context_content))
+        practice_context = PracticeContext.objects.from_content(practice_context_content)
         saved_answers = _save_answer(request, answers, practice_context)
         if not isinstance(saved_answers, list):
             return saved_answers
@@ -299,7 +299,7 @@ def practice(request):
         environment.shift_time(time)
 
     practice_context_content = _load_practice_context_content(request)
-    practice_context = PracticeContext.objects.from_content(json.dumps(practice_context_content))
+    practice_context = PracticeContext.objects.from_content(practice_context_content)
 
     # save answers
     if request.method == 'POST':
@@ -372,7 +372,7 @@ def _save_answer(request, answers, practice_context):
         else:
             return HttpResponseBadRequest("direction not found")
 
-        answer_meta = None if 'meta' not in a else AnswerMeta.objects.from_content(json.dumps(a['meta']))
+        answer_meta = None if 'meta' not in a else AnswerMeta.objects.from_content(a['meta'])
 
         db_answer = FlashcardAnswer(
             user_id=request.user.id,
