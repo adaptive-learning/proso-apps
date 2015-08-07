@@ -40,8 +40,8 @@ def practice_image(request):
     item_position = dict(zip(items_in_order, range(len(item_ids))))
     svg = proso.svg.Printer()
     answers = sorted(list(answers), key=lambda a: a.id)
-    SQUARE_SIZE = 15
-    OFFSET_X = SQUARE_SIZE * 10
+    SQUARE_SIZE = 10
+    OFFSET_X = SQUARE_SIZE
     OFFSET_Y = SQUARE_SIZE * 3
     for i, item in enumerate(items_in_order):
         svg.print_square(OFFSET_X + SQUARE_SIZE * i, OFFSET_Y - SQUARE_SIZE, SQUARE_SIZE, int(255 * item_prediction[item]))
@@ -52,7 +52,7 @@ def practice_image(request):
         svg.print_square(
             OFFSET_X + SQUARE_SIZE * item_position[answer.item_asked_id],
             OFFSET_Y + SQUARE_SIZE * i, SQUARE_SIZE, color, border_color=0)
-        svg.print_text(SQUARE_SIZE, OFFSET_Y + SQUARE_SIZE * i + 0.8 * SQUARE_SIZE, answer.time.strftime('%Y-%m-%d %H:%M:%S'))
+        svg.print_text(OFFSET_X + SQUARE_SIZE * (len(items_in_order) + 1), OFFSET_Y + SQUARE_SIZE * i + 0.8 * SQUARE_SIZE, answer.time.strftime('%Y-%m-%d %H:%M:%S'), font_size=10)
     return HttpResponse(str(svg), content_type="image/svg+xml")
 
 
