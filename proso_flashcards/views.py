@@ -52,7 +52,7 @@ def practice_image(request):
         svg.print_square(
             OFFSET_X + SQUARE_SIZE * item_position[answer.item_asked_id],
             OFFSET_Y + SQUARE_SIZE * i, SQUARE_SIZE, color, border_color=0)
-        svg.print_text(OFFSET_X + SQUARE_SIZE * (len(items_in_order) + 1), OFFSET_Y + SQUARE_SIZE * i + 0.8 * SQUARE_SIZE, answer.time.strftime('%Y-%m-%d %H:%M:%S'), font_size=10)
+        svg.print_text(OFFSET_X + SQUARE_SIZE * (len(items_in_order) + 1), OFFSET_Y + SQUARE_SIZE * i + 0.8 * SQUARE_SIZE, answer.time.strftime('%H:%M:%S %Y-%m-%d'), font_size=10)
     return HttpResponse(str(svg), content_type="image/svg+xml")
 
 
