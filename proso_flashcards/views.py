@@ -77,7 +77,7 @@ def show_more(request, object_class, should_cache=True):
         }
         prefetch_related_all = {
             settings.PROSO_FLASHCARDS.get("term_extension", Term): ["parents"],
-            FlashcardAnswer: ["options"],
+            FlashcardAnswer: ['options__{}'.format(Flashcard.related_term())],
             Flashcard: ["categories"],
             settings.PROSO_FLASHCARDS.get("context_extension", Context): ["categories"],
         }
@@ -414,6 +414,9 @@ def _to_json(request, value):
     LOGGER.debug("converting value to simple JSON took %s seconds", (time_lib() - time_start))
     common_json_enrich.enrich_by_predicate(request, json, common_json_enrich.url, lambda x: True,
                                        ignore_get=['filter_column', 'filter_value', 'categories', 'contexts', 'types'])
+    common_json_enrich.enrich_by_object_type(request, json,
+        flashcards_json_enrich.answer_flashcards, ['fc_answer'],
+        skip_nested=True)
     if 'environment' in request.GET:
         common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
                                                  ["fc_term"],
