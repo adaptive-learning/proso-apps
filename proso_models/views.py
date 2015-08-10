@@ -1,11 +1,13 @@
 from django.http import HttpResponseBadRequest
 from proso.django.request import is_time_overridden, get_time, get_user_id
 from proso.django.response import render_json
-from models import get_environment, get_active_environment_info, Item
+from models import get_environment, get_active_environment_info, Item, recommend_users as models_recommend_users
+import datetime
 import numpy
 import json_enrich
 import proso_common.json_enrich as common_json_enrich
 from lazysignup.decorators import allow_lazy_user
+from django.contrib.admin.views.decorators import staff_member_required
 
 
 @allow_lazy_user
@@ -21,6 +23,52 @@ def status(request):
         'number_of_correct_answers': environment.number_of_correct_answers(user=user_id),
         'environment_info': get_active_environment_info(),
     }), template='models_json.html')
+
+
+@staff_member_required
+def recommend_users(request):
+    '''
+    Recommend users for further analysis.
+
+    GET parameters:
+      register_min:
+        minimal date of user's registration ('%Y-%m-%d')
+      register_max:
+        maximal date of user's registration ('%Y-%m-%d')
+      number_of_answers_min:
+        minimal number of user's answers
+      number_of_answers_max:
+        maximal number of user's answers
+      success_min:
+        minimal user's success rate
+      success_max:
+        maximal user's success rate
+      variable_name:
+        name of the filtered parameter
+      variable_min:
+        minimal value of the parameter of the model
+      variable_max:
+        maximal value of parameter of the model
+      limit:
+        number of returned questions (default 10, maximum 100)
+    '''
+    limit = int(request.GET.get('limit', 1))
+
+    def _get_interval(key):
+        return request.GET.get('{}_min'.format(key)), request.GET.get('{}_max'.format(key))
+
+    def _convert_time_interval(interval):
+        mapped = map(lambda x: None if x is None else datetime.datetime.strptime(x, '%Y-%m-%d'), list(interval))
+        return mapped[0], mapped[1]
+
+    recommended = models_recommend_users(
+        _convert_time_interval(_get_interval('register')),
+        _get_interval('number_of_answers'),
+        _get_interval('success'),
+        request.GET.get('variable_name'),
+        _get_interval('variable'),
+        limit)
+    return render_json(request, recommended, template='models_json.html', help_text=recommend_users.__doc__)
 
 
 @allow_lazy_user

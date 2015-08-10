@@ -91,6 +91,56 @@ def get_option_selector(item_selector):
     )
 
 
+def recommend_users(register_time_interval, number_of_answers_interval, success_rate_interval, variable_name, variable_interval, limit):
+    where = []
+    having = []
+    params = []
+
+    def _create_condition(column_name, interval, where, params):
+        if interval[0] is not None:
+            where.append('{} >= %s'.format(column_name))
+            params.append(interval[0])
+        if interval[1] is not None:
+            where.append('{} <= %s'.format(column_name))
+            params.append(interval[1])
+    _create_condition('date_joined', register_time_interval, where, params)
+    _create_condition('AVG(CASE WHEN item_asked_id = item_answered_id THEN 1 ELSE 0 END)', success_rate_interval, having, params)
+    _create_condition('COUNT(proso_models_answer.id)', number_of_answers_interval, having, params)
+    if variable_name is not None:
+        _create_condition('proso_models_variable.{}'.format(variable_name), variable_interval, having, params)
+    having_final = ''
+    where_final = ''
+    if len(where) > 0:
+        where_final = 'WHERE {}'.format(' AND '.join(where))
+    if len(having) > 0:
+        having_final = 'HAVING {}'.format(' AND '.join(having))
+    if variable_name is not None:
+        variable_join = '''
+            INNER JOIN proso_models_variable
+                ON proso_models_answer.user_id = proso_models_variable.user_id
+                AND proso_models_variable.key = {}
+                AND proso_models_variable.item_primary_id IS NULL
+            '''
+    else:
+        variable_join = ''
+    with closing(connection.cursor()) as cursor:
+        cursor.execute(
+            '''
+            SELECT
+                auth_user.id
+            FROM auth_user
+            INNER JOIN proso_models_answer ON auth_user.id = proso_models_answer.user_id
+            ''' + variable_join + '''
+            ''' + where_final + '''
+            GROUP BY auth_user.id
+            ''' + having_final + '''
+            ORDER BY RANDOM()
+            LIMIT %s
+            ''', params + [limit]
+        )
+        return map(lambda x: x[0], cursor.fetchall())
+
+
 ################################################################################
 # Environment
 ################################################################################

@@ -9,4 +9,5 @@ urlpatterns = patterns(
     url(r'^audit/(?P<key>[\w_]+)', 'audit', name='audit'),
     url(r'^model/', 'model', name='model'),
     url(r'^status/', 'status', name='models_status'),
+    url(r'^recommend_users/', 'recommend_users', name='models_recommend_user'),
 )
