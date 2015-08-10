@@ -104,10 +104,10 @@ def recommend_users(register_time_interval, number_of_answers_interval, success_
             where.append('{} <= %s'.format(column_name))
             params.append(interval[1])
     _create_condition('date_joined', register_time_interval, where, params)
+    if variable_name is not None:
+        _create_condition('proso_models_variable.value', variable_interval, where, params)
     _create_condition('AVG(CASE WHEN item_asked_id = item_answered_id THEN 1 ELSE 0 END)', success_rate_interval, having, params)
     _create_condition('COUNT(proso_models_answer.id)', number_of_answers_interval, having, params)
-    if variable_name is not None:
-        _create_condition('proso_models_variable.{}'.format(variable_name), variable_interval, having, params)
     having_final = ''
     where_final = ''
     if len(where) > 0:
@@ -118,9 +118,9 @@ def recommend_users(register_time_interval, number_of_answers_interval, success_
         variable_join = '''
             INNER JOIN proso_models_variable
                 ON proso_models_answer.user_id = proso_models_variable.user_id
-                AND proso_models_variable.key = {}
+                AND proso_models_variable.key = '{}'
                 AND proso_models_variable.item_primary_id IS NULL
-            '''
+            '''.format(variable_name)
     else:
         variable_join = ''
     with closing(connection.cursor()) as cursor:
