@@ -176,7 +176,6 @@ class FlashcardManager(models.Manager):
             selected_items.pop(test_position)
             test_flashcard = flashcards.pop(test_position)
             test_flashcard.direction = FlashcardAnswer.FROM_TERM
-            test_flashcard.options = []
             if len(selected_items) > 0:
                 other = self._load_options(
                     option_selector, selected_items, flashcards, environment,
