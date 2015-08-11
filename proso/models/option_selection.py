@@ -44,7 +44,13 @@ class RandomOptionSelection(OptionSelection):
     def select_options(self, environment, user, item, time, options, allow_zero_options=None, **kwargs):
         if item in options:
             options.remove(item)
-        return random.sample(options, min(len(options), random.randint(1, 5))) + [item]
+        number_of_options = min(len(options), random.randint(0, self.max_options() - 1))
+        if number_of_options == 0:
+            if not self.is_zero_options_restriction_allowed() or allow_zero_options:
+                return []
+            else:
+                number_of_options = self.max_options() - 1
+        return random.sample(options, min(len(options), number_of_options)) + [item]
 
 
 class ConfusingOptionSelection(OptionSelection):
