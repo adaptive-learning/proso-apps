@@ -13,10 +13,10 @@ class ItemSelection:
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, predictive_model, target_probability):
+    def __init__(self, predictive_model, target_probability=0.7):
         self._predictive_model = predictive_model
         self._target_probability = target_probability
-        self._predictios_cache = None
+        self._predictions_cache = None
         self._rolling_success = None
 
     @abc.abstractmethod
@@ -28,11 +28,11 @@ class ItemSelection:
         pass
 
     def get_predictions(self, environment, user=None, items=None, time=None):
-        if self._predictios_cache is None:
+        if self._predictions_cache is None:
             if user is None or items is None or time is None:
                 raise Exception('Can not compute predictions without user, items and time.')
-            self._predictios_cache = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
-        return self._predictios_cache
+            self._predictions_cache = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
+        return self._predictions_cache
 
     def get_target_probability(self):
         return self._target_probability
@@ -44,9 +44,6 @@ class ItemSelection:
 
 
 class RandomItemSelection(ItemSelection):
-
-    def __init__(self, predictive_model):
-        self._predictive_model = predictive_model
 
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
         candidates = random.sample(items, min(n, len(items)))
