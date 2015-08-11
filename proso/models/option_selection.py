@@ -14,8 +14,10 @@ LOGGER = logging.getLogger('django.request')
 class OptionSelection:
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, item_selector, **kwargs):
+    def __init__(self, item_selector, max_options=6, allow_zero_options_restriction=False, **kwargs):
         self._item_selector = item_selector
+        self._allow_zero_options_restriction = allow_zero_options_restriction
+        self._max_options = max_options
 
     @abc.abstractmethod
     def select_options(self, environment, user, item, time, options, **kwargs):
@@ -25,6 +27,12 @@ class OptionSelection:
         return [self.select_options(environment, user, item, time, options[item], **kwargs)
                 for item in items]
 
+    def is_zero_options_restriction_allowed(self):
+        return self._allow_zero_options_restriction
+
+    def max_options(self):
+        return self._max_options
+
 
 class NonOptionSelection(OptionSelection):
     def select_options(self, environment, user, item, time, options, **kwargs):
@@ -32,17 +40,14 @@ class NonOptionSelection(OptionSelection):
 
 
 class RandomOptionSelection(OptionSelection):
-    def select_options(self, environment, user, item, time, options, **kwargs):
+
+    def select_options(self, environment, user, item, time, options, allow_zero_options=None, **kwargs):
         if item in options:
             options.remove(item)
         return random.sample(options, min(len(options), random.randint(1, 5))) + [item]
 
 
 class ConfusingOptionSelection(OptionSelection):
-    def __init__(self, item_selector, max_options=6, allow_zero_options_restriction=False, **kwargs):
-        super(ConfusingOptionSelection, self).__init__(item_selector, **kwargs)
-        self.max_options = max_options
-        self.allow_zero_options_restriction = allow_zero_options_restriction
 
     def select_options_more_items(self, environment, user, items, time, options, allow_zero_options=None, **kwargs):
         if allow_zero_options is None:
@@ -64,12 +69,12 @@ class ConfusingOptionSelection(OptionSelection):
         prob_target = adjust_target_probability(target_probability, rolling_success)
         g = min(0.5, max(0, prob_target - prob_real) / max(0.001, 1 - prob_real))
         k = round_fun(1.0 / g) if g != 0 else 1
-        number_of_options = int(0 if (k > self.max_options or k == 0) else (k - 1))
+        number_of_options = int(0 if (k > self.max_options() or k == 0) else (k - 1))
         if number_of_options == 0:
-            if not self.allow_zero_options_restriction or allow_zero_options:
+            if not self.is_zero_options_restriction_allowed() or allow_zero_options:
                 return []
             else:
-                number_of_options = self.max_options - 1
+                number_of_options = self.max_options() - 1
         # confusing places
         confusing_factor = environment.confusing_factor_more_items(item, options)
         confusing_items = map(
