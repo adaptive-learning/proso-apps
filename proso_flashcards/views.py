@@ -21,6 +21,7 @@ import proso_models.json_enrich as models_json_enrich
 import proso_flashcards.json_enrich as flashcards_json_enrich
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
 from proso_models.models import get_environment, get_predictive_model, PracticeContext, AnswerMeta
+from django.utils.translation import ugettext as _
 import proso.svg
 
 
@@ -312,6 +313,11 @@ def practice(request):
 
     time_before_candidates = time_lib()
     candidates = _candidates_to_practice(request, 100, practice_context_content)
+    if len(candidates) == 0:
+        return render_json(request, {
+            'error': _('There is no flashcard for the given filter to practice.'),
+            'error_type': 'empty_practice'
+        }, status=404, template='flashcards_json.html')
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_candidates))
     time_before_practice = time_lib()
     language = request.GET.get("language", request.LANGUAGE_CODE)
