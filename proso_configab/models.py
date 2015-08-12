@@ -114,7 +114,7 @@ class ExperimentSetupManager(models.Manager):
                     proso_configab_answerexperimentsetup.experiment_setup_id,
                     proso_models_answer.user_id,
                     COUNT(proso_models_answer.id) as number_of_answers,
-                    COUNT(DISTINCT(proso_models_answer)) number_of_sessions
+                    COUNT(DISTINCT(proso_models_answer.session_id)) number_of_sessions
                 FROM proso_models_answer
                 INNER JOIN proso_configab_answerexperimentsetup ON proso_configab_answerexperimentsetup.answer_id = proso_models_answer.id
                 WHERE proso_configab_answerexperimentsetup.experiment_setup_id IN (''' + ', '.join(['%s' for _ in experiment_setup_ids]) + ''')
@@ -135,7 +135,7 @@ class ExperimentSetupManager(models.Manager):
                     result[experiment_setup_id] = {
                         'number_of_users': len(data),
                         'number_of_answers_median': numpy.median(map(lambda d: d['number_of_answers'], data)),
-                        'returning_chance': numpy.round(sum(map(lambda d: d['number_of_sessions'] > 1, data)) / float(len(data)), 2),
+                        'returning_chance': float('{0:.2f}'.format(numpy.round(sum(map(lambda d: d['number_of_sessions'] > 1, data)) / float(len(data)), 2))),
                     }
                 else:
                     result[experiment_setup_id] = {
