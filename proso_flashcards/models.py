@@ -345,7 +345,7 @@ class CategoryManager(models.Manager):
                 id = abs(id)
                 types.append(self.filter(pk=id).values_list("children_type", flat=True))
             else:
-                if id.startswith('-'):
+                if id is not None and id.startswith('-'):
                     id = id[1:]
                 types.append(self.filter(identifier=id).values_list("children_type", flat=True))
         types = map(lambda l: l[0] if len(l) > 0 else None, types)
@@ -484,7 +484,7 @@ def _get_value_without_negation(value):
     if isinstance(value, int):
         return abs(value), value < 0
     else:
-        if value.startswith('-'):
+        if value is not None and value.startswith('-'):
             return value[1:], True
         else:
             return value, False
