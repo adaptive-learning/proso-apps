@@ -29,8 +29,12 @@ class ItemSelection:
 
     def get_predictions(self, environment, user=None, items=None, time=None):
         if self._predictions_cache is None:
-            if user is None or items is None or time is None:
-                raise Exception('Can not compute predictions without user, items and time.')
+            if user is None:
+                raise Exception('Can not compute predictions without user.')
+            if items is None:
+                raise Exception('Can not compute predictions without items.')
+            if time is None:
+                raise Exception('Can not compute predictions without time.')
             self._predictions_cache = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
         return self._predictions_cache
 
