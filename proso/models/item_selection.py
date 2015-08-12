@@ -74,8 +74,9 @@ class TestWrapperItemSelection(ItemSelection):
         self.get_predictions(environment, user, items, time)
         test_item = random.choice(items)
         test_meta = {'test': 'random_without_options'}
-        items, meta = self._item_selector.select(environment, user, items, time, practice_context, n - 1, **kwargs) if n - 1 > 0 else ([], [])
-        return items[:test_position] + [test_item] + items[test_position:], meta[:test_position] + [test_meta] + meta[test_position:]
+        items = filter(lambda i: i != test_item, items)
+        selected_items, meta = self._item_selector.select(environment, user, items, time, practice_context, n - 1, **kwargs) if n - 1 > 0 else ([], [])
+        return selected_items[:test_position] + [test_item] + selected_items[test_position:], meta[:test_position] + [test_meta] + meta[test_position:]
 
     def get_predictions(self, environment, user=None, items=None, time=None):
         return self._item_selector.get_predictions(environment, user=user, items=items, time=time)
