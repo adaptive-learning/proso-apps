@@ -4,6 +4,7 @@ from threading import currentThread
 from proso.django.request import is_user_id_overridden, is_time_overridden
 from django.dispatch import receiver
 from django.db.models.signals import pre_save
+from proso.django.response import BadRequestException
 import hashlib
 import importlib
 import json
@@ -84,6 +85,6 @@ def check_user_or_time_overridden(sender, instance, **kwargs):
     if '{}.{}'.format(instance.__class__.__module__, instance.__class__.__name__) == 'proso_user.models.Session':
         return
     if _is_user_overriden_from_url.get(currentThread(), False):
-        raise Exception("Nothing can be saved when the user is overridden from URL.")
+        raise BadRequestException("Nothing can be saved when the user is overridden from URL.")
     if _is_time_overriden_from_url.get(currentThread(), False):
-        raise Exception("Nothing can be saved when the time is overridden from URL.")
+        raise BadRequestException("Nothing can be saved when the time is overridden from URL.")
