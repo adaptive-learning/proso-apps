@@ -106,7 +106,7 @@ class PossibleValue(models.Model):
 
 class ExperimentSetupManager(models.Manager):
 
-    def get_stats(self, experiment_setup_ids):
+    def get_stats(self, experiment_setup_ids, answers_per_user=10):
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
@@ -119,8 +119,9 @@ class ExperimentSetupManager(models.Manager):
                 INNER JOIN proso_configab_answerexperimentsetup ON proso_configab_answerexperimentsetup.answer_id = proso_models_answer.id
                 WHERE proso_configab_answerexperimentsetup.experiment_setup_id IN (''' + ', '.join(['%s' for _ in experiment_setup_ids]) + ''')
                 GROUP BY proso_configab_answerexperimentsetup.experiment_setup_id, proso_models_answer.user_id
+                HAVING COUNT(proso_models_answer.id) > %s
                 ''',
-                experiment_setup_ids
+                experiment_setup_ids + [answers_per_user]
             )
             fetched = defaultdict(list)
             for row in cursor:
