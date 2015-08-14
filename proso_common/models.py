@@ -82,9 +82,10 @@ class Config(models.Model):
 
 @receiver(pre_save)
 def check_user_or_time_overridden(sender, instance, **kwargs):
-    if '{}.{}'.format(instance.__class__.__module__, instance.__class__.__name__) == 'proso_user.models.Session':
+    instance_class = '{}.{}'.format(instance.__class__.__module__, instance.__class__.__name__)
+    if instance_class.endswith('Session'):
         return
     if _is_user_overriden_from_url.get(currentThread(), False):
-        raise BadRequestException("Nothing can be saved when the user is overridden from URL.")
+        raise BadRequestException("Nothing ({}) can be saved when the user is overridden from URL.".format(instance_class))
     if _is_time_overriden_from_url.get(currentThread(), False):
-        raise BadRequestException("Nothing can be saved when the time is overridden from URL.")
+        raise BadRequestException("Nothing ({}) can be saved when the time is overridden from URL.".format(instance_class))
