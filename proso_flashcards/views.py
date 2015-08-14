@@ -291,6 +291,12 @@ def practice(request):
       see answer resource
     """
 
+    if request.user.id is None:  # Google Bot
+        return render_json(request, {
+            'error': _('There is no user available for the practice.'),
+            'error_type': 'user_undefined'
+        }, status=400, template='flashcards_json.html')
+
     limit = min(int(request.GET.get('limit', 10)), 100)
     # prepare
     user = get_user_id(request)
