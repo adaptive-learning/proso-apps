@@ -8,6 +8,8 @@ from social_auth.exceptions import AuthAlreadyAssociated
 from django.contrib.auth import logout
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
+from proso.django.response import HttpError, render_json
+
 
 _HTML_TYPES = ('text/html', 'application/xhtml+xml')
 
@@ -37,6 +39,16 @@ class ToolbarMiddleware(object):
         if response.get('Content-Length', None):
             response['Content-Length'] = len(response.content)
         return response
+
+
+class ErrorMiddleware(object):
+
+    def process_exception(self, request, exception):
+        if isinstance(exception, HttpError):
+            return render_json(request, {
+                'error': str(exception),
+                'error_type': 'bad_request'
+                }, template='common_json.html', status=exception.http_status)
 
 
 class AuthAlreadyAssociatedMiddleware(object):

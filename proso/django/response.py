@@ -63,6 +63,19 @@ def render_json(request, json, template=None, status=None, help_text=None, versi
     return result
 
 
+class HttpError(Exception):
+
+    def __init__(self, status, message):
+        super(HttpError, self).__init__(message)
+        self.http_status = status
+
+
+class BadRequestException(HttpError):
+
+    def __init__(self, message):
+        super(BadRequestException, self).__init__(400, message)
+
+
 class JsonResponse(HttpResponse):
 
     """
