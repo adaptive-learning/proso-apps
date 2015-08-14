@@ -70,6 +70,8 @@ def show_more(request, object_class, should_cache=True):
     to_json_kwargs = {}
     if object_class == Flashcard and "without_contexts" in request.GET:
         to_json_kwargs['contexts'] = False
+    if issubclass(object_class, Context) and 'without_content' in request.GET:
+        to_json_kwargs['with_content'] = False
 
     def _load_objects(request, object_class):
         select_related_all = {

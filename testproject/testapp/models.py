@@ -27,9 +27,8 @@ class ExtendedTerm(Term):
 class ExtendedContext(Context):
     extra_info = models.TextField()
 
-    def to_json(self, nested=False):
-        json = Context.to_json(self, nested)
-        json["extra-info"] = self.extra_info
+    def to_json(self, **kwargs):
+        json = Context.to_json(self, **kwargs)
         return json
 
     @staticmethod

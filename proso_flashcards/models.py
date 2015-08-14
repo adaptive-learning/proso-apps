@@ -48,7 +48,7 @@ class Context(models.Model):
     name = models.TextField(null=True, blank=True)
     content = models.TextField(null=True, blank=True)
 
-    def to_json(self, nested=False):
+    def to_json(self, nested=False, with_content=True):
         json = {
             "id": self.pk,
             "identifier": self.identifier,
@@ -56,8 +56,9 @@ class Context(models.Model):
             "object_type": "fc_context",
             "lang": self.lang,
             "name": self.name,
-            "content": self.content,
         }
+        if with_content:
+            json['content'] = self.content
         if not nested:
             json["categories"] = [category.to_json(nested=True) for category in self.categories.all()]
         return json
