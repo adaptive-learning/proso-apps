@@ -173,12 +173,3 @@ def _override_value(app_name_key, value, override_key, override_value):
         to_override = to_override[k]
     to_override[override_keys[-1]] = override_value
     return value
-
-
-@receiver(pre_save)
-def check_overridden_and_persistence(sender, instance, **kwargs):
-    if is_overridden_from_url():
-        if isinstance(instance, Session):
-            return
-        raise Exception("Nothing ({}) can be saved when the configuration is overridden ({}) from URL.".format(
-            instance.__class__, _overridden[currentThread()]))
