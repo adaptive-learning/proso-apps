@@ -23,9 +23,11 @@ class OptionSelection:
     def select_options(self, environment, user, item, time, options, **kwargs):
         pass
 
-    def select_options_more_items(self, environment, user, items, time, options, **kwargs):
-        return [self.select_options(environment, user, item, time, options[item], **kwargs)
-                for item in items]
+    def select_options_more_items(self, environment, user, items, time, options, allow_zero_options=None, **kwargs):
+        if allow_zero_options is None:
+            allow_zero_options = defaultdict(lambda: True)
+        return [self.select_options(environment, user, item, time, options[item],
+                                    allow_zero_options=allow_zero_options[item], **kwargs) for item in items]
 
     def is_zero_options_restriction_allowed(self):
         return self._allow_zero_options_restriction
@@ -54,12 +56,6 @@ class RandomOptionSelection(OptionSelection):
 
 
 class ConfusingOptionSelection(OptionSelection):
-
-    def select_options_more_items(self, environment, user, items, time, options, allow_zero_options=None, **kwargs):
-        if allow_zero_options is None:
-            allow_zero_options = defaultdict(lambda: True)
-        return [self.select_options(environment, user, item, time, options[item],
-                                    allow_zero_options=allow_zero_options[item], **kwargs) for item in items]
 
     def select_options(self, environment, user, item, time, options, allow_zero_options=True, **kwargs):
         options = filter(lambda i: i != item, options)
