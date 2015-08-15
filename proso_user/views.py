@@ -194,6 +194,13 @@ def session(request):
       display_height
         height of the client's display
     """
+
+    if request.user.id is None:  # Google Bot
+        return render_json(request, {
+            'error': _('There is no user available to create a session.'),
+            'error_type': 'user_undefined'
+        }, status=400, template='user_json.html')
+
     if request.method == 'GET':
         return render_json(
             request,
