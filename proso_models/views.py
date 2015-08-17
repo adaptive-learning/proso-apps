@@ -1,7 +1,7 @@
 from django.http import HttpResponseBadRequest
-from proso.django.request import is_time_overridden, get_time, get_user_id
+from proso.django.request import is_time_overridden, get_time, get_user_id, load_query_json
 from proso.django.response import render_json
-from models import get_environment, get_active_environment_info, Item, recommend_users as models_recommend_users
+from models import get_environment, get_active_environment_info, Item, recommend_users as models_recommend_users, PracticeContext, context_learning_stats
 import datetime
 import numpy
 import json_enrich
@@ -23,6 +23,13 @@ def status(request):
         'number_of_correct_answers': environment.number_of_correct_answers(user=user_id),
         'environment_info': get_active_environment_info(),
     }), template='models_json.html')
+
+
+@staff_member_required
+def context_learning(request):
+    context = PracticeContext.objects.from_content(load_query_json(request.GET, 'context', '{}'))
+    limit = int(request.GET.get('limit', 10))
+    return render_json(request, _to_json(request, context_learning_stats(context.id, limit)), template='models_json.html')
 
 
 @staff_member_required

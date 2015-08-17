@@ -23,6 +23,7 @@ from django.db import transaction
 from proso.django.util import disable_for_loaddata, is_on_postgresql
 import logging
 import hashlib
+import numpy
 
 
 LOGGER = logging.getLogger('django.request')
@@ -89,6 +90,40 @@ def get_option_selector(item_selector):
         default_class='proso.models.option_selection.ConfusingOptionSelection',
         pass_parameters=[item_selector]
     )
+
+
+def context_learning_stats(context_id, limit, users=None):
+    with closing(connection.cursor()) as cursor:
+        cursor.execute("SELECT id FROM proso_models_answermeta WHERE content LIKE '%random_without_options%'")
+        meta_ids = map(lambda x: str(x[0]), cursor.fetchall())
+    if len(meta_ids) == 0:
+        return {
+            'number_of_users': 0,
+            'learning_curve': [],
+        }
+    with closing(connection.cursor()) as cursor:
+        where = ['context_id = %s', 'metainfo_id IN ({})'.format(','.join(meta_ids))]
+        where_params = [context_id]
+        if users is not None:
+            where.append('user_id IN ({})'.format(','.join(['%s' for _ in users])))
+            where_params += users
+        cursor.execute(
+            '''
+            SELECT
+                user_id,
+                item_asked_id = COALESCE(item_answered_id, -1)
+            FROM proso_models_answer
+            WHERE ''' + ' AND '.join(where) + '''
+            ORDER BY id
+            ''', where_params)
+        user_answers = defaultdict(list)
+        for row in cursor:
+            user_answers[row[0]].append(row[1])
+        user_answers = {user: answers[:limit] for (user, answers) in user_answers.iteritems() if len(answers) >= limit}
+        return {
+            'number_of_users': len(user_answers),
+            'learning_curve': map(lambda x: float('{0:.2f}'.format(x)), map(numpy.mean, zip(*user_answers.values()))),
+        }
 
 
 def recommend_users(register_time_interval, number_of_answers_interval, success_rate_interval, variable_name, variable_interval, limit):
