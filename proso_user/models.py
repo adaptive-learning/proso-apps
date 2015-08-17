@@ -228,7 +228,7 @@ def migrate_google_openid_user(user):
             # in case of already migrated users do not lose data
             if new_user.id != old_social.user.id:
                 new_user.delete()
-                old_social.delete()
+            old_social.delete()
             LOGGER.info('Migrating user "{}" from Google OpenID to OAauth2'.format(user.email))
             return old_social.user
         except UserSocialAuth.DoesNotExist:
