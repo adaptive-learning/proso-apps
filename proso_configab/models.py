@@ -3,7 +3,7 @@ from django.db import models
 from datetime import datetime
 from collections import defaultdict
 from random import randint
-from proso_models.models import Answer
+from proso_models.models import Answer, learning_curve
 from django.db import transaction
 from proso.django.config import override
 from django.dispatch import receiver
@@ -106,7 +106,7 @@ class PossibleValue(models.Model):
 
 class ExperimentSetupManager(models.Manager):
 
-    def get_stats(self, experiment_setup_ids, answers_per_user=10):
+    def get_stats(self, experiment_setup_ids, answers_per_user=10, learning_curve_length=5, learning_curve_max_users=1000):
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
@@ -124,7 +124,9 @@ class ExperimentSetupManager(models.Manager):
                 experiment_setup_ids + [answers_per_user]
             )
             fetched = defaultdict(list)
+            experiment_users = defaultdict(set)
             for row in cursor:
+                experiment_users[row[0]].add(row[1])
                 fetched[row[0]].append({
                     'number_of_answers': row[2],
                     'number_of_sessions': row[3]
@@ -133,10 +135,12 @@ class ExperimentSetupManager(models.Manager):
             for experiment_setup_id in experiment_setup_ids:
                 if experiment_setup_id in fetched:
                     data = fetched[experiment_setup_id]
+                    users = experiment_users[experiment_setup_id]
                     result[experiment_setup_id] = {
                         'number_of_users': len(data),
                         'number_of_answers_median': numpy.median(map(lambda d: d['number_of_answers'], data)),
                         'returning_chance': float('{0:.2f}'.format(numpy.round(sum(map(lambda d: d['number_of_sessions'] > 1, data)) / float(len(data)), 2))),
+                        'learning_curve': learning_curve(learning_curve_length, users=users, number_of_users=learning_curve_max_users),
                     }
                 else:
                     result[experiment_setup_id] = {
