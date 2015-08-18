@@ -147,7 +147,7 @@ def learning_curve(length, context=None, users=None, number_of_users=1000):
         context_answers = defaultdict(lambda: defaultdict(list))
         for row in cursor:
             context_answers[row[0]][row[1]].append(row[2])
-        user_answers = [answers[:length] for user_answers in context_answers.itervalues() for answers in user_answers.itervalues()]
+        user_answers = [answers[:length] for user_answers in context_answers.itervalues() for answers in user_answers.itervalues() if len(answers) >= length]
         return {
             'number_of_users': len(valid_users),
             'number_of_datapoints': len(user_answers),
