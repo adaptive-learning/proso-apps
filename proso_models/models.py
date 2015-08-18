@@ -94,7 +94,7 @@ def get_option_selector(item_selector):
 
 def learning_curve(length, context=None, users=None, number_of_users=1000):
     with closing(connection.cursor()) as cursor:
-        cursor.execute("SELECT id FROM proso_models_answermeta WHERE content LIKE '%random_without_options%'")
+        cursor.execute("SELECT id FROM proso_models_answermeta WHERE content LIKE '%%random_without_options%%'")
         meta_ids = map(lambda x: str(x[0]), cursor.fetchall())
     EMPTY_LEARNING_CURVE = {
         'number_of_users': 0,
