@@ -12,10 +12,10 @@ from proso.django.util import disable_for_loaddata
 from django.contrib.auth.signals import user_logged_in
 from contextlib import closing
 from django.db import connection
+from proso.metric import binomial_confidence_mean, confidence_value_to_json, confidence_median
 import json
 import hashlib
 import logging
-import numpy
 
 
 LOGGER = logging.getLogger('django.request')
@@ -138,8 +138,9 @@ class ExperimentSetupManager(models.Manager):
                     users = experiment_users[experiment_setup_id]
                     result[experiment_setup_id] = {
                         'number_of_users': len(data),
-                        'number_of_answers_median': numpy.median(map(lambda d: d['number_of_answers'], data)),
-                        'returning_chance': float('{0:.2f}'.format(numpy.round(sum(map(lambda d: d['number_of_sessions'] > 1, data)) / float(len(data)), 2))),
+                        'number_of_answers': confidence_value_to_json(confidence_median(map(lambda d: d['number_of_answers'], data))),
+                        'returning_chance': confidence_value_to_json(
+                            binomial_confidence_mean(map(lambda d: d['number_of_sessions'] > 1, data))),
                         'learning_curve': learning_curve(learning_curve_length, users=users, number_of_users=learning_curve_max_users),
                     }
                 else:

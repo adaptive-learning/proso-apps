@@ -21,9 +21,9 @@ from django.core.cache import cache
 from proso.django.cache import get_request_cache, is_cache_prepared
 from django.db import transaction
 from proso.django.util import disable_for_loaddata, is_on_postgresql
+from proso.metric import binomial_confidence_mean, confidence_value_to_json
 import logging
 import hashlib
-import numpy
 
 
 LOGGER = logging.getLogger('django.request')
@@ -150,17 +150,8 @@ def learning_curve(length, context=None, users=None, number_of_users=1000):
         user_answers = [answers[:length] for user_answers in context_answers.itervalues() for answers in user_answers.itervalues() if len(answers) >= length]
 
         def _mean_with_confidence(xs, z=1.96):
-            print xs
-            mean = numpy.mean(xs)
-            confidence = z * numpy.sqrt((mean * (1 - mean)) / len(xs))
-            format_number = lambda x: float('{0:.2f}'.format(x))
-            return {
-                'mean': format_number(mean),
-                'confidence_interval': {
-                    'min': format_number(mean - confidence),
-                    'max': format_number(mean + confidence),
-                },
-            }
+            return confidence_value_to_json(binomial_confidence_mean(xs))
+
         return {
             'number_of_users': len(valid_users),
             'number_of_datapoints': len(user_answers),
