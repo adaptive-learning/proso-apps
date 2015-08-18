@@ -10,5 +10,5 @@ urlpatterns = patterns(
     url(r'^model/', 'model', name='model'),
     url(r'^status/', 'status', name='models_status'),
     url(r'^recommend_users/', 'recommend_users', name='models_recommend_user'),
-    url(r'^context_learning/', 'context_learning', name='models_context_learning'),
+    url(r'^learning_curve/', 'learning_curve', name='models_learning_curve'),
 )

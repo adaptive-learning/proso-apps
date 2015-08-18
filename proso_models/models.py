@@ -92,37 +92,67 @@ def get_option_selector(item_selector):
     )
 
 
-def context_learning_stats(context_id, limit, users=None):
+def learning_curve(length, context=None, users=None, number_of_users=1000):
     with closing(connection.cursor()) as cursor:
         cursor.execute("SELECT id FROM proso_models_answermeta WHERE content LIKE '%random_without_options%'")
         meta_ids = map(lambda x: str(x[0]), cursor.fetchall())
+    EMPTY_LEARNING_CURVE = {
+        'number_of_users': 0,
+        'number_of_data_points': 0,
+        'success': [],
+        'object_type': 'learning_curve',
+    }
     if len(meta_ids) == 0:
-        return {
-            'number_of_users': 0,
-            'learning_curve': [],
-        }
-    with closing(connection.cursor()) as cursor:
-        where = ['context_id = %s', 'metainfo_id IN ({})'.format(','.join(meta_ids))]
-        where_params = [context_id]
+        return EMPTY_LEARNING_CURVE
+
+    def _get_where(context, users, meta_ids):
+        _where = ['metainfo_id IN ({})'.format(','.join(meta_ids))]
+        _where_params = []
+        if context is not None:
+            _where.append('context_id = %s')
+            _where_params.append(context)
         if users is not None:
-            where.append('user_id IN ({})'.format(','.join(['%s' for _ in users])))
-            where_params += users
+            _where.append('user_id IN ({})'.format(','.join(['%s' for _ in users])))
+            _where_params += users
+        return _where, _where_params
+
+    with closing(connection.cursor()) as cursor:
+        where, where_params = _get_where(context, users, meta_ids)
         cursor.execute(
             '''
             SELECT
+                user_id
+            FROM proso_models_answer
+            WHERE ''' + ' AND '.join(where) + '''
+            GROUP BY context_id, user_id
+            HAVING COUNT(id) >= %s
+            ORDER BY RANDOM()
+            LIMIT %s
+            ''', where_params + [length, number_of_users])
+        valid_users = list(set(map(lambda x: x[0], cursor.fetchall())))
+    if len(valid_users) == 0:
+        return EMPTY_LEARNING_CURVE
+    with closing(connection.cursor()) as cursor:
+        where, where_params = _get_where(context, valid_users, meta_ids)
+        cursor.execute(
+            '''
+            SELECT
+                context_id,
                 user_id,
                 item_asked_id = COALESCE(item_answered_id, -1)
             FROM proso_models_answer
             WHERE ''' + ' AND '.join(where) + '''
             ORDER BY id
             ''', where_params)
-        user_answers = defaultdict(list)
+        context_answers = defaultdict(lambda: defaultdict(list))
         for row in cursor:
-            user_answers[row[0]].append(row[1])
-        user_answers = {user: answers[:limit] for (user, answers) in user_answers.iteritems() if len(answers) >= limit}
+            context_answers[row[0]][row[1]].append(row[2])
+        user_answers = [answers[:length] for user_answers in context_answers.itervalues() for answers in user_answers.itervalues()]
         return {
-            'number_of_users': len(user_answers),
-            'learning_curve': map(lambda x: float('{0:.2f}'.format(x)), map(numpy.mean, zip(*user_answers.values()))),
+            'number_of_users': len(valid_users),
+            'number_of_datapoints': len(user_answers),
+            'success': map(lambda x: float('{0:.2f}'.format(x)), map(numpy.mean, zip(*user_answers))),
+            'object_type': 'learning_curve',
         }
 
 
