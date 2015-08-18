@@ -148,10 +148,23 @@ def learning_curve(length, context=None, users=None, number_of_users=1000):
         for row in cursor:
             context_answers[row[0]][row[1]].append(row[2])
         user_answers = [answers[:length] for user_answers in context_answers.itervalues() for answers in user_answers.itervalues() if len(answers) >= length]
+
+        def _mean_with_confidence(xs, z=1.96):
+            print xs
+            mean = numpy.mean(xs)
+            confidence = z * numpy.sqrt((mean * (1 - mean)) / len(xs))
+            format_number = lambda x: float('{0:.2f}'.format(x))
+            return {
+                'mean': format_number(mean),
+                'confidence_interval': {
+                    'min': format_number(mean - confidence),
+                    'max': format_number(mean + confidence),
+                },
+            }
         return {
             'number_of_users': len(valid_users),
             'number_of_datapoints': len(user_answers),
-            'success': map(lambda x: float('{0:.2f}'.format(x)), map(numpy.mean, zip(*user_answers))),
+            'success': map(_mean_with_confidence, zip(*user_answers)),
             'object_type': 'learning_curve',
         }
 
