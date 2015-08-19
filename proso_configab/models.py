@@ -142,6 +142,7 @@ class ExperimentSetupManager(models.Manager):
                         'returning_chance': confidence_value_to_json(
                             binomial_confidence_mean(map(lambda d: d['number_of_sessions'] > 1, data))),
                         'learning_curve': learning_curve(learning_curve_length, users=users, number_of_users=learning_curve_max_users),
+                        'learning_curve_all_users': learning_curve(learning_curve_length, users=users, number_of_users=learning_curve_max_users, user_length=1)
                     }
                 else:
                     result[experiment_setup_id] = {

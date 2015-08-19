@@ -27,9 +27,30 @@ def status(request):
 
 @staff_member_required
 def learning_curve(request):
+    '''
+    Shows a learning curve based on the randomized testing.
+
+    GET parameters:
+      length:
+        length of the learning curve
+      context:
+        JSON representing the practice context
+      all_users:
+        if present stop filtering users based on the minimal number of testing
+        answers (=length)
+    '''
     context = PracticeContext.objects.from_content(load_query_json(request.GET, 'context', '{}'))
     length = int(request.GET.get('length', 10))
-    return render_json(request, _to_json(request, models_learning_curve(length, context=context.id)), template='models_json.html')
+    if 'all_users' in request.GET:
+        user_length = 1
+    else:
+        user_length = None
+    return render_json(
+        request, _to_json(
+            request, models_learning_curve(length,
+            context=context.id, user_length=user_length)
+        ),
+        template='models_json.html', help_text=learning_curve.__doc__)
 
 
 @staff_member_required

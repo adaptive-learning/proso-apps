@@ -92,7 +92,9 @@ def get_option_selector(item_selector):
     )
 
 
-def learning_curve(length, context=None, users=None, number_of_users=1000):
+def learning_curve(length, context=None, users=None, user_length=None, number_of_users=1000):
+    if user_length is None:
+        user_length = length
     with closing(connection.cursor()) as cursor:
         cursor.execute("SELECT id FROM proso_models_answermeta WHERE content LIKE '%%random_without_options%%'")
         meta_ids = map(lambda x: str(x[0]), cursor.fetchall())
@@ -128,7 +130,7 @@ def learning_curve(length, context=None, users=None, number_of_users=1000):
             HAVING COUNT(id) >= %s
             ORDER BY RANDOM()
             LIMIT %s
-            ''', where_params + [length, number_of_users])
+            ''', where_params + [user_length, number_of_users])
         valid_users = list(set(map(lambda x: x[0], cursor.fetchall())))
     if len(valid_users) == 0:
         return EMPTY_LEARNING_CURVE
@@ -147,10 +149,16 @@ def learning_curve(length, context=None, users=None, number_of_users=1000):
         context_answers = defaultdict(lambda: defaultdict(list))
         for row in cursor:
             context_answers[row[0]][row[1]].append(row[2])
-        user_answers = [answers[:length] for user_answers in context_answers.itervalues() for answers in user_answers.itervalues() if len(answers) >= length]
+        user_answers = [
+            answers[:min(len(answers), length)] + [None for _ in range(length - min(len(answers), length))]
+            for user_answers in context_answers.itervalues()
+            for answers in user_answers.itervalues()
+            if len(answers) >= user_length
+        ]
+        print user_answers
 
-        def _mean_with_confidence(xs, z=1.96):
-            return confidence_value_to_json(binomial_confidence_mean(xs))
+        def _mean_with_confidence(xs):
+            return confidence_value_to_json(binomial_confidence_mean(filter(lambda x: x is not None, xs)))
 
         return {
             'number_of_users': len(valid_users),
