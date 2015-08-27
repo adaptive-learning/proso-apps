@@ -219,7 +219,7 @@ class Command(BaseCommand):
         db_flashcards = {}
         db_flashcards_loaded = {}
         item_mapping = {}
-        for db_flashcard in Flashcard.objects.select_related('context').all():
+        for db_flashcard in Flashcard.objects.all():
             db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
             item_mapping[db_flashcard.identifier] = db_flashcard.item_id
         db_flascards_before_load = copy.copy(db_flashcards)
@@ -230,8 +230,8 @@ class Command(BaseCommand):
                 raise CommandError("Term {} for flashcard {} doesn't exist".format(flashcard["term"], flashcard["id"]))
             for term in terms:
                 db_flashcard = Flashcard.objects.filter(identifier=flashcard["id"], lang=term.lang).first()
-                context = Context.objects.filter(identifier=flashcard["context"], lang=term.lang).first()
-                if context is None:
+                context_id = Context.objects.filter(identifier=flashcard["context"], lang=term.lang).values_list("id", flat=True).first()
+                if context_id is None:
                     raise CommandError(
                         "Context {} for flashcard {} doesn't exist".format(flashcard["context"], flashcard["id"]))
                 if db_flashcard is None:
@@ -240,7 +240,7 @@ class Command(BaseCommand):
                         lang=term.lang,
                     )
                 db_flashcard.term = term
-                db_flashcard.context = context
+                db_flashcard.context_id = context_id
                 if "description" in flashcard:
                     db_flashcard.description = flashcard["description"]
                 if "active" in flashcard:
@@ -255,11 +255,11 @@ class Command(BaseCommand):
                 db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
 
         print "\nChecking flashcards for loaded contexts"
-        context_id_loaded = set(map(lambda db_flashcard: db_flashcard.context.id, db_flashcards_loaded.values()))
+        context_id_loaded = set(map(lambda db_flashcard: db_flashcard.context_id, db_flashcards_loaded.values()))
         db_flashcards_ignored = {
             key: db_flashcards[key]
             for key in (
-                set({key: db_flashcard for (key, db_flashcard) in db_flascards_before_load.iteritems() if db_flashcard.context.id in context_id_loaded}.keys())
+                set({key: db_flashcard for (key, db_flashcard) in db_flascards_before_load.iteritems() if db_flashcard.context_id in context_id_loaded}.keys())
                 -
                 set(db_flashcards_loaded.keys())
             )
