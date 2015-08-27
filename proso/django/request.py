@@ -8,7 +8,7 @@ import urllib
 
 
 def load_query_json(query_dict, key, default_json=None):
-    value =  query_dict.get(key, default_json)
+    value = query_dict.get(key, default_json)
     try:
         return simplejson.loads(value)
     except ValueError:
