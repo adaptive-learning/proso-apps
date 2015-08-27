@@ -1067,6 +1067,17 @@ def init_content_hash_answer_meta(sender, instance, **kwargs):
     init_content_hash(instance)
 
 
+@receiver(pre_save)
+@disable_for_loaddata
+def handle_response_time_bug(sender, instance, **kwargs):
+    if not issubclass(sender, Answer):
+        return
+    if instance.response_time is None or instance.response_time > 1000 * 60 * 60 * 24 or instance.response_time < 0:
+        LOGGER.error('There is a wrong value {} for response time, user {}, time {}, item asked {}'.format(
+            instance.response_time, instance.user_id, instance.time, instance.item_asked_id))
+        instance.response_time = -1
+
+
 @receiver(pre_save, sender=PracticeContext)
 @disable_for_loaddata
 def init_content_hash_practice_context(sender, instance, **kwargs):
