@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 from jsonschema import validate
 from django.db import transaction
 import re
+import copy
 
 from proso_flashcards.models import Category, Context, Term, Flashcard
 
@@ -22,6 +23,13 @@ class Command(BaseCommand):
             default=False,
             action="store_true",
             help='Do not check if categories children are only of one type. Also correct type of categories is not set.'),
+        make_option(
+            '--ignored-flashcards',
+            dest='ignored_flashcards',
+            choices=['disable', 'delete'],
+            default=None,
+            help='Set strategy in case of flashcards which are not mentioned for loaded context.',
+        )
     )
 
     def handle(self, *args, **options):
@@ -42,7 +50,7 @@ class Command(BaseCommand):
                 if "terms" in data:
                     self._load_terms(data["terms"])
                 if "flashcards" in data:
-                    self._load_flashcards(data["flashcards"])
+                    self._load_flashcards(data["flashcards"], options['ignored_flashcards'])
                 if not options["skip_category_check"]:
                     check_and_set_category_type(Category)
                 check_db_integrity()
@@ -205,14 +213,16 @@ class Command(BaseCommand):
         print "New total number of terms in DB: {}".format(len(db_terms))
         return db_terms
 
-    def _load_flashcards(self, data):
+    def _load_flashcards(self, data, ignored_flashcards_strategy):
         if data is not None:
             print "\nLoading flashcards"
         db_flashcards = {}
+        db_flashcards_loaded = {}
         item_mapping = {}
-        for db_flashcard in Flashcard.objects.all():
+        for db_flashcard in Flashcard.objects.select_related('context').all():
             db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
             item_mapping[db_flashcard.identifier] = db_flashcard.item_id
+        db_flascards_before_load = copy.copy(db_flashcards)
 
         for flashcard in progress.bar(data, every=max(1, len(data) / 100)):
             terms = Term.objects.filter(identifier=flashcard["term"])
@@ -241,7 +251,31 @@ class Command(BaseCommand):
                 else:
                     db_flashcard.save()
                     item_mapping[db_flashcard.identifier] = db_flashcard.item_id
+                db_flashcards_loaded[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
                 db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
+
+        print "\nChecking flashcards for loaded contexts"
+        context_id_loaded = set(map(lambda db_flashcard: db_flashcard.context.id, db_flashcards_loaded.values()))
+        db_flashcards_ignored = {
+            key: db_flashcards[key]
+            for key in (
+                set({key: db_flashcard for (key, db_flashcard) in db_flascards_before_load.iteritems() if db_flashcard.context.id in context_id_loaded}.keys())
+                -
+                set(db_flashcards_loaded.keys())
+            )
+        }
+        if len(db_flashcards_ignored) > 0:
+            deleted_flashcard_items = set()
+            print "\nThe following flashcards has been ignored during loading, action:", 'IGNORE' if ignored_flashcards_strategy is None else ignored_flashcards_strategy.upper()
+            for db_flashcard in db_flashcards_ignored.itervalues():
+                print ' --', db_flashcard.lang, ':', db_flashcard.identifier, ':', db_flashcard.context.identifier
+                if ignored_flashcards_strategy == 'delete':
+                    if db_flashcard.item_id not in deleted_flashcard_items:
+                        deleted_flashcard_items.add(db_flashcard.item_id)
+                        db_flashcard.item.delete()
+                elif ignored_flashcards_strategy == 'deactivate':
+                    db_flashcard.active = False
+                    db_flashcard.save()
 
         categories = self._load_categories()
         print "\nBuilding dependencies"
