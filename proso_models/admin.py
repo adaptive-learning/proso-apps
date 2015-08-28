@@ -11,7 +11,8 @@ def pretty_date(time=False):
     'just now', etc
     """
     from datetime import datetime
-    now = datetime.now()
+    from django.utils import timezone
+    now = timezone.now()
     if isinstance(time, int):
         diff = now - datetime.fromtimestamp(time)
     elif isinstance(time, datetime):
