@@ -44,6 +44,11 @@ class NonOptionSelection(OptionSelection):
 class RandomOptionSelection(OptionSelection):
 
     def select_options(self, environment, user, item, time, options, allow_zero_options=None, **kwargs):
+        if len(options) == 0:
+            if self.is_zero_options_restriction_allowed() and not allow_zero_options:
+                raise Exception("Zero options are not allowed, but there are no candidates for options in case of item {}.".format(item))
+            else:
+                return []
         if item in options:
             options.remove(item)
         number_of_options = min(len(options), random.randint(0, self.max_options() - 1))
@@ -59,6 +64,11 @@ class ConfusingOptionSelection(OptionSelection):
 
     def select_options(self, environment, user, item, time, options, allow_zero_options=True, **kwargs):
         options = filter(lambda i: i != item, options)
+        if len(options) == 0:
+            if self.is_zero_options_restriction_allowed() and not allow_zero_options:
+                raise Exception("Zero options are not allowed, but there are no candidates for options in case of item {}.".format(item))
+            else:
+                return []
         rolling_success = self._item_selector.get_rolling_success(environment, user, None)
         target_probability = self._item_selector.get_target_probability()
         prediction = self._item_selector.get_predictions(environment)[item]
@@ -71,7 +81,7 @@ class ConfusingOptionSelection(OptionSelection):
         prob_target = adjust_target_probability(target_probability, rolling_success)
         g = min(0.5, max(0, prob_target - prob_real) / max(0.001, 1 - prob_real))
         k = round_fun(1.0 / g) if g != 0 else 1
-        number_of_options = int(0 if (k > self.max_options() or k == 0) else (k - 1))
+        number_of_options = min(len(options), int(0 if (k > self.max_options() or k == 0) else (k - 1)))
         if number_of_options == 0:
             if not self.is_zero_options_restriction_allowed() or allow_zero_options:
                 return []
@@ -110,25 +120,44 @@ class ConfusingOptionSelection(OptionSelection):
 
 class TestOptionSelection(unittest.TestCase):
 
+    def test_questions_with_low_number_of_options(self):
+        for i in xrange(3):
+            # setup
+            options = range(1, i + 1)
+            environment = self.get_environment([0] * 100)
+            # test
+            option_selector = self.get_option_selector(self.get_item_selector(0.75, 0.5))
+            selected = option_selector.select_options(environment, 0, 0, None, options)
+            self.assertNotEqual(1, len(selected), 'There is no question with one option.')
+            if len(selected) > 0:
+                self.assertTrue(0 in selected, "The asked item is in options in case of non-zero options.")
+
     def test_questions_with_one_option_are_forbidden(self):
         # setup
         options = range(1, 101)
-        confusing_factors = [0] * 100
-        # mock item selector
-        item_selector = MagicMock()
-        item_selector.get_rolling_success.return_value = 0.5
-        item_selector.get_target_probability.return_value = 0.75
-        # mock environment
-        environment = MagicMock()
-        environment.confusing_factor_more_items.return_value = confusing_factors
+        environment = self.get_environment([0] * 100)
         # test
-        option_selector = self.get_option_selector(item_selector)
+        option_selector = self.get_option_selector(self.get_item_selector(0.75, 0.5))
         selected = option_selector.select_options(environment, 0, 0, None, options)
         self.assertNotEqual(1, len(selected), 'There is no question with one option.')
         selected = option_selector.select_options_more_items(
             environment, 0, range(100, 110), None, dict(zip(range(100, 110), ([options] * 10))))
-        for opts in selected:
+        for i, opts in zip(range(100, 110), selected):
             self.assertNotEqual(1, len(opts), 'There is no question with one option.')
+            if len(opts) > 0:
+                self.assertTrue(i in opts, "The asked item is in options in case of non-zero options.")
+
+    def get_environment(self, confusing_factors):
+        environment = MagicMock()
+        environment.confusing_factor_more_items.return_value = confusing_factors
+        return environment
+
+    def get_item_selector(self, target_probability, rolling_success):
+        item_selector = MagicMock()
+        item_selector.get_rolling_success.return_value = rolling_success
+        item_selector.get_target_probability.return_value = target_probability
+        return item_selector
+
 
 
     @abc.abstractmethod

@@ -222,15 +222,17 @@ class FlashcardManager(models.Manager):
     def _load_options(self, option_selector, selected_items, flashcards, environment, user, time, limit, items, practice_context, language, with_contexts):
         from proso_flashcards.flashcard_construction import get_option_set, get_direction
 
+        # option sets
+        option_sets = get_option_set().get_option_for_flashcards(flashcards)
+
         # select direction
         direction = get_direction()
         allow_zero_option = {}
         for flashcard in flashcards:
-            flashcard.direction = direction.get_direction(flashcard)
+            flashcard.direction = FlashcardAnswer.FROM_TERM if len(option_sets[flashcard.item_id]) == 0 else direction.get_direction(flashcard)
             allow_zero_option[flashcard.item_id] = flashcard.direction == FlashcardAnswer.FROM_TERM
 
         # select options
-        option_sets = get_option_set().get_option_for_flashcards(flashcards)
         options = option_selector.select_options_more_items(environment, user, selected_items, time, option_sets,
                                                             allow_zero_options=allow_zero_option)
         all_options = {}
