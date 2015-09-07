@@ -24,8 +24,10 @@ register:
 
 ################################################################################
 
-test:
-	python -m unittest discover -p test_*.py -s proso; \
+unittest:
+	python -m unittest discover -p test_*.py -s .;
+
+test: unittest
 	python manage.py test --traceback --pattern *_test.py;
 
 reinstall: check uninstall install
