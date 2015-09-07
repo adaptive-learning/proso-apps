@@ -7,6 +7,7 @@ from proso_models.models import Item, Answer, get_environment, get_item_selector
 from django.db.models.signals import pre_save, m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
 from proso.django.util import disable_for_loaddata, cache_pure
+from proso.django.config import get_config
 import random
 import logging
 
@@ -229,6 +230,15 @@ class FlashcardManager(models.Manager):
         direction = get_direction()
         allow_zero_option = {}
         for flashcard in flashcards:
+            force_direction = get_config('proso_flashcards', 'empty_option_set.force_direction', default=None)
+            if force_direction is None or len(option_sets[flashcard.item_id]) > 0:
+                flashcard.direction = direction.get_direction(flashcard)
+            elif force_direction == 't2d':
+                flashcard.direction = FlashcardAnswer.FROM_TERM
+            elif force_direction == 'd2t':
+                force_direction = FlashcardAnswer.FROM_DESCRIPTION
+            else:
+                raise Exception('Only "t2d" or "d2t" are allowed values for "proso_flashcards.empty_option_set.force_direction"!')
             flashcard.direction = FlashcardAnswer.FROM_TERM if len(option_sets[flashcard.item_id]) == 0 else direction.get_direction(flashcard)
             allow_zero_option[flashcard.item_id] = flashcard.direction == FlashcardAnswer.FROM_TERM
 
