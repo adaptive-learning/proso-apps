@@ -25,7 +25,7 @@ register:
 ################################################################################
 
 unittest:
-	python -m unittest discover -p test_*.py -s .;
+	python -m unittest discover -p test_*.py -s proso;
 
 test: unittest
 	python manage.py test --traceback --pattern *_test.py;
