@@ -24,6 +24,12 @@ class Command(BaseCommand):
             action="store_true",
             help='Do not check if categories children are only of one type. Also correct type of categories is not set.'),
         make_option(
+            '--skip-language-check',
+            dest='skip_language_check',
+            default=False,
+            action="store_true",
+            help='Do not check if for objects (Terms, Categoreies, etc.) for any given identifier exist for each language.'),
+        make_option(
             '--ignored-flashcards',
             dest='ignored_flashcards',
             choices=['disable', 'delete'],
@@ -53,7 +59,8 @@ class Command(BaseCommand):
                     self._load_flashcards(data["flashcards"], options['ignored_flashcards'])
                 if not options["skip_category_check"]:
                     check_and_set_category_type(Category)
-                check_db_integrity()
+                if not options["skip_language_check"]:
+                    check_db_lang_integrity()
 
     def _load_categories(self, data=None):
         if data is not None:
@@ -295,7 +302,7 @@ class Command(BaseCommand):
         return db_flashcards
 
 
-def check_db_integrity():
+def check_db_lang_integrity():
     print "\nChecking DB language integrity"
     langs = Category.objects.all().values_list("lang", flat=True).distinct()
     print " -- languages: {}".format(langs)
