@@ -71,6 +71,8 @@ class TestWrapperItemSelection(ItemSelection):
         items_in_queue = kwargs.get('items_in_queue', 0)
         number_of_answers = environment.number_of_answers(user=user, context=practice_context) + items_in_queue
         test_position = number_of_answers % self._nth
+        if test_position != 0:
+            test_position = self._nth - test_position
         if test_position >= n:
             return self._item_selector.select(environment, user, items, time, practice_context, n, **kwargs)
         LOGGER.debug('Providing random test item on position {}, items in queue {}'.format(test_position, items_in_queue))
