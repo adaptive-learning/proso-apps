@@ -34,7 +34,7 @@ class Command(BaseCommand):
             dest='ignored_flashcards',
             choices=['disable', 'delete'],
             default=None,
-            help='Set strategy in case of flashcards which are not mentioned for loaded context.',
+            help='Set strategy [delete|disable] in case of flashcards which are not mentioned for loaded context.',
         )
     )
 
@@ -280,7 +280,7 @@ class Command(BaseCommand):
                     if db_flashcard.item_id not in deleted_flashcard_items:
                         deleted_flashcard_items.add(db_flashcard.item_id)
                         db_flashcard.item.delete()
-                elif ignored_flashcards_strategy == 'deactivate':
+                elif ignored_flashcards_strategy == 'disable':
                     db_flashcard.active = False
                     db_flashcard.save()
 
