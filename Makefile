@@ -64,6 +64,14 @@ check:
 
 ################################################################################
 
+release-micro:
+	$(MAKE) milestone; \
+	$(MAKE) upload; \
+	$(MAKE) increase-micro; \
+	$(MAKE) snapshot; \
+	git add proso/release.py; \
+	$(MAKE) commit-start-working;
+
 release:
 	$(MAKE) MILESTONE="$(MILESTONE)" milestone; \
 	if [ "$(MILESTONE)" ]; then \
