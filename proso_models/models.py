@@ -507,12 +507,22 @@ class DatabaseEnvironment(CommonEnvironment):
             'key': key,
             'info_id': self._info_id,
         }
-        try:
-            variable = Variable.objects.get(**data)
+        # HACK: There is a race condition creating more variables, so it is
+        #       not possible to get exactly one. I hope this scenario does
+        #       not happen very often.
+        variables = list(Variable.objects.filter(**data))
+        if len(variables) == 0:
+            variable = Variable(**data)
+        else:
+            if len(variables) == 1:
+                variable = variables[0]
+            else:
+                LOGGER.error('There is a duplicate variable with the following data: {}. Start cleaning.'.format(data))
+                variable = max(variables, key=lambda variable: variable.id)
+                for var in filter(lambda var: var.id != variable.id, variables):
+                    var.delete()
             if variable.permanent != permanent:
                 raise Exception("Variable %s changed permanency." % key)
-        except Variable.DoesNotExist:
-            variable = Variable(**data)
         if variable.value != value:
             variable.value = value
             variable.audit = audit
