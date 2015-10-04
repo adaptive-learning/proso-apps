@@ -123,7 +123,7 @@ class LocationManager(models.Manager):
 
 class Location(models.Model):
 
-    ip_address = models.CharField(max_length=39, null=True, blank=True, default=None)
+    ip_address = models.CharField(max_length=39, null=True, blank=True, default=None, unique=True)
 
     objects = LocationManager()
 
