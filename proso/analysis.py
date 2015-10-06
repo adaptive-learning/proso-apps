@@ -37,7 +37,7 @@ def _convert_json_keys(json_struct):
     if isinstance(json_struct, list):
         return map(_convert_json_keys, json_struct)
     elif isinstance(json_struct, dict):
-        return {_maybe_convert_str(key): val for (key, val) in json_struct.iteritems()}
+        return {_maybe_convert_str(key): _convert_json_keys(val) for (key, val) in json_struct.iteritems()}
     else:
         return json_struct
 
