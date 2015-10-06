@@ -1,6 +1,7 @@
 import json
 import hashlib
 import os
+import pandas
 
 
 def get_experiment_data(name, compute_fun, cache_dir, cached=True, **kwargs):
@@ -15,6 +16,20 @@ def get_experiment_data(name, compute_fun, cache_dir, cached=True, **kwargs):
             os.makedirs(cache_dir)
         with open(filename, 'w') as f:
             f.write(json.dumps(result, sort_keys=True))
+    return result
+
+
+def get_raw_data(name, load_fun, cache_dir, cached=True, **kwargs):
+    kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True)).hexdigest()
+    filename = '{}/{}_{}.pd'.format(cache_dir, name, kwargs_hash)
+    if cached and os.path.exists(filename):
+        with open(filename, 'r') as f:
+            return pandas.read_pickle(filename)
+    result = load_fun(**kwargs)
+    if cached:
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        result.to_pickle(filename)
     return result
 
 
