@@ -5,7 +5,7 @@ import os
 
 def get_experiment_data(name, compute_fun, cache_dir, cached=True, **kwargs):
     kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True)).hexdigest()
-    filename = '{}/{}.json'.format(cache_dir, name);
+    filename = '{}/{}_{}.json'.format(cache_dir, name, kwargs_hash)
     if cached and os.path.exists(filename):
         with open(filename, 'r') as f:
             return _convert_json_keys(json.loads(f.read()))
