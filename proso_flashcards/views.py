@@ -98,15 +98,18 @@ def show_more(request, object_class, should_cache=True):
             objs = objs.prefetch_related(*prefetch_related).filter(**{column: value})
         else:
             objs = objs.prefetch_related(*prefetch_related).all()
-        if object_class == FlashcardAnswer:
-            user_id = get_user_id(request)
-            objs = objs.filter(user_id=user_id).order_by('-time')
-        if object_class == Flashcard:
+        if object_class == FlashcardAnswer or object_class == Flashcard:
             categories = load_query_json(request.GET, "categories", "[]")
             contexts = load_query_json(request.GET, "contexts", "[]")
             types = load_query_json(request.GET, "types", "[]")
             avoid = load_query_json(request.GET, "avoid", "[]")
-            objs = objs.filter_fc(categories, contexts, types, avoid)
+            language = request.GET.get("language", request.LANGUAGE_CODE)
+            flashcard_ids, item_ids = Flashcard.objects.filtered_ids(categories, contexts, types, avoid, language)
+            if object_class == FlashcardAnswer:
+                user_id = get_user_id(request)
+                objs = objs.filter(user_id=user_id, item_asked__in=item_ids).order_by('-time')
+            if object_class == Flashcard:
+                objs = objs.filter(pk__in=flashcard_ids)
         if object_class == Flashcard or object_class == settings.PROSO_FLASHCARDS.get("term_extension", Term) or \
                 object_class == settings.PROSO_FLASHCARDS.get("context_extension", Context) or object_class == Category:
             language = request.GET.get("language", request.LANGUAGE_CODE)
