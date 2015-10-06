@@ -18,6 +18,7 @@ urlpatterns = patterns(
     url(r'^practice/', 'practice', name='flashcard_practice'),
     url(r'^practice_image/', 'practice_image', name='flashcard_practice_image'),
     url(r'^user_stats/', 'user_stats', name='flashcard_user_stats'),
+    url(r'^flashcard_counts/', 'flashcard_counts', name='flashcard_counts'),
     url(r'^ngService/', ensure_csrf_cookie(TemplateView.as_view(template_name="practice_service.html")),
         name='practice_service'),
 )

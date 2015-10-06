@@ -134,7 +134,7 @@ class FlashcardManager(models.Manager):
         return i
 
     @cache_pure
-    def filtered_ids_group(self, data, language):
+    def filtered_ids_group(self, data, language, empty_groups=False):
         all_items = []
         items_map = {}
         for identifier, filter in data.items():
@@ -143,7 +143,7 @@ class FlashcardManager(models.Manager):
             types = filter.get("types", [])
             language = filter.get("language", language)
             _, items = Flashcard.objects.filtered_ids(categories, contexts, types, [], language)
-            if len(items) > 0:
+            if len(items) > 0 or empty_groups:
                 items_map[identifier] = items
                 all_items += items
 

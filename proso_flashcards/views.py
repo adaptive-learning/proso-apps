@@ -211,6 +211,47 @@ def user_stats(request):
 
 
 @allow_lazy_user
+def flashcard_counts(request):
+    """
+    Get number of flashcards for selected flashcards groups
+
+    filters:                -- use this or body
+      json as in BODY
+
+    BODY
+      json in following format:
+      {
+        "#identifier":          -- custom identifier (str)
+          {
+            "categories": [],   -- list of ids (int) or identifiers (str) of categories
+                                -- for union of multiple category intersections use list of lists
+            "contexts": [],     -- list of ids (int) or identifiers (str) of contexts
+            "types": [],        -- list of names (str) of types of terms
+            "language": ,       -- language (str)
+          },
+        ...
+      }
+    """
+
+    data = None
+    if request.method == "POST":
+        data = json.loads(request.body)
+    if "filters" in request.GET:
+        data = load_query_json(request.GET, "filters")
+    if data is None:
+        return render_json(request, {}, template='flashcards_json.html', help_text=flashcard_counts.__doc__)
+
+    time_start = time_lib()
+    _, items_map = Flashcard.objects.filtered_ids_group(data, request.LANGUAGE_CODE, empty_groups=True)
+    LOGGER.debug("flashcard_counts - getting flashcards in groups took %s seconds", (time_lib() - time_start))
+    print items_map
+
+    response = {group_id: len(items) for group_id, items in items_map.items()}
+
+    return render_json(request, response, template='flashcards_json.html', help_text=flashcard_counts.__doc__)
+
+
+@allow_lazy_user
 @transaction.atomic
 def answer(request):
     """

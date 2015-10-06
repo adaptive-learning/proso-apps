@@ -10,6 +10,7 @@
         <li><a href="{% url 'show_fc_answers' %}?html=True&stats=True&environment=True">Answers</a></li>
         <li><a href="{% url 'flashcard_practice' %}?html=True&contexts=[]&categories=[]&types=[]&avoid=[]">Practice</a></li>
         <li><a href="{% url 'flashcard_user_stats' %}?html=True">User stats</a></li>
+        <li><a href='{% url 'flashcard_counts' %}?html=True&filters={"all":{"categories":[]}}'>Flashcard counts</a></li>
         <li><a href="{% url 'practice_service' %}">ngPractice</a></li>
     </ul>
 {% endblock %}
