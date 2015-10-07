@@ -2,6 +2,26 @@ import json
 import hashlib
 import os
 import pandas
+import numpy
+
+
+def decorate_session_number(answers, delta_in_seconds, user_col='user_id', time_col='time', session_number_col='session_number', override=False):
+    if not override and session_number_col in answers:
+        return answers
+
+    def _session_number_for_user(group, delta_in_seconds):
+        session_duration = numpy.timedelta64(delta_in_seconds, 's')
+        group[session_number_col] = (
+            (group[time_col] - group[time_col].shift(1) > session_duration).
+            fillna(1).
+            cumsum())
+        return group
+
+    return (answers.
+        sort([user_col, time_col]).
+        groupby(user_col).
+        apply(lambda x: _session_number_for_user(x, delta_in_seconds)).
+        sort())
 
 
 def get_experiment_data(name, compute_fun, cache_dir, cached=True, **kwargs):
