@@ -40,7 +40,7 @@ def get_tables_allowed_to_export():
             app_models = importlib.import_module('%s.models' % app)
             if not hasattr(app_models, 'PROSO_MODELS_TO_EXPORT'):
                 continue
-            tables += map(lambda model: model._meta.db_table, app_models.PROSO_MODELS_TO_EXPORT)
+            tables += map(lambda model: (model._meta.pk.column, model._meta.db_table), app_models.PROSO_MODELS_TO_EXPORT)
         except ImportError:
             continue
     return tables

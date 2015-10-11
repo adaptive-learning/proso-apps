@@ -34,24 +34,24 @@ class Command(BaseCommand):
             self.handle_all_tables(batch_size)
 
     def handle_all_tables(self, batch_size):
-        for table_name in get_tables_allowed_to_export():
-            self.handle_one_table(table_name, batch_size)
+        for pk_column, table_name in get_tables_allowed_to_export():
+            self.handle_one_table(table_name, pk_column, batch_size)
 
-    def handle_one_table(self, table_name, batch_size):
-        if table_name not in get_tables_allowed_to_export():
+    def handle_one_table(self, table_name, pk_column, batch_size):
+        if table_name not in zip(*get_tables_allowed_to_export())[1]:
             raise CommandError('table "%s" is not supported' % table_name)
         count = 0
         with closing(connection.cursor()) as cursor:
             cursor.execute('SELECT COUNT(*) FROM ' + table_name)
             count, = cursor.fetchone()
         print 'processing %s' % table_name, ',', count, 'items'
-        sql = 'SELECT * FROM ' + table_name
+        sql = 'SELECT * FROM {}'.format(table_name)
         dest_file = settings.DATA_DIR + '/' + table_name
         dest_file_csv = dest_file + '.csv'
         dest_file_zip = dest_file + '.zip'
         for offset in xrange(0, count, batch_size):
             with closing(connection.cursor()) as cursor:
-                cursor.execute(sql + ' LIMIT ' + str(batch_size) + ' OFFSET ' + str(offset))
+                cursor.execute(sql + ' ORDER BY {} LIMIT {} OFFSET {}'.format(pk_column, batch_size, offset))
                 self.dump_cursor(
                     cursor,
                     dest_file_csv,
