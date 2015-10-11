@@ -95,7 +95,7 @@ create-minor-branch:
 	git checkout -b master-$${MAJOR}.$${MINOR}.X; \
 	$(MAKE) increase-micro; \
 	$(MAKE) snapshot; \
-	git add proso/release; \
+	git add proso/release.py; \
 	$(MAKE) commit-start-working; \
 	git push origin master-$${MAJOR}.$${MINOR}.X
 
