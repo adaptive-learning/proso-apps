@@ -73,30 +73,31 @@ release-micro:
 	$(MAKE) commit-start-working;
 
 release:
-	$(MAKE) MILESTONE="$(MILESTONE)" milestone; \
-	if [ "$(MILESTONE)" ]; then \
-		$(MAKE) snapshot; \
-		git add proso/release.py; \
-		$(MAKE) commit-back-to-snapshot; \
-	else \
-		$(MAKE) upload; \
-		$(MAKE) increase-minor; \
-		$(MAKE) snapshot; \
-		git add proso/release.py; \
-		$(MAKE) commit-start-working; \
-	fi; \
+	$(MAKE) milestone; \
+	$(MAKE) upload; \
+	$(MAKE) create-minor-branch; \
+	git checkout master; \
+	$(MAKE) increase-minor; \
+	$(MAKE) snapshot; \
+	git add proso/release.py; \
+	$(MAKE) commit-start-working; \
 
 milestone:
 	MAJOR=$(MAJOR_VERSION); \
 	MINOR=$(MINOR_VERSION); \
 	MICRO=$(MICRO_VERSION); \
-	if [ "$(MILESTONE)" ]; then \
-		SUFFIX="-$(MILESTONE)"; \
-	else \
-		SUFFIX=""; \
-	fi; \
-	sed -i "s/VERSION = '.*'/VERSION = '$${MAJOR}.$${MINOR}.$${MICRO}$${SUFFIX}'/g" proso/release.py; \
+	sed -i "s/VERSION = '.*'/VERSION = '$${MAJOR}.$${MINOR}.$${MICRO}'/g" proso/release.py; \
 	$(MAKE) publish-version; \
+
+create-minor-branch:
+	MAJOR=$(MAJOR_VERSION); \
+	MINOR=$(MINOR_VERSION); \
+	git checkout -b master-$${MAJOR}.$${MINOR}.X; \
+	$(MAKE) increase-micro; \
+	$(MAKE) snapshot; \
+	git add proso/release; \
+	$(MAKE) commit-start-working; \
+	git push origin master-$${MAJOR}.$${MINOR}.X
 
 commit-back-to-snapshot:
 	git commit -m 'back to $(VERSION_FULL)'; \

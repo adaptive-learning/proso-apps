@@ -30,13 +30,13 @@ To run tests:
 
 ## Release
 
-In case of milestone:
-
-	make MILESTONE=<milestone> release
-
-In case of final version (you have to setup your PIP environment before):
+In case of final major version (you have to setup your PIP environment before):
 
 	make release
+
+In case of final micro version:
+
+	make release-micro
 
 
 
