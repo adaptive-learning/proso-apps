@@ -5,6 +5,23 @@ import pandas
 import numpy
 
 
+def decorate_last_in_session(answers, last_in_session_col='last_in_session', session_number_col='session_number', user_col='user_id', override=False):
+    if not override and last_in_session_col in answers:
+        return answers
+    if session_number_col not in answers:
+        raise Exception("There is no column '{}'.".format(session_number_col))
+
+    def _last_in_session_for_user(group):
+        data = group.sort([session_number_col, 'id'])
+        data[last_in_session_col] = data[session_number_col] != data.shift(-1)[session_number_col]
+        return data
+
+    return (answers.
+        groupby(user_col).
+        apply(_last_in_session_for_user).
+        sort())
+
+
 def decorate_session_number(answers, delta_in_seconds, user_col='user_id', time_col='time', session_number_col='session_number', override=False):
     if not override and session_number_col in answers:
         return answers
@@ -21,6 +38,30 @@ def decorate_session_number(answers, delta_in_seconds, user_col='user_id', time_
         sort([user_col, time_col]).
         groupby(user_col).
         apply(lambda x: _session_number_for_user(x, delta_in_seconds)).
+        sort())
+
+
+def decorate_rolling_success(answers, rolling_success_col='rolling_success',
+        last_in_session_col='last_in_session', session_number_col='session_number', window_length=10,
+        user_col='user_id', asked_col='item_asked_id', answered_col='item_answered_id', override=False):
+
+    if not override and rolling_success_col in answers:
+        return answers
+    if last_in_session_col not in answers:
+        raise Exception("There is no column '{}'.".format(last_in_session_col))
+    if session_number_col not in answers:
+        raise Exception("There is no column '{}'.".format(session_number_col))
+
+    def _rolling_succcess_for_user_session(group, window_length):
+        group[rolling_success_col] = pandas.rolling_apply(
+            group[asked_col] == group[answered_col],
+            window_length,
+            lambda x: sum(x) / float(window_length))
+        return group
+
+    return (answers.
+        groupby([user_col, session_number_col]).
+        apply(lambda x: _rolling_succcess_for_user_session(x, window_length)).
         sort())
 
 
