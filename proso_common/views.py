@@ -125,13 +125,13 @@ def csv(request, table_name=None):
 
 def _csv_list(request):
     response = map(
-        lambda table_name: {'table': table_name, 'url': reverse('csv_table', kwargs={'table_name': table_name})},
+        lambda (_, table_name): {'table': table_name, 'url': reverse('csv_table', kwargs={'table_name': table_name})},
         get_tables_allowed_to_export())
     return render_json(request, response, template='common_json.html')
 
 
 def _csv_table(request, table_name):
-    if table_name not in get_tables_allowed_to_export():
+    if table_name not in map(lambda xs: xs[1], get_tables_allowed_to_export()):
         response = {
             "error": "the requested table '%s' is not valid" % table_name
         }
