@@ -404,7 +404,7 @@ def _save_answer(request, answers, practice_context):
         flashcard_ids = set()
         for a in answers:
             flashcard_ids.add(a["flashcard_id"])
-            if a["flashcard_answered_id"] is not None:
+            if a.get("flashcard_answered_id") is not None:
                 flashcard_ids.add(a["flashcard_answered_id"])
             if "option_ids" in a:
                 flashcard_ids |= set(a["option_ids"])
@@ -416,7 +416,7 @@ def _save_answer(request, answers, practice_context):
 
     for a in answers:
         flashcard = flashcards[a["flashcard_id"]]
-        flashcard_answered = flashcards[a["flashcard_answered_id"]] if a["flashcard_answered_id"] is not None else None
+        flashcard_answered = flashcards[a["flashcard_answered_id"]] if a.get("flashcard_answered_id") is not None else None
         if "response_time" in a:
             response_time = a["response_time"]
         else:
