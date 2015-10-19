@@ -5,7 +5,7 @@ from proso_models.admin import pretty_date
 
 class TermAdmin(admin.ModelAdmin):
     list_display = ('id', 'identifier', 'lang', 'name', 'type')
-    search_fields = ('name', 'type')
+    search_fields = ('identifier', 'name', 'type')
 
 
 class ContextAdmin(admin.ModelAdmin):
@@ -15,6 +15,7 @@ class ContextAdmin(admin.ModelAdmin):
 
 class FlashcardAdmin(admin.ModelAdmin):
     list_display = ('id', 'identifier', 'lang', 'term', 'context')
+    search_fields = ('identifier', 'term__name', 'context__name')
 
 
 class CategoryAdmin(admin.ModelAdmin):
