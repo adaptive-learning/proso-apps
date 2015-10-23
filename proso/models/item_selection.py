@@ -108,6 +108,7 @@ class ScoreItemSelection(ItemSelection):
         self._weight_parent_time_ago = weight_parent_time_ago
         self._weight_parent_number_of_answers = weight_parent_number_of_answers
         self._recompute_parent_score = recompute_parent_score
+        self._history_adjustment = history_adjustment
 
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
         answers_num = dict(zip(items, environment.number_of_answers_more_items(user=user, items=items)))
@@ -118,7 +119,7 @@ class ScoreItemSelection(ItemSelection):
         # items provides only an under-approximation of the real state.
         last_answer_time_parents = self._last_answer_time_for_parents(environment, parents, last_answer_time)
         answers_num_parents = self._answers_num_for_parents(environment, parents, answers_num)
-        if history_adjustment:
+        if self._history_adjustment:
             prob_target = adjust_target_probability(self._target_probability, self.get_rolling_success(environment, user, practice_context))
         else:
             prob_target = self._target_probability
