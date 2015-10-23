@@ -99,7 +99,7 @@ class ScoreItemSelection(ItemSelection):
     def __init__(
             self, predictive_model, weight_probability=10.0, weight_number_of_answers=5.0,
             weight_time_ago=120, weight_parent_time_ago=120, weight_parent_number_of_answers=2.5,
-            target_probability=0.8, recompute_parent_score=True):
+            target_probability=0.8, recompute_parent_score=True, history_adjustment=True):
         ItemSelection.__init__(self, predictive_model, target_probability)
         self._weight_probability = weight_probability
         self._weight_number_of_answers = weight_number_of_answers
@@ -118,7 +118,10 @@ class ScoreItemSelection(ItemSelection):
         # items provides only an under-approximation of the real state.
         last_answer_time_parents = self._last_answer_time_for_parents(environment, parents, last_answer_time)
         answers_num_parents = self._answers_num_for_parents(environment, parents, answers_num)
-        prob_target = adjust_target_probability(self._target_probability, self.get_rolling_success(environment, user, practice_context))
+        if history_adjustment:
+            prob_target = adjust_target_probability(self._target_probability, self.get_rolling_success(environment, user, practice_context))
+        else:
+            prob_target = self._target_probability
 
         if proso.django.log.is_active():
             for item in items:
