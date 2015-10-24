@@ -112,8 +112,8 @@ class ScoreItemSelection(ItemSelection):
 
     def __init__(
             self, predictive_model, weight_probability=10.0, weight_number_of_answers=5.0,
-            weight_time_ago=120, weight_parent_time_ago=5.0, weight_parent_number_of_answers=2.5,
-            target_probability=DEFAULT_TARGET_PROBABILITY, recompute_parent_score=True, history_adjustment=True):
+            weight_time_ago=5, weight_parent_time_ago=5.0, weight_parent_number_of_answers=2.5,
+            target_probability=DEFAULT_TARGET_PROBABILITY, time_ago_max=120, recompute_parent_score=True, history_adjustment=True):
         ItemSelection.__init__(self, predictive_model, target_probability, history_adjustment)
         self._weight_probability = weight_probability
         self._weight_number_of_answers = weight_number_of_answers
@@ -121,6 +121,7 @@ class ScoreItemSelection(ItemSelection):
         self._weight_parent_time_ago = weight_parent_time_ago
         self._weight_parent_number_of_answers = weight_parent_number_of_answers
         self._recompute_parent_score = recompute_parent_score
+        self._time_ago_max = time_ago_max
 
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
         answers_num = dict(zip(items, environment.number_of_answers_more_items(user=user, items=items)))
@@ -204,7 +205,7 @@ class ScoreItemSelection(ItemSelection):
         if last_answer_time == 0:
             return 1.0
         seconds_ago = (time - last_answer_time).total_seconds()
-        max_seconds_ago = 120
+        max_seconds_ago = self._time_ago_max
         return -1 + numpy.log2(min(seconds_ago, max_seconds_ago)) / numpy.log2(max_seconds_ago)
 
     def _answers_num_for_parents(self, environment, parents, answers_num):
