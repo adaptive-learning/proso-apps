@@ -28,6 +28,7 @@ class ABConfigMiddleware(object):
             return
         LOGGER.debug('Setting up configuration for user {} based on AB experiments in middleware.'.format(request.user.id))
         for app_name_key, value in UserSetup.objects.get_variables_to_override(request.user.id).iteritems():
+            LOGGER.debug('Setting {} to "{}" for user {}.'.format(app_name_key, value, request.user.id))
             override(app_name_key, value)
 
 
@@ -197,10 +198,13 @@ class UserSetupManager(models.Manager):
         # 2) Paused experiments have effect on already assigned users, but new
         #    users are not assigned.
         with transaction.atomic():
+            # Fetch all setups available for the given user.
+            # If there is one setup of this kind, find values for enabled experiments.
+            # If there is no such setup create one
             setups = ExperimentSetup.objects.prefetch_related('values', 'values__experiment').filter(usersetup__user_id=user_id)
             if len(setups) == 1:
                 vals = filter(lambda val: val.experiment.is_enabled, setups[0].values.all())
-                return {'{}.{}'.format(val.variable.app_name, val.variable.name): val.value for val in setups[0].values.all()}
+                return {'{}.{}'.format(val.variable.app_name, val.variable.name): val.value for val in vals}
             experiments = Experiment.objects.filter(is_enabled=True, is_paused=False)
             to_override = {}
             experiment_setup_values = []
