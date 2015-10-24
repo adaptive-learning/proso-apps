@@ -69,8 +69,6 @@ class ConfusingOptionSelection(OptionSelection):
                 raise Exception("Zero options are not allowed, but there are no candidates for options in case of item {}.".format(item))
             else:
                 return []
-        rolling_success = self._item_selector.get_rolling_success(environment, user, None)
-        target_probability = self._item_selector.get_target_probability()
         prediction = self._item_selector.get_predictions(environment)[item]
         if prediction is None:
             raise ValueError("Prediction is missing")
@@ -78,7 +76,7 @@ class ConfusingOptionSelection(OptionSelection):
         # number of options
         round_fun = round
         prob_real = prediction
-        prob_target = adjust_target_probability(target_probability, rolling_success)
+        prob_target = self._item_selector.get_target_probability(environment, user, None)
         g = min(0.5, max(0, prob_target - prob_real) / max(0.001, 1 - prob_real))
         k = round_fun(1.0 / g) if g != 0 else 1
         number_of_options = min(len(options), int(0 if (k > self.max_options() or k == 0) else (k - 1)))
@@ -126,7 +124,7 @@ class TestOptionSelection(unittest.TestCase):
             options = range(1, i + 1)
             environment = self.get_environment([0] * 100)
             # test
-            option_selector = self.get_option_selector(self.get_item_selector(0.75, 0.5))
+            option_selector = self.get_option_selector(self.get_item_selector(0.75))
             selected = option_selector.select_options(environment, 0, 0, None, options)
             self.assertNotEqual(1, len(selected), 'There is no question with one option.')
             if len(selected) > 0:
@@ -137,7 +135,7 @@ class TestOptionSelection(unittest.TestCase):
         options = range(1, 101)
         environment = self.get_environment([0] * 100)
         # test
-        option_selector = self.get_option_selector(self.get_item_selector(0.75, 0.5))
+        option_selector = self.get_option_selector(self.get_item_selector(0.75))
         selected = option_selector.select_options(environment, 0, 0, None, options)
         self.assertNotEqual(1, len(selected), 'There is no question with one option.')
         selected = option_selector.select_options_more_items(
@@ -152,9 +150,8 @@ class TestOptionSelection(unittest.TestCase):
         environment.confusing_factor_more_items.return_value = confusing_factors
         return environment
 
-    def get_item_selector(self, target_probability, rolling_success):
+    def get_item_selector(self, target_probability):
         item_selector = MagicMock()
-        item_selector.get_rolling_success.return_value = rolling_success
         item_selector.get_target_probability.return_value = target_probability
         return item_selector
 
