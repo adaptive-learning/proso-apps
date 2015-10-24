@@ -3,21 +3,26 @@ import random
 import math
 import logging
 import proso.django.log
+import numpy
 from collections import defaultdict
 
 
 LOGGER = logging.getLogger('django.request')
 
 
+DEFAULT_TARGET_PROBABILITY = 0.8
+
+
 class ItemSelection:
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, predictive_model, target_probability=0.7):
+    def __init__(self, predictive_model, target_probability=DEFAULT_TARGET_PROBABILITY, history_adjustment=True):
         self._predictive_model = predictive_model
         self._target_probability = target_probability
         self._predictions_cache = None
         self._rolling_success = None
+        self._history_adjustment = history_adjustment
 
     @abc.abstractmethod
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
@@ -38,8 +43,14 @@ class ItemSelection:
             self._predictions_cache = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
         return self._predictions_cache
 
-    def get_target_probability(self):
-        return self._target_probability
+    def history_adjustment(self):
+        return self._history_adjustment
+
+    def get_target_probability(self, environment, user, practice_context=None):
+        if self._history_adjustment:
+            return adjust_target_probability(self._target_probability, self.get_rolling_success(environment, user, practice_context))
+        else:
+            return self._target_probability
 
     def get_rolling_success(self, environment, user, practice_context=None):
         if self._rolling_success is None:
@@ -84,11 +95,14 @@ class TestWrapperItemSelection(ItemSelection):
         selected_items, meta = self._item_selector.select(environment, user, items, time, practice_context, n - 1, **kwargs) if n - 1 > 0 else ([], [])
         return selected_items[:test_position] + [test_item] + selected_items[test_position:], meta[:test_position] + [test_meta] + meta[test_position:]
 
+    def history_adjustment(self):
+        return self._item_selector.history_adjustment()
+
     def get_predictions(self, environment, user=None, items=None, time=None):
         return self._item_selector.get_predictions(environment, user=user, items=items, time=time)
 
-    def get_target_probability(self):
-        return self._item_selector.get_target_probability()
+    def get_target_probability(self, environment, user, practice_context=None):
+        return self._item_selector.get_target_probability(environment, user, practice_context=practice_context)
 
     def get_rolling_success(self, environment, user, practice_context=None):
         return self._item_selector.get_rolling_success(environment, user, practice_context=practice_context)
@@ -98,17 +112,15 @@ class ScoreItemSelection(ItemSelection):
 
     def __init__(
             self, predictive_model, weight_probability=10.0, weight_number_of_answers=5.0,
-            weight_time_ago=120, weight_parent_time_ago=120, weight_parent_number_of_answers=2.5,
-            target_probability=0.8, recompute_parent_score=True, history_adjustment=True):
-        ItemSelection.__init__(self, predictive_model, target_probability)
+            weight_time_ago=120, weight_parent_time_ago=5.0, weight_parent_number_of_answers=2.5,
+            target_probability=DEFAULT_TARGET_PROBABILITY, recompute_parent_score=True, history_adjustment=True):
+        ItemSelection.__init__(self, predictive_model, target_probability, history_adjustment)
         self._weight_probability = weight_probability
         self._weight_number_of_answers = weight_number_of_answers
         self._weight_time_ago = weight_time_ago
-        self._target_probability = target_probability
         self._weight_parent_time_ago = weight_parent_time_ago
         self._weight_parent_number_of_answers = weight_parent_number_of_answers
         self._recompute_parent_score = recompute_parent_score
-        self._history_adjustment = history_adjustment
 
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
         answers_num = dict(zip(items, environment.number_of_answers_more_items(user=user, items=items)))
@@ -119,10 +131,7 @@ class ScoreItemSelection(ItemSelection):
         # items provides only an under-approximation of the real state.
         last_answer_time_parents = self._last_answer_time_for_parents(environment, parents, last_answer_time)
         answers_num_parents = self._answers_num_for_parents(environment, parents, answers_num)
-        if self._history_adjustment:
-            prob_target = adjust_target_probability(self._target_probability, self.get_rolling_success(environment, user, practice_context))
-        else:
-            prob_target = self._target_probability
+        prob_target = self.get_target_probability(environment, user, practice_context=practice_context)
 
         if proso.django.log.is_active():
             for item in items:
@@ -160,11 +169,14 @@ class ScoreItemSelection(ItemSelection):
                 score, chosen = max(finished)
                 if proso.django.log:
                     LOGGER.debug(
-                        'selecting %s (total_score %.2f, prob score %.2f, time_score %.2f, answers score %.2f, parents %s)' %
+                        'selecting %s (total_score %.2f, prob: %.4f, prob score %.2f, time: %s, time_score %.2f, answers: %s, answers score %.2f, parents %s)' %
                         (
                             chosen, score[0],
+                            probability[chosen],
                             self._weight_probability * self._score_probability(prob_target, probability[chosen]),
+                            last_answer_time[chosen],
                             self._weight_time_ago * self._score_last_answer_time(last_answer_time[chosen], time),
+                            answers_num[chosen],
                             self._weight_number_of_answers * self._score_answers_num(answers_num[chosen]),
                             map(lambda x: x[0], parents[chosen]))
                         )
@@ -178,20 +190,22 @@ class ScoreItemSelection(ItemSelection):
         return candidates, [None for _ in candidates]
 
     def _score_answers_num(self, answers_num):
-        return 1.0 / max(math.sqrt(answers_num), 0.001)
+        return 0.5 / max(math.sqrt(answers_num), 0.5)
 
     def _score_probability(self, target_probability, probability):
         diff = target_probability - probability
         sign = 1 if diff > 0 else -1
         normed_diff = abs(diff) / max(0.001, abs(target_probability - 0.5 + sign * 0.5))
-        return 1 - normed_diff
+        return 1 - normed_diff ** 2
 
     def _score_last_answer_time(self, last_answer_time, time):
         if last_answer_time is None:
-            seconds_ago = 315360000
-        else:
-            seconds_ago = (time - last_answer_time).total_seconds()
-        return - 1.0 / max(seconds_ago, 0.001)
+            return 0.0
+        if last_answer_time == 0:
+            return 1.0
+        seconds_ago = (time - last_answer_time).total_seconds()
+        max_seconds_ago = 120
+        return -1 + numpy.log2(min(seconds_ago, max_seconds_ago)) / numpy.log2(max_seconds_ago)
 
     def _answers_num_for_parents(self, environment, parents, answers_num):
         children = defaultdict(list)
