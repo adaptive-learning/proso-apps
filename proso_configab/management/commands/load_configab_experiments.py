@@ -55,6 +55,9 @@ class Command(BaseCommand):
                         probability=value['probability'],
                     )
             print ' -- experiment', experiment['id'], 'created'
-        enabled_experiments = Experiment.objects.filter(is_enabled=True).count()
-        if enabled_experiments > 1:
-            raise CommandError('Number of enabled experiments is not allowed to be larger than 1, found {}'.format(enabled_experiments))
+        enabled_experiments = Experiment.objects.filter(is_enabled=True)
+        if len(enabled_experiments) > 1:
+            raise CommandError('Number of enabled experiments is not allowed to be larger than 1, found {}: {}'.format(
+                len(enabled_experiments),
+                ", ".join([e.identifier for e in enabled_experiments])
+            ))
