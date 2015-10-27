@@ -9,8 +9,6 @@ from models import Rating, Comment
 from proso_user.models import Session
 from lazysignup.decorators import allow_lazy_user
 from proso.django.config import get_config
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
 
@@ -47,15 +45,6 @@ def feedback(request):
             feedback_data['username'] = request.user.username
         if not feedback_data.get('email'):
             feedback_data['email'] = request.user.email
-        else:
-            try:
-                validate_email(feedback_data['email'])
-            except ValidationError:
-                return render_json(
-                    request,
-                    {'error': _('The given e-mail address is not valid.'), 'error_type': 'invalid_email'},
-                    template='feedback_json.html', status=400
-                )
         Comment.objects.create(
             username=feedback_data['username'],
             email=feedback_data['email'],
