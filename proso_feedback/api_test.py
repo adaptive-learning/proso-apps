@@ -6,12 +6,6 @@ import json
 class FeedbackAPITest(TestCase):
 
     def testComment(self):
-        # invalid e-mail address
-        response = self.client.post('/feedback/feedback/', json.dumps({
-            'email': 'aaa',
-            'text': 'dummy'
-        }), content_type='application/json')
-        self.assertEqual(response.status_code, 400, "User can't give a feedback with invalid e-mail address.")
         # empty e-mail address
         response = self.client.post('/feedback/feedback/', json.dumps({
             'text': 'dummy with empty e-mail'
