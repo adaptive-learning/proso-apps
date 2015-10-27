@@ -76,6 +76,8 @@ class FlashcardQuerySet(models.query.QuerySet):
         if isinstance(contexts, list) and len(contexts) > 0:
             qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
                                   _create_q('context_id', id) if isinstance(id, int) else _create_q('context__identifier', id), contexts)))
+        if isinstance(types, list) and len(types) > 0:
+            qs = qs.filter(reduce(lambda a, b: a | b, map(lambda type: _create_q('term__type', type), types)))
         if isinstance(categories, list) and len(categories) > 0:
             if not isinstance(categories[0], list):
                 categories = [categories]
@@ -85,9 +87,11 @@ class FlashcardQuerySet(models.query.QuerySet):
                 for id, type in zip(cats, Category.objects.children_types(cats)):
                     union.append(self._get_filter(id, type))
                 intersection.append(reduce(lambda a, b: a | b, union))
-            qs = qs.filter(reduce(lambda a, b: a & b, intersection))
-        if isinstance(types, list) and len(types) > 0:
-            qs = qs.filter(reduce(lambda a, b: a | b, map(lambda type: _create_q('term__type', type), types)))
+            if len(intersection) == 1:
+                return qs.filter(intersection[0])
+            for i, filter in enumerate(intersection):
+                intersection[i] = set(qs.filter(filter).values_list("id", flat=True))
+            return self.filter(id__in=reduce(lambda a, b: a & b, intersection))
         return qs
 
     def _get_filter(self, id, type):
