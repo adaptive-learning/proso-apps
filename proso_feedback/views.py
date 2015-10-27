@@ -18,7 +18,7 @@ LOGGER = getLogger(__name__)
 
 
 def is_likely_worthless(feedback):
-    return len(feedback['text']) <= 50
+    return len(feedback['text'].split()) <= 5
 
 
 @allow_lazy_user
