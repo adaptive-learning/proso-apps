@@ -14,6 +14,7 @@ from django.core.cache import cache
 import json as json_lib
 import logging
 from proso.django.config import get_global_config
+from django.db.models.sql.datastructures import EmptyResultSet
 
 
 LOGGER = logging.getLogger('django.request')
@@ -84,28 +85,31 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
     time_start = time_lib()
     limit = min(int(request.GET.get('limit', 10)), 100)
     page = int(request.GET.get('page', 0))
-    objs = get_fun(request, object_class)
-    if 'db_orderby' in request.GET:
-        objs = objs.order_by(('-' if 'desc' in request.GET else '') + request.GET['db_orderby'])
-    if 'all' not in request.GET and 'json_orderby' not in request.GET:
-        objs = objs[page * limit:(page + 1) * limit]
-    cache_key = 'proso_common_sql_json_%s' % hashlib.sha1(str(objs.query).decode('utf-8') + str(to_json_kwargs)).hexdigest()
-    cached = cache.get(cache_key)
-    if should_cache and cached:
-        list_objs = json_lib.loads(cached)
-    else:
-        list_objs = map(lambda x: x.to_json(**to_json_kwargs), list(objs))
-        if should_cache:
-            cache.set(cache_key, json_lib.dumps(list_objs), 60 * 60 * 24 * 30)
-    LOGGER.debug('loading objects in show_more view took %s seconds', (time_lib() - time_start))
-    json = post_process_fun(request, list_objs)
-    if 'json_orderby' in request.GET:
-        time_before_json_sort = time_lib()
-        json.sort(key=lambda x: (-1 if 'desc' in request.GET else 1) * x[request.GET['json_orderby']])
-        if 'all' not in request.GET:
-            json = json[page * limit:(page + 1) * limit]
-        LOGGER.debug('sorting objects according to JSON field took %s seconds', (time_lib() - time_before_json_sort))
-    return render_json(request, json, template=template, help_text=show_more.__doc__)
+    try:
+        objs = get_fun(request, object_class)
+        if 'db_orderby' in request.GET:
+            objs = objs.order_by(('-' if 'desc' in request.GET else '') + request.GET['db_orderby'])
+        if 'all' not in request.GET and 'json_orderby' not in request.GET:
+            objs = objs[page * limit:(page + 1) * limit]
+        cache_key = 'proso_common_sql_json_%s' % hashlib.sha1(str(objs.query).decode('utf-8') + str(to_json_kwargs)).hexdigest()
+        cached = cache.get(cache_key)
+        if should_cache and cached:
+            list_objs = json_lib.loads(cached)
+        else:
+            list_objs = map(lambda x: x.to_json(**to_json_kwargs), list(objs))
+            if should_cache:
+                cache.set(cache_key, json_lib.dumps(list_objs), 60 * 60 * 24 * 30)
+        LOGGER.debug('loading objects in show_more view took %s seconds', (time_lib() - time_start))
+        json = post_process_fun(request, list_objs)
+        if 'json_orderby' in request.GET:
+            time_before_json_sort = time_lib()
+            json.sort(key=lambda x: (-1 if 'desc' in request.GET else 1) * x[request.GET['json_orderby']])
+            if 'all' not in request.GET:
+                json = json[page * limit:(page + 1) * limit]
+            LOGGER.debug('sorting objects according to JSON field took %s seconds', (time_lib() - time_before_json_sort))
+        return render_json(request, json, template=template, help_text=show_more.__doc__)
+    except EmptyResultSet:
+        return render_json(request, [], template=template, help_text=show_more.__doc__)
 
 
 def config(request):
