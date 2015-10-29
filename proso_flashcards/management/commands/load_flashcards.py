@@ -1,5 +1,6 @@
 from clint.textui import progress
 from django.conf import settings
+from django.core.cache import cache
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.db.models import Count
@@ -59,6 +60,7 @@ class Command(BaseCommand):
                     check_and_set_category_type(Category)
                 if not options["skip_language_check"]:
                     check_db_lang_integrity()
+                cache.clear()
 
     def _load_categories(self, data=None):
         if data is not None:
