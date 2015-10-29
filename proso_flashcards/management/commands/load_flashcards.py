@@ -1,17 +1,15 @@
-import json
-from optparse import make_option
-
 from clint.textui import progress
 from django.conf import settings
-from django.db.models import Count
-import os
 from django.core.management.base import BaseCommand, CommandError
-from jsonschema import validate
 from django.db import transaction
-import re
-import copy
-
+from django.db.models import Count
+from jsonschema import validate
+from optparse import make_option
 from proso_flashcards.models import Category, Context, Term, Flashcard
+import copy
+import json
+import os
+import re
 
 
 class Command(BaseCommand):
