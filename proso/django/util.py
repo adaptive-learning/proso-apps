@@ -31,14 +31,14 @@ def cache_pure(f, expiration=60 * 60 * 24 * 30):
 
         key = "{}:args:{}-kwargs:{}".format(f.__name__, repr(key_args), repr(kwargs))
         hash_key = hashlib.sha1(key).hexdigest()
-        value = cache.get(hash, CACHE_MISS)
+        value = cache.get(hash_key, CACHE_MISS)
         if value != CACHE_MISS:
-            LOGGER.debug("loaded function result (%s...) form CACHE; key: %s..., hash %s", str(value)[:300], key[:300], hash)
+            LOGGER.debug("loaded function result (%s...) form CACHE; key: %s..., hash %s", str(value)[:300], key[:300], hash_key)
             return value
 
         value = f(*args, **kwargs)
-        LOGGER.debug("saved function result (%s...) to CACHE; key: %s..., hash %s", str(value)[:300], key[:300], hash)
-        cache.set(hash, value, expiration)
+        LOGGER.debug("saved function result (%s...) to CACHE; key: %s..., hash %s", str(value)[:300], key[:300], hash_key)
+        cache.set(hash_key, value, expiration)
 
         return value
 
