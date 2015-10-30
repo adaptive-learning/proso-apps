@@ -203,6 +203,11 @@ LOGGING = {
             'handlers': ['console', 'request'],
             'propagate': True,
             'level': 'DEBUG'
+        },
+        'javascript': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'DEBUG'
         }
     }
 }

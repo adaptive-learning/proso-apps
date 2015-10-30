@@ -15,9 +15,13 @@ import json as json_lib
 import logging
 from proso.django.config import get_global_config
 from django.db.models.sql.datastructures import EmptyResultSet
+from django.views.decorators.csrf import ensure_csrf_cookie
+from proso.django.request import json_body
+from django.conf import settings
 
 
 LOGGER = logging.getLogger('django.request')
+JAVASCRIPT_LOGGER = logging.getLogger(getattr(settings, 'PROSO_JAVASCRIPT_LOGGER', 'javascript'))
 
 
 def show_one(request, post_process_fun, object_class, id, template='common_json.html'):
@@ -110,6 +114,30 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
         return render_json(request, json, template=template, help_text=show_more.__doc__)
     except EmptyResultSet:
         return render_json(request, [], template=template, help_text=show_more.__doc__)
+
+
+@ensure_csrf_cookie
+def log(request):
+    if request.method == "POST":
+        log_dict = json_body(request.body)
+        log_dict['user'] = request.user.id if request.user.is_authenticated() else None
+        log_dict['http_user_agent'] = request.META.get('HTTP_USER_AGENT', '')
+        levels = {
+            'debug': JAVASCRIPT_LOGGER.debug,
+            'info': JAVASCRIPT_LOGGER.info,
+            'warn': JAVASCRIPT_LOGGER.warn,
+            'error': JAVASCRIPT_LOGGER.error,
+        }
+        log_fun = JAVASCRIPT_LOGGER.info
+        if 'level' in log_dict:
+            log_fun = levels[log_dict['level']]
+            del log_dict['level']
+        log_fun('; '.join(['{}={}'.format(key, '"{}"'.format(value.replace('"', '\\"') if isinstance(value, str) else value)) for key, value in log_dict.iteritems()]), extra={
+            'request': request
+        })
+        return HttpResponse('ok', status=201)
+    else:
+        return render_json(request, {}, template='common_json.html', help_text=log.__doc__)
 
 
 def config(request):
