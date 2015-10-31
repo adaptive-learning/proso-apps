@@ -13,6 +13,9 @@ default:
         domain: localhost
         to:
             - root@localhost
+    proso_common:
+        logging:
+            js_errors: true
     proso_tests:
         a:
             b:
