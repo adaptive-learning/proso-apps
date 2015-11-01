@@ -96,6 +96,10 @@ class HttpUserAgent(models.Model):
             'device_family': self.device_family
         }
 
+    def __unicode__(self):
+        return (u"{0.os_family} - {0.os_version} - {0.browser_family}" +
+                u"- {0.browser_version} - {0.device_family}").format(self)
+
 
 class TimeZoneManager(models.Manager):
 
@@ -134,6 +138,9 @@ class Location(models.Model):
             'ip_address': self.ip_address
         }
 
+    def __unicode__(self):
+        return self.ip_address
+
 
 class TimeZone(models.Model):
 
@@ -148,6 +155,9 @@ class TimeZone(models.Model):
             'object_type': 'time_zone',
             'content': self.content
         }
+
+    def __unicode__(self):
+        return self.content
 
 
 class SessionManager(models.Manager):
