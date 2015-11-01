@@ -44,7 +44,7 @@ class ContextOptionSet(OptionSet):
             if flashcard.term.type is not None:
                 types.add(flashcard.term.type)
 
-        options_filter = {'context_id__in': contexts}
+        options_filter = {'context_id__in': contexts, 'active': True}
         if types:
             options_filter['term__type__in'] = types
         option_sets = defaultdict(set)
