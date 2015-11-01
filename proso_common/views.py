@@ -17,7 +17,6 @@ from proso.django.config import get_global_config
 from django.db.models.sql.datastructures import EmptyResultSet
 from django.views.decorators.csrf import ensure_csrf_cookie
 from proso.django.request import json_body
-from django.conf import settings
 
 
 LOGGER = logging.getLogger('django.request')
