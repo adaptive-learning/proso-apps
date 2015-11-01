@@ -45,7 +45,7 @@ def feedback(request):
             feedback_data['username'] = request.user.username
         if not feedback_data.get('email'):
             feedback_data['email'] = request.user.email
-        Comment.objects.create(
+        comment = Comment.objects.create(
             username=feedback_data['username'],
             email=feedback_data['email'],
             text=feedback_data['text'])
@@ -64,8 +64,9 @@ def feedback(request):
                 "feedback": feedback_data,
                 "user": request.user,
             })
+            subject = feedback_domain + ' feedback ' + str(comment.id)
             mail = EmailMultiAlternatives(
-                feedback_domain + ' feedback',
+                subject,
                 text_content,
                 mail_from,
                 feedback_to,
