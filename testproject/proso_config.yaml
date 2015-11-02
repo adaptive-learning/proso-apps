@@ -24,6 +24,9 @@ default:
                     dummy: ok
         instantiate_nok:
             class: proso_common.config_test.TestClass
+    proso_common:
+        logging:
+            js_errors: true
     proso_flashcards:
         practice:
             common:
