@@ -3,7 +3,7 @@ from proso_common.management.commands import analyse
 from proso_common.models import get_tables_allowed_to_export
 from django.conf import settings
 from django.core.servers.basehttp import FileWrapper
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 import os
 import os.path
 from django.core.urlresolvers import reverse
@@ -117,10 +117,21 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
 
 @ensure_csrf_cookie
 def log(request):
+    """
+    Log an event from the client to the server.
+
+    POST parameters (JSON keys):
+      message:
+        description (str) of the logged event
+      level:
+        debug|info|warn|error
+      data:
+        additional data (JSON) describing the logged event
+    """
     if request.method == "POST":
         log_dict = json_body(request.body)
-        log_dict['user'] = request.user.id if request.user.is_authenticated() else None
-        log_dict['http_user_agent'] = request.META.get('HTTP_USER_AGENT', '')
+        if 'message' not in log_dict:
+            return HttpResponseBadRequest('There is no message to log!')
         levels = {
             'debug': JAVASCRIPT_LOGGER.debug,
             'info': JAVASCRIPT_LOGGER.info,
@@ -130,13 +141,14 @@ def log(request):
         log_fun = JAVASCRIPT_LOGGER.info
         if 'level' in log_dict:
             log_fun = levels[log_dict['level']]
-            del log_dict['level']
-        log_fun('; '.join(['{}={}'.format(key, '"{}"'.format(value.replace('"', '\\"') if isinstance(value, str) else value)) for key, value in log_dict.iteritems()]), extra={
-            'request': request
+        log_fun(log_dict['message'], extra={
+            'request': request,
+            'user': request.user.id if request.user.is_authenticated() else None,
+            'client_data': json_lib.dumps(log_dict.get('data', {})),
         })
         return HttpResponse('ok', status=201)
     else:
-        return render_json(request, {}, template='common_json.html', help_text=log.__doc__)
+        return render_json(request, {}, template='common_log_service.html', help_text=log.__doc__)
 
 
 def config(request):

@@ -2,6 +2,7 @@
 {% block menu_heading_block %}Common{% endblock %}
 {% block menu_list_block %}
     <ul>
+        <li><a href="{% url 'log' %}?html=True">Log</a></li>
         <li><a href="{% url 'config' %}?html=True">Config</a></li>
         <li><a href="{% url 'csv_list' %}?html=True">Csv list</a></li>
         <li><a href="{% url 'analysis' %}?htm=True">Analysis</a></li>
