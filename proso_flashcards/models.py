@@ -62,6 +62,8 @@ class Context(models.Model):
             json['content'] = self.content
         if not nested:
             json["categories"] = [category.to_json(nested=True) for category in self.categories.all()]
+            json["flashcards"] = [flashcard.to_json(nested=True) for
+                                  flashcard in self.flashcards.all().prefetch_related("term")]
         return json
 
     def __unicode__(self):
