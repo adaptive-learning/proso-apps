@@ -247,7 +247,6 @@ def flashcard_counts(request):
     time_start = time_lib()
     _, items_map = Flashcard.objects.filtered_ids_group(data, request.LANGUAGE_CODE, empty_groups=True)
     LOGGER.debug("flashcard_counts - getting flashcards in groups took %s seconds", (time_lib() - time_start))
-    print items_map
 
     response = {group_id: len(items) for group_id, items in items_map.items()}
 
