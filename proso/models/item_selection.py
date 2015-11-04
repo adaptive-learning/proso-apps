@@ -203,8 +203,8 @@ class ScoreItemSelection(ItemSelection):
         if last_answer_time is None:
             return 0.0
         seconds_ago = (time - last_answer_time).total_seconds()
-        if seconds_ago == 0:
-            return 1.0
+        if seconds_ago <= 0:
+            return -1.0
         return -1 + numpy.log2(min(seconds_ago, self._time_ago_max)) / numpy.log2(self._time_ago_max)
 
     def _answers_num_for_parents(self, environment, parents, answers_num):
