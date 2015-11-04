@@ -98,7 +98,7 @@ class FlashcardQuerySet(models.query.QuerySet):
 
     def _get_filter(self, id, type):
         if type is None or type not in [Category.TERMS, Category.FLASHCARDS, Category.CONTEXTS]:
-            LOGGER.warn('Trying to filter by a category of categories, which is not supported. Returning FALSE condition.')
+            LOGGER.warn('Trying to filter by a category of categories "{}", which is not supported. Returning FALSE condition.'.format(id))
             q = Q(pk=False)
             _, negation = _get_value_without_negation(id)
             return ~q if negation else q
