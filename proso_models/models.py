@@ -523,14 +523,16 @@ class DatabaseEnvironment(CommonEnvironment):
                     var.delete()
             if variable.permanent != permanent:
                 raise Exception("Variable %s changed permanency." % key)
-        if variable.value != value:
-            variable.value = value
-            variable.audit = audit
-            variable.permanent = permanent
-            if not permanent:
-                variable.info_id = self._info_id
-            variable.updated = datetime.now() if time is None else time
-            variable.save()
+        if variable.value == value:
+            LOGGER.warn('Trying to set the same value for the variable with the following data: {}.'.format(data))
+            return
+        variable.value = value
+        variable.audit = audit
+        variable.permanent = permanent
+        if not permanent:
+            variable.info_id = self._info_id
+        variable.updated = datetime.now() if time is None else time
+        variable.save()
 
     def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         if key is None:
