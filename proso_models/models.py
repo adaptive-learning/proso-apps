@@ -1114,10 +1114,10 @@ def init_config(sender, instance, **kwargs):
         instance.config_id = Config.objects.from_content(get_global_config()).id
 
 
-@receiver(post_save)
+@receiver(pre_save)
 @disable_for_loaddata
 def update_predictive_model(sender, instance, **kwargs):
-    if not issubclass(sender, Answer) or not kwargs['created']:
+    if not issubclass(sender, Answer) or instance.pk is not None:
         return
     environment = get_environment()
     predictive_model = get_predictive_model()
