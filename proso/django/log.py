@@ -1,6 +1,9 @@
 from logging import Handler
 from collections import defaultdict
 from threading import currentThread
+from django.utils.log import AdminEmailHandler
+import json
+
 
 _request_log = defaultdict(list)
 _installed_middleware = False
@@ -36,6 +39,11 @@ class RequestHandler(Handler):
                 'filename': record.filename,
                 'level': record.levelname
             })
+
+class AdminJavascriptEmailHandler(AdminEmailHandler):
+
+    def format(self, record):
+        return 'Message: %s\nUser: %s\nClient Data: %s' % (record.getMessage(), record.user, json.dumps(record.client_data, indent=4, sort_keys=True))
 
 
 class RequestLogMiddleware(object):
