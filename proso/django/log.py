@@ -6,20 +6,20 @@ import json
 
 
 _request_log = defaultdict(list)
-_installed_middleware = False
-_should_log = False
+_installed_middleware = defaultdict(lambda: False)
+_should_log = defaultdict(lambda: False)
 
 
 def is_active():
-    return _should_log
+    return _should_log[currentThread()]
 
 
 def is_log_prepared():
-    return _installed_middleware
+    return _installed_middleware[currentThread()]
 
 
 def get_request_log():
-    assert _installed_middleware, 'RequestLogMiddleware not loaded'
+    assert _installed_middleware[currentThread()], 'RequestLogMiddleware not loaded'
     return _request_log[currentThread()]
 
 
@@ -29,7 +29,7 @@ class RequestHandler(Handler):
         Handler.__init__(self)
 
     def emit(self, record):
-        if _should_log:
+        if is_active():
             self.format(record)
             get_request_log().append({
                 'message': record.message,
@@ -50,10 +50,10 @@ class RequestLogMiddleware(object):
 
     def __init__(self):
         global _installed_middleware
-        _installed_middleware = True
+        _installed_middleware[currentThread()] = True
 
     def process_request(self, request):
         global _should_log
         global _request_log
-        _should_log = 'debug' in request.GET and request.user.is_staff
+        _should_log[currentThread()] = 'debug' in request.GET and request.user.is_staff
         _request_log[currentThread()] = []
