@@ -6,7 +6,7 @@ import json
 
 
 _request_log = defaultdict(list)
-_installed_middleware = defaultdict(lambda: False)
+_installed_middleware = False
 _should_log = defaultdict(lambda: False)
 
 
@@ -15,11 +15,11 @@ def is_active():
 
 
 def is_log_prepared():
-    return _installed_middleware[currentThread()]
+    return _installed_middleware
 
 
 def get_request_log():
-    assert _installed_middleware[currentThread()], 'RequestLogMiddleware not loaded'
+    assert _installed_middleware, 'RequestLogMiddleware not loaded'
     return _request_log[currentThread()]
 
 
@@ -50,7 +50,7 @@ class RequestLogMiddleware(object):
 
     def __init__(self):
         global _installed_middleware
-        _installed_middleware[currentThread()] = True
+        _installed_middleware = True
 
     def process_request(self, request):
         global _should_log
