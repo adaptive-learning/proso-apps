@@ -8,6 +8,7 @@ from proso.django.response import BadRequestException
 import hashlib
 import importlib
 import json
+import abc
 
 _is_user_overriden_from_url = {}
 _is_time_overriden_from_url = {}
@@ -44,6 +45,32 @@ def get_tables_allowed_to_export():
         except ImportError:
             continue
     return tables
+
+
+def get_integrity_checks():
+    checks = []
+    for app in settings.INSTALLED_APPS:
+        try:
+            app_models = importlib.import_module('%s.models' % app)
+            if not hasattr(app_models, 'PROSO_INTEGRITY_CHECKS'):
+                continue
+            checks += map(lambda check_class: check_class(), app_models.PROSO_INTEGRITY_CHECKS)
+        except ImportError:
+            continue
+    return checks
+
+
+class IntegrityCheck:
+
+    @abc.abstractmethod
+    def check(self):
+        """
+        Perform integrity check
+
+        Returns:
+            None if everything is OK, message (dict) otherwise
+        """
+        pass
 
 
 class ConfigManager(models.Manager):
