@@ -283,7 +283,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
             del self._prefetched[prefetched_key]
         InMemoryEnvironment.write(
             self, key, value, user=user, item=item,
-            item_secondary=item_secondary, symmetric=symmetric
+            item_secondary=item_secondary, time=time, symmetric=symmetric
         )
 
     def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
