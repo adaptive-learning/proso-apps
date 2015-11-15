@@ -24,6 +24,8 @@ from proso.django.util import disable_for_loaddata, is_on_postgresql
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
 import logging
 import hashlib
+import django.apps
+from proso_common.models import IntegrityCheck
 
 
 LOGGER = logging.getLogger('django.request')
@@ -839,6 +841,38 @@ class DatabaseEnvironment(CommonEnvironment):
 
 
 ################################################################################
+# Integrity checks
+################################################################################
+
+class LonelyItems(IntegrityCheck):
+
+    def check(self):
+        referenced = set()
+        for django_model in django.apps.apps.get_models():
+            for django_field in django_model._meta.fields:
+                if isinstance(django_field, models.ForeignKey) and django_field.related.parent_model == Item:
+                    db_column = django_field.get_attname_column()[1]
+                    db_table = django_field.model._meta.db_table
+                    if db_table in ['proso_models_variable', 'proso_models_audit']:
+                        continue
+                    with closing(connection.cursor()) as cursor:
+                        cursor.execute('SELECT DISTINCT(%s) FROM %s' % (db_column, db_table))
+                        for (item_id,) in cursor:
+                            if item_id is not None:
+                                referenced.add(item_id)
+        with closing(connection.cursor()) as cursor:
+            cursor.execute('SELECT id from proso_models_item WHERE id NOT IN (%s)' % ','.join(map(str, referenced)))
+            lonely_items = cursor.fetchall()
+            if len(lonely_items) == 0:
+                return None
+            else:
+                return {
+                    'message': 'There are some not referenced items.',
+                    'items': lonely_items,
+                }
+
+
+################################################################################
 # Models
 ################################################################################
 
@@ -1173,3 +1207,4 @@ def log_audit(sender, instance, **kwargs):
 
 
 PROSO_MODELS_TO_EXPORT = [Answer]
+PROSO_INTEGRITY_CHECKS = [LonelyItems]
