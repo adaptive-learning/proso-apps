@@ -17,7 +17,7 @@ class Environment:
 
     __metaclass__ = abc.ABCMeta
 
-    def process_answer(self, user, item, asked, answered, time, response_time, guess, **kwargs):
+    def process_answer(self, user, item, asked, answered, time, answer, response_time, guess, **kwargs):
         """
         This method is used during the answer streaming and is called after the
         predictive model for each answer.
@@ -60,19 +60,19 @@ class Environment:
         pass
 
     @abc.abstractmethod
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=True):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=True, answer=None):
         pass
 
     @abc.abstractmethod
     def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         pass
 
-    def update(self, key, init_value, update_fun, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True):
+    def update(self, key, init_value, update_fun, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, answer=None):
         value = self.read(
             key, user=user, item=item, item_secondary=item_secondary, default=init_value, symmetric=symmetric)
         self.write(
             key, update_fun(value), user=user,
-            item=item, item_secondary=item_secondary, time=time, audit=audit, symmetric=symmetric)
+            item=item, item_secondary=item_secondary, time=time, audit=audit, symmetric=symmetric, answer=answer)
 
     @abc.abstractmethod
     def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
@@ -163,25 +163,25 @@ class InMemoryEnvironment(CommonEnvironment):
         # key -> user -> item_primary -> item_secondary -> [(permanent, time, value)]
         self._data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
 
-    def process_answer(self, user, item, asked, answered, time, response_time, guess, **kwargs):
+    def process_answer(self, user, item, asked, answered, time, answer, response_time, guess, **kwargs):
         if time is None:
             time = datetime.datetime.now()
 
         def update_all(key, init_value, update_fun):
-            self.update(key, init_value, update_fun, time=time)
-            self.update(key, init_value, update_fun, user=user, time=time)
-            self.update(key, init_value, update_fun, item=item, time=time)
-            self.update(key, init_value, update_fun, user=user, item=item, time=time)
+            self.update(key, init_value, update_fun, time=time, answer=answer)
+            self.update(key, init_value, update_fun, user=user, time=time, answer=answer)
+            self.update(key, init_value, update_fun, item=item, time=time, answer=answer)
+            self.update(key, init_value, update_fun, user=user, item=item, time=time, answer=answer)
         increment = lambda x: x + 1
         if self.number_of_answers(user=user, item=item) == 0:
             update_all(self.NUMBER_OF_FIRST_ANSWERS, 0, increment)
         update_all(self.NUMBER_OF_ANSWERS, 0, increment)
         if asked == answered:
             update_all(self.NUMBER_OF_CORRECT_ANSWERS, 0, increment)
-        self.write(self.LAST_CORRECTNESS, asked == answered, user=user)
+        self.write(self.LAST_CORRECTNESS, asked == answered, user=user, answer=answer)
         if guess == 0 and asked != answered and answered is not None:
-            self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered)
-            self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered, user=user)
+            self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered, answer=answer)
+            self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered, user=user, answer=answer)
 
     def audit(self, key, user=None, item=None, item_secondary=None, limit=None, symmetric=True):
         items = [item_secondary, item]
@@ -190,14 +190,14 @@ class InMemoryEnvironment(CommonEnvironment):
         found = self._data[key][user][items[1]][items[0]]
         if found and found[0][0]:
             return []
-        found = map(lambda x: (x[1], x[2]), found)
+        found = map(lambda x: (x[1], x[3]), found)
         if limit is not None:
             found = found[-limit:]
         found.reverse()
         return found
 
     def get_items_with_values(self, key, item, user=None):
-        return map(lambda (i, l): (i, l[-1][2]), self._data[key][user][item].items())
+        return map(lambda (i, l): (i, l[-1][3]), self._data[key][user][item].items())
 
     def get_items_with_values_more_items(self, key, items, user=None):
         return map(lambda i: self.get_items_with_values(key, i, user), items)
@@ -205,7 +205,7 @@ class InMemoryEnvironment(CommonEnvironment):
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         found = self._get(key, user=user, item=item, item_secondary=item_secondary, symmetric=symmetric)
         if found:
-            return found[2]
+            return found[3]
         else:
             return default
 
@@ -214,7 +214,7 @@ class InMemoryEnvironment(CommonEnvironment):
             lambda i: self.read(key, user, i, item, default, symmetric),
             items)
 
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         value = float(value)
         if permanent:
             audit = False
@@ -229,9 +229,9 @@ class InMemoryEnvironment(CommonEnvironment):
                 key, item, item_secondary, user, found[-1][0], permanent
             ))
         if audit or not found:
-            found.append((permanent, time, value))
+            found.append((permanent, time, answer, value))
         else:
-            found[-1] = (permanent, time, value)
+            found[-1] = (permanent, time, answer, value)
 
     def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         items = [item_secondary, item]
@@ -314,17 +314,17 @@ class InMemoryEnvironment(CommonEnvironment):
                 for item_primary, secondaries in primaries.iteritems():
                     for item_secondary, values in secondaries.iteritems():
                         if len(values) > 0:
-                            permanent, time, value = values[-1]
-                            yield (key, user, item_primary, item_secondary, permanent, time, value)
+                            permanent, time, answer, value = values[-1]
+                            yield (key, user, item_primary, item_secondary, permanent, time, answer, value)
 
     def export_audit(self):
         for key, users in self._data.iteritems():
             for user, primaries in users.iteritems():
                 for item_primary, secondaries in primaries.iteritems():
                     for item_secondary, values in secondaries.iteritems():
-                        for permanent, time, value in values:
+                        for permanent, time, answer, value in values:
                             if not permanent:
-                                yield (key, user, item_primary, item_secondary, time, value)
+                                yield (key, user, item_primary, item_secondary, time, answer, value)
 
     def _get(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         items = [item_secondary, item]
@@ -354,6 +354,10 @@ class TestEnvironment(unittest.TestCase):
 
     @abc.abstractmethod
     def generate_environment(self):
+        pass
+
+    @abc.abstractmethod
+    def generate_answer_id(self):
         pass
 
     def test_permanent(self):
@@ -459,7 +463,7 @@ class TestCommonEnvironment(TestEnvironment):
         self.assertEqual([0 for i in items], env.number_of_answers_more_items(items))
         for u in [user_1, user_2]:
             for i in items:
-                env.process_answer(u, i, i, i, datetime.datetime.now(), 1000, True)
+                env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, True)
         self.assertEqual(env.number_of_answers(), 20)
         self.assertEqual(env.number_of_answers(user=user_1), 10)
         self.assertEqual(env.number_of_answers(user=user_1, item=items[0]), 1)
@@ -479,7 +483,7 @@ class TestCommonEnvironment(TestEnvironment):
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
-                    env.process_answer(u, i, i, i if j < 5 else i + 1, datetime.datetime.now(), 1000, True)
+                    env.process_answer(u, i, i, i if j < 5 else i + 1, datetime.datetime.now(), self.generate_answer_id(), 1000, True)
         self.assertEqual(env.number_of_correct_answers(), 100)
         self.assertEqual(env.number_of_correct_answers(user=user_1), 50)
         self.assertEqual(env.number_of_correct_answers(user=user_1, item=items[0]), 5)
@@ -500,7 +504,7 @@ class TestCommonEnvironment(TestEnvironment):
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
-                    env.process_answer(u, i, i, i, datetime.datetime.now(), 1000, True)
+                    env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, True)
         self.assertEqual(env.number_of_first_answers(), 20)
         self.assertEqual(env.number_of_first_answers(user=user_1), 10)
         self.assertEqual(env.number_of_first_answers(user=user_1, item=items[0]), 1)
@@ -532,7 +536,7 @@ class TestCommonEnvironment(TestEnvironment):
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
-                    env.process_answer(u, i, i, i, datetime.datetime.now(), 1000, True)
+                    env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, True)
         self.assertIsNotNone(env.number_of_first_answers())
         self.assertIsNotNone(env.number_of_first_answers(user=user_1))
         self.assertIsNotNone(env.number_of_first_answers(user=user_1, item=items[0]))
@@ -550,7 +554,7 @@ class TestCommonEnvironment(TestEnvironment):
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
-                    env.process_answer(u, i, i, i + diff, datetime.datetime.now(), 1000, True)
+                    env.process_answer(u, i, i, i + diff, datetime.datetime.now(), self.generate_answer_id(), 1000, True)
             diff += 1
         self.assertEqual(env.rolling_success(user_1), 1.0)
         self.assertEqual(env.rolling_success(user_2), 0.0)
@@ -564,10 +568,10 @@ class TestCommonEnvironment(TestEnvironment):
         self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1), 0)
         for i in items:
             for guess in [0, 1./3, 1./5]:
-                env.process_answer(user_1, items[0], items[0], i, datetime.datetime.now(), 1000, guess)
+                env.process_answer(user_1, items[0], items[0], i, datetime.datetime.now(), self.generate_answer_id(), 1000, guess)
         for i in items:
             for guess in [0, 1./3, 1./5]:
-                env.process_answer(user_2, i, i, i, datetime.datetime.now(), 1000, guess)
+                env.process_answer(user_2, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, guess)
         self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1]), 1)
         self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1), 1)
         self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1], user=user_2), 0)

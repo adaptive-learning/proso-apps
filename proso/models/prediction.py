@@ -26,11 +26,11 @@ class PredictiveModel:
         data = self.prepare_phase(environment, user, item, time, **kwargs)
         return self.predict_phase(data, user, item, time, **kwargs)
 
-    def predict_and_update(self, environment, user, item, correct, time, **kwargs):
+    def predict_and_update(self, environment, user, item, correct, time, answer_id, **kwargs):
         data = self.prepare_phase(environment, user, item, time, **kwargs)
         prediction = self.predict_phase(data, user, item, time, **kwargs)
         self.update_phase(
-            environment, data, prediction, user, item, correct, time, **kwargs)
+            environment, data, prediction, user, item, correct, time, answer_id, **kwargs)
         return prediction
 
     @abc.abstractmethod
@@ -91,7 +91,7 @@ class PredictiveModel:
         pass
 
     @abc.abstractmethod
-    def update_phase(self, environment, data, prediction, user, item, correct, time, **kwargs):
+    def update_phase(self, environment, data, prediction, user, item, correct, time, answer_id, **kwargs):
         """
         After the prediction update the environment and persist some
         information for the predictive model.
@@ -129,8 +129,8 @@ class SimplePredictiveModel(PredictiveModel):
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
         return [self.simple_predict(user, item, time, **kwargs) for item in items]
 
-    def update_phase(self, environment, data, prediction, user, item, correct, time, **kwargs):
-        self.simple_update(prediction, user, item, correct, time, **kwargs)
+    def update_phase(self, environment, data, prediction, user, item, correct, time, answer_id, **kwargs):
+        self.simple_update(prediction, user, item, correct, time, answer_id, **kwargs)
 
     @abc.abstractmethod
     def simple_predict(self, user, item, time, **kwargs):
@@ -159,8 +159,8 @@ class AveragePredictiveModel(PredictiveModel):
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
         return map(lambda (tot, num): float(tot) / max(num, 1), zip(data[0], data[1]))
 
-    def update_phase(self, environment, data, prediction, user, item, correct, time, **kwargs):
-        environment.update('total_sum', 0, lambda x: x + correct, item=item)
+    def update_phase(self, environment, data, prediction, user, item, correct, time, answer_id, **kwargs):
+        environment.update('total_sum', 0, lambda x: x + correct, item=item, answer=answer_id)
 
 
 class PriorCurrentPredictiveModel(PredictiveModel):
@@ -218,7 +218,7 @@ class PriorCurrentPredictiveModel(PredictiveModel):
             }, user, i, time, **kwargs))
         return preds
 
-    def update_phase(self, environment, data, prediction, user, item, correct, time, **kwargs):
+    def update_phase(self, environment, data, prediction, user, item, correct, time, answer_id, **kwargs):
         result = correct
         if data['current_skill'] is None:
             current_skill = data['prior_skill'] - data['difficulty']
@@ -228,15 +228,17 @@ class PriorCurrentPredictiveModel(PredictiveModel):
             current_skill = current_skill + self._pfae_good * (result - prediction)
         else:
             current_skill = current_skill + self._pfae_bad * (result - prediction)
-        environment.write('current_skill', current_skill, user=user, item=item, time=time)
+        environment.write('current_skill', current_skill, user=user, item=item, time=time, answer=answer_id)
         if data['use_prior']:
             alpha_fun = lambda n: self._elo_alpha / (1 + self._elo_dynamic_alpha * n)
             prior_skill_alpha = alpha_fun(data['user_first_answers'])
             difficulty_alpha = alpha_fun(data['item_first_answers'])
             environment.write(
-                'prior_skill', data['prior_skill'] + prior_skill_alpha * (result - prediction), user=user, time=time)
+                'prior_skill', data['prior_skill'] + prior_skill_alpha * (result - prediction),
+                user=user, time=time, answer=answer_id)
             environment.write(
-                'difficulty', data['difficulty'] - difficulty_alpha * (result - prediction), item=item, time=time)
+                'difficulty', data['difficulty'] - difficulty_alpha * (result - prediction),
+                item=item, time=time, answer=answer_id)
 
 
 class AlwaysLearningPredictiveModel(PredictiveModel):
@@ -276,12 +278,12 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
         return map(lambda i: self.predict_phase(data, user, i, time, **kwargs), items)
 
-    def update_phase(self, environment, data, prediction, user, item, correct, time, **kwargs):
+    def update_phase(self, environment, data, prediction, user, item, correct, time, answer_id, **kwargs):
         if data['last_times'][item] is None:
             alpha_fun = lambda n: self._elo_alpha / (1 + self._elo_dynamic_alpha * n)
             difficulty_alpha = alpha_fun(data['first_answers'][item])
             data['difficulties'][item] -= difficulty_alpha * (correct - prediction)
-            environment.write('difficulty', data['difficulties'][item], item=item, time=time)
+            environment.write('difficulty', data['difficulties'][item], item=item, time=time, answer=answer_id)
         parents_per_level = [
             list(set(map(lambda (i, w): i, parents))) for parents in self._iterate_parents_per_level(item, data)]
         parents_per_level = zip(range(len(parents_per_level)), parents_per_level)
@@ -296,7 +298,7 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
                     number_of_options=len(kwargs['options']) if 'options' in kwargs else 0,
                     guess=kwargs.get('guess'))[0]
                 data['skills'][parent] += level_decay(level) * update_const * (correct - parent_prediction)
-                environment.write('skill', data['skills'][parent], item=parent, user=user, time=time)
+                environment.write('skill', data['skills'][parent], item=parent, user=user, time=time, answer=answer_id)
 
     def _load_parents(self, environment, items, user):
         parents = {}
@@ -346,9 +348,9 @@ class ShiftedPredictiveModel(PredictiveModel):
     def predict_phase(self, data, user, item, time, **kwargs):
         return super(ShiftedPredictiveModel, self).predict_phase(data, user, item, time, **kwargs)
 
-    def update_phase(self, environment, data, prediction, user, item, correct, time, **kwargs):
+    def update_phase(self, environment, data, prediction, user, item, correct, time, answer_id, **kwargs):
         return super(ShiftedPredictiveModel, self).update_phase(
-            environment, data, prediction, user, item, correct, time, **kwargs)
+            environment, data, prediction, user, item, correct, time, answer_id, **kwargs)
 
     def predict_and_update(self, environment, user, item, correct, time, **kwargs):
         return super(ShiftedPredictiveModel, self).predict_and_update(environment, user, item, correct, time, **kwargs)

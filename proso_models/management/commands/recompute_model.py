@@ -105,6 +105,7 @@ class Command(BaseCommand):
             cursor.execute(
                 '''
                 SELECT
+                    id,
                     user_id,
                     item_id,
                     item_asked_id,
@@ -118,7 +119,7 @@ class Command(BaseCommand):
                 ''', [info.load_progress, options['batch_size']])
             progress_bar = progress.bar(cursor, every=max(1, cursor.rowcount / 100), expected_size=cursor.rowcount)
             info.load_progress += cursor.rowcount
-            for (user, item, asked, answered, time, response_time, guess) in progress_bar:
+            for (answer_id, user, item, asked, answered, time, response_time, guess) in progress_bar:
                 predictive_model.predict_and_update(
                     environment,
                     user,
@@ -127,8 +128,9 @@ class Command(BaseCommand):
                     time.replace(tzinfo=None),
                     item_answered=answered,
                     item_asked=asked,
-                    guess=guess)
-                environment.process_answer(user, item, asked, answered, time, response_time, guess)
+                    guess=guess,
+                    answer_id=answer_id)
+                environment.process_answer(user, item, asked, answered, time, answer_id, response_time, guess)
         print ' -- model phase, time:', timer('recompute_model'), 'seconds'
         timer('recompute_flush')
         print ' -- flushing phase'

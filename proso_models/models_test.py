@@ -25,5 +25,8 @@ class DatabaseEnvironmentTest(test.TestCase, environment.TestCommonEnvironment):
         user.save()
         return user.id
 
+    def generate_answer_id(self):
+        return None
+
     def generate_environment(self):
         return DatabaseEnvironment()

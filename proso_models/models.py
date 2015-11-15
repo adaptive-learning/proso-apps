@@ -275,7 +275,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                 default=default, symmetric=symmetric
             )
 
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         prefetched_key = self._prefetched_key(key, user, item, item_secondary, symmetric)
         prefetched = self._prefetched.get(prefetched_key)
         if prefetched is not None:
@@ -284,7 +284,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
         InMemoryEnvironment.write(
             self, key, value, user=user, item=item,
             item_secondary=item_secondary, time=time, audit=audit,
-            symmetric=symmetric, permanent=permanent
+            symmetric=symmetric, permanent=permanent, answer=answer
         )
 
     def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
@@ -301,15 +301,15 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
         filename_audit = os.path.join(settings.DATA_DIR, 'environment_flush_audit.csv')
         filename_variable = os.path.join(settings.DATA_DIR, 'environment_flush_variable.csv')
         with open(filename_audit, 'w') as file_audit:
-            for (key, u, i_p, i_s, t, v) in self.export_audit():
+            for (key, u, i_p, i_s, t, a, v) in self.export_audit():
                 if key in self.DROP_KEYS:
                     continue
                 file_audit.write(
-                    '%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, t.strftime('%Y-%m-%d %H:%M:%S'), v, self._info_id))
+                    '%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, t.strftime('%Y-%m-%d %H:%M:%S'), a, v, self._info_id))
         with open(filename_variable, 'w') as file_variable:
-            for (key, u, i_p, i_s, p, t, v) in self.export_values():
+            for (key, u, i_p, i_s, p, t, a, v) in self.export_values():
                 file_variable.write(
-                    '%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t, p, self._info_id))
+                    '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t, p, self._info_id))
         with transaction.atomic():
             with closing(connection.cursor()) as cursor:
                 cursor.execute('SET CONSTRAINTS ALL DEFERRED')
@@ -323,7 +323,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                         'proso_models_audit',
                         sep=',',
                         null='None',
-                        columns=['key', 'user_id', 'item_primary_id', 'item_secondary_id', 'time', 'value', 'info_id']
+                        columns=['key', 'user_id', 'item_primary_id', 'item_secondary_id', 'time', 'answer_id', 'value', 'info_id']
                     )
                 with open(filename_variable, 'r') as file_variable:
                     cursor.copy_from(
@@ -331,7 +331,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                         'proso_models_variable',
                         sep=',',
                         null='None',
-                        columns=['key', 'user_id', 'item_primary_id', 'item_secondary_id', 'value', 'audit', 'updated', 'permanent', 'info_id']
+                        columns=['key', 'user_id', 'item_primary_id', 'item_secondary_id', 'value', 'audit', 'updated', 'answer_id', 'permanent', 'info_id']
                     )
 
     def _get_prefetched(self, key, user, item, item_secondary, symmetric):
@@ -348,6 +348,8 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def __init__(self, info_id=None):
         self._time = None
+        self._before_answer = None
+        self._avoid_audit = False
         self._info_id = info_id
 
     def process_answer(self, user, item, asked, answered, time, response_time, guess, **kwargs):
@@ -411,7 +413,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_single(key, user, item, item_secondary, symmetric=symmetric)
-            if self._time is None:
+            if (self._time is None and self._before_answer is None) or self._avoid_audit:
                 cursor.execute(
                     'SELECT value FROM proso_models_variable WHERE ' + where,
                     where_params)
@@ -428,7 +430,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(key, items, user, item, symmetric=symmetric)
-            if self._time is None:
+            if (self._time is None and self._before_answer) and self._avoid_audit:
                 cursor.execute(
                     'SELECT item_primary_id, item_secondary_id, value FROM proso_models_variable WHERE '
                     + where,
@@ -491,7 +493,7 @@ class DatabaseEnvironment(CommonEnvironment):
             result = dict(result)
             return map(lambda key: result.get(key), items)
 
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         if permanent:
             audit = False
         if key is None:
@@ -531,6 +533,7 @@ class DatabaseEnvironment(CommonEnvironment):
         variable.value = value
         variable.audit = audit
         variable.permanent = permanent
+        variable.answer_id = answer
         if not permanent:
             variable.info_id = self._info_id
         variable.updated = datetime.now() if time is None else time
@@ -644,6 +647,12 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def shift_time(self, new_time):
         self._time = new_time
+
+    def shift_answers(self, before_answer):
+        self._before_answer = before_answer
+
+    def avoid_audit(self, avoid_audit):
+        self._avoid_audit = avoid_audit
 
     def rolling_success(self, user, window_size=10, context=None):
         where, where_params = self._where({'user_id': user, 'context_id': context}, False, for_answers=True)
@@ -777,6 +786,13 @@ class DatabaseEnvironment(CommonEnvironment):
         if top_most and self._time is not None and time_shift:
             result_cond = ('(%s) AND time < ?' % result_cond)
             result_params = result_params + [self._time.strftime('%Y-%m-%d %H:%M:%S')]
+        if top_most and self._before_answer:
+            if for_answers:
+                result_cond = ('(%s) AND id < ?' % result_cond)
+                result_params = result_params + [self._before_answer]
+            elif not self._avoid_audit:
+                result_cond = ('(%s) AND answer_id < ?' % result_cond)
+                result_params = result_params + [self._before_answer]
         result_cond = result_cond.replace('?', '%s')
         return result_cond, result_params
 
@@ -1009,6 +1025,7 @@ class Variable(models.Model):
     audit = models.BooleanField(default=True)
     updated = models.DateTimeField(default=datetime.now)
     info = models.ForeignKey(EnvironmentInfo, null=True, blank=True, default=None)
+    answer = models.ForeignKey(Answer, null=True, blank=True, default=None)
 
     def __str__(self):
         return str({
@@ -1050,6 +1067,7 @@ class Audit(models.Model):
     value = models.FloatField()
     time = models.DateTimeField(default=datetime.now)
     info = models.ForeignKey(EnvironmentInfo, null=True, blank=True, default=None)
+    answer = models.ForeignKey(Answer, null=True, blank=True, default=None)
 
     class Meta:
         app_label = 'proso_models'
@@ -1116,12 +1134,16 @@ def init_config(sender, instance, **kwargs):
         instance.config_id = Config.objects.from_content(get_global_config()).id
 
 
-@receiver(pre_save)
+@receiver(post_save)
 @disable_for_loaddata
 def update_predictive_model(sender, instance, **kwargs):
-    if not issubclass(sender, Answer) or instance.pk is not None:
+    if not issubclass(sender, Answer) or not kwargs['created']:
         return
     environment = get_environment()
+    # We want to make the prediction before the answer is saved,
+    # but we need answer id to track it.
+    environment.shift_answers(instance.pk)
+    environment.avoid_audit(True)
     predictive_model = get_predictive_model()
     predictive_model.predict_and_update(
         environment,
@@ -1129,6 +1151,7 @@ def update_predictive_model(sender, instance, **kwargs):
         instance.item_id,
         instance.item_asked_id == instance.item_answered_id,
         instance.time,
+        instance.pk,
         item_answered=instance.item_answered_id,
         item_asked=instance.item_asked_id)
 
@@ -1144,7 +1167,8 @@ def log_audit(sender, instance, **kwargs):
             key=instance.key,
             value=instance.value,
             time=instance.updated,
-            info_id=instance.info_id)
+            info_id=instance.info_id,
+            answer=instance.answer)
         audit.save()
 
 
