@@ -72,6 +72,8 @@ class Context(models.Model):
 
 class FlashcardQuerySet(models.query.QuerySet):
     def filter_fc(self, categories, contexts, types, avoid, language=None):
+        if get_config('proso_flashcards', 'avoid_also_related_flaschcards', default=False):
+            avoid = Flashcard.objects.filter(term__flashcards__pk__in=avoid).values_list("pk", flat=True)
         qs = self.filter(Q(active=True) & ~Q(id__in=avoid))
         if language is not None:
             qs = qs.filter(lang=language)

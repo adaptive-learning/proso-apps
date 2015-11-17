@@ -7,7 +7,7 @@ default:
             class: proso.models.option_selection.ConfusingOptionSelection
             parameters:
               max_options: 3
-              allow_zero_options_restriction: True
+              allow_zero_options_restriction: False
     proso_feedback:
         send_emails: false
         domain: localhost
@@ -31,6 +31,7 @@ default:
         logging:
             js_errors: true
     proso_flashcards:
+        avoid_also_related_flaschcards: true
         practice:
             common:
                 set_length: 10
