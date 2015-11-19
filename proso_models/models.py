@@ -782,7 +782,7 @@ class DatabaseEnvironment(CommonEnvironment):
             result_cond, result_params = operator.join(conds), params
         else:
             raise Exception("Unsupported type of condition:" + str(type(condition)))
-        if top_most and not for_answers:
+        if top_most and not for_answers and self._info_id is not None:
             result_cond = ('(%s) AND (info_id = ? OR info_id IS NULL)' % result_cond)
             result_params = result_params + [self._info_id]
         if top_most and self._time is not None and time_shift:
