@@ -463,7 +463,7 @@ class TestCommonEnvironment(TestEnvironment):
         self.assertEqual([0 for i in items], env.number_of_answers_more_items(items))
         for u in [user_1, user_2]:
             for i in items:
-                env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, True)
+                env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
         self.assertEqual(env.number_of_answers(), 20)
         self.assertEqual(env.number_of_answers(user=user_1), 10)
         self.assertEqual(env.number_of_answers(user=user_1, item=items[0]), 1)
@@ -483,7 +483,7 @@ class TestCommonEnvironment(TestEnvironment):
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
-                    env.process_answer(u, i, i, i if j < 5 else i + 1, datetime.datetime.now(), self.generate_answer_id(), 1000, True)
+                    env.process_answer(u, i, i, i if j < 5 else i + 1, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
         self.assertEqual(env.number_of_correct_answers(), 100)
         self.assertEqual(env.number_of_correct_answers(user=user_1), 50)
         self.assertEqual(env.number_of_correct_answers(user=user_1, item=items[0]), 5)
@@ -504,7 +504,7 @@ class TestCommonEnvironment(TestEnvironment):
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
-                    env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, True)
+                    env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
         self.assertEqual(env.number_of_first_answers(), 20)
         self.assertEqual(env.number_of_first_answers(user=user_1), 10)
         self.assertEqual(env.number_of_first_answers(user=user_1, item=items[0]), 1)
@@ -536,7 +536,7 @@ class TestCommonEnvironment(TestEnvironment):
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
-                    env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, True)
+                    env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
         self.assertIsNotNone(env.number_of_first_answers())
         self.assertIsNotNone(env.number_of_first_answers(user=user_1))
         self.assertIsNotNone(env.number_of_first_answers(user=user_1, item=items[0]))
@@ -554,7 +554,7 @@ class TestCommonEnvironment(TestEnvironment):
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
-                    env.process_answer(u, i, i, i + diff, datetime.datetime.now(), self.generate_answer_id(), 1000, True)
+                    env.process_answer(u, i, i, i + diff, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
             diff += 1
         self.assertEqual(env.rolling_success(user_1), 1.0)
         self.assertEqual(env.rolling_success(user_2), 0.0)
