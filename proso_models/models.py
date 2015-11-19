@@ -354,7 +354,7 @@ class DatabaseEnvironment(CommonEnvironment):
         self._avoid_audit = False
         self._info_id = info_id
 
-    def process_answer(self, user, item, asked, answered, time, response_time, guess, **kwargs):
+    def process_answer(self, user, item, asked, answered, time, answer_id, response_time, guess, **kwargs):
         answer = Answer(
             user_id=user,
             item_id=item,
