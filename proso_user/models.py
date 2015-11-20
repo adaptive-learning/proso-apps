@@ -42,6 +42,9 @@ class UserProfile(models.Model):
                 'username': self.user.username,
                 'email': self.user.email,
                 'staff': self.user.is_staff,
+                'properties': dict([
+                    (p.name, p.value) for p in
+                    UserProfileProperty.objects.filter(user_profile=self.id)]),
             }
         }
         if stats:
@@ -49,6 +52,29 @@ class UserProfile(models.Model):
             data["number_of_answers"] = Answer.objects.count(self.user)
             data["number_of_correct_answers"] = Answer.objects.correct_count(self.user)
         return data
+
+    def __unicode__(self):
+        return u"Profile: '{0.user.username}'".format(self)
+
+    def save_properties(self, properties_json):
+        for property_dict in properties_json:
+            property_dict['value'] = str(property_dict['value']).replace('+', ' ')
+            try:
+                property_object = UserProfileProperty.objects.get(
+                    user_profile=self, name=property_dict['name'])
+            except UserProfileProperty.DoesNotExist:
+                property_object = UserProfileProperty(
+                    user_profile=self, name=property_dict['name'])
+            if property_object.value != property_dict['value']:
+                property_object.value = property_dict['value']
+                property_object.save()
+
+
+class UserProfileProperty(models.Model):
+    user_profile = models.ForeignKey(UserProfile, db_index=True)
+    name = models.CharField(max_length=20, null=False, blank=False,
+                            db_index=True)
+    value = models.CharField(max_length=200, null=False)
 
 
 class HttpUserAgentManager(models.Manager):
