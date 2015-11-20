@@ -432,7 +432,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(key, items, user, item, symmetric=symmetric)
-            if (self._time is None and self._before_answer) and self._avoid_audit:
+            if (self._time is None and self._before_answer is None) or self._avoid_audit:
                 cursor.execute(
                     'SELECT item_primary_id, item_secondary_id, value FROM proso_models_variable WHERE '
                     + where,
