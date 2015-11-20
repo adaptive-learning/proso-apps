@@ -157,7 +157,6 @@ def learning_curve(length, context=None, users=None, user_length=None, number_of
             for answers in user_answers.itervalues()
             if len(answers) >= user_length
         ]
-        print user_answers
 
         def _mean_with_confidence(xs):
             return confidence_value_to_json(binomial_confidence_mean(filter(lambda x: x is not None, xs)))
