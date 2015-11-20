@@ -23,6 +23,11 @@
             <input type="password" name="user[password]">
             <input type="password" name="user[password_check]">
         </fieldset>
+            <legend>Property</legend>
+            <input type="text" name="properties[0][name]" placeholder="Property Name">
+            <input type="text" name="properties[0][value]" placeholder="Property Value">
+        <fieldset>
+        </fieldset>
         <button type="submit" class="pure-button pure-button-primary">Save</button>
         {% csrf_token %}
     </form>

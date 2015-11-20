@@ -1,5 +1,11 @@
-from models import UserProfile, Session
+from models import UserProfile, UserProfileProperty, Session
 from django.contrib import admin
+
+
+class UserProfilePropertyAdmin(admin.ModelAdmin):
+    list_display = ('user_profile', 'name', 'value')
+    search_fields = ('user_profile__user__username', 'name')
+    list_filter = ('name',)
 
 
 class UserProfileAdmin(admin.ModelAdmin):
@@ -16,3 +22,4 @@ class SessionAdmin(admin.ModelAdmin):
 
 admin.site.register(Session, SessionAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
+admin.site.register(UserProfileProperty, UserProfilePropertyAdmin)

@@ -77,6 +77,8 @@ def profile(request, status=200):
                 error = _save_user(request, user, new=False)
                 if error:
                     return render_json(request, error, template='user_json.html', status=400)
+            if 'properties' in to_save:
+                user_profile.save_properties(to_save['properties'])
             user_profile.save()
         request.method = "GET"
         return profile(request, status=202)
