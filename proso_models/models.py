@@ -932,6 +932,9 @@ class PracticeContext(models.Model):
             'content_hash': self.content_hash,
         }
 
+    def __unicode__(self):
+        return u"{0.content}".format(self)
+
 
 class AnswerManager(models.Manager):
 

@@ -42,6 +42,7 @@ class AnswerAdmin(admin.ModelAdmin):
         'user',
         'item_asked',
         'item_answered',
+        'context',
         'is_correct',
         'direction',
         'options_count',
