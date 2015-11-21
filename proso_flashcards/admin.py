@@ -48,6 +48,7 @@ class AnswerAdmin(admin.ModelAdmin):
         'options_count',
         'asked_ago')
     raw_id_fields = ("options",)
+    search_fields = ('user__username',)
 
 
 admin.site.register(Term, TermAdmin)
