@@ -28,6 +28,7 @@ class UserAPITest(TestCase):
                 "id": 1,
                 "staff": False,
             },
+            "properties": {},
             "object_type": "user_profile",
             "id": 1,
             "public": False

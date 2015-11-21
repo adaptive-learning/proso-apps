@@ -34,6 +34,9 @@ class UserProfile(models.Model):
             'object_type': 'user_profile',
             'send_emails': self.send_emails,
             'public': self.public,
+            'properties': dict([
+                (p.name, p.value) for p in
+                UserProfileProperty.objects.filter(user_profile=self.id)]),
             'user': {
                 'id': self.user.id,
                 'object_type': 'user',
@@ -42,9 +45,6 @@ class UserProfile(models.Model):
                 'username': self.user.username,
                 'email': self.user.email,
                 'staff': self.user.is_staff,
-                'properties': dict([
-                    (p.name, p.value) for p in
-                    UserProfileProperty.objects.filter(user_profile=self.id)]),
             }
         }
         if stats:
