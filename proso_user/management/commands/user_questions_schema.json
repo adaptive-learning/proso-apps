@@ -1,0 +1,86 @@
+{
+  "description": "Schema for data file containing questions for users.",
+  "definitions": {
+    "event": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "value"]
+    },
+    "condition": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "value"]
+    },
+    "possible-answer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        }
+      },
+      "patternProperties": {
+        "^content-(\\w\\w)$": {
+            "type": "string"
+        }
+      },
+      "required": ["id"]
+    },
+    "question": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "repeat": {
+          "type": "boolean"
+        },
+        "answer-type": {
+          "enum": ["open", "closed", "mixed"]
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "ref": "#/definitions/event"
+          }
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "ref": "#/definitions/condition"
+          }
+        },
+        "posssible-answers": {
+          "type": "array",
+          "items": {
+            "ref": "#/definitions/posssible-answer"
+          }
+        }
+      },
+      "patternProperties": {
+        "^content-(\\w\\w)$": {
+            "type": "string"
+        }
+      }
+    }
+  }
+}
