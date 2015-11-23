@@ -1,0 +1,39 @@
+{
+  "questions": [
+    {
+      "id": "sex",
+      "content-cs": "Jaké je tvé pohlaví?",
+      "content-en": "What is your sex?",
+      "answer-type": "closed",
+      "possible-answers": [
+        {
+          "id": "male",
+          "content-en": "Male",
+          "content-cs": "Muž"
+        },
+        {
+          "id": "female",
+          "content-en": "Female",
+          "content-cs": "Žena"
+        },
+        {
+          "id": "not_specified",
+          "content-en": "Not specified",
+          "content-cs": "Neuvedeno"
+        }
+      ],
+      "condtions": [
+        {
+          "type": "user_status",
+          "value": "registered"
+        }
+      ],
+      "events": [
+        {
+          "type": "practice_sequence_finished",
+          "value": "5"
+        }
+      ]
+    }
+  ]
+}
