@@ -248,6 +248,141 @@ class Session(models.Model):
         return result
 
 
+class UserQuestionEventManager(models.Manager):
+
+    def from_type_value(self, type, value):
+        result = self.filter(type=type, value=value).first()
+        if result is None:
+            result = UserQuestionEvent(type=type, value=value)
+            result.save()
+        return result
+
+
+class UserQuestionEvent(models.Model):
+
+    type = models.CharField(max_length=50, null=False, blank=False)
+    value = models.CharField(max_length=50, null=False, blank=False)
+
+    objects = UserQuestionEventManager()
+
+    def to_json(self, nested=False):
+        return {
+            'id': self.id,
+            'object_type': 'user_question_event',
+            'type': self.type,
+            'value': self.value,
+        }
+
+
+class UserQuestionConditionManager(models.Manager):
+
+    def from_type_value(self, type, value):
+        result = self.filter(type=type, value=value).first()
+        if result is None:
+            result = UserQuestionCondition(type=type, value=value)
+            result.save()
+        return result
+
+
+class UserQuestionCondition(models.Model):
+
+    type = models.CharField(max_length=50, null=False, blank=False)
+    value = models.CharField(max_length=50, null=False, blank=False)
+
+    objects = UserQuestionConditionManager()
+
+    def to_json(self, nested=False):
+        return {
+            'id': self.id,
+            'object_type': 'user_question_condition',
+            'type': self.type,
+            'value': self.value,
+        }
+
+
+class UserQuestion(models.Model):
+
+    TYPE_OPEN = 'o'
+    TYPE_CLOSED = 'c'
+    TYPE_MIXED = 'm'
+
+    ANSWER_TYPES = {
+        TYPE_OPEN: 'open',
+        TYPE_CLOSED: 'closed',
+        TYPE_MIXED: 'mixed',
+    }
+
+    identifier = models.SlugField()
+    lang = models.CharField(max_length=10, null=False, blank=False)
+    content = models.TextField(null=False, blank=False)
+    active = models.BooleanField(null=False, blank=False, default=True)
+    answer_type = models.CharField(choices=ANSWER_TYPES.items(), default='o', max_length=1)
+    on_events = models.ManyToManyField(UserQuestionEvent)
+    conditions = models.ManyToManyField(UserQuestionCondition)
+    repeat = models.BooleanField(default=False)
+
+    def to_json(self, nested=False):
+        result = {
+            'id': self.id,
+            'identifier': self.identifier,
+            'object_type': 'user_question',
+            'lang': self.lang,
+            'content': self.content,
+            'active': self.active,
+            'answer_type': self.answer_type,
+            'on_events': map(lambda e: e.to_json(nested=True), self.on_events.all()),
+            'conditions': map(lambda c: c.to_json(nested=True), self.conditions.all()),
+            'repeat': self.repeat,
+        }
+        if not nested:
+            result['possible_answers'] = []
+            for possible_answer in self.possible_answers.all():
+                if possible_answer.active:
+                    result['possible_answers'].append(possible_answer.to_json(nested=True))
+        return result
+
+
+class UserQuestionPossibleAnswer(models.Model):
+
+    identifier = models.SlugField()
+    active = models.BooleanField(null=False, blank=False, default=True)
+    content = models.CharField(max_length=100, null=False, blank=False)
+    question = models.ForeignKey(UserQuestion, null=False, blank=False, related_name='possible_answers')
+
+    def to_json(self, nested=False):
+        result = {
+            'id': self.id,
+            'identifier': self.identifier,
+            'object_type': 'user_question_possible_answer',
+            'content': self.content,
+        }
+        if not nested:
+            result['question'] = self.question.to_json(nested=True)
+        return result
+
+
+class UserQuestionAnswer(models.Model):
+
+    user = models.ForeignKey(User)
+    closed_answer = models.ForeignKey(UserQuestionPossibleAnswer, null=True, blank=True, default=True)
+    open_answer = models.CharField(max_length=100, null=True, blank=True, default=None)
+    time = models.DateTimeField(auto_now_add=True)
+    question = models.ForeignKey(UserQuestion, related_name='user_answers')
+
+    def to_json(self, nested=False):
+        result = {
+            'id': self.id,
+            'object_type': 'user_question_answer',
+        }
+        if self.closed_answer is not None:
+            result['closed_answer'] = self.closed_answer.to_json(nested=True)
+        else:
+            result['open_answer'] = self.open_answer
+        if not nested:
+            result['question'] = self.question.to_json(nested=True)
+        return result
+
+
 def migrate_google_openid_user(user):
     with transaction.atomic():
         if user and is_user_lazy(user):
