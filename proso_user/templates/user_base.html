@@ -2,9 +2,12 @@
 {% block menu_heading_block %}User{% endblock %}
 {% block menu_list_block %}
 	<ul>
+		<li><a href="{% url 'answer_question' %}?html=True">Answer Question</a></li>
 		<li><a href="{% url 'login' %}?html=True">Log In</a></li>
 		<li><a href="{% url 'logout' %}?html=True">Log Out</a></li>
 		<li><a href="{% url 'profile' %}?html=True">Profile</a></li>
+		<li><a href="{% url 'show_user_questions' %}?html=True">Questions</a></li>
+		<li><a href="{% url 'user_questions_to_ask' %}?html=True">Questions to Ask</a></li>
 		<li><a href="{% url 'session' %}?html=True">Session</a></li>
 		<li><a href="{% url 'signup' %}?html=True">Sign Up</a></li>
 		<li><a href="{% url 'user_service' %}?html=True">ngService</a></li>

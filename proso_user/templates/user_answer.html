@@ -1,0 +1,55 @@
+{% extends 'user_base.html' %}
+{% load staticfiles %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <h2>Emulate POST request</h2>
+    <form class="pure-form" action="" method="post" ng-app="proso_user" ng-controller="answer">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Answer</legend>
+            <input type="number" ng-model="answer.question" placeholder="Question Id">
+            <input type="number" ng-model="answer.closed_answer" placeholder="Closed Answer (id)">
+            <input type="text" ng-model="answer.open_answer" maxlength="100" placeholder="Open Answer">
+        </fieldset>
+
+        <button type="button" class="pure-button pure-button-primary" ng-click="submit()">Save</button>
+
+        <pre> {% verbatim %}{{ answer | json:4 }}{% endverbatim %}</pre>
+        <div style="color:red" ng-show="error_msg">Response: <b>{% verbatim %}{{ error_msg }}{% endverbatim %}</b></div>
+    </form>
+
+{% endblock %}
+
+
+{% block head_block %}
+    <script src="{% static "proso_common/angular/angular.min.js" %}"></script>
+    <script>
+        var app = angular.module('proso_user', []);
+        app.config(function($httpProvider) {
+            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        });
+        app.controller("answer", function($scope, $http, $window, $location){
+            $scope.answer = {};
+            $scope.error_msg = {};
+
+            $scope.submit = function() {
+                $scope.error_msg = {};
+                if (!$scope.answer.open_answer) {
+                    delete $scope.answer['open_answer'];
+                }
+                if (!$scope.answer.closed_answer) {
+                    delete $scope.answer['closed_answer'];
+                }
+                $http.post('', {answers: [$scope.answer]}).
+                    error(function(data, status, headers, config){
+                        $scope.error_msg = data;
+                    });
+            };
+        });
+    </script>
+{% endblock %}
