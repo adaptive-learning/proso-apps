@@ -2,17 +2,21 @@ from django.core.exceptions import ObjectDoesNotExist
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
 from proso.django.request import get_user_id, json_body, is_user_id_overridden
-from models import Session, UserProfile, TimeZone, migrate_google_openid_user
+from models import Session, UserProfile, TimeZone, UserQuestion, UserQuestionAnswer, UserQuestionPossibleAnswer, migrate_google_openid_user
 from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
+from proso.django.cache import cache_page_conditional
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.contrib.auth.models import User
 from django.middleware.csrf import get_token
 import json
+import proso_common
 from django.utils.translation import ugettext as _
 from proso.django.config import get_config
+import proso_common.json_enrich as common_json_enrich
+import json_enrich as user_json_enrich
 
 
 @allow_lazy_user
@@ -86,6 +90,43 @@ def profile(request, status=200):
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 
 
+@cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
+def show_one(request, object_class, id):
+    return proso_common.views.show_one(
+        request, _to_json, object_class, id, template='user_json.html')
+
+
+@cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
+def show_more(request, object_class, should_cache=True):
+
+    to_json_kwargs = {}
+
+    def _load_objects(request, object_class):
+        select_related_all = {}
+        prefetch_related_all = {
+            UserQuestion: ['possible_answers', 'on_events', 'conditions'],
+        }
+        select_related = select_related_all.get(object_class, [])
+        prefetch_related = prefetch_related_all.get(object_class, [])
+        objs = object_class.objects
+        if len(select_related) > 0:
+            objs = objs.select_related(*select_related)
+        if 'filter_column' in request.GET and 'filter_value' in request.GET:
+            column = request.GET['filter_column']
+            value = request.GET['filter_value']
+            if value.isdigit():
+                value = int(value)
+
+            objs = objs.prefetch_related(*prefetch_related).filter(**{column: value})
+        else:
+            objs = objs.prefetch_related(*prefetch_related).all()
+        return objs
+
+    return proso_common.views.show_more(
+        request, _to_json, _load_objects, object_class,
+        should_cache=should_cache, template='user_json.html', to_json_kwargs=to_json_kwargs)
+
+
 @ensure_csrf_cookie
 def login(request):
     """
@@ -124,6 +165,66 @@ def login(request):
         return profile(request)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
+
+
+def answer_question(request):
+    if request.method == 'GET':
+        return render(request, 'user_answer.html', {}, help_text=answer_question.__doc__)
+    elif request.method == 'POST':
+        with transaction.atomic():
+            user_id = get_user_id(request)
+            to_save = json_body(request.body)
+            for answer in to_save['answers']:
+                question = get_object_or_404(UserQuestion, pk=answer['question'])
+                if 'open_answer' in answer and 'closed_answer' in answer:
+                    return render_json(request, {
+                        'error': _('The answer can not contain both open and closed part'),
+                        'error_type': 'answer_closed_open_both'
+                    }, template='user_json.html', status=400)
+                if 'open_answer' not in answer and 'closed_answer' not in answer:
+                    return render_json(request, {
+                        'error': _('The answer has to contain either open, or closed part.'),
+                        'error_type': 'answer_closed_open_missing'
+                    }, template='user_json.html', status=400)
+                if question.answer_type == UserQuestion.TYPE_CLOSED and 'closed_answer' not in answer:
+                    return render_json(request, {
+                        'error': _('The answer has to contain closed part.'),
+                        'error_type': 'answer_closed_missing'
+                    }, template='user_json.html', status=400)
+                if question.answer_type == UserQuestion.TYPE_OPEN and 'open_answer' not in answer:
+                    return render_json(request, {
+                        'error': _('The answer has to contain open part.'),
+                        'error_type': 'answer_open_missing'
+                    }, template='user_json.html', status=400)
+
+                user_answer = None
+                if not question.repeat:
+                    user_answer = UserQuestionAnswer.objects.filter(user_id=user_id, question__identifier=question.identifier).first()
+                    status = 202
+                if user_answer is None:
+                    status = 201
+                    user_answer = UserQuestionAnswer(user_id=user_id, question=question)
+                if 'closed_answer' in answer:
+                    user_answer.closed_answer = get_object_or_404(UserQuestionPossibleAnswer, pk=answer['closed_answer'])
+                    if user_answer.closed_answer.question_id != question.id:
+                        return render_json(request, {
+                            'error': _('The given question and question for the given closed answer does not match.'),
+                            'error_type': 'closed_answer_no_match'
+                        }, template='user_json.html', status=400)
+                else:
+                    user_answer.closed_answer = None
+                user_answer.open_answer = answer['open_answer'] if 'open_answer' in answer else None
+                user_answer.save()
+            return HttpResponse('ok', status=status)
+    else:
+        return HttpResponseBadRequest("method %s is not allowed".format(request.method))
+
+
+def questions_to_ask(request):
+    language = request.GET.get("language", request.LANGUAGE_CODE)
+    user_id = get_user_id(request)
+    questions = UserQuestion.objects.questions_to_ask(user_id, language)
+    return render_json(request, _to_json(request, list(questions)), template='user_json.html')
 
 
 def logout(request):
@@ -270,6 +371,12 @@ def _to_json(request, value, **kwargs):
         json = value.to_json(**kwargs)
     else:
         json = value
+    common_json_enrich.enrich_by_object_type(request, json,
+        user_json_enrich.user_answers, ['user_question'],
+        skip_nested=True)
+    common_json_enrich.enrich_by_object_type(request, json,
+        user_json_enrich.url, ['user_question', 'user_question_possible_answer'],
+        skip_nested=False)
     return json
 
 

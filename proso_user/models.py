@@ -12,6 +12,7 @@ from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_
 from proso.django.util import disable_for_loaddata
 from django.db import transaction
 from social_auth.models import UserSocialAuth
+from collections import defaultdict
 import logging
 
 
@@ -300,6 +301,18 @@ class UserQuestionCondition(models.Model):
         }
 
 
+class UserQuestionManager(models.Manager):
+
+    def questions_to_ask(self, user_id, language):
+        user_answers = defaultdict(list)
+        for user_answer in UserQuestionAnswer.objects.select_related('question').filter(user_id=user_id):
+            user_answers[user_answer.question.identifier].append(user_answer)
+        questions = self.prefetch_related(
+            'possible_answers', 'on_events', 'conditions'
+        ).filter(active=True, lang=language).exclude(identifier__in=user_answers.keys(), repeat=False)
+        return questions
+
+
 class UserQuestion(models.Model):
 
     TYPE_OPEN = 'o'
@@ -320,6 +333,8 @@ class UserQuestion(models.Model):
     on_events = models.ManyToManyField(UserQuestionEvent)
     conditions = models.ManyToManyField(UserQuestionCondition)
     repeat = models.BooleanField(default=False)
+
+    objects = UserQuestionManager()
 
     def to_json(self, nested=False):
         result = {
