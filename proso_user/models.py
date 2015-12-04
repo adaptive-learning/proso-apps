@@ -334,6 +334,4 @@ def init_username(sender, user, **kwargs):
 
 PROSO_MODELS_TO_EXPORT = [
     User, UserProfile, Session, Location, HttpUserAgent, TimeZone,
-    UserQuestionEvent, UserQuestionCondition, UserQuestion, UserQuestionAnswer,
-    UserQuestionPossibleAnswer
 ]
