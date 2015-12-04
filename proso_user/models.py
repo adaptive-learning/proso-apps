@@ -332,4 +332,8 @@ def init_username(sender, user, **kwargs):
         name_lazy_user(user, save=False)
 
 
-PROSO_MODELS_TO_EXPORT = [User, UserProfile, Session]
+PROSO_MODELS_TO_EXPORT = [
+    User, UserProfile, Session, Location, HttpUserAgent, TimeZone,
+    UserQuestionEvent, UserQuestionCondition, UserQuestion, UserQuestionAnswer,
+    UserQuestionPossibleAnswer
+]
