@@ -80,8 +80,10 @@ class LanguageInPathMiddleware(object):
 
 
 def redirect_domain(request, target_domain):
-    url = ('http://' + target_domain + request.get_full_path() +
-           '?sessionid=' + request.COOKIES.get('sessionid', ''))
+    sessionid = request.COOKIES.get('sessionid', '')
+    url = 'http://' + target_domain + request.get_full_path()
+    if sessionid != '':
+        url += '?sessionid=' + sessionid
     return redirect(url, permanent=True)
 
 
