@@ -82,7 +82,7 @@ class LanguageInPathMiddleware(object):
 def redirect_domain(request, target_domain):
     url = ('http://' + target_domain + request.get_full_path() +
            '?sessionid=' + request.COOKIES.get('sessionid', ''))
-    return HttpResponseRedirect(url)
+    return redirect(url, permanent=True)
 
 
 def set_lang(request, language_code):
