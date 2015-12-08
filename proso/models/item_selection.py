@@ -10,7 +10,7 @@ from collections import defaultdict
 LOGGER = logging.getLogger('django.request')
 
 
-DEFAULT_TARGET_PROBABILITY = 0.8
+DEFAULT_TARGET_PROBABILITY = 0.65
 
 
 class ItemSelection:
