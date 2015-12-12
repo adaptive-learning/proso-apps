@@ -113,23 +113,34 @@ class ScoreItemSelection(ItemSelection):
     def __init__(
             self, predictive_model, weight_probability=10.0, weight_number_of_answers=5.0,
             weight_time_ago=5, weight_parent_time_ago=5.0, weight_parent_number_of_answers=2.5,
-            target_probability=DEFAULT_TARGET_PROBABILITY, time_ago_max=120, recompute_parent_score=True, history_adjustment=True):
+            target_probability=DEFAULT_TARGET_PROBABILITY, time_ago_max=120, recompute_parent_score=True,
+            history_adjustment=True, estimate_parent_factors=True):
         ItemSelection.__init__(self, predictive_model, target_probability, history_adjustment)
         self._weight_probability = weight_probability
         self._weight_number_of_answers = weight_number_of_answers
         self._weight_time_ago = weight_time_ago
         self._weight_parent_time_ago = weight_parent_time_ago
         self._weight_parent_number_of_answers = weight_parent_number_of_answers
+        self._estimate_parent_factors = estimate_parent_factors
         self._recompute_parent_score = recompute_parent_score
         self._time_ago_max = time_ago_max
 
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
-        answers_num = dict(zip(items, environment.number_of_answers_more_items(user=user, items=items)))
-        last_answer_time = dict(zip(items, environment.last_answer_time_more_items(user=user, items=items)))
-        probability = self.get_predictions(environment, user, items, time)
         parents = dict(zip(items, environment.get_items_with_values_more_items('parent', items=items)))
-        # The current implementation of retrieving features for the parent
-        # items provides only an under-approximation of the real state.
+        if self._estimate_parent_factors:
+            related_items = items
+        else:
+            parent_ids = set(sum([[p for p, v in ps] for ps in parents.values()], []))
+            children = dict(zip(parent_ids, environment.get_items_with_values_more_items('child', items=parent_ids)))
+            related_items = sum([[i for i, v in c] for c in children.values()], [])
+            parents = defaultdict(lambda:[])
+            for parent, childs in children.items():
+                for child, v in childs:
+                    parents[child].append((parent, v))
+
+        answers_num = dict(zip(related_items, environment.number_of_answers_more_items(user=user, items=related_items)))
+        last_answer_time = dict(zip(related_items, environment.last_answer_time_more_items(user=user, items=related_items)))
+        probability = self.get_predictions(environment, user, items, time)
         last_answer_time_parents = self._last_answer_time_for_parents(environment, parents, last_answer_time)
         answers_num_parents = self._answers_num_for_parents(environment, parents, answers_num)
         prob_target = self.get_target_probability(environment, user, practice_context=practice_context)
