@@ -225,7 +225,8 @@ class Command(BaseCommand):
                         modified = True
                     if modified:
                         db_term.parents.clear()
-                        db_term.parents.add(parents)
+                        for p in parents:
+                            db_term.parents.add(p)
                         db_term.save()
                 else:
                     print "Warning: Missing term '%s' in language '%s'" % (term["id"], lang)
@@ -328,6 +329,8 @@ class Command(BaseCommand):
                         modified = True
                     if modified:
                         db_flashcard.categories.clear()
+                        for p in parents:
+                            db_flashcard.parents.add(p)
                         db_flashcard.save()
                 else:
                     print "Warning: Missing flashcard '%s' in language '%s'" % (term["id"], lang)
