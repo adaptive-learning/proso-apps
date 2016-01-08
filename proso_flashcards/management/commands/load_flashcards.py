@@ -207,15 +207,28 @@ class Command(BaseCommand):
         print "\nBuilding dependencies"
         for term in progress.bar(data, every=max(1, len(data) / 100)):
             for lang in [k[-2:] for k in term.keys() if re.match(r'^name-\w\w$', k)]:
-                db_term = db_terms[term["id"] + lang]
-                db_term.parents.clear()
-                if "categories" in term:
-                    for parent in term["categories"]:
-                        if parent + lang not in categories:
-                            raise CommandError(
-                                "Parent category {} for term {} doesn't exist".format(parent + lang, term["id"]))
-                        db_term.parents.add(categories[parent + lang])
-                db_term.save()
+                if term["id"] + lang in db_terms:
+                    db_term = db_terms[term["id"] + lang]
+                    parents = []
+                    modified = False
+                    db_term_parents = db_term.parents.all()
+                    if "categories" in term:
+                        for parent in term["categories"]:
+                            if parent + lang not in categories:
+                                raise CommandError(
+                                    "Parent category {} for term {} doesn't exist".format(parent + lang, term["id"]))
+                            category = categories[parent + lang]
+                            parents.append(category)
+                            if category not in db_term_parents:
+                                modified = True
+                    if len(parents) != db_term.parents.count():
+                        modified = True
+                    if modified:
+                        db_term.parents.clear()
+                        db_term.parents.add(parents)
+                        db_term.save()
+                else:
+                    print "Warning: Missing term '%s' in language '%s'" % (term["id"], lang)
 
         print "New total number of terms in DB: {}".format(len(db_terms))
         return db_terms
@@ -241,22 +254,30 @@ class Command(BaseCommand):
                 if context_id is None:
                     raise CommandError(
                         "Context {} for flashcard {} doesn't exist".format(flashcard["context"], flashcard["id"]))
+                modified = False
                 if db_flashcard is None:
+                    modified = True
                     db_flashcard = Flashcard(
                         identifier=flashcard["id"],
                         lang=term.lang,
                     )
+                if db_flashcard.term != term or db_flashcard.context_id != context_id:
+                    modified = True
                 db_flashcard.term = term
                 db_flashcard.context_id = context_id
-                if "description" in flashcard:
+                if "description" in flashcard and db_flashcard.description != flashcard["description"]:
                     db_flashcard.description = flashcard["description"]
-                if "active" in flashcard:
+                    modified = True
+                if "active" in flashcard and db_flashcard.active != flashcard["active"]:
                     db_flashcard.active = flashcard["active"]
-                if db_flashcard.identifier in item_mapping:
+                    modified = True
+                if (db_flashcard.identifier in item_mapping and
+                        db_flashcard.item_id != item_mapping[db_flashcard.identifier]):
                     db_flashcard.item_id = item_mapping[db_flashcard.identifier]
                     db_flashcard.save()
                 else:
-                    db_flashcard.save()
+                    if modified:
+                        db_flashcard.save()
                     item_mapping[db_flashcard.identifier] = db_flashcard.item_id
                 db_flashcards_loaded[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
                 db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
@@ -288,15 +309,28 @@ class Command(BaseCommand):
         print "\nBuilding dependencies"
         for flashcard in progress.bar(data, every=max(1, len(data) / 100)):
             for lang in Category.objects.all().values_list("lang", flat=True).distinct():
-                db_flashcard = db_flashcards[flashcard["id"] + lang]
-                db_flashcard.categories.clear()
-                if "categories" in flashcard:
-                    for parent in flashcard["categories"]:
-                        if parent + lang not in categories:
-                            raise CommandError(
-                                "Parent category {} for flashcard {} doesn't exist".format(parent + lang, flashcard["id"]))
-                        db_flashcard.categories.add(categories[parent + lang])
-                db_flashcard.save()
+                if flashcard["id"] + lang in db_flashcards:
+                    db_flashcard = db_flashcards[flashcard["id"] + lang]
+                    parents = []
+                    modified = False
+                    db_flashcard_parents = db_flashcard.categories.all()
+                    if "categories" in flashcard:
+                        for parent in flashcard["categories"]:
+                            if parent + lang not in categories:
+                                raise CommandError(
+                                    "Parent category {} for flashcard {} doesn't exist".format(parent + lang, flashcard["id"]))
+                            db_flashcard.categories.add(categories[parent + lang])
+                            category = categories[parent + lang]
+                            parents.append(category)
+                            if category not in db_flashcard_parents:
+                                modified = True
+                    if len(parents) != db_flashcard.categories.count():
+                        modified = True
+                    if modified:
+                        db_flashcard.categories.clear()
+                        db_flashcard.save()
+                else:
+                    print "Warning: Missing flashcard '%s' in language '%s'" % (term["id"], lang)
 
         print "New total number of flashcards in DB: {}".format(len(db_flashcards))
         return db_flashcards
