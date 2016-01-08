@@ -262,8 +262,9 @@ class Command(BaseCommand):
                         identifier=flashcard["id"],
                         lang=term.lang,
                     )
-                if db_flashcard.term != term or db_flashcard.context_id != context_id:
-                    modified = True
+                else:
+                    if db_flashcard.term != term or db_flashcard.context_id != context_id:
+                        modified = True
                 db_flashcard.term = term
                 db_flashcard.context_id = context_id
                 if "description" in flashcard and db_flashcard.description != flashcard["description"]:
@@ -333,7 +334,7 @@ class Command(BaseCommand):
                             db_flashcard.parents.add(p)
                         db_flashcard.save()
                 else:
-                    print "Warning: Missing flashcard '%s' in language '%s'" % (term["id"], lang)
+                    print "Warning: Missing flashcard '%s' in language '%s'" % (flashcard["id"], lang)
 
         print "New total number of flashcards in DB: {}".format(len(db_flashcards))
         return db_flashcards
