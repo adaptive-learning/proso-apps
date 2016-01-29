@@ -47,7 +47,7 @@ def render(request, template, data, *args, **kwargs):
 
 def render_json(request, json, template=None, status=None, help_text=None, version=proso.release.VERSION):
     time_start = time()
-    if status is None or status / 100 == 2:
+    if status is None or status // 100 == 2:
         json = {'data': json, 'version': version}
     if 'error' in json and 'error_type' in json:
         LOGGER.warning('%s: %s', json['error_type'], json['error'])
