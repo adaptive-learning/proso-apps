@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# this migration is for purpose of migrating proso-apps to python3.5
 from __future__ import unicode_literals
 
 from django.db import models, migrations

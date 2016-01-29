@@ -64,7 +64,7 @@ details at http://psa.matiasaguirre.net/docs/configuration/porting_from_dsa.html
 ### migrations
  
     python manage.py migrate default 0001 --fake
-    python manage.py migrate proso_user
+    run somehow migration 0006_migrate_to_psa.py (dir: proso_user) - move to migrations, run, move back
     python manage.py migrate default
     python manage.py migrate flatblocks 0001 --fake
     python manage.py migrate lazysignup 0001 --fake
