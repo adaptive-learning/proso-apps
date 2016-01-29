@@ -73,7 +73,7 @@ class PracticeAPITest(TestCase):
                     self.assertTrue(category in term_categories, "The term has expected categories.")
 
     def test_avoid(self):
-        avoid = map(lambda f: f.id, [f for f in list(self._flashcards.values()) if f.lang == 'en'])[:10]
+        avoid = list(map(lambda f: f.id, [f for f in list(self._flashcards.values()) if f.lang == 'en']))[:10]
         content = self._get_practice(language='en', avoid=json.dumps(avoid), limit=100)
         found = [f['id'] for f in content['data']['flashcards']]
         for a in avoid:
