@@ -67,6 +67,7 @@ class ConfusingOptionSelection(OptionSelection):
                 raise Exception("Zero options are not allowed, but there are no candidates for options in case of item {}.".format(item))
             else:
                 return []
+        print(self._item_selector.get_predictions(environment)[item])
         prediction = self._item_selector.get_predictions(environment)[item]
         if prediction is None:
             raise ValueError("Prediction is missing")
@@ -148,6 +149,7 @@ class TestOptionSelection(unittest.TestCase):
     def get_item_selector(self, target_probability):
         item_selector = MagicMock()
         item_selector.get_target_probability.return_value = target_probability
+        item_selector.get_predictions.return_value = defaultdict(lambda: 0.5)
         return item_selector
 
 

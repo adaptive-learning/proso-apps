@@ -183,7 +183,7 @@ class InMemoryEnvironment(CommonEnvironment):
 
     def audit(self, key, user=None, item=None, item_secondary=None, limit=None, symmetric=True):
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items.sort()
         found = self._data[key][user][items[1]][items[0]]
         if found and found[0][0]:
@@ -215,7 +215,7 @@ class InMemoryEnvironment(CommonEnvironment):
         if permanent:
             audit = False
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items.sort()
         if time is None:
             time = datetime.datetime.now()
@@ -231,7 +231,7 @@ class InMemoryEnvironment(CommonEnvironment):
 
     def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items.sort()
         found = self._data[key][user][items[1]][items[0]]
         if len(found) and not found[-1][0]:
@@ -322,7 +322,7 @@ class InMemoryEnvironment(CommonEnvironment):
 
     def _get(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items.sort()
         found = self._data[key][user][items[1]][items[0]]
         if found:
@@ -406,9 +406,9 @@ class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
             env.write('key', value)
         expected = list(map(float, list(range(100))))
         expected.reverse()
-        found = list(zip(*env.audit('key'))[1])
+        found = list(list(zip(*env.audit('key')))[1])
         self.assertEqual(expected, found)
-        found = list(zip(*env.audit('key', limit=10))[1])
+        found = list(list(zip(*env.audit('key', limit=10)))[1])
         self.assertEqual(expected[:10], found)
 
 
@@ -439,7 +439,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.time('key', item=items[0], item_secondary=items[1]), times[5])
         for i, t in zip(items[1:], times):
             env.write('key', 2, item=items[0], item_secondary=i, time=t)
-        self.assertEquals(env.time_more_items('key', item=items[0], items=items[1:]), times[:9])
+        self.assertEqual(env.time_more_items('key', item=items[0], items=items[1:]), times[:9])
 
     def test_number_of_answers(self):
         env = self.generate_environment()

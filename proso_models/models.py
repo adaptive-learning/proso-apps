@@ -340,7 +340,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
 
     def _prefetched_key(self, key, user, item, item_secondary, symmetric):
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items.sort()
         return (key, user, items[1], items[0])
 
@@ -502,7 +502,7 @@ class DatabaseEnvironment(CommonEnvironment):
         if value is None:
             raise Exception('Value has to be specified')
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items = sorted(items)
         data = {
             'user_id': user,
@@ -544,7 +544,7 @@ class DatabaseEnvironment(CommonEnvironment):
         if key is None:
             raise Exception('Key has to be specified')
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items = sorted(items)
         data = {
             'user_id': user,
@@ -735,7 +735,7 @@ class DatabaseEnvironment(CommonEnvironment):
         if key is None:
             raise Exception('Key has to be specified')
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items = sorted(items)
         return self._where({
             'user_id': user,
