@@ -43,6 +43,7 @@ In case of final micro version:
 
 ### virtualenv
 
+ - (only for testing )install sqlite-devel or libsqlite3-dev from repository  
  - install python3.5 (http://techglimpse.com/install-update-python-pip-linux-tutorial/)
  - create virtualenv with python3.5 (use -p in mkvirtualenv command)
  - install requirements (make install)
