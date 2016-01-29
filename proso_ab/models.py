@@ -38,7 +38,7 @@ class ExperimentManager(models.Manager):
                 self.clear_session(request.session)
         override = {}
         if user.is_staff:
-            for key, value in request.GET.items():
+            for key, value in list(request.GET.items()):
                 if key.startswith('ab_value_'):
                     override[key.replace('ab_value_', '')] = value
         if 'ab_experiment_values_modified' in request.session:
@@ -51,9 +51,9 @@ class ExperimentManager(models.Manager):
             request.session['ab_experiment_values'] = {}
             request.session['ab_experiment_values_user'] = user.id
         request.session['ab_experiment_values_modified'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        for k, v in override.iteritems():
+        for k, v in override.items():
             request.session['ab_experiment_values'][k] = v
-        for name, value in UserValue.objects.for_user(user).iteritems():
+        for name, value in UserValue.objects.for_user(user).items():
             if name in override:
                 continue
             request.session['ab_experiment_values'][name] = value
@@ -73,7 +73,7 @@ class ExperimentManager(models.Manager):
         total_prob = sum([probability for (probability, value) in values])
         if total_prob != 100:
             raise Exception('Total probability has to be equal to 100, it was ' + str(total_prob))
-        if default_value not in map(lambda (p, v): v, values):
+        if default_value not in [p_v[1] for p_v in values]:
             raise Exception('Default value %s is not present in values.' % default_value)
         experiment = Experiment(name=name, active=active)
         experiment.save()
@@ -101,8 +101,7 @@ class ExperimentManager(models.Manager):
         global _request_cache_initialized
         _request_cache_initialized = True
         _request_cache[currentThread()] = list(Value.objects.filter(
-            id__in=map(lambda d: d['id'],
-            request.session.get('ab_experiment_values', {}).values())))
+            id__in=[d['id'] for d in list(request.session.get('ab_experiment_values', {}).values())]))
         LOGGER.debug('initialized request cache for AB experiments, user %s' % (str(None if user is None else user.id)))
 
 
@@ -182,7 +181,7 @@ class UserValueManager(models.Manager):
                 value = Value.objects.choose_value(experiment)
                 UserValue(user_id=user.id, value=value).save()
                 prepared[experiment.name] = value.to_json()
-        for experiment, default in defaults.iteritems():
+        for experiment, default in defaults.items():
             if experiment not in prepared:
                 prepared[experiment] = default.to_json()
         return prepared

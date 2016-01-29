@@ -55,7 +55,7 @@ class UserProfile(models.Model):
         return data
 
     def __unicode__(self):
-        return u"Profile: '{0.user.username}'".format(self)
+        return "Profile: '{0.user.username}'".format(self)
 
     def save_properties(self, properties_json):
         for property_dict in properties_json:
@@ -124,8 +124,8 @@ class HttpUserAgent(models.Model):
         }
 
     def __unicode__(self):
-        return (u"{0.os_family} - {0.os_version} - {0.browser_family}" +
-                u"- {0.browser_version} - {0.device_family}").format(self)
+        return ("{0.os_family} - {0.os_version} - {0.browser_family}" +
+                "- {0.browser_version} - {0.device_family}").format(self)
 
 
 class TimeZoneManager(models.Manager):
@@ -309,7 +309,7 @@ class UserQuestionManager(models.Manager):
             user_answers[user_answer.question.identifier].append(user_answer)
         questions = self.prefetch_related(
             'possible_answers', 'on_events', 'conditions'
-        ).filter(active=True, lang=language).exclude(identifier__in=user_answers.keys(), repeat=False)
+        ).filter(active=True, lang=language).exclude(identifier__in=list(user_answers.keys()), repeat=False)
         return questions
 
 
@@ -329,7 +329,7 @@ class UserQuestion(models.Model):
     lang = models.CharField(max_length=10, null=False, blank=False)
     content = models.TextField(null=False, blank=False)
     active = models.BooleanField(null=False, blank=False, default=True)
-    answer_type = models.CharField(choices=ANSWER_TYPES.items(), default='o', max_length=1)
+    answer_type = models.CharField(choices=list(ANSWER_TYPES.items()), default='o', max_length=1)
     on_events = models.ManyToManyField(UserQuestionEvent)
     conditions = models.ManyToManyField(UserQuestionCondition)
     repeat = models.BooleanField(default=False)
@@ -345,8 +345,8 @@ class UserQuestion(models.Model):
             'content': self.content,
             'active': self.active,
             'answer_type': self.answer_type,
-            'on_events': map(lambda e: e.to_json(nested=True), self.on_events.all()),
-            'conditions': map(lambda c: c.to_json(nested=True), self.conditions.all()),
+            'on_events': [e.to_json(nested=True) for e in self.on_events.all()],
+            'conditions': [c.to_json(nested=True) for c in self.conditions.all()],
             'repeat': self.repeat,
         }
         if not nested:

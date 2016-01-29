@@ -5,7 +5,7 @@ from django.http import HttpResponse
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
-from sitemap import sitemaps
+from .sitemap import sitemaps
 
 
 urlpatterns = patterns(

@@ -7,7 +7,7 @@ from re import search
 
 
 class Command(NoArgsCommand):
-    help = u"""Compute hashes of static content files. Typically on deploy"""
+    help = """Compute hashes of static content files. Typically on deploy"""
 
     def handle(self, *args, **options):
         filter_ = ''

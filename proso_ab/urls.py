@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, url
-from models import Experiment, Value
+from .models import Experiment, Value
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import TemplateView
 

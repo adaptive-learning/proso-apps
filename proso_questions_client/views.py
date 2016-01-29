@@ -28,7 +28,7 @@ def home(request, hack=None):
     request.META["CSRF_COOKIE_USED"] = True
     hashes = dict((key, value)
                   for key, value
-                  in settings.HASHES.iteritems()
+                  in settings.HASHES.items()
                   if "/lib/" not in key and "/js/" not in key and "/sass/" not in key
                   )
     c = {

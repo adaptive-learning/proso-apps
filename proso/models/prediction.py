@@ -1,9 +1,10 @@
 import abc
 import operator
 from math import exp
+from functools import reduce
 
 
-class PredictiveModel:
+class PredictiveModel(metaclass=abc.ABCMeta):
 
     """
     This class handles the logic behind the predictive models, which is
@@ -15,8 +16,6 @@ class PredictiveModel:
         update
             the model updates environment to persist it for the future prediction
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def predict_more_items(self, environment, user, items, time, **kwargs):
         data = self.prepare_phase_more_items(environment, user, items, time, **kwargs)
@@ -157,7 +156,7 @@ class AveragePredictiveModel(PredictiveModel):
         return float(data[0]) / max(data[1], 1)
 
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
-        return map(lambda (tot, num): float(tot) / max(num, 1), zip(data[0], data[1]))
+        return [float(tot_num[0]) / max(tot_num[1], 1) for tot_num in zip(data[0], data[1])]
 
     def update_phase(self, environment, data, prediction, user, item, correct, time, answer_id, **kwargs):
         environment.update('total_sum', 0, lambda x: x + correct, item=item, answer=answer_id)
@@ -206,9 +205,9 @@ class PriorCurrentPredictiveModel(PredictiveModel):
 
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
         preds = []
-        to_iter = zip(
+        to_iter = list(zip(
             items, data['difficulties'],
-            data['current_skills'], data['last_times'])
+            data['current_skills'], data['last_times']))
         for i, d, c, t in to_iter:
             preds.append(self.predict_phase({
                 'prior_skill': data['prior_skill'],
@@ -254,16 +253,16 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
 
     def prepare_phase_more_items(self, environment, user, items, time, **kwargs):
         parents = self._load_parents(environment, items, user)
-        all_items = list(set(items + [i for ps in parents.values() for (i, v) in ps]))
+        all_items = list(set(items + [i for ps in list(parents.values()) for (i, v) in ps]))
         return {
-            'skills': dict(zip(
-                all_items, environment.read_more_items('skill', items=all_items, user=user, default=0))),
-            'first_answers': dict(zip(
-                items, environment.number_of_first_answers_more_items(items=items))),
-            'difficulties': dict(zip(
-                items, environment.read_more_items('difficulty', items=items, default=0))),
-            'last_times': dict(zip(
-                items, environment.last_answer_time_more_items(items=items, user=user))),
+            'skills': dict(list(zip(
+                all_items, environment.read_more_items('skill', items=all_items, user=user, default=0)))),
+            'first_answers': dict(list(zip(
+                items, environment.number_of_first_answers_more_items(items=items)))),
+            'difficulties': dict(list(zip(
+                items, environment.read_more_items('difficulty', items=items, default=0)))),
+            'last_times': dict(list(zip(
+                items, environment.last_answer_time_more_items(items=items, user=user)))),
             'parents': parents
         }
 
@@ -276,7 +275,7 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
             guess=kwargs.get('guess'))[0]
 
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
-        return map(lambda i: self.predict_phase(data, user, i, time, **kwargs), items)
+        return [self.predict_phase(data, user, i, time, **kwargs) for i in items]
 
     def update_phase(self, environment, data, prediction, user, item, correct, time, answer_id, **kwargs):
         if data['last_times'][item] is None:
@@ -285,8 +284,8 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
             data['difficulties'][item] -= difficulty_alpha * (correct - prediction)
             environment.write('difficulty', data['difficulties'][item], item=item, time=time, answer=answer_id)
         parents_per_level = [
-            list(set(map(lambda (i, w): i, parents))) for parents in self._iterate_parents_per_level(item, data)]
-        parents_per_level = zip(range(len(parents_per_level)), parents_per_level)
+            list(set([i_w[0] for i_w in parents])) for parents in self._iterate_parents_per_level(item, data)]
+        parents_per_level = list(zip(list(range(len(parents_per_level))), parents_per_level))
         parents_per_level.reverse()
         level_decay = lambda level: 1.0 / 3 ** level
         update_const = self._pfae_good if correct else self._pfae_bad
@@ -306,7 +305,7 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
             found = environment.get_items_with_values_more_items('parent', items)
             new_items = set()
             for i, ps in zip(items, found):
-                new_items = new_items.union(map(lambda x: x[0], ps))
+                new_items = new_items.union([x[0] for x in ps])
                 if len(ps) == 0:
                     ps.append((None, 1))
                 parents[i] = ps
@@ -316,15 +315,15 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
     def _load_skill(self, item, data):
         skill = 0
         for skill_items in self._iterate_parents_per_level(item, data):
-            weights = float(sum(map(lambda (i, w): w, skill_items)))
-            skill += sum(map(lambda (i, w): data['skills'][i] * w / weights, skill_items))
+            weights = float(sum([i_w1[1] for i_w1 in skill_items]))
+            skill += sum([data['skills'][i_w3[0]] * i_w3[1] / weights for i_w3 in skill_items])
         return skill
 
     def _iterate_parents_per_level(self, item, data):
         to_find = [(item, 1)]
         while len(to_find) > 0:
             yield to_find
-            to_find = [iw for ps in map(lambda (i, w): [] if i is None else data['parents'][i], to_find) for iw in ps]
+            to_find = [iw for ps in [[] if i_w2[0] is None else data['parents'][i_w2[0]] for i_w2 in to_find] for iw in ps]
 
 
 class ShiftedPredictiveModel(PredictiveModel):
@@ -356,9 +355,7 @@ class ShiftedPredictiveModel(PredictiveModel):
         return super(ShiftedPredictiveModel, self).predict_and_update(environment, user, item, correct, time, **kwargs)
 
     def predict_more_items(self, environment, user, items, time, **kwargs):
-        return map(
-            lambda p: min(1.0, max(0.0, p + self._prediction_shift)),
-            super(ShiftedPredictiveModel, self).predict_more_items(environment, user, items, time, **kwargs))
+        return [min(1.0, max(0.0, p + self._prediction_shift)) for p in super(ShiftedPredictiveModel, self).predict_more_items(environment, user, items, time, **kwargs)]
 
 
 def predict_simple(skill_asked, number_of_options=None, guess=None):
@@ -392,17 +389,17 @@ def predict(skill_asked, option_skills):
     if len(option_skills) == 0:
         return (_sigmoid(skill_asked), [])
 
-    probs = map(lambda x: _sigmoid(x), [skill_asked] + option_skills)
+    probs = [_sigmoid(x) for x in [skill_asked] + option_skills]
     items = 2 ** len(probs)
     asked_prob = 0
     opt_wrong_probs = [0 for i in option_skills]
 
     for i in range(items):
         knows = _to_binary_reverse_list(i, len(probs))
-        guess_options = 1 if knows[0] else sum(map(lambda x: 1 - x, knows))
+        guess_options = 1 if knows[0] else sum([1 - x for x in knows])
         current_prob = reduce(
             operator.mul,
-            map(lambda (p, k): p if k else 1 - p, zip(probs, knows)),
+            [p_k[0] if p_k[1] else 1 - p_k[0] for p_k in zip(probs, knows)],
             1)
         asked_prob += (1.0 / guess_options) * current_prob
         if guess_options > 1:

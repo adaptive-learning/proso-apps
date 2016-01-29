@@ -9,13 +9,11 @@ from collections import defaultdict
 # API
 ################################################################################
 
-class Environment:
+class Environment(metaclass=abc.ABCMeta):
 
     """
     This class encapsulates environment for the purpose of modelling.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def process_answer(self, user, item, asked, answered, time, answer, response_time, guess, **kwargs):
         """
@@ -190,17 +188,17 @@ class InMemoryEnvironment(CommonEnvironment):
         found = self._data[key][user][items[1]][items[0]]
         if found and found[0][0]:
             return []
-        found = map(lambda x: (x[1], x[3]), found)
+        found = [(x[1], x[3]) for x in found]
         if limit is not None:
             found = found[-limit:]
         found.reverse()
         return found
 
     def get_items_with_values(self, key, item, user=None):
-        return map(lambda (i, l): (i, l[-1][3]), self._data[key][user][item].items())
+        return [(i_l[0], i_l[1][-1][3]) for i_l in list(self._data[key][user][item].items())]
 
     def get_items_with_values_more_items(self, key, items, user=None):
-        return map(lambda i: self.get_items_with_values(key, i, user), items)
+        return [self.get_items_with_values(key, i, user) for i in items]
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         found = self._get(key, user=user, item=item, item_secondary=item_secondary, symmetric=symmetric)
@@ -210,9 +208,7 @@ class InMemoryEnvironment(CommonEnvironment):
             return default
 
     def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
-        return map(
-            lambda i: self.read(key, user, i, item, default, symmetric),
-            items)
+        return [self.read(key, user, i, item, default, symmetric) for i in items]
 
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         value = float(value)
@@ -256,9 +252,7 @@ class InMemoryEnvironment(CommonEnvironment):
             return None
 
     def time_more_items(self, key, items, user=None, item=None, symmetric=True):
-        return map(
-            lambda i: self.time(key, user, i, item, symmetric),
-            items)
+        return [self.time(key, user, i, item, symmetric) for i in items]
 
     def number_of_answers(self, user=None, item=None, context=None):
         if context is not None:
@@ -296,7 +290,7 @@ class InMemoryEnvironment(CommonEnvironment):
         if context is not None:
             raise Exception('Using context is not supported.')
         audit = self.audit(self.LAST_CORRECTNESS, user=user, limit=window_size)
-        audit = map(lambda (x, y): y, audit)
+        audit = [x_y[1] for x_y in audit]
         if len(audit) < window_size:
             return None
         else:
@@ -309,19 +303,19 @@ class InMemoryEnvironment(CommonEnvironment):
         return self.read_more_items(self.CONFUSING_FACTOR, item=item, items=items, user=user, default=0)
 
     def export_values(self):
-        for key, users in self._data.iteritems():
-            for user, primaries in users.iteritems():
-                for item_primary, secondaries in primaries.iteritems():
-                    for item_secondary, values in secondaries.iteritems():
+        for key, users in self._data.items():
+            for user, primaries in users.items():
+                for item_primary, secondaries in primaries.items():
+                    for item_secondary, values in secondaries.items():
                         if len(values) > 0:
                             permanent, time, answer, value = values[-1]
                             yield (key, user, item_primary, item_secondary, permanent, time, answer, value)
 
     def export_audit(self):
-        for key, users in self._data.iteritems():
-            for user, primaries in users.iteritems():
-                for item_primary, secondaries in primaries.iteritems():
-                    for item_secondary, values in secondaries.iteritems():
+        for key, users in self._data.items():
+            for user, primaries in users.items():
+                for item_primary, secondaries in primaries.items():
+                    for item_secondary, values in secondaries.items():
                         for permanent, time, answer, value in values:
                             if not permanent:
                                 yield (key, user, item_primary, item_secondary, time, answer, value)
@@ -340,9 +334,7 @@ class InMemoryEnvironment(CommonEnvironment):
 # Tests
 ################################################################################
 
-class TestEnvironment(unittest.TestCase):
-
-    __metaclass__ = abc.ABCMeta
+class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def generate_user(self):
@@ -398,21 +390,21 @@ class TestEnvironment(unittest.TestCase):
         item = self.generate_item()
         items = [self.generate_item() for i in range(10)]
         user = self.generate_user()
-        for i, v in zip(items, range(10)):
+        for i, v in zip(items, list(range(10))):
             env.write('key', v, item=i)
-        for i, v in zip(items, range(10, 20)):
+        for i, v in zip(items, list(range(10, 20))):
             env.write('key', v, user=user, item=i)
-        for i, v in zip(items, range(20, 30)):
+        for i, v in zip(items, list(range(20, 30))):
             env.write('key', v, user=user, item=item, item_secondary=i)
-        self.assertEqual(range(10), env.read_more_items('key', items))
-        self.assertEqual(range(10, 20), env.read_more_items('key', items, user=user))
-        self.assertEqual(range(20, 30), env.read_more_items('key', items=items, user=user, item=item))
+        self.assertEqual(list(range(10)), env.read_more_items('key', items))
+        self.assertEqual(list(range(10, 20)), env.read_more_items('key', items, user=user))
+        self.assertEqual(list(range(20, 30)), env.read_more_items('key', items=items, user=user, item=item))
 
     def test_audit(self):
         env = self.generate_environment()
         for value in range(100):
             env.write('key', value)
-        expected = map(float, range(100))
+        expected = list(map(float, list(range(100))))
         expected.reverse()
         found = list(zip(*env.audit('key'))[1])
         self.assertEqual(expected, found)
@@ -420,9 +412,7 @@ class TestEnvironment(unittest.TestCase):
         self.assertEqual(expected[:10], found)
 
 
-class TestCommonEnvironment(TestEnvironment):
-
-    __metaclass__ = abc.ABCMeta
+class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
 
     def test_time(self):
         env = self.generate_environment()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from models import Question, Category, Set, Option
+from .models import Question, Category, Set, Option
 from django.contrib import admin
 
 

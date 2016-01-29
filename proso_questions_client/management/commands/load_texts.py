@@ -7,7 +7,7 @@ import os
 
 
 class Command(BaseCommand):
-    help = u"""Load flatblock texts from json file to db."""
+    help = """Load flatblock texts from json file to db."""
 
     SCHEMA = {
         "description": "Schema for data file containing texts",

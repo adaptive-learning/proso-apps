@@ -1,5 +1,5 @@
 #  -*- coding: utf-8 -*-
-import environment as environment
+from . import environment as environment
 
 
 class InMemoryEnvironmentTest(environment.TestCommonEnvironment):

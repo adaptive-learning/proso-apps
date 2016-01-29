@@ -15,7 +15,7 @@ class cache_environment_for_item:
         def _wrapper(self, *args, **kwargs):
             if not func.__name__.endswith('_more_items') or _should_skip():
                 return func(self, *args, **kwargs)
-            args_dict = dict(zip(inspect.getargspec(func).args[1:], args) + kwargs.items())
+            args_dict = dict(list(zip(inspect.getargspec(func).args[1:], args)) + list(kwargs.items()))
             default = decorator_self._default
             if default is None:
                 default = args_dict.get('default', None)
@@ -24,7 +24,7 @@ class cache_environment_for_item:
                 raise Exception('items have to be specified')
             cached_items = {}
             other_items = []
-            cache_keys = dict(zip(items, map(lambda x: _cache_key(func, x, args, kwargs), items)))
+            cache_keys = dict(list(zip(items, [_cache_key(func, x, args, kwargs) for x in items])))
             for item in items:
                 cache_key = cache_keys[item]
                 if not _cache_has_key(cache_key):
@@ -33,13 +33,13 @@ class cache_environment_for_item:
                     cached_items[item] = _cache_get(cache_key, default)
             if len(other_items) > 0:
                 args_dict['items'] = other_items
-                inner_result = dict(zip(other_items, func(self, **args_dict)))
-                for item, value in inner_result.items():
+                inner_result = dict(list(zip(other_items, func(self, **args_dict))))
+                for item, value in list(inner_result.items()):
                     cache_key = cache_keys[item]
                     _cache_set(cache_key, value)
             else:
                 inner_result = {}
-            return map(lambda item: cached_items.get(item, inner_result.get(item)), items)
+            return [cached_items.get(item, inner_result.get(item)) for item in items]
         return _wrapper
 
 
@@ -61,10 +61,10 @@ def _cache_set(key, value):
 
 def _cache_key(func, item, args, kwargs):
     funcname = func.__name__.replace('_more_items', '')
-    args_dict = dict(zip(inspect.getargspec(func).args[1:], args) + kwargs.items())
+    args_dict = dict(list(zip(inspect.getargspec(func).args[1:], args)) + list(kwargs.items()))
     del args_dict['items']
     return '____'.join([
         str(funcname),
         str(item),
-        '___'.join(map(lambda (key, value): str(key) + '_' + str(value), sorted(args_dict.items())))]
+        '___'.join([str(key_value[0]) + '_' + str(key_value[1]) for key_value in sorted(args_dict.items())])]
     )

@@ -5,9 +5,9 @@
 
 import atexit
 import base64
-import cStringIO as StringIO
+import io as StringIO
 import getpass
-import httplib
+import http.client
 import json as simplejson
 import os
 import platform
@@ -15,7 +15,7 @@ import re
 import socket
 import sys
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import zipfile
 import tarfile
 
@@ -120,12 +120,12 @@ if not args.sauce:
 
             if not os.path.exists(chromedriver_local):
                 datafile = StringIO.StringIO(
-                    urllib2.urlopen(chromedriver_url).read())
+                    urllib.request.urlopen(chromedriver_url).read())
                 contents = zipfile.ZipFile(datafile, 'r')
                 contents.extract(chromedriver_bin, "tools")
 
             chromedriver = os.path.realpath(chromedriver_local)
-            os.chmod(chromedriver, 0755)
+            os.chmod(chromedriver, 0o755)
         else:
             chromedriver = "chromedriver"
 
@@ -146,7 +146,7 @@ if not args.sauce:
             phantomjs_local = os.path.join("tools", phantomjs_bin)
             if not os.path.exists(phantomjs_local):
                 datafile = StringIO.StringIO(
-                    urllib2.urlopen(phantomjs_url).read())
+                    urllib.request.urlopen(phantomjs_url).read())
                 contents = tarfile.TarFile.open(fileobj=datafile, mode='r:bz2')
                 file("tools/" + phantomjs_bin, "w").write(
                     contents.extractfile(
@@ -154,7 +154,7 @@ if not args.sauce:
                     ).read())
 
             phantomjs = os.path.realpath(phantomjs_local)
-            os.chmod(phantomjs, 0755)
+            os.chmod(phantomjs, 0o755)
         else:
             if platform.system() == "Darwin":
                 phantomjs_url = "https://phantomjs.googlecode.com/files/phantomjs-1.9.0-macosx.zip"  # noqa
@@ -167,12 +167,12 @@ if not args.sauce:
             phantomjs_local = os.path.join("tools", phantomjs_bin)
             if not os.path.exists(phantomjs_local):
                 datafile = StringIO.StringIO(
-                    urllib2.urlopen(phantomjs_url).read())
+                    urllib.request.urlopen(phantomjs_url).read())
                 contents = zipfile.ZipFile(datafile, 'r')
                 contents.extract(phantomjs_bin, "tools")
 
             phantomjs = os.path.realpath(phantomjs_local)
-            os.chmod(phantomjs, 0755)
+            os.chmod(phantomjs, 0o755)
 else:
     assert os.environ['SAUCE_USERNAME']
     assert os.environ['SAUCE_ACCESS_KEY']
@@ -184,7 +184,7 @@ else:
     sauce_connect_bin = "Sauce-Connect.jar"
     sauce_connect_local = os.path.join("tools", sauce_connect_bin)
     if not os.path.exists(sauce_connect_local):
-        datafile = StringIO.StringIO(urllib2.urlopen(sauce_connect_url).read())
+        datafile = StringIO.StringIO(urllib.request.urlopen(sauce_connect_url).read())
         contents = zipfile.ZipFile(datafile, 'r')
         contents.extract(sauce_connect_bin, "tools")
 
@@ -298,7 +298,7 @@ import testtools
 if args.list:
     data = file("test/testcases.js").read()
     for test in re.compile("(?<=').+(?=')").findall(data):
-        print test[:-5]
+        print(test[:-5])
     sys.exit(-1)
 
 if args.load_list:
@@ -343,8 +343,8 @@ output.startTestRun()
 # Start up a local HTTP server which serves the files to the browser and
 # collects the test results.
 # -----------------------------------------------------------------------------
-import SimpleHTTPServer
-import SocketServer
+import http.server
+import socketserver
 import threading
 import cgi
 import re
@@ -419,13 +419,13 @@ class MultiPartForm(object):
 critical_failure = False
 
 
-class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class ServerHandler(http.server.SimpleHTTPRequestHandler):
     STATUS = {0: 'success', 1: 'fail', 2: 'fail', 3: 'skip'}
 
     # Make the HTTP requests be quiet
     def log_message(self, format, *a):
         if args.verbose:
-            SimpleHTTPServer.SimpleHTTPRequestHandler.log_message(
+            http.server.SimpleHTTPRequestHandler.log_message(
                 self, format, *a)
 
     def do_POST(self):
@@ -445,7 +445,7 @@ class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         try:
             json_data = form.getvalue('data')
             data = simplejson.loads(json_data)
-        except ValueError, e:
+        except ValueError as e:
             critical_failure = True
 
             test_id = "CRITICAL-FAILURE"
@@ -466,7 +466,7 @@ class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                 info = dict(result)
                 info.pop('_structured_clone', None)
 
-                if not isinstance(result['message'], (str, unicode)):
+                if not isinstance(result['message'], str):
                     msg = str(result['message'])
                 else:
                     msg = result['message']
@@ -514,16 +514,16 @@ class ServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                     form.add_file(
                         'upload[]', screenshot, fileHandle=open(screenshot, 'rb'))
 
-                    request = urllib2.Request("http://postimage.org/")
+                    request = urllib.request.Request("http://postimage.org/")
                     body = str(form)
                     request.add_header('Content-type', form.get_content_type())
                     request.add_header('Content-length', len(body))
                     request.add_data(body)
 
-                    result = urllib2.urlopen(request).read()
-                    print "Screenshot at:", re.findall("""<td><textarea wrap='off' onmouseover='this.focus\(\)' onfocus='this.select\(\)' id="code_1" scrolling="no">([^<]*)</textarea></td>""", result)  # noqa
-            except Exception, e:
-                print e
+                    result = urllib.request.urlopen(request).read()
+                    print("Screenshot at:", re.findall("""<td><textarea wrap='off' onmouseover='this.focus\(\)' onfocus='this.select\(\)' id="code_1" scrolling="no">([^<]*)</textarea></td>""", result))  # noqa
+            except Exception as e:
+                print(e)
 
         response = "OK"
         self.send_response(200)
@@ -540,16 +540,16 @@ else:
 
 while True:
     try:
-        httpd = SocketServer.TCPServer(
+        httpd = socketserver.TCPServer(
             ("127.0.0.1", port),
             ServerHandler)
         break
     except socket.error as e:
-        print e
+        print(e)
         time.sleep(5)
 
 port = httpd.socket.getsockname()[-1]
-print "Serving at", port
+print("Serving at", port)
 
 httpd_thread = threading.Thread(target=httpd.serve_forever)
 httpd_thread.daemon = True
@@ -671,7 +671,7 @@ session_id = None
 try:
     try:
         if args.verbose:
-            print driver_arguments
+            print(driver_arguments)
         browser = getattr(webdriver, args.browser)(**driver_arguments)
         session_id = browser.session_id
         atexit.register(browser.quit)
@@ -718,16 +718,16 @@ try:
                 progress = browser.execute_script('return window.getTestRunnerProgress()')
                 status = '%s/%s (%s%%)' % (progress['completed'], progress['total'],
                     100 * progress['completed'] // progress['total'])
-            except selenium_exceptions.WebDriverException, e:
+            except selenium_exceptions.WebDriverException as e:
                 status = e
 
-            print 'Running tests...', status
+            print('Running tests...', status)
             sys.stdout.flush()
             time.sleep(1)
 
         # Deal with unexpected alerts, sometimes they are dismissed by
         # alternative means so we have to deal with that case too.
-        except selenium_exceptions.UnexpectedAlertPresentException, e:
+        except selenium_exceptions.UnexpectedAlertPresentException as e:
             try:
                 alert = browser.switch_to_alert()
                 sys.stderr.write("""\
@@ -737,14 +737,14 @@ WARNING: Unexpected alert found!
 ---------------------------------------------------------------------
 """ % alert.text)
                 alert.dismiss()
-            except selenium_exceptions.NoAlertPresentException, e:
+            except selenium_exceptions.NoAlertPresentException as e:
                 sys.stderr.write(
                     "WARNING: Unexpected alert"
                     " which dissappeared on it's own!\n"
                 )
             sys.stderr.flush()
 
-except Exception, e:
+except Exception as e:
     import traceback
     sys.stderr.write(traceback.format_exc())
     major_failure = True
@@ -757,17 +757,17 @@ finally:
         if os.path.exists(log_path):
             shutil.copy(log_path, ".")
         else:
-            print "Unable to find Chrome log file:", log_path
+            print("Unable to find Chrome log file:", log_path)
 
 if summary.testsRun == 0:
-    print
-    print "FAIL: No tests run!"
+    print()
+    print("FAIL: No tests run!")
 
 sys.stdout.flush()
 sys.stderr.flush()
 
 while args.dontexit and browser.window_handles:
-    print "Waiting for you to close the browser...."
+    print("Waiting for you to close the browser....")
     sys.stdout.flush()
     sys.stderr.flush()
     time.sleep(1)
@@ -789,13 +789,13 @@ if args.sauce and session_id:
         "passed": summary.wasSuccessful(),
         "custom-data": custom_data,
     })
-    connection = httplib.HTTPConnection("saucelabs.com")
+    connection = http.client.HTTPConnection("saucelabs.com")
     connection.request(
         'PUT', '/rest/v1/%s/jobs/%s' % (sauce_username, session_id),
         body_content,
         headers={"Authorization": "Basic %s" % base64string})
     result = connection.getresponse()
-    print "Sauce labs updated:", result.status == 200
+    print("Sauce labs updated:", result.status == 200)
 
     import hmac
     from hashlib import md5
@@ -805,7 +805,7 @@ if args.sauce and session_id:
         md5).hexdigest()
     url = "https://saucelabs.com/jobs/%s?auth=%s" % (
         browser.session_id, key)
-    print "Sauce lab output at:", url
+    print("Sauce lab output at:", url)
 
 if summary.wasSuccessful() and summary.testsRun > 0 and not major_failure:
     sys.exit(0)

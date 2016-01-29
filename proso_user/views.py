@@ -2,7 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
 from proso.django.request import get_user_id, json_body, is_user_id_overridden
-from models import Session, UserProfile, TimeZone, UserQuestion, UserQuestionAnswer, UserQuestionPossibleAnswer, migrate_google_openid_user
+from .models import Session, UserProfile, TimeZone, UserQuestion, UserQuestionAnswer, UserQuestionPossibleAnswer, migrate_google_openid_user
 from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
@@ -16,7 +16,7 @@ import proso_common
 from django.utils.translation import ugettext as _
 from proso.django.config import get_config
 import proso_common.json_enrich as common_json_enrich
-import json_enrich as user_json_enrich
+from . import json_enrich as user_json_enrich
 
 
 @allow_lazy_user
@@ -366,7 +366,7 @@ def initmobile_view(request):
 
 def _to_json(request, value, **kwargs):
     if isinstance(value, list):
-        json = map(lambda x: x if isinstance(x, dict) else x.to_json(**kwargs), value)
+        json = [x if isinstance(x, dict) else x.to_json(**kwargs) for x in value]
     elif not isinstance(value, dict):
         json = value.to_json(**kwargs)
     else:

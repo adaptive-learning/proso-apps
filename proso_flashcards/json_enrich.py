@@ -2,6 +2,7 @@ from proso.django.request import get_user_id, get_time
 from proso_models.json_enrich import _environment
 from proso_models.models import get_predictive_model
 from proso_flashcards.models import Flashcard
+from functools import reduce
 
 
 def avg_prediction(request, json_list, nested):
@@ -12,15 +13,15 @@ def avg_prediction(request, json_list, nested):
     context_items = {json["id"]: Flashcard.objects.in_contexts_as_items([json["id"]])
                      for json in json_list if json["object_type"] == "fc_context"}
     all_items = list(set(reduce(lambda a, b: a + b,
-                                category_items.values() + term_items.values() + context_items.values())))
+                                list(category_items.values()) + list(term_items.values()) + list(context_items.values()))))
     user = get_user_id(request)
     time = get_time(request)
-    predictions = dict(zip(all_items, get_predictive_model().predict_more_items(
+    predictions = dict(list(zip(all_items, get_predictive_model().predict_more_items(
         _environment(request),
         user,
         all_items,
         time
-    )))
+    ))))
 
     for json in json_list:
         prediction = []
@@ -35,9 +36,9 @@ def avg_prediction(request, json_list, nested):
 
 
 def answer_flashcards(request, json_list, nested):
-    asked_item_ids = map(lambda a: a['item_asked_id'], json_list)
-    answered_item_ids = map(lambda a: a.get('item_answered_id', None), json_list)
-    flashcard_item_ids = asked_item_ids + filter(lambda x: x is not None, answered_item_ids)
+    asked_item_ids = [a['item_asked_id'] for a in json_list]
+    answered_item_ids = [a.get('item_answered_id', None) for a in json_list]
+    flashcard_item_ids = asked_item_ids + [x for x in answered_item_ids if x is not None]
     if len(flashcard_item_ids) == 0:
         return
     flashcards = {

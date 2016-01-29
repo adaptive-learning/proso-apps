@@ -1,4 +1,4 @@
-from models import UserProfile, UserProfileProperty, Session
+from .models import UserProfile, UserProfileProperty, Session
 from django.contrib import admin
 
 

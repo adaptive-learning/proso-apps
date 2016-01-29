@@ -1,12 +1,12 @@
 from django.shortcuts import get_object_or_404
-from models import Question, Option, DecoratedAnswer, Set, Category, get_test_evaluator
+from .models import Question, Option, DecoratedAnswer, Set, Category, get_test_evaluator
 from proso_models.models import Answer
 from proso.django.response import render, render_json, redirect_pass_get
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.db import transaction
-import json_enrich
+from . import json_enrich
 import proso_common.json_enrich as common_json_enrich
 import proso_models.json_enrich as models_json_enrich
 from proso.django.request import is_time_overridden, get_time, get_user_id
@@ -133,7 +133,7 @@ def practice(request):
     candidates = Question.objects.practice(item_selector, environment, user, time, limit, questions=questions)
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_practice))
     json = _to_json(request, {
-        'questions': map(lambda x: x.to_json(), candidates)
+        'questions': [x.to_json() for x in candidates]
     })
     return render_json(request, json, template='questions_json.html', status=status, help_text=practice.__doc__)
 
@@ -164,7 +164,7 @@ def test(request):
         ).all())
     json = _to_json(request, {
         'test': question_set.to_json(),
-        'questions': map(lambda x: x.to_json(), candidates)
+        'questions': [x.to_json() for x in candidates]
     })
     return render_json(request, json, template='questions_json.html', help_text=test.__doc__)
 
@@ -198,18 +198,14 @@ def test_evaluate(request, question_set_id):
             return saved_answers
         test_evaluator = get_test_evaluator()
         answers_evaluated = test_evaluator.evaluate(saved_answers)
-        questions = dict(map(
-            lambda q: (q.item_id, q.id),
-            list(Question.objects.filter(item_id__in=map(lambda a: a.general_answer.item_id, saved_answers)))))
-        questions_evaluated = map(
-            lambda (a, score): {'question_id': questions[a.general_answer.item_id], 'score': score},
-            answers_evaluated)
+        questions = dict([(q.item_id, q.id) for q in list(Question.objects.filter(item_id__in=[a.general_answer.item_id for a in saved_answers]))])
+        questions_evaluated = [{'question_id': questions[a_score[0].general_answer.item_id], 'score': a_score[1]} for a_score in answers_evaluated]
         return render_json(
             request,
             {
                 'score_to_pass': test_evaluator.score_to_pass(),
                 'questions': questions_evaluated,
-                'score_achieved': sum(map(lambda x: x['score'], questions_evaluated)),
+                'score_achieved': sum([x['score'] for x in questions_evaluated]),
                 'score_max': test_evaluator.score_max(),
             },
             template='questions_json.html', help_text=test_evaluate.__doc__)
@@ -253,7 +249,7 @@ def answer(request):
 def _to_json(request, value):
     time_start = time_lib()
     if isinstance(value, list):
-        json = map(lambda x: x if isinstance(x, dict) else x.to_json(), value)
+        json = [x if isinstance(x, dict) else x.to_json() for x in value]
     elif not isinstance(value, dict):
         json = value.to_json()
     else:
@@ -291,18 +287,18 @@ def _save_answers(request, question_set=None):
             return HttpResponseBadRequest('"response_time" is not defined')
     expected_question_ids = None
     if question_set:
-        expected_question_ids = map(lambda q: q.id, question_set.questions.all())
-    all_data = zip(
-        map(lambda x: int(x) if x else None, request.POST.getlist(question_key)),
-        map(lambda x: int(x) if x else None, request.POST.getlist(answered_key)),
-        map(int, request.POST.getlist(response_time_key))
-    )
+        expected_question_ids = [q.id for q in question_set.questions.all()]
+    all_data = list(zip(
+        [int(x) if x else None for x in request.POST.getlist(question_key)],
+        [int(x) if x else None for x in request.POST.getlist(answered_key)],
+        list(map(int, request.POST.getlist(response_time_key)))
+    ))
     saved_answers = []
     answered_question_ids = []
-    questions = dict(map(lambda q: (q.id, q), Question.objects.filter(pk__in=zip(*all_data)[0])))
-    notnone_answered = filter(lambda x: x is not None, zip(*all_data)[1])
-    correct_options = dict(zip(zip(*all_data)[0], Option.objects.get_correct_options(zip(*all_data)[0])))
-    answered_options = dict(map(lambda o: (o.id, o), Option.objects.filter(pk__in=notnone_answered)))
+    questions = dict([(q.id, q) for q in Question.objects.filter(pk__in=zip(*all_data)[0])])
+    notnone_answered = [x for x in zip(*all_data)[1] if x is not None]
+    correct_options = dict(list(zip(zip(*all_data)[0], Option.objects.get_correct_options(zip(*all_data)[0]))))
+    answered_options = dict([(o.id, o) for o in Option.objects.filter(pk__in=notnone_answered)])
     for question_id, option_answered_id, response_time in all_data:
         question = questions[question_id]
         answered_question_ids.append(question.id)

@@ -101,7 +101,7 @@ class UserAPITest(TestCase):
         response = self.client.get('/user/session/')
         self.assertEqual(response.status_code, 200, 'There is session available.')
         content = json.loads(response.content)['data']
-        for k, v in update.iteritems():
+        for k, v in update.items():
             msg = '"%s" is correct after session is updated.' % k
             if k == 'time_zone':
                 self.assertEqual(content[k]['content'], v, msg)

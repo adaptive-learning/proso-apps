@@ -13,9 +13,7 @@ LOGGER = logging.getLogger('django.request')
 DEFAULT_TARGET_PROBABILITY = 0.65
 
 
-class ItemSelection:
-
-    __metaclass__ = abc.ABCMeta
+class ItemSelection(metaclass=abc.ABCMeta):
 
     def __init__(self, predictive_model, target_probability=DEFAULT_TARGET_PROBABILITY, history_adjustment=True):
         self._predictive_model = predictive_model
@@ -40,7 +38,7 @@ class ItemSelection:
                 raise Exception('Can not compute predictions without items.')
             if time is None:
                 raise Exception('Can not compute predictions without time.')
-            self._predictions_cache = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
+            self._predictions_cache = dict(list(zip(items, self._predictive_model.predict_more_items(environment, user, items, time))))
         return self._predictions_cache
 
     def history_adjustment(self):
@@ -91,7 +89,7 @@ class TestWrapperItemSelection(ItemSelection):
         self.get_predictions(environment, user, items, time)
         test_item = random.choice(items)
         test_meta = {'test': 'random_without_options'}
-        items = filter(lambda i: i != test_item, items)
+        items = [i for i in items if i != test_item]
         selected_items, meta = self._item_selector.select(environment, user, items, time, practice_context, n - 1, **kwargs) if n - 1 > 0 else ([], [])
         return selected_items[:test_position] + [test_item] + selected_items[test_position:], meta[:test_position] + [test_meta] + meta[test_position:]
 
@@ -126,20 +124,20 @@ class ScoreItemSelection(ItemSelection):
         self._time_ago_max = time_ago_max
 
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
-        parents = dict(zip(items, environment.get_items_with_values_more_items('parent', items=items)))
+        parents = dict(list(zip(items, environment.get_items_with_values_more_items('parent', items=items))))
         if self._estimate_parent_factors:
             related_items = items
         else:
-            parent_ids = set(sum([[p for p, v in ps] for ps in parents.values()], []))
-            children = dict(zip(parent_ids, environment.get_items_with_values_more_items('child', items=parent_ids)))
-            related_items = sum([[i for i, v in c] for c in children.values()], [])
+            parent_ids = set(sum([[p for p, v in ps] for ps in list(parents.values())], []))
+            children = dict(list(zip(parent_ids, environment.get_items_with_values_more_items('child', items=parent_ids))))
+            related_items = sum([[i for i, v in c] for c in list(children.values())], [])
             parents = defaultdict(lambda:[])
-            for parent, childs in children.items():
+            for parent, childs in list(children.items()):
                 for child, v in childs:
                     parents[child].append((parent, v))
 
-        answers_num = dict(zip(related_items, environment.number_of_answers_more_items(user=user, items=related_items)))
-        last_answer_time = dict(zip(related_items, environment.last_answer_time_more_items(user=user, items=related_items)))
+        answers_num = dict(list(zip(related_items, environment.number_of_answers_more_items(user=user, items=related_items))))
+        last_answer_time = dict(list(zip(related_items, environment.last_answer_time_more_items(user=user, items=related_items))))
         probability = self.get_predictions(environment, user, items, time)
         last_answer_time_parents = self._last_answer_time_for_parents(environment, parents, last_answer_time)
         answers_num_parents = self._answers_num_for_parents(environment, parents, answers_num)
@@ -158,7 +156,8 @@ class ScoreItemSelection(ItemSelection):
                 random.random()
             )
 
-        def _finish_score(((score, r), i)):
+        def _finish_score(xxx_todo_changeme):
+            ((score, r), i) = xxx_todo_changeme
             total = 0.0
             parent_time_score = 0.0
             parent_answers_num_score = 0.0
@@ -173,11 +172,11 @@ class ScoreItemSelection(ItemSelection):
             score += self._weight_parent_number_of_answers * parent_answers_num_score
             return (score, r), i
 
-        scored = zip(map(_score, items), items)
+        scored = list(zip(list(map(_score, items)), items))
         if self._recompute_parent_score:
             candidates = []
             while len(candidates) < n and len(scored) > 0:
-                finished = map(_finish_score, scored)
+                finished = list(map(_finish_score, scored))
                 score, chosen = max(finished)
                 if proso.django.log:
                     LOGGER.debug(
@@ -190,14 +189,14 @@ class ScoreItemSelection(ItemSelection):
                             self._weight_time_ago * self._score_last_answer_time(last_answer_time[chosen], time),
                             answers_num[chosen],
                             self._weight_number_of_answers * self._score_answers_num(answers_num[chosen]),
-                            map(lambda x: x[0], parents[chosen]))
+                            [x[0] for x in parents[chosen]])
                         )
                 candidates.append(chosen)
                 for p, v in parents[chosen]:
                     last_answer_time_parents[p] = time
-                scored = filter(lambda (score, i): i != chosen, scored)
+                scored = [score_i for score_i in scored if score_i[1] != chosen]
         else:
-            candidates = map(lambda ((score, r), i): i, sorted(scored, reverse=True)[:min(len(scored), n)])
+            candidates = [score_r_i[1] for score_r_i in sorted(scored, reverse=True)[:min(len(scored), n)]]
 
         return candidates, [None for _ in candidates]
 
@@ -220,27 +219,25 @@ class ScoreItemSelection(ItemSelection):
 
     def _answers_num_for_parents(self, environment, parents, answers_num):
         children = defaultdict(list)
-        for i, ps in parents.iteritems():
+        for i, ps in parents.items():
             for p, v in ps:
                 children[p].append(i)
 
-        return dict(map(
-            lambda (p, chs): (p, sum(map(lambda ch: answers_num[ch], chs))),
-            children.items()))
+        return dict([(p_chs[0], sum([answers_num[ch] for ch in p_chs[1]])) for p_chs in list(children.items())])
 
     def _last_answer_time_for_parents(self, environment, parents, last_answer_time):
         children = defaultdict(list)
-        for i, ps in parents.iteritems():
+        for i, ps in parents.items():
             for p, v in ps:
                 children[p].append(i)
 
         def _max_time_from_items(xs):
-            times = filter(lambda x: x is not None, map(lambda x: last_answer_time[x], xs))
+            times = [x for x in [last_answer_time[x] for x in xs] if x is not None]
             if len(times) > 0:
                 return max(times)
             else:
                 return None
-        return dict(map(lambda (p, chs): (p, _max_time_from_items(chs)), children.items()))
+        return dict([(p_chs1[0], _max_time_from_items(p_chs1[1])) for p_chs1 in list(children.items())])
 
     def __str__(self):
         return 'SCORE BASED ITEM SELECTION: target probability {0:.2f}, weight probability {1:.2f}, weight time {2:.2f}, weight answers {3:.2f}'.format(

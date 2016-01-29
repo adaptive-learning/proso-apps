@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.7
-from __future__ import absolute_import, unicode_literals, print_function, division
+
 
 from sys import argv
 from os import environ, stat, remove as _delete_file

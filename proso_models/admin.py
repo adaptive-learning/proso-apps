@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from models import Answer
+from .models import Answer
 from django.contrib import admin
 
 

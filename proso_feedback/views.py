@@ -5,7 +5,7 @@ from django.template.loader import render_to_string
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.mail import EmailMultiAlternatives
 from logging import getLogger
-from models import Rating, Comment
+from .models import Rating, Comment
 from proso_user.models import Session
 from lazysignup.decorators import allow_lazy_user
 from proso.django.config import get_config
@@ -99,7 +99,7 @@ def rating(request):
         return render(request, 'feedback_rating.html', {}, help_text=rating.__doc__)
     if request.method == 'POST':
         data = json_body(request.body)
-        if data['value'] not in range(1, 4):
+        if data['value'] not in list(range(1, 4)):
             return render_json(
                 request,
                 {'error': _('The given value is not valid.'), 'error_type': 'invalid_value'},

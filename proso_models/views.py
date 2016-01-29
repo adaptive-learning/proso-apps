@@ -1,10 +1,10 @@
 from django.http import HttpResponseBadRequest
 from proso.django.request import is_time_overridden, get_time, get_user_id, load_query_json
 from proso.django.response import render_json
-from models import get_environment, get_active_environment_info, Item, recommend_users as models_recommend_users, PracticeContext, learning_curve as models_learning_curve
+from .models import get_environment, get_active_environment_info, Item, recommend_users as models_recommend_users, PracticeContext, learning_curve as models_learning_curve
 import datetime
 import numpy
-import json_enrich
+from . import json_enrich
 import proso_common.json_enrich as common_json_enrich
 from lazysignup.decorators import allow_lazy_user
 from django.contrib.admin.views.decorators import staff_member_required
@@ -86,7 +86,7 @@ def recommend_users(request):
         return request.GET.get('{}_min'.format(key)), request.GET.get('{}_max'.format(key))
 
     def _convert_time_interval(interval):
-        mapped = map(lambda x: None if x is None else datetime.datetime.strptime(x, '%Y-%m-%d'), list(interval))
+        mapped = [None if x is None else datetime.datetime.strptime(x, '%Y-%m-%d') for x in list(interval)]
         return mapped[0], mapped[1]
 
     recommended = models_recommend_users(
@@ -106,14 +106,14 @@ def model(request):
     item_ids = list(set(map(int, request.GET['items'].split(','))))
     items = Item.objects.filter(id__in=item_ids).all()
     if len(items) != len(item_ids):
-        found_item_ids = map(lambda item: item.id, items)
+        found_item_ids = [item.id for item in items]
         not_found_item_ids = set(item_ids) - set(found_item_ids)
         return render_json(request, {
             'error': 'There are no items with the following ids: %s' % list(not_found_item_ids)
         }, template='models_json.html', status=404)
     result = {
         'object_type': 'model',
-        'items': map(lambda item: item.to_json(), items)
+        'items': [item.to_json() for item in items]
     }
     return render_json(request, _to_json(request, result), template='models_json.html')
 
@@ -136,7 +136,8 @@ def audit(request, key):
     values = environment.audit(
         key, user=user, item=item, item_secondary=item_secondary, limit=limit)
 
-    def _to_json_audit((time, value)):
+    def _to_json_audit(xxx_todo_changeme):
+        (time, value) = xxx_todo_changeme
         return _to_json(request, {
             'object_type': 'value',
             'key': key,
@@ -146,7 +147,7 @@ def audit(request, key):
             'value': value,
             'time': time.strftime('%Y-%m-%d %H:%M:%S')
         })
-    return render_json(request, map(_to_json_audit, values), template='models_json.html')
+    return render_json(request, list(map(_to_json_audit, values)), template='models_json.html')
 
 
 @allow_lazy_user

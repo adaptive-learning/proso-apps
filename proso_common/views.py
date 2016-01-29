@@ -99,7 +99,7 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
         if should_cache and cached:
             list_objs = json_lib.loads(cached)
         else:
-            list_objs = map(lambda x: x.to_json(**to_json_kwargs), list(objs))
+            list_objs = [x.to_json(**to_json_kwargs) for x in list(objs)]
             if should_cache:
                 cache.set(cache_key, json_lib.dumps(list_objs), 60 * 60 * 24 * 30)
         LOGGER.debug('loading objects in show_more view took %s seconds', (time_lib() - time_start))
@@ -167,14 +167,12 @@ def csv(request, table_name=None):
 
 
 def _csv_list(request):
-    response = map(
-        lambda (_, table_name): {'table': table_name, 'url': reverse('csv_table', kwargs={'table_name': table_name})},
-        get_tables_allowed_to_export())
+    response = [{'table': __table_name[1], 'url': reverse('csv_table', kwargs={'table_name': __table_name[1]})} for __table_name in get_tables_allowed_to_export()]
     return render_json(request, response, template='common_json.html')
 
 
 def _csv_table(request, table_name):
-    if table_name not in map(lambda xs: xs[1], get_tables_allowed_to_export()):
+    if table_name not in [xs[1] for xs in get_tables_allowed_to_export()]:
         response = {
             "error": "the requested table '%s' is not valid" % table_name
         }
@@ -195,7 +193,6 @@ def analysis(request, app_name=None):
     if app_name is None:
         data["apps"] = list(os.listdir(analyse.OUTPUT_DIR))
     else:
-        data["imgs"] = map(lambda i: "analysis/{}/{}".format(app_name, i),
-                           os.listdir(os.path.join(analyse.OUTPUT_DIR, app_name)))
+        data["imgs"] = ["analysis/{}/{}".format(app_name, i) for i in os.listdir(os.path.join(analyse.OUTPUT_DIR, app_name))]
         data["app_name"] = app_name
     return render(request, 'common_analysis.html', data)

@@ -4,7 +4,7 @@ import shutil
 
 
 class Command(BaseCommand):
-    help = u"""Load files to static folder."""
+    help = """Load files to static folder."""
 
     def handle(self, *args, **options):
         if len(args) < 1:
@@ -13,5 +13,5 @@ class Command(BaseCommand):
                 " <folder> folder containing the files")
         dirpath = args[0]
         for filename in os.listdir(dirpath):
-            print 'copying', os.path.join(dirpath, filename), 'to', "./proso_questions_client/static/dist/"
+            print('copying', os.path.join(dirpath, filename), 'to', "./proso_questions_client/static/dist/")
             shutil.copy2(os.path.join(dirpath, filename), "./proso_questions_client/static/dist/")

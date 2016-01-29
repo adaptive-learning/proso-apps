@@ -37,8 +37,8 @@ def practice_image(request):
     environment = get_environment()
     predictions = predictive_model.predict_more_items(environment, user=-1, items=item_ids, time=datetime.now())
     items_in_order = zip(*sorted(zip(predictions, item_ids), reverse=True))[1] if len(item_ids) > 1 else []
-    item_prediction = dict(zip(item_ids, predictions))
-    item_position = dict(zip(items_in_order, range(len(item_ids))))
+    item_prediction = dict(list(zip(item_ids, predictions)))
+    item_position = dict(list(zip(items_in_order, list(range(len(item_ids))))))
     svg = proso.svg.Printer()
     answers = sorted(list(answers), key=lambda a: a.id)
     SQUARE_SIZE = 10
@@ -47,7 +47,7 @@ def practice_image(request):
     for i, item in enumerate(items_in_order):
         svg.print_square(OFFSET_X + SQUARE_SIZE * i, OFFSET_Y - SQUARE_SIZE, SQUARE_SIZE, int(255 * item_prediction[item]))
     for i, answer in enumerate(answers):
-        for j in xrange(len(items_in_order)):
+        for j in range(len(items_in_order)):
             svg.print_square(OFFSET_X + SQUARE_SIZE * j, OFFSET_Y + SQUARE_SIZE * i, SQUARE_SIZE, 255, border_color=200)
         color = 'green' if answer.item_asked_id == answer.item_answered_id else 'red'
         svg.print_square(
@@ -179,19 +179,19 @@ def user_stats(request):
     LOGGER.debug("user_stats - getting flashcards in groups took %s seconds", (time_lib() - time_start))
 
     time_start = time_lib()
-    answers = dict(zip(all_items, environment.number_of_answers_more_items(all_items, user)))
-    correct_answers = dict(zip(all_items, environment.number_of_correct_answers_more_items(all_items, user)))
+    answers = dict(list(zip(all_items, environment.number_of_answers_more_items(all_items, user))))
+    correct_answers = dict(list(zip(all_items, environment.number_of_correct_answers_more_items(all_items, user))))
     LOGGER.debug("user_stats - getting number of answers took %s seconds", (time_lib() - time_start))
 
     if request.GET.get("mastered"):
         time_start = time_lib()
         mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
         predictions = get_predictive_model().predict_more_items(environment, user, all_items, get_time(request))
-        mastered = dict(zip(all_items, map(lambda p: p >= mastery_threshold, predictions)))
+        mastered = dict(list(zip(all_items, [p >= mastery_threshold for p in predictions])))
         LOGGER.debug("user_stats - getting predictions for flashcards took %s seconds", (time_lib() - time_start))
 
     time_start = time_lib()
-    for identifier, items in items_map.items():
+    for identifier, items in list(items_map.items()):
         if len(items) == 0:
             response[identifier] = {
                 "filter": data[identifier],
@@ -245,10 +245,10 @@ def flashcard_counts(request):
         return render_json(request, {}, template='flashcards_json.html', help_text=flashcard_counts.__doc__)
 
     time_start = time_lib()
-    _, items_map = Flashcard.objects.filtered_ids_group(data, request.LANGUAGE_CODE, empty_groups=True)
+    __, items_map = Flashcard.objects.filtered_ids_group(data, request.LANGUAGE_CODE, empty_groups=True)
     LOGGER.debug("flashcard_counts - getting flashcards in groups took %s seconds", (time_lib() - time_start))
 
-    response = {group_id: len(items) for group_id, items in items_map.items()}
+    response = {group_id: len(items) for group_id, items in list(items_map.items())}
 
     return render_json(request, response, template='flashcards_json.html', help_text=flashcard_counts.__doc__)
 
@@ -379,7 +379,7 @@ def practice(request):
         items_in_queue=len(load_query_json(request.GET, "avoid", "[]")))
     LOGGER.debug('choosing items for practice took %s seconds', (time_lib() - time_before_practice))
     data = _to_json(request, {
-        'flashcards': map(lambda x: x.to_json(categories=False, contexts=with_contexts), flashcards)
+        'flashcards': [x.to_json(categories=False, contexts=with_contexts) for x in flashcards]
     })
     return render_json(request, data, template='flashcards_json.html', help_text=practice.__doc__)
 
@@ -407,7 +407,7 @@ def _save_answer(request, answers, practice_context):
                 flashcard_ids.add(a["flashcard_answered_id"])
             if "option_ids" in a:
                 flashcard_ids |= set(a["option_ids"])
-        flashcards = dict(map(lambda fc: (fc.id, fc), Flashcard.objects.filter(pk__in=flashcard_ids)))
+        flashcards = dict([(fc.id, fc) for fc in Flashcard.objects.filter(pk__in=flashcard_ids)])
     except KeyError:
         return HttpResponseBadRequest("Flashcard or answered flashcard id not found")
     if len(flashcard_ids) != len(flashcards):
@@ -463,7 +463,7 @@ def _save_answer(request, answers, practice_context):
 def _to_json(request, value):
     time_start = time_lib()
     if isinstance(value, list):
-        json = map(lambda x: x if isinstance(x, dict) else x.to_json(), value)
+        json = [x if isinstance(x, dict) else x.to_json() for x in value]
     elif not isinstance(value, dict):
         json = value.to_json()
     else:

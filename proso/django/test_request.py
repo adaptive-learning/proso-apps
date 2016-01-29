@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-import request
+from . import request
 
 class TestParseCommonBodyToJson(unittest.TestCase):
 

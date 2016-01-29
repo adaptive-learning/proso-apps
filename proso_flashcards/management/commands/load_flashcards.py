@@ -14,7 +14,7 @@ import re
 
 
 class Command(BaseCommand):
-    help = u"Load flashcards from JSON file"
+    help = "Load flashcards from JSON file"
     option_list = BaseCommand.option_list + (
         make_option(
             '--skip-category-check',
@@ -64,7 +64,7 @@ class Command(BaseCommand):
 
     def _load_categories(self, data=None):
         if data is not None:
-            print "\nLoading categories"
+            print("\nLoading categories")
         db_categories = {}
         item_mapping = {}
         for db_category in Category.objects.all().select_related("parents"):
@@ -74,7 +74,7 @@ class Command(BaseCommand):
             return db_categories
 
         for category in progress.bar(data, every=max(1, len(data) / 100)):
-            langs = [k[-2:] for k in category.keys() if re.match(r'^name-\w\w$', k)]
+            langs = [k[-2:] for k in list(category.keys()) if re.match(r'^name-\w\w$', k)]
             for lang in langs:
                 db_category = Category.objects.filter(identifier=category["id"], lang=lang).first()
                 if db_category is None:
@@ -95,9 +95,9 @@ class Command(BaseCommand):
                     item_mapping[db_category.identifier] = db_category.item_id
                 db_categories[db_category.identifier + db_category.lang] = db_category
 
-        print "\nBuilding dependencies"
+        print("\nBuilding dependencies")
         for category in progress.bar(data, every=max(1, len(data) / 100)):
-            for lang in [k[-2:] for k in category.keys() if re.match(r'^name-\w\w$', k)]:
+            for lang in [k[-2:] for k in list(category.keys()) if re.match(r'^name-\w\w$', k)]:
                 db_category = db_categories[category["id"] + lang]
                 db_category.parents.clear()
                 if "parent-categories" in category:
@@ -109,12 +109,12 @@ class Command(BaseCommand):
                         db_category.parents.add(db_categories[parent + lang])
                 db_category.save()
 
-        print "New total number of categories in DB: {}".format(len(db_categories))
+        print(("New total number of categories in DB: {}".format(len(db_categories))))
         return db_categories
 
     def _load_contexts(self, data=None):
         if data is not None:
-            print "\nLoading contexts"
+            print("\nLoading contexts")
         model = settings.PROSO_FLASHCARDS.get("context_extension", Context)
         db_contexts = {}
         item_mapping = {}
@@ -125,7 +125,7 @@ class Command(BaseCommand):
             return db_contexts
 
         for context in progress.bar(data, every=max(1, len(data) / 100)):
-            langs = [k[-2:] for k in context.keys() if re.match(r'^name-\w\w$', k)]
+            langs = [k[-2:] for k in list(context.keys()) if re.match(r'^name-\w\w$', k)]
             for lang in langs:
                 db_context = model.objects.filter(identifier=context["id"], lang=lang).first()
                 if db_context is None:
@@ -153,9 +153,9 @@ class Command(BaseCommand):
                 db_contexts[db_context.identifier + db_context.lang] = db_context
 
         categories = self._load_categories()
-        print "\nBuilding dependencies"
+        print("\nBuilding dependencies")
         for context in progress.bar(data, every=max(1, len(data) / 100)):
-            for lang in [k[-2:] for k in context.keys() if re.match(r'^name-\w\w$', k)]:
+            for lang in [k[-2:] for k in list(context.keys()) if re.match(r'^name-\w\w$', k)]:
                 db_context = db_contexts[context["id"] + lang]
                 db_context.categories.clear()
                 if "categories" in context:
@@ -166,12 +166,12 @@ class Command(BaseCommand):
                         db_context.categories.add(categories[parent + lang])
                 db_context.save()
 
-        print "New total number of contexts in DB: {}".format(len(db_contexts))
+        print(("New total number of contexts in DB: {}".format(len(db_contexts))))
         return db_contexts
 
     def _load_terms(self, data=None):
         if data is not None:
-            print "\nLoading terms"
+            print("\nLoading terms")
         model = settings.PROSO_FLASHCARDS.get("term_extension", Term)
         db_terms = {}
         item_mapping = {}
@@ -182,7 +182,7 @@ class Command(BaseCommand):
             return db_terms
 
         for term in progress.bar(data, every=max(1, len(data) / 100)):
-            langs = [k[-2:] for k in term.keys() if re.match(r'^name-\w\w$', k)]
+            langs = [k[-2:] for k in list(term.keys()) if re.match(r'^name-\w\w$', k)]
             for lang in langs:
                 db_term = model.objects.filter(identifier=term["id"], lang=lang).first()
                 if db_term is None:
@@ -204,9 +204,9 @@ class Command(BaseCommand):
                 db_terms[db_term.identifier + db_term.lang] = db_term
 
         categories = self._load_categories()
-        print "\nBuilding dependencies"
+        print("\nBuilding dependencies")
         for term in progress.bar(data, every=max(1, len(data) / 100)):
-            for lang in [k[-2:] for k in term.keys() if re.match(r'^name-\w\w$', k)]:
+            for lang in [k[-2:] for k in list(term.keys()) if re.match(r'^name-\w\w$', k)]:
                 if term["id"] + lang in db_terms:
                     db_term = db_terms[term["id"] + lang]
                     parents = []
@@ -229,14 +229,14 @@ class Command(BaseCommand):
                             db_term.parents.add(p)
                         db_term.save()
                 else:
-                    print "Warning: Missing term '%s' in language '%s'" % (term["id"], lang)
+                    print(("Warning: Missing term '%s' in language '%s'" % (term["id"], lang)))
 
-        print "New total number of terms in DB: {}".format(len(db_terms))
+        print(("New total number of terms in DB: {}".format(len(db_terms))))
         return db_terms
 
     def _load_flashcards(self, data, ignored_flashcards_strategy):
         if data is not None:
-            print "\nLoading flashcards"
+            print("\nLoading flashcards")
         db_flashcards = {}
         db_flashcards_loaded = {}
         item_mapping = {}
@@ -284,21 +284,21 @@ class Command(BaseCommand):
                 db_flashcards_loaded[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
                 db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
 
-        print "\nChecking flashcards for loaded contexts"
-        context_id_loaded = set(map(lambda db_flashcard: db_flashcard.context_id, db_flashcards_loaded.values()))
+        print("\nChecking flashcards for loaded contexts")
+        context_id_loaded = set([db_flashcard.context_id for db_flashcard in list(db_flashcards_loaded.values())])
         db_flashcards_ignored = {
             key: db_flashcards[key]
             for key in (
-                set({key: db_flashcard for (key, db_flashcard) in db_flascards_before_load.iteritems() if db_flashcard.context_id in context_id_loaded}.keys())
+                set({key: db_flashcard for (key, db_flashcard) in list(db_flascards_before_load.items()) if db_flashcard.context_id in context_id_loaded}.keys())
                 -
                 set(db_flashcards_loaded.keys())
             )
         }
         if len(db_flashcards_ignored) > 0:
             deleted_flashcard_items = set()
-            print "\nThe following flashcards has been ignored during loading, action:", 'IGNORE' if ignored_flashcards_strategy is None else ignored_flashcards_strategy.upper()
-            for db_flashcard in db_flashcards_ignored.itervalues():
-                print ' --', db_flashcard.lang, ':', db_flashcard.identifier, ':', db_flashcard.context.identifier
+            print(("\nThe following flashcards has been ignored during loading, action:", 'IGNORE' if ignored_flashcards_strategy is None else ignored_flashcards_strategy.upper()))
+            for db_flashcard in list(db_flashcards_ignored.values()):
+                print((' --', db_flashcard.lang, ':', db_flashcard.identifier, ':', db_flashcard.context.identifier))
                 if ignored_flashcards_strategy == 'delete':
                     if db_flashcard.item_id not in deleted_flashcard_items:
                         deleted_flashcard_items.add(db_flashcard.item_id)
@@ -308,7 +308,7 @@ class Command(BaseCommand):
                     db_flashcard.save()
 
         categories = self._load_categories()
-        print "\nBuilding dependencies"
+        print("\nBuilding dependencies")
         for flashcard in progress.bar(data, every=max(1, len(data) / 100)):
             for lang in Category.objects.all().values_list("lang", flat=True).distinct():
                 if flashcard["id"] + lang in db_flashcards:
@@ -334,22 +334,22 @@ class Command(BaseCommand):
                             db_flashcard.parents.add(p)
                         db_flashcard.save()
                 else:
-                    print "Warning: Missing flashcard '%s' in language '%s'" % (flashcard["id"], lang)
+                    print(("Warning: Missing flashcard '%s' in language '%s'" % (flashcard["id"], lang)))
 
-        print "New total number of flashcards in DB: {}".format(len(db_flashcards))
+        print(("New total number of flashcards in DB: {}".format(len(db_flashcards))))
         return db_flashcards
 
 
 def check_db_lang_integrity():
-    print "\nChecking DB language integrity"
+    print("\nChecking DB language integrity")
     langs = Category.objects.all().values_list("lang", flat=True).distinct()
-    print " -- languages: {}".format(langs)
+    print((" -- languages: {}".format(langs)))
     for model in [Category, Term, Flashcard, Context]:
         bad_objects = model.objects.all() \
             .values('identifier').annotate(Count("lang")).filter(lang__count__lt=len(langs))
         if len(bad_objects) > 0:
             raise CommandError(" -- {}s with wrong number of languages: {}".format(model.__name__, bad_objects))
-    print " -- OK"
+    print(" -- OK")
 
 
 def check_and_set_category_type(dbCategory):
@@ -360,7 +360,7 @@ def check_and_set_category_type(dbCategory):
         subcategories = category.subcategories.all().count()
         all = terms + flashcards + contexts + subcategories
         if all == 0:
-            print "Info: Category {} have no children".format(category.identifier)
+            print(("Info: Category {} have no children".format(category.identifier)))
 
         category.children_type = None
         if terms == all:

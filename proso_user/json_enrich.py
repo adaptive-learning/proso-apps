@@ -4,7 +4,7 @@ from proso_common.json_enrich import CACHE_EXPIRATION
 from proso.django.response import pass_get_parameters_string, append_get_parameters
 from django.core.urlresolvers import reverse
 from proso.django.request import get_user_id
-from models import UserQuestionAnswer
+from .models import UserQuestionAnswer
 from collections import defaultdict
 
 

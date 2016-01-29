@@ -14,10 +14,10 @@ CACHE_EXPIRATION = 60 * 60 * 24 * 30
 def enrich(request, json, fun, nested=False, top_level=True):
     time_start = time()
     if isinstance(json, list):
-        result = map(lambda x: enrich(request, x, fun, top_level=False), json)
+        result = [enrich(request, x, fun, top_level=False) for x in json]
     elif isinstance(json, dict):
         json = fun(request, json, nested=nested)
-        result = {k: enrich(request, v, fun, nested=True, top_level=False) for k, v in json.items()}
+        result = {k: enrich(request, v, fun, nested=True, top_level=False) for k, v in list(json.items())}
     else:
         result = json
     if top_level:
@@ -34,13 +34,13 @@ def enrich_by_predicate(request, json, fun, predicate, skip_nested=False, **kwar
         if nested and skip_nested:
             return
         if isinstance(json_inner, list):
-            map(lambda x: _collect(x, nested), json_inner)
+            list(map(lambda x: _collect(x, nested), json_inner))
         elif isinstance(json_inner, dict):
             if predicate(json_inner):
                 collected.append(json_inner)
                 if nested:
                     memory['nested'] = True
-            map(lambda x: _collect(x, True), json_inner.values())
+            list(map(lambda x: _collect(x, True), list(json_inner.values())))
     _collect(json, False)
     if len(collected) > 0:
         fun(request, collected, memory['nested'], **kwargs)

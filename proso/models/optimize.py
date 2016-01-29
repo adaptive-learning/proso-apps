@@ -1,6 +1,6 @@
 def alternating_grid(func, ranges, niter=100, accept_test=None, minimum_steps=None):
-    init_values = map(lambda x: (x[0] + x[1]) / 2.0, ranges)
-    steps = map(lambda x: (x[1] - x[0]) / 2.0, ranges)
+    init_values = [(x[0] + x[1]) / 2.0 for x in ranges]
+    steps = [(x[1] - x[0]) / 2.0 for x in ranges]
     minimum = func(init_values), init_values
     count = 0
     tried = [[init_values[i]] for i in range(len(ranges))]

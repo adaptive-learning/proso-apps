@@ -10,7 +10,7 @@ from clint.textui import progress
 
 class Command(BaseCommand):
 
-    help = u"Load questions from JSON file"
+    help = "Load questions from JSON file"
 
     SCHEMA = {
         "description": "Schema for data file containing questions",
@@ -134,13 +134,13 @@ class Command(BaseCommand):
     def _load_questions(self, data, working_directory, resources):
         categories = {}
         sets = {}
-        print ' -- reset questions with identifier'
+        print(' -- reset questions with identifier')
         identifiers_to_reset = []
         for question_data in data['questions']:
             if 'identifier' in question_data:
                 identifiers_to_reset.append(question_data['identifier'])
         questions_with_identifiers = Question.objects.from_identifiers(identifiers_to_reset, reset=True)
-        print ' -- load questions'
+        print(' -- load questions')
         for question_data in progress.bar(data['questions'], every=len(data['questions']) / 100):
             resource = question_data.get('resource', None)
             if resource is not None:
@@ -167,13 +167,13 @@ class Command(BaseCommand):
                     categories[c].questions.add(question)
             self._load_images(question_data, working_directory, question=question)
             self._load_options(working_directory, question_data['options'], question)
-        for s in sets.values():
+        for s in list(sets.values()):
             s.save()
-        for c in categories.values():
+        for c in list(categories.values()):
             c.save()
 
     def _load_resources(self, data, working_directory):
-        print ' -- load resources'
+        print(' -- load resources')
         resources = {}
         for resource_data in progress.bar(data['resources'], every=len(data['resources']) / 100):
             resource_id = resource_data['identifier'].strip()
@@ -235,5 +235,5 @@ class Command(BaseCommand):
 
     def _ensure_string(self, value):
         if isinstance(value, int):
-            value = unicode(str(value), "utf-8")
+            value = str(str(value), "utf-8")
         return value

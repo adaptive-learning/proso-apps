@@ -27,7 +27,7 @@ class ABConfigMiddleware(object):
             LOGGER.debug('There is no user to setup configuration based on AB experiments in middleware.')
             return
         LOGGER.debug('Setting up configuration for user {} based on AB experiments in middleware.'.format(request.user.id))
-        for app_name_key, value in UserSetup.objects.get_variables_to_override(request.user.id).iteritems():
+        for app_name_key, value in UserSetup.objects.get_variables_to_override(request.user.id).items():
             LOGGER.debug('Setting {} to "{}" for user {}.'.format(app_name_key, value, request.user.id))
             override(app_name_key, value)
 
@@ -57,11 +57,11 @@ class Experiment(models.Model):
                 values[val.variable].append(val)
             if len(values) > 0:
                 result['variables'] = []
-            for variable, vals in values.iteritems():
+            for variable, vals in values.items():
                 variable_json = variable.to_json(nested=True)
-                variable_json['possible_values'] = map(lambda val: val.to_json(nested=True), vals)
+                variable_json['possible_values'] = [val.to_json(nested=True) for val in vals]
                 result['variables'].append(variable_json)
-            result['setups'] = map(lambda setup: setup.to_json(nested=True), self.experimentsetup_set.all())
+            result['setups'] = [setup.to_json(nested=True) for setup in self.experimentsetup_set.all()]
         return result
 
 
@@ -139,9 +139,9 @@ class ExperimentSetupManager(models.Manager):
                     users = experiment_users[experiment_setup_id]
                     result[experiment_setup_id] = {
                         'number_of_users': len(data),
-                        'number_of_answers': confidence_value_to_json(confidence_median(map(lambda d: d['number_of_answers'], data))),
+                        'number_of_answers': confidence_value_to_json(confidence_median([d['number_of_answers'] for d in data])),
                         'returning_chance': confidence_value_to_json(
-                            binomial_confidence_mean(map(lambda d: d['number_of_sessions'] > 1, data))),
+                            binomial_confidence_mean([d['number_of_sessions'] > 1 for d in data])),
                         'learning_curve': learning_curve(learning_curve_length, users=users, number_of_users=learning_curve_max_users),
                         'learning_curve_all_users': learning_curve(learning_curve_length, users=users, number_of_users=learning_curve_max_users, user_length=1)
                     }
@@ -154,7 +154,7 @@ class ExperimentSetupManager(models.Manager):
             return result
 
     def from_values(self, values):
-        experiment_ids = set(map(lambda val: val.experiment_id, values))
+        experiment_ids = set([val.experiment_id for val in values])
         if len(experiment_ids) > 1:
             raise Exception("Values from different experiemnts can not be combined.")
         content_hash = hashlib.sha1(json.dumps({'{}'.format(val.variable.id): val.id for val in values}, sort_keys=True)).hexdigest()
@@ -203,7 +203,7 @@ class UserSetupManager(models.Manager):
             # If there is no such setup create one
             setups = ExperimentSetup.objects.prefetch_related('values', 'values__experiment').filter(usersetup__user_id=user_id)
             if len(setups) == 1:
-                vals = filter(lambda val: val.experiment.is_enabled, setups[0].values.all())
+                vals = [val for val in setups[0].values.all() if val.experiment.is_enabled]
                 return {'{}.{}'.format(val.variable.app_name, val.variable.name): val.value for val in vals}
             experiments = Experiment.objects.filter(is_enabled=True, is_paused=False)
             to_override = {}
@@ -215,7 +215,7 @@ class UserSetupManager(models.Manager):
                 variables = defaultdict(list)
                 for val in experiment.possiblevalue_set.all():
                     variables[val.variable].append(val)
-                for var, vals in variables.iteritems():
+                for var, vals in variables.items():
                     chance = randint(0, 99)
                     total = 0
                     for val in vals:
@@ -258,7 +258,7 @@ class AnswerExperimentSetup(models.Model):
 
 @receiver(user_logged_in)
 def setup_config(sender, user, request, **kwargs):
-    for app_name_key, value in UserSetup.objects.get_variables_to_override(user.id).iteritems():
+    for app_name_key, value in UserSetup.objects.get_variables_to_override(user.id).items():
         override(app_name_key, value)
     LOGGER.debug('Setting up configuration for user {} based on AB experiments in login signal reciever.'.format(user.id))
 

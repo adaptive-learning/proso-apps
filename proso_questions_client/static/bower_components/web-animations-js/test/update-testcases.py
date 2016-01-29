@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import cStringIO as StringIO
+import io as StringIO
 from fnmatch import fnmatch
 import difflib
 import os

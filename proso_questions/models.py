@@ -48,7 +48,7 @@ class Resource(models.Model):
             'id': self.id,
             'item_id': self.item_id,
             'text': self.text,
-            'images': map(lambda i: i.to_json(nested=True), list(self.resource_images.all()))
+            'images': [i.to_json(nested=True) for i in list(self.resource_images.all())]
         }
 
 
@@ -74,9 +74,9 @@ class QuestionManager(models.Manager):
                 set_to_reset.questions.remove(question)
             for image in question.question_images.all():
                 image.delete()
-        for category_to_reset in categories_to_reset.itervalues():
+        for category_to_reset in categories_to_reset.values():
             category_to_reset.save()
-        for set_to_reset in sets_to_reset.itervalues():
+        for set_to_reset in sets_to_reset.values():
             set_to_reset.save()
 
     def from_identifiers(self, identifiers, reset=False):
@@ -107,7 +107,7 @@ class QuestionManager(models.Manager):
 
     def practice(self, item_selector, environment, user_id, time, n, questions=None):
         if questions is not None:
-            all_ids = map(lambda x: x.item_id, questions)
+            all_ids = [x.item_id for x in questions]
         else:
             with closing(connection.cursor()) as cursor:
                 cursor.execute(
@@ -117,11 +117,11 @@ class QuestionManager(models.Manager):
                     ORDER BY RANDOM()
                     LIMIT %s
                     """, [n * 100])
-                all_ids = map(lambda x: x[0], cursor.fetchall())
+                all_ids = [x[0] for x in cursor.fetchall()]
         n = min(n, len(all_ids))
         selected_items = item_selector.select(environment, user_id, all_ids, time, n)
         if questions is not None:
-            questions_dict = dict(zip(all_ids, questions))
+            questions_dict = dict(list(zip(all_ids, questions)))
         else:
             questions = (self.filter(item_id__in=selected_items).
                     select_related('resource').
@@ -129,7 +129,7 @@ class QuestionManager(models.Manager):
                         'question_options', 'question_options__option_images',
                         'question_images', 'resource__resource_images', 'set_set', 'category_set'))
             questions_dict = dict([(q.item_id, q) for q in questions])
-        return map(lambda i: questions_dict[i], selected_items)
+        return [questions_dict[i] for i in selected_items]
 
 
 class Question(models.Model):
@@ -148,18 +148,18 @@ class Question(models.Model):
             'item_id': self.item_id,
             'text': self.text,
             'object_type': 'question',
-            'images': map(lambda i: i.to_json(nested=True), self.question_images.all()),
+            'images': [i.to_json(nested=True) for i in self.question_images.all()],
             'resource': self.resource.to_json(nested=True) if self.resource else None,
             'identifier': self.identifier
         }
         if not nested:
-            result['sets'] = map(lambda s: s.to_json(nested=True), self.set_set.all())
-            result['categories'] = map(lambda c: c.to_json(nested=True), self.category_set.all())
-            result['options'] = sorted(map(lambda o: o.to_json(nested=True), self.question_options.all()), key=lambda opt: opt.get('order', 0))
+            result['sets'] = [s.to_json(nested=True) for s in self.set_set.all()]
+            result['categories'] = [c.to_json(nested=True) for c in self.category_set.all()]
+            result['options'] = sorted([o.to_json(nested=True) for o in self.question_options.all()], key=lambda opt: opt.get('order', 0))
         return result
 
     def __unicode__(self):
-        return u'Question: {0}'.format(self.text[:100])
+        return 'Question: {0}'.format(self.text[:100])
 
 
 class CategoryManager(models.Manager):
@@ -249,7 +249,7 @@ class OptionManager(models.Manager):
     def get_correct_options(self, questions):
         opts = self.filter(question__in=questions, correct=True)
         opts_dict = dict([(opt.question_id, opt) for opt in opts])
-        return map(lambda q: opts_dict.get(q.id if isinstance(q, Question) else int(q), None), questions)
+        return [opts_dict.get(q.id if isinstance(q, Question) else int(q), None) for q in questions]
 
     def get_correct_option(self, question):
         return self.get(question=question, correct=True)
@@ -274,7 +274,7 @@ class Option(models.Model):
             'id': self.pk,
             'item_id': self.item_id,
             'object_type': 'option',
-            'images': map(lambda i: i.to_json(nested=True), self.option_images.all())
+            'images': [i.to_json(nested=True) for i in self.option_images.all()]
         }
 
 
@@ -359,8 +359,8 @@ class CategoryTestEvaluator(TestEvaluator):
         self._score_to_pass = score_to_pass
 
     def evaluate(self, answers):
-        q_item_ids = map(lambda a: a.general_answer.item_id, answers)
-        questions = dict(map(lambda q: (q.item_id, q), list(Question.objects.prefetch_related('category_set').filter(item_id__in=q_item_ids))))
+        q_item_ids = [a.general_answer.item_id for a in answers]
+        questions = dict([(q.item_id, q) for q in list(Question.objects.prefetch_related('category_set').filter(item_id__in=q_item_ids))])
         result = []
         found_answers = {}
         for answer in answers:
@@ -376,7 +376,7 @@ class CategoryTestEvaluator(TestEvaluator):
                 score = score_rule.get('wrong', 0)
             found_answers[category.name] = found_answers.get(category.name, 0) + 1
             result.append((answer, score))
-        for category_name, number_of_answers in found_answers.iteritems():
+        for category_name, number_of_answers in found_answers.items():
             if number_of_answers != self._score_by_categories[category_name]['answers']:
                 raise Exception('The test expects %s answers in category "%s", found %s.' % (
                     self._score_by_categories[category_name]['answers'],

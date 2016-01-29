@@ -1,4 +1,4 @@
-from models import Question
+from .models import Question
 from django.core.urlresolvers import reverse
 import markdown
 from proso.django.response import pass_get_parameters_string, append_get_parameters, pass_get_parameters
@@ -16,10 +16,8 @@ def question(request, json_list, nested):
     object_type = json_list[0]['object_type']
     if object_type != 'answer':
         raise Exception('object type "%s" is not supported' % object_type)
-    question_item_ids = map(lambda x: x['question_item_id'], json_list)
-    qs = dict(map(
-        lambda q: (q.item_id, q.to_json(nested=True)),
-        list(Question.objects.filter(**{'item_id__in': question_item_ids}))))
+    question_item_ids = [x['question_item_id'] for x in json_list]
+    qs = dict([(q.item_id, q.to_json(nested=True)) for q in list(Question.objects.filter(**{'item_id__in': question_item_ids}))])
     for answer in json_list:
         answer['question'] = qs[answer['question_item_id']]
 
