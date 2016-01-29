@@ -20,7 +20,7 @@ LOGGER = logging.getLogger('django.request')
 
 
 def get_content_hash(content):
-    return hashlib.sha1(content).hexdigest()
+    return hashlib.sha1(content.encode()).hexdigest()
 
 
 class UserProfile(models.Model):

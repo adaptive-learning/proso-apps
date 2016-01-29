@@ -157,7 +157,8 @@ class ExperimentSetupManager(models.Manager):
         experiment_ids = set([val.experiment_id for val in values])
         if len(experiment_ids) > 1:
             raise Exception("Values from different experiemnts can not be combined.")
-        content_hash = hashlib.sha1(json.dumps({'{}'.format(val.variable.id): val.id for val in values}, sort_keys=True)).hexdigest()
+        content_hash = hashlib.sha1(json.dumps({'{}'.format(val.variable.id): val.id for val in values},
+                                               sort_keys=True).encode()).hexdigest()
         setup, created = self.get_or_create(content_hash=content_hash)
         if not created:
             return setup

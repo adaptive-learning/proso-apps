@@ -66,7 +66,7 @@ def decorate_rolling_success(answers, rolling_success_col='rolling_success',
 
 
 def get_experiment_data(name, compute_fun, cache_dir, cached=True, debug=False, **kwargs):
-    kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True)).hexdigest()
+    kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True).encode()).hexdigest()
     filename = '{}/{}_{}.json'.format(cache_dir, name, kwargs_hash)
     if cached and os.path.exists(filename):
         if debug:
@@ -85,7 +85,7 @@ def get_experiment_data(name, compute_fun, cache_dir, cached=True, debug=False, 
 
 
 def get_raw_data(name, load_fun, cache_dir, cached=True, debug=False, **kwargs):
-    kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True)).hexdigest()
+    kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True).encode()).hexdigest()
     filename = '{}/{}_{}.pd'.format(cache_dir, name, kwargs_hash)
     if cached and os.path.exists(filename):
         with open(filename, 'r') as f:

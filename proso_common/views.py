@@ -94,7 +94,7 @@ def show_more(request, post_process_fun, get_fun, object_class, should_cache=Tru
             objs = objs.order_by(('-' if 'desc' in request.GET else '') + request.GET['db_orderby'].strip('/'))
         if 'all' not in request.GET and 'json_orderby' not in request.GET:
             objs = objs[page * limit:(page + 1) * limit]
-        cache_key = 'proso_common_sql_json_%s' % hashlib.sha1(str(objs.query).decode('utf-8') + str(to_json_kwargs)).hexdigest()
+        cache_key = 'proso_common_sql_json_%s' % hashlib.sha1((str(objs.query) + str(to_json_kwargs)).encode()).hexdigest()
         cached = cache.get(cache_key)
         if should_cache and cached:
             list_objs = json_lib.loads(cached)

@@ -1116,7 +1116,7 @@ class Audit(models.Model):
 
 
 def get_content_hash(content):
-    return hashlib.sha1(content).hexdigest()
+    return hashlib.sha1(content.encode()).hexdigest()
 
 
 ################################################################################

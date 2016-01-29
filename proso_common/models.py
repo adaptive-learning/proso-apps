@@ -31,7 +31,7 @@ class CommonMiddleware(object):
 
 
 def get_content_hash(content):
-    return hashlib.sha1(content).hexdigest()
+    return hashlib.sha1(content.encode()).hexdigest()
 
 
 def get_tables_allowed_to_export():
