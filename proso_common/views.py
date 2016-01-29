@@ -129,7 +129,7 @@ def log(request):
         additional data (JSON) describing the logged event
     """
     if request.method == "POST":
-        log_dict = json_body(request.body)
+        log_dict = json_body(request.body.decode("utf-8"))
         if 'message' not in log_dict:
             return HttpResponseBadRequest('There is no message to log!')
         levels = {

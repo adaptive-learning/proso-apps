@@ -39,7 +39,7 @@ def feedback(request):
     if request.method == 'GET':
         return render(request, 'feedback_feedback.html', {}, help_text=feedback.__doc__)
     if request.method == 'POST':
-        feedback_data = json_body(request.body)
+        feedback_data = json_body(request.body.decode("utf-8"))
         feedback_data['user_agent'] = Session.objects.get_current_session().http_user_agent.content
         if not feedback_data.get('username'):
             feedback_data['username'] = request.user.username
@@ -98,7 +98,7 @@ def rating(request):
     if request.method == 'GET':
         return render(request, 'feedback_rating.html', {}, help_text=rating.__doc__)
     if request.method == 'POST':
-        data = json_body(request.body)
+        data = json_body(request.body.decode("utf-8"))
         if data['value'] not in list(range(1, 4)):
             return render_json(
                 request,

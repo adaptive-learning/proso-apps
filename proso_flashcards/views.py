@@ -156,7 +156,7 @@ def user_stats(request):
     response = {}
     data = None
     if request.method == "POST":
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode("utf-8"))
     if "filters" in request.GET:
         data = load_query_json(request.GET, "filters")
     if data is None:
@@ -238,7 +238,7 @@ def flashcard_counts(request):
 
     data = None
     if request.method == "POST":
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode("utf-8"))
     if "filters" in request.GET:
         data = load_query_json(request.GET, "filters")
     if data is None:
@@ -385,7 +385,7 @@ def practice(request):
 
 
 def _get_answers(request):
-    data = json.loads(request.body)
+    data = json.loads(request.body.decode("utf-8"))
     if "answer" in data:
         answers = [data["answer"]]
     elif "answers" in data:
