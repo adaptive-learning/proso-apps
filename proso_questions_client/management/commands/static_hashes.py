@@ -36,6 +36,6 @@ class Command(NoArgsCommand):
 
     def get_static_file_content(self, filename):
         filename = os.path.join(settings.BASE_DIR, filename)
-        with file(filename) as f:
+        with open(filename) as f:
             content = f.read()
         return content

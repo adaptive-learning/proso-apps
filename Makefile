@@ -59,7 +59,7 @@ uninstall:
 	pip uninstall --yes proso-apps
 
 check:
-	flake8 --ignore=E501,E225,E123,E128 --exclude=*/migrations/*.py,*/static/bower_components proso_models $(APPS)
+	flake8 --ignore=E501,E225,E123,E128,W503,E731 --exclude=*/migrations/*.py,*/static/bower_components proso_models $(APPS)
 
 
 ################################################################################

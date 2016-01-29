@@ -23,7 +23,6 @@ class OptionSet(metaclass=abc.ABCMeta):
     def __init__(self, **kwargs):
         pass
 
-    
     @abc.abstractmethod
     def get_option_for_flashcards(self, flashcards):
         pass
@@ -57,7 +56,6 @@ class Direction(metaclass=abc.ABCMeta):
     def __init__(self, **kwargs):
         pass
 
-    
     @abc.abstractmethod
     def get_direction(self, flashcard):
         pass
