@@ -2,7 +2,7 @@ from proso.django.response import render_json, render
 from proso_common.management.commands import analyse
 from proso_common.models import get_tables_allowed_to_export
 from django.conf import settings
-from django.core.servers.basehttp import FileWrapper
+from wsgiref.util import FileWrapper
 from django.http import HttpResponse, HttpResponseBadRequest
 import os
 import os.path

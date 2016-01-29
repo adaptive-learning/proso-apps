@@ -77,7 +77,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'testproject.urls'
 
 TEMPLATE_CONTEXT_PROCESSORS = \
-    settings.TEMPLATE_CONTEXT_PROCESSORS + ("proso_common.context_processors.config_processor", )
+    settings.TEMPLATE_CONTEXT_PROCESSORS + ["proso_common.context_processors.config_processor"]
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".

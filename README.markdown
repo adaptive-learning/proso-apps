@@ -41,6 +41,13 @@ In case of final micro version:
 
 ## Migration to python3
 
+### virtualenv
+
+ - install python3.5 (http://techglimpse.com/install-update-python-pip-linux-tutorial/)
+ - create virtualenv with python3.5 (use -p in mkvirtualenv command)
+ - install requirements (make install)
+ 
+
 ### social-auth
 
 details at http://psa.matiasaguirre.net/docs/configuration/porting_from_dsa.html
@@ -51,5 +58,14 @@ details at http://psa.matiasaguirre.net/docs/configuration/porting_from_dsa.html
  - change facebook and google backends in AUTHENTICATION_BACKENDS  in settings.py
  - in google developer console allow Google+ API
  - clean the session and force the users to login again in your site or run script to update session in DB
-  
+
+
+### migrations
+ 
+    python manage.py migrate default 0001 --fake
+    python manage.py migrate proso_user
+    python manage.py migrate default
+    python manage.py migrate flatblocks 0001 --fake
+    python manage.py migrate lazysignup 0001 --fake
+    python manage.py migrate
 
