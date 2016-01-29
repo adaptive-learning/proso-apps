@@ -1,6 +1,6 @@
-from social_auth.exceptions import AuthAlreadyAssociated
 from django.contrib.auth import logout
 from django.shortcuts import redirect
+from social.exceptions import AuthAlreadyAssociated
 
 
 class AuthAlreadyAssociatedMiddleware(object):

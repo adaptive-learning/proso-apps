@@ -61,7 +61,7 @@ def profile(request, status=200):
                 migrated_user = migrate_google_openid_user(request.user)
                 if migrated_user is not None:
                     auth.logout(request)
-                    migrated_user.backend = 'social_auth.backends.google.GoogleOAuth2Backend'
+                    migrated_user.backend = 'social.backends.google.GoogleOAuth2'
                     auth.login(request, migrated_user)
             user_profile = get_object_or_404(UserProfile, user_id=user_id)
         return render_json(

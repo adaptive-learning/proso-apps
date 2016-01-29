@@ -2,6 +2,7 @@ from django.db import models
 import hashlib
 from ipware.ip import get_ip
 import user_agents
+from social.apps.django_app.default.models import UserSocialAuth
 from proso.django.request import get_current_request
 from django.db.models.signals import pre_save, post_save
 from lazysignup.signals import converted
@@ -11,7 +12,6 @@ import datetime
 from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social, name_lazy_user
 from proso.django.util import disable_for_loaddata
 from django.db import transaction
-from social_auth.models import UserSocialAuth
 from collections import defaultdict
 import logging
 

@@ -4,10 +4,10 @@ import re
 from django.conf import settings
 from django.utils.encoding import force_text
 from django.utils import translation
-from social_auth.exceptions import AuthAlreadyAssociated
 from django.contrib.auth import logout
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
+from social.exceptions import AuthAlreadyAssociated
 from proso.django.response import HttpError, render_json
 import datetime
 import logging

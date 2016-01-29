@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='flashcardanswer',
             name='options',
-            field=models.ManyToManyField(related_name=b'answers_with_this_as_option', to=b'proso_flashcards.Flashcard'),
+            field=models.ManyToManyField(related_name=b'answers_with_this_as_option', to='proso_flashcards.Flashcard'),
         ),
     ]

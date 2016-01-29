@@ -145,7 +145,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='category',
             name='subcategories',
-            field=models.ManyToManyField(related_name=b'parents', to=b'proso_flashcards.Category'),
+            field=models.ManyToManyField(related_name=b'parents', to='proso_flashcards.Category'),
         ),
         migrations.AlterField(
             model_name='category',
