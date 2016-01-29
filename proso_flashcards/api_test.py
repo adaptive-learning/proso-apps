@@ -89,6 +89,6 @@ class PracticeAPITest(TestCase):
         url = '/flashcards/practice/?%s' % kwargs_str
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, 'The status code is OK, url: %s' % url)
-        content = json.loads(response.content)
+        content = json.loads(response.content.decode("utf-8"))
         self.assertGreater(len(content['data']['flashcards']), 0, 'There is at least one flashcard, url: %s' % url)
         return content

@@ -33,7 +33,7 @@ class UserAPITest(TestCase):
             "id": 1,
             "public": False
         }
-        response = json.loads(response.content)['data']
+        response = json.loads(response.content.decode("utf-8"))["data"]
         expected_profile["user"]["id"] = response["user"]["id"]
         expected_profile["id"] = response["id"]
         self.assertEqual(
@@ -44,7 +44,7 @@ class UserAPITest(TestCase):
         response = self.client.get('/user/profile/')
         self.assertEqual(response.status_code, 200, 'There is a profile for user logged in.')
         self.assertEqual(
-            json.loads(response.content)['data'], expected_profile,
+            json.loads(response.content.decode("utf-8"))['data'], expected_profile,
             'The profile matches.'
         )
         # update profile
@@ -58,7 +58,7 @@ class UserAPITest(TestCase):
         expected_profile['user']['first_name'] = 'Kvido'
         self.assertEqual(response.status_code, 202, 'The profile can be updated.')
         self.assertEqual(
-            json.loads(response.content)['data'], expected_profile,
+            json.loads(response.content.decode("utf-8"))["data"], expected_profile,
             'The updated profile matches.'
         )
 
@@ -69,7 +69,7 @@ class UserAPITest(TestCase):
             'password_check': 'some_password',
         }), content_type='application/json')
         self.assertEqual(response.status_code, 400, 'The user without e-mail can not be registered.')
-        self.assertEqual(json.loads(response.content)['error_type'], 'email_empty')
+        self.assertEqual(json.loads(response.content.decode("utf-8"))['error_type'], 'email_empty')
 
     def test_signup_wrong_password_check(self):
         response = self.client.post('/user/signup/', json.dumps({
@@ -79,13 +79,13 @@ class UserAPITest(TestCase):
             'password_check': 'some_password_wrong',
         }), content_type='application/json')
         self.assertEqual(response.status_code, 400, 'The user with wrong password check can not be registered.')
-        self.assertEqual(json.loads(response.content)['error_type'], 'password_not_match')
+        self.assertEqual(json.loads(response.content.decode("utf-8"))['error_type'], 'password_not_match')
 
     def test_sesssion(self):
         # check session
         response = self.client.get('/user/session/')
         self.assertEqual(response.status_code, 200, 'There is session available.')
-        content = json.loads(response.content)['data']
+        content = json.loads(response.content.decode("utf-8"))['data']
         keys = ['display_height', 'display_width', 'http_user_agent', 'location', 'user_id', 'id', 'object_type']
         for key in keys:
             self.assertTrue(key in content, '"%s" is in the session' % key)
@@ -100,7 +100,7 @@ class UserAPITest(TestCase):
         self.assertEqual(response.status_code, 202, 'The session can be modified.')
         response = self.client.get('/user/session/')
         self.assertEqual(response.status_code, 200, 'There is session available.')
-        content = json.loads(response.content)['data']
+        content = json.loads(response.content.decode("utf-8"))['data']
         for k, v in update.items():
             msg = '"%s" is correct after session is updated.' % k
             if k == 'time_zone':
