@@ -12,15 +12,15 @@
         <hr/>
         User: {% verbatim %}{{ user_service.user.username }}{% endverbatim %}
         <input type="button" class="pure-button pure-button-primary" ng-click="user_service.logout()" value="Logout"/>
-        <form ng-submit="user_service.updateProfile(user_service.update)">
+        <form ng-submit="user_service.updateProfile(user_service.user)">
             <p>Update user:</p>
-            <input type="text" ng-model="user_service.update.user.first_name" placeholder="First Name"/>
-            <input type="text" ng-model="user_service.update.user.last_name" placeholder="Last Name"/>
-            <input type="password" ng-model="user_service.update.user.password" placeholder="Password"/>
-            <input type="password" ng-model="user_service.update.user.password_check" placeholder="Password Again"/>
+            <input type="text" ng-model="user_service.user.first_name" placeholder="First Name"/>
+            <input type="text" ng-model="user_service.user.last_name" placeholder="Last Name"/>
+            <input type="password" ng-model="user_service.user.password" placeholder="Password"/>
+            <input type="password" ng-model="user_service.user.password_check" placeholder="Password Again"/>
             <p>Update profile:</p>
-            <label>Send Emails <input type="checkbox" ng-model="user_service.update.send_emails"/> </label>
-            <label>Public <input type="checkbox" ng-model="user_service.update.public"/> </label>
+            <label>Send Emails <input type="checkbox" ng-model="user_service.user.profile.send_emails"/> </label>
+            <label>Public <input type="checkbox" ng-model="user_service.user.profile.public"/> </label>
             <input type="submit" class="pure-button pure-button-primary" value="Update"/>
             {% verbatim %}{{ user_service.update | json:4 }}{% endverbatim %}
         </form>
