@@ -10,8 +10,9 @@ class DatabaseEnvironmentTest(test.TestCase, environment.TestCommonEnvironment):
 
     _user = 0
 
-    @staticmethod
-    def setUpClass():
+    @classmethod
+    def setUpClass(cls):
+        super(DatabaseEnvironmentTest, cls).setUpClass()
         settings.DEBUG = True
 
     def generate_item(self):

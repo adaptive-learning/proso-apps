@@ -8,6 +8,7 @@ class CommonAPITest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(CommonAPITest, cls).setUpClass()
         User.objects.create_superuser('admin', 'admin@test.com', 'admin')
 
     def tearDown(self):
