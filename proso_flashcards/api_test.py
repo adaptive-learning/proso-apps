@@ -14,10 +14,10 @@ class PracticeAPITest(TestCase):
     ]
 
     def setUp(self):
-        self._categories = dict(map(lambda c: ((c.identifier, c.lang), c), Category.objects.all()))
-        self._contexts = dict(map(lambda c: ((c.identifier, c.lang), c), Context.objects.all()))
-        self._terms = dict(map(lambda t: ((t.identifier, t.lang), t), Term.objects.prefetch_related('parents').all()))
-        self._flashcards = dict(map(lambda f: ((f.identifier, f.lang), f), Flashcard.objects.select_related('term', 'context').all()))
+        self._categories = dict([((c.identifier, c.lang), c) for c in Category.objects.all()])
+        self._contexts = dict([((c.identifier, c.lang), c) for c in Context.objects.all()])
+        self._terms = dict([((t.identifier, t.lang), t) for t in Term.objects.prefetch_related('parents').all()])
+        self._flashcards = dict([((f.identifier, f.lang), f) for f in Flashcard.objects.select_related('term', 'context').all()])
 
     def test_language(self):
         for lang in [None, 'cs', 'en', 'es']:
@@ -69,26 +69,26 @@ class PracticeAPITest(TestCase):
             for f in filters:
                 content = self._get_practice(language='en', categories=f, limit=100)
                 for flashcard in content['data']['flashcards']:
-                    term_categories = map(lambda c: c.identifier, self._terms[flashcard['term']['identifier'], 'en'].parents.all())
+                    term_categories = [c.identifier for c in self._terms[flashcard['term']['identifier'], 'en'].parents.all()]
                     self.assertTrue(category in term_categories, "The term has expected categories.")
 
     def test_avoid(self):
-        avoid = map(lambda f: f.id, filter(lambda f: f.lang == 'en', self._flashcards.values()))[:10]
+        avoid = list(map(lambda f: f.id, [f for f in list(self._flashcards.values()) if f.lang == 'en']))[:10]
         content = self._get_practice(language='en', avoid=json.dumps(avoid), limit=100)
-        found = map(lambda f: f['id'], content['data']['flashcards'])
+        found = [f['id'] for f in content['data']['flashcards']]
         for a in avoid:
             self.assertFalse(a in found, "There is no flashcard with avoided id.")
 
     def test_deactivated_flashcards(self):
         content = self._get_practice(language='en', limit=100)
-        found = map(lambda f: f['id'], content['data']['flashcards'])
+        found = [f['id'] for f in content['data']['flashcards']]
         self.assertFalse(178 in found, "There is no flashcard which is not active.")
 
     def _get_practice(self, **kwargs):
-        kwargs_str = '&'.join(map(lambda (key, val): '%s=%s' % (key, val), kwargs.items()))
+        kwargs_str = '&'.join(['%s=%s' % (key_val[0], key_val[1]) for key_val in list(kwargs.items())])
         url = '/flashcards/practice/?%s' % kwargs_str
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, 'The status code is OK, url: %s' % url)
-        content = json.loads(response.content)
+        content = json.loads(response.content.decode("utf-8"))
         self.assertGreater(len(content['data']['flashcards']), 0, 'There is at least one flashcard, url: %s' % url)
         return content

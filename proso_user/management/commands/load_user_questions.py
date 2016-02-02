@@ -8,7 +8,7 @@ import re
 
 
 class Command(BaseCommand):
-    help = u"Load questions for users from JSON file"
+    help = "Load questions for users from JSON file"
 
     ANSWER_TYPES = {
         'open': UserQuestion.TYPE_OPEN,
@@ -31,9 +31,9 @@ class Command(BaseCommand):
                 self._load_questions(data['questions'])
 
     def _load_questions(self, questions_json):
-        print "\nLoading categories"
+        print("\nLoading categories")
         for question_json in questions_json:
-            langs = [k[-2:] for k in question_json.keys() if re.match(r'^content-\w\w$', k)]
+            langs = [k[-2:] for k in list(question_json.keys()) if re.match(r'^content-\w\w$', k)]
             for lang in langs:
                 question = UserQuestion.objects.filter(identifier=question_json['id'], lang=lang).first()
                 if question is None:
@@ -44,7 +44,7 @@ class Command(BaseCommand):
                 question.repeat = question_json.get('repeat', False)
                 question.answer_type = self.ANSWER_TYPES[question_json.get('answer-type', 'mixed')]
                 if question.pk is not None:
-                    possible_answer_ids = map(lambda a: a['id'], question_json['possible-answers'])
+                    possible_answer_ids = [a['id'] for a in question_json['possible-answers']]
                     for answer in question.possible_answers.all():
                         if answer.identifier not in possible_answer_ids:
                             answer.active = False

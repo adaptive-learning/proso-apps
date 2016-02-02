@@ -1,5 +1,5 @@
 language: python
-python: 2.7
+python: 3.5
 cache:
   - pip
   - apt
@@ -13,3 +13,5 @@ install:
   - make install
 script:
   - make test
+notifications:
+    email: false

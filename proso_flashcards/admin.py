@@ -1,5 +1,5 @@
 from django.contrib import admin
-from models import Term, Context, Flashcard, Category, FlashcardAnswer
+from .models import Term, Context, Flashcard, Category, FlashcardAnswer
 from proso_models.admin import pretty_date
 
 

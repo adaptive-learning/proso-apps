@@ -44,12 +44,12 @@ class Command(BaseCommand):
         with closing(connection.cursor()) as cursor:
             cursor.execute('SELECT COUNT(*) FROM ' + table_name)
             count, = cursor.fetchone()
-        print 'processing %s' % table_name, ',', count, 'items'
+        print('processing %s' % table_name, ',', count, 'items')
         sql = 'SELECT * FROM {}'.format(table_name)
         dest_file = settings.DATA_DIR + '/' + table_name
         dest_file_csv = dest_file + '.csv'
         dest_file_zip = dest_file + '.zip'
-        for offset in xrange(0, count, batch_size):
+        for offset in range(0, count, batch_size):
             with closing(connection.cursor()) as cursor:
                 cursor.execute(sql + ' ORDER BY {} LIMIT {} OFFSET {}'.format(pk_column, batch_size, offset))
                 self.dump_cursor(
@@ -70,5 +70,5 @@ class Command(BaseCommand):
             if not append:
                 writer.writerow(headers)
             for row in cursor:
-                row = [val.encode('utf-8') if isinstance(val, unicode) else val for val in row]
+                row = [val.encode('utf-8') if isinstance(val, str) else val for val in row]
                 writer.writerow(row)

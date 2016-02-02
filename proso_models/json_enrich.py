@@ -2,12 +2,12 @@ from proso.django.config import get_config
 from proso.django.response import pass_get_parameters
 from django.core.urlresolvers import reverse
 from proso.django.request import is_time_overridden, get_time, get_user_id
-import models
+from . import models
 import numpy
 
 
 def prediction(request, json_list, nested):
-    object_item_ids = map(lambda x: x['item_id'], json_list)
+    object_item_ids = [x['item_id'] for x in json_list]
     user = get_user_id(request)
     time = get_time(request)
     predictions = _predictive_model().predict_more_items(_environment(request), user, object_item_ids, time)
@@ -24,7 +24,7 @@ def prediction(request, json_list, nested):
 
 
 def number_of_answers(request, json_list, nested):
-    object_item_ids = map(lambda x: x['item_id'], json_list)
+    object_item_ids = [x['item_id'] for x in json_list]
     user = get_user_id(request)
     number_of_answers = _environment(request).number_of_answers_more_items(
         user=user, items=object_item_ids)
@@ -35,7 +35,7 @@ def number_of_answers(request, json_list, nested):
 
 
 def number_of_correct_answers(request, json_list, nested):
-    object_item_ids = map(lambda x: x['item_id'], json_list)
+    object_item_ids = [x['item_id'] for x in json_list]
     user = get_user_id(request)
     number_of_correct_answers = _environment(request).number_of_correct_answers_more_items(
         user=user, items=object_item_ids)
@@ -48,7 +48,7 @@ def number_of_correct_answers(request, json_list, nested):
 def group_item_keys(request, json, nested, key, aggr_fun=numpy.mean):
     if 'items' not in json:
         return json
-    collected = map(lambda item: item[key], json['items'])
+    collected = [item[key] for item in json['items']]
     aggregated = aggr_fun(collected)
     if isinstance(aggregated, int):
         show = aggregated

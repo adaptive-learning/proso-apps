@@ -66,13 +66,13 @@ def decorate_rolling_success(answers, rolling_success_col='rolling_success',
 
 
 def get_experiment_data(name, compute_fun, cache_dir, cached=True, debug=False, **kwargs):
-    kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True)).hexdigest()
+    kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True).encode()).hexdigest()
     filename = '{}/{}_{}.json'.format(cache_dir, name, kwargs_hash)
     if cached and os.path.exists(filename):
         if debug:
-            print 'reading cache', filename, 'for the function "{}" with parameters:'.format(compute_fun)
+            print('reading cache', filename, 'for the function "{}" with parameters:'.format(compute_fun))
             for key, value in sorted(kwargs.items()):
-                print '    - {}: {}'.format(key, value)
+                print('    - {}: {}'.format(key, value))
         with open(filename, 'r') as f:
             return _convert_json_keys(json.loads(f.read()))
     result = compute_fun(**kwargs)
@@ -85,15 +85,15 @@ def get_experiment_data(name, compute_fun, cache_dir, cached=True, debug=False, 
 
 
 def get_raw_data(name, load_fun, cache_dir, cached=True, debug=False, **kwargs):
-    kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True)).hexdigest()
+    kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True).encode()).hexdigest()
     filename = '{}/{}_{}.pd'.format(cache_dir, name, kwargs_hash)
     if cached and os.path.exists(filename):
         with open(filename, 'r') as f:
             result = pandas.read_pickle(filename)
         if debug:
-            print 'reading cache ({})'.format(len(result)), filename, 'for the function "{}" with parameters:'.format(load_fun.__name__)
+            print('reading cache ({})'.format(len(result)), filename, 'for the function "{}" with parameters:'.format(load_fun.__name__))
             for key, value in sorted(kwargs.items()):
-                print '    - {}: {}'.format(key, value)
+                print('    - {}: {}'.format(key, value))
 
     result = load_fun(**kwargs)
     if cached:
@@ -105,9 +105,9 @@ def get_raw_data(name, load_fun, cache_dir, cached=True, debug=False, **kwargs):
 
 def _convert_json_keys(json_struct):
     if isinstance(json_struct, list):
-        return map(_convert_json_keys, json_struct)
+        return list(map(_convert_json_keys, json_struct))
     elif isinstance(json_struct, dict):
-        return {_maybe_convert_str(key): _convert_json_keys(val) for (key, val) in json_struct.iteritems()}
+        return {_maybe_convert_str(key): _convert_json_keys(val) for (key, val) in json_struct.items()}
     else:
         return json_struct
 

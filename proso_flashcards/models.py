@@ -10,6 +10,7 @@ from proso.django.util import disable_for_loaddata, cache_pure
 from proso.django.config import get_config
 import random
 import logging
+from functools import reduce
 
 
 LOGGER = logging.getLogger('django.request')
@@ -38,7 +39,7 @@ class Term(models.Model):
         return json
 
     def __unicode__(self):
-        return u"{0.lang} - {0.name}".format(self)
+        return "{0.lang} - {0.name}".format(self)
 
 
 class Context(models.Model):
@@ -67,7 +68,7 @@ class Context(models.Model):
         return json
 
     def __unicode__(self):
-        return u"{0.lang} - {0.name}".format(self)
+        return "{0.lang} - {0.name}".format(self)
 
 
 class FlashcardQuerySet(models.query.QuerySet):
@@ -78,10 +79,9 @@ class FlashcardQuerySet(models.query.QuerySet):
         if language is not None:
             qs = qs.filter(lang=language)
         if isinstance(contexts, list) and len(contexts) > 0:
-            qs = qs.filter(reduce(lambda a, b: a | b, map(lambda id:
-                                  _create_q('context_id', id) if isinstance(id, int) else _create_q('context__identifier', id), contexts)))
+            qs = qs.filter(reduce(lambda a, b: a | b, [_create_q('context_id', id) if isinstance(id, int) else _create_q('context__identifier', id) for id in contexts]))
         if isinstance(types, list) and len(types) > 0:
-            qs = qs.filter(reduce(lambda a, b: a | b, map(lambda type: _create_q('term__type', type), types)))
+            qs = qs.filter(reduce(lambda a, b: a | b, [_create_q('term__type', type) for type in types]))
         if isinstance(categories, list) and len(categories) > 0:
             if not isinstance(categories[0], list):
                 categories = [categories]
@@ -145,7 +145,7 @@ class FlashcardManager(models.Manager):
     def filtered_ids_group(self, data, language, empty_groups=False):
         all_items = []
         items_map = {}
-        for identifier, filter in data.items():
+        for identifier, filter in list(data.items()):
             categories = filter.get("categories", [])
             contexts = filter.get("contexts", [])
             types = filter.get("types", [])
@@ -260,16 +260,16 @@ class FlashcardManager(models.Manager):
             db_options = db_options.prefetch_related(Flashcard.related_context())
         for option in db_options:
             all_options[option.item_id] = option
-        options = dict(zip(selected_items, options))
+        options = dict(list(zip(selected_items, options)))
 
         for flashcard in flashcards:
             if len(options[flashcard.item_id]) > 0:
-                flashcard.options = map(lambda id: all_options[id], options[flashcard.item_id])
+                flashcard.options = [all_options[id] for id in options[flashcard.item_id]]
 
         return flashcards
 
     def _test_index(self, meta):
-        check = map(lambda m: m is not None and 'without_options' in m.get('test', ''), meta)
+        check = [m is not None and 'without_options' in m.get('test', '') for m in meta]
         return check.index(True) if any(check) else None
 
 
@@ -297,7 +297,7 @@ class Flashcard(models.Model):
             "description": self.description
         }
         if hasattr(self, "options"):
-            data["options"] = map(lambda o: o.to_json(nested=True), sorted(self.options, key=lambda f: f.term.name))
+            data["options"] = [o.to_json(nested=True) for o in sorted(self.options, key=lambda f: f.term.name)]
         if hasattr(self, "direction"):
             data["direction"] = self.direction
         if hasattr(self, 'practice_meta'):
@@ -341,7 +341,7 @@ class Flashcard(models.Model):
             return "context__{}".format(extension.__name__.lower())
 
     def __unicode__(self):
-        return u"{0.term} - {0.context}".format(self)
+        return "{0.term} - {0.context}".format(self)
 
 
 class CategoryManager(models.Manager):
@@ -369,7 +369,7 @@ class CategoryManager(models.Manager):
                 if id is not None and id.startswith('-'):
                     id = id[1:]
                 types.append(self.filter(identifier=id).values_list("children_type", flat=True))
-        types = map(lambda l: l[0] if len(l) > 0 else None, types)
+        types = [l[0] if len(l) > 0 else None for l in types]
         return types
 
 
@@ -416,7 +416,7 @@ class Category(models.Model):
         }
 
     def __unicode__(self):
-        return u"{0.lang} - {0.name}".format(self)
+        return "{0.lang} - {0.name}".format(self)
 
 
 class FlashcardAnswer(Answer):

@@ -1,9 +1,9 @@
 import proso_common.views
-from models import Experiment
+from .models import Experiment
 from time import time as time_lib
 import logging
 import proso_common.json_enrich as common_json_enrich
-import json_enrich as configab_json_enrich
+from . import json_enrich as configab_json_enrich
 
 
 LOGGER = logging.getLogger('django.request')
@@ -45,7 +45,7 @@ def show_more(request, object_class, should_cache=True):
 def _to_json(request, value):
     time_start = time_lib()
     if isinstance(value, list):
-        json = map(lambda x: x if isinstance(x, dict) else x.to_json(), value)
+        json = [x if isinstance(x, dict) else x.to_json() for x in value]
     elif not isinstance(value, dict):
         json = value.to_json()
     else:

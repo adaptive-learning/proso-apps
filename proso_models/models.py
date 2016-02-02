@@ -12,7 +12,7 @@ from django.conf import settings
 from proso_user.models import Session
 import re
 import os.path
-from decorator import cache_environment_for_item
+from .decorator import cache_environment_for_item
 from collections import defaultdict
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
 from proso_common.models import Config
@@ -99,7 +99,7 @@ def learning_curve(length, context=None, users=None, user_length=None, number_of
         user_length = length
     with closing(connection.cursor()) as cursor:
         cursor.execute("SELECT id FROM proso_models_answermeta WHERE content LIKE '%%random_without_options%%'")
-        meta_ids = map(lambda x: str(x[0]), cursor.fetchall())
+        meta_ids = [str(x[0]) for x in cursor.fetchall()]
     EMPTY_LEARNING_CURVE = {
         'number_of_users': 0,
         'number_of_data_points': 0,
@@ -133,7 +133,7 @@ def learning_curve(length, context=None, users=None, user_length=None, number_of
             ORDER BY RANDOM()
             LIMIT %s
             ''', where_params + [user_length, number_of_users])
-        valid_users = list(set(map(lambda x: x[0], cursor.fetchall())))
+        valid_users = list(set([x[0] for x in cursor.fetchall()]))
     if len(valid_users) == 0:
         return EMPTY_LEARNING_CURVE
     with closing(connection.cursor()) as cursor:
@@ -153,18 +153,18 @@ def learning_curve(length, context=None, users=None, user_length=None, number_of
             context_answers[row[0]][row[1]].append(row[2])
         user_answers = [
             answers[:min(len(answers), length)] + [None for _ in range(length - min(len(answers), length))]
-            for user_answers in context_answers.itervalues()
-            for answers in user_answers.itervalues()
+            for user_answers in context_answers.values()
+            for answers in user_answers.values()
             if len(answers) >= user_length
         ]
 
         def _mean_with_confidence(xs):
-            return confidence_value_to_json(binomial_confidence_mean(filter(lambda x: x is not None, xs)))
+            return confidence_value_to_json(binomial_confidence_mean([x for x in xs if x is not None]))
 
         return {
             'number_of_users': len(valid_users),
             'number_of_datapoints': len(user_answers),
-            'success': map(_mean_with_confidence, zip(*user_answers)),
+            'success': list(map(_mean_with_confidence, list(zip(*user_answers)))),
             'object_type': 'learning_curve',
         }
 
@@ -216,7 +216,7 @@ def recommend_users(register_time_interval, number_of_answers_interval, success_
             LIMIT %s
             ''', params + [limit]
         )
-        return map(lambda x: x[0], cursor.fetchall())
+        return [x[0] for x in cursor.fetchall()]
 
 
 ################################################################################
@@ -243,8 +243,8 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
     def prefetch(self, users, items):
         if len(users) == 0 and len(items) == 0:
             return
-        users = map(str, users)
-        items = map(str, items)
+        users = list(map(str, users))
+        items = list(map(str, items))
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
@@ -340,7 +340,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
 
     def _prefetched_key(self, key, user, item, item_secondary, symmetric):
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items.sort()
         return (key, user, items[1], items[0])
 
@@ -373,7 +373,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 ' ORDER BY time DESC LIMIT %s',
                 where_params + [limit])
             result = cursor.fetchall()
-            map(lambda (d, v): (self._ensure_is_datetime(d), v), result)
+            list(map(lambda d_v: (self._ensure_is_datetime(d_v[0]), d_v[1]), result))
             return result
 
     def get_items_with_values(self, key, item, user=None):
@@ -409,7 +409,7 @@ class DatabaseEnvironment(CommonEnvironment):
             result = defaultdict(list)
             for p_id, s_id, val in cursor:
                 result[p_id].append((s_id, val))
-            return map(lambda i: result[i], items)
+            return [result[i] for i in items]
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
@@ -447,11 +447,11 @@ class DatabaseEnvironment(CommonEnvironment):
                     where_params)
                 result = cursor.fetchall()
             if item is None:
-                result = map(lambda (x, y, z): (x, z), result)
+                result = [(x_y_z[0], x_y_z[2]) for x_y_z in result]
             else:
-                result = map(lambda (x, y, z): (x, z) if y == item else (y, z), result)
+                result = [(x_y_z1[0], x_y_z1[2]) if x_y_z1[1] == item else (x_y_z1[1], x_y_z1[2]) for x_y_z1 in result]
             result = dict(result)
-            return map(lambda key: result.get(key, default), items)
+            return [result.get(k, default) for k in items]
 
     def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
@@ -488,11 +488,11 @@ class DatabaseEnvironment(CommonEnvironment):
                     where_params)
                 result = cursor.fetchall()
             if item is None:
-                result = map(lambda (x, y, z): (x, z), result)
+                result = [(x_y_z2[0], x_y_z2[2]) for x_y_z2 in result]
             else:
-                result = map(lambda (x, y, z): (x, z) if y == item else (y, z), result)
+                result = [(x_y_z3[0], x_y_z3[2]) if x_y_z3[1] == item else (x_y_z3[1], x_y_z3[2]) for x_y_z3 in result]
             result = dict(result)
-            return map(lambda key: result.get(key), items)
+            return [result.get(k) for k in items]
 
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         if permanent:
@@ -502,7 +502,7 @@ class DatabaseEnvironment(CommonEnvironment):
         if value is None:
             raise Exception('Value has to be specified')
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items = sorted(items)
         data = {
             'user_id': user,
@@ -524,7 +524,7 @@ class DatabaseEnvironment(CommonEnvironment):
             else:
                 LOGGER.error('There is a duplicate variable with the following data: {}. Start cleaning.'.format(data))
                 variable = max(variables, key=lambda variable: variable.id)
-                for var in filter(lambda var: var.id != variable.id, variables):
+                for var in [var for var in variables if var.id != variable.id]:
                     var.delete()
             if variable.permanent != permanent:
                 raise Exception("Variable %s changed permanency." % key)
@@ -544,7 +544,7 @@ class DatabaseEnvironment(CommonEnvironment):
         if key is None:
             raise Exception('Key has to be specified')
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items = sorted(items)
         data = {
             'user_id': user,
@@ -609,7 +609,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 + where + ' GROUP BY item_id' + ('' if user is None else ', user_id'),
                 where_params)
             fetched = dict(cursor.fetchall())
-            return map(lambda i: fetched.get(i, 0), items)
+            return [fetched.get(i, 0) for i in items]
 
     @cache_environment_for_item(default=0)
     def number_of_correct_answers_more_items(self, items, user=None):
@@ -620,7 +620,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 + where + ' GROUP BY item_id' + ('' if user is None else ', user_id'),
                 where_params)
             fetched = dict(cursor.fetchall())
-            return map(lambda i: fetched.get(i, 0), items)
+            return [fetched.get(i, 0) for i in items]
 
     @cache_environment_for_item(default=0)
     def number_of_first_answers_more_items(self, items, user=None):
@@ -631,7 +631,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 + where + ' GROUP BY user_id, item_id) AS t GROUP BY item_id' + ('' if user is None else ', user_id'),
                 where_params)
             fetched = dict(cursor.fetchall())
-            return map(lambda i: fetched.get(i, 0), items)
+            return [fetched.get(i, 0) for i in items]
         return 0
 
     @cache_environment_for_item()
@@ -642,9 +642,9 @@ class DatabaseEnvironment(CommonEnvironment):
                 'SELECT item_id, MAX(time) FROM proso_models_answer WHERE '
                 + where + ' GROUP BY item_id' + ('' if user is None else ', user_id'),
                 where_params)
-            fetched = dict(map(lambda (x, d): (x, self._ensure_is_datetime(d)), cursor.fetchall()))
+            fetched = dict([(x_d[0], self._ensure_is_datetime(x_d[1])) for x_d in cursor.fetchall()])
 
-            return map(lambda i: fetched.get(i, None), items)
+            return [fetched.get(i, None) for i in items]
 
     def shift_time(self, new_time):
         self._time = new_time
@@ -668,7 +668,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 ORDER BY id DESC
                 LIMIT %s
                 ''', where_params + [window_size])
-            fetched = map(lambda x: True if x[0] else False, cursor.fetchall())
+            fetched = [True if x[0] else False for x in cursor.fetchall()]
             if len(fetched) < window_size:
                 return None
             else:
@@ -685,7 +685,7 @@ class DatabaseEnvironment(CommonEnvironment):
             cached_item = cache.get(cache_key)
             if cached_item:
                 cached_all[item_secondary] = int(cached_item)
-        to_find = filter(lambda i: i not in cached_all.keys(), items)
+        to_find = [i for i in items if i not in list(cached_all.keys())]
         if len(cached_all) != 0:
             LOGGER.debug('cache hit for confusing factor, item {}, {} other items and user {}'.format(item, len(cached_all), user))
         if len(to_find) != 0:
@@ -714,7 +714,7 @@ class DatabaseEnvironment(CommonEnvironment):
                         found[item_asked] = found.get(item_asked, 0) + count
                 for i in to_find:
                     found[i] = found.get(i, 0)
-                for item_secondary, count in found.iteritems():
+                for item_secondary, count in found.items():
                     _items = sorted([item, item_secondary])
                     cache_key = 'confusing_factor_per_item_{}_{}_{}'.format(_items[0], _items[1], user)
                     cache.set(
@@ -723,7 +723,7 @@ class DatabaseEnvironment(CommonEnvironment):
                         get_config('proso_models', 'confusing_factor.cache_expiration', default=24 * 60 * 60)
                     )
                     cached_all[item_secondary] = count
-        return map(lambda i: cached_all[i], items)
+        return [cached_all[i] for i in items]
 
     def export_values():
         pass
@@ -735,7 +735,7 @@ class DatabaseEnvironment(CommonEnvironment):
         if key is None:
             raise Exception('Key has to be specified')
         items = [item_secondary, item]
-        if symmetric:
+        if symmetric and item is not None and item_secondary is not None:
             items = sorted(items)
         return self._where({
             'user_id': user,
@@ -752,7 +752,7 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_primary_id': items,
             'item_secondary_id': item
         }
-        if item is None or all(map(lambda x: item <= x, items)) or not symmetric:
+        if item is None or all([item <= x for x in items]) or not symmetric:
             return self._where(cond_secondary, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
         cond_primary = {
             'key': key,
@@ -760,7 +760,7 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_primary_id': item,
             'item_secondary_id': items
         }
-        if all(map(lambda x: item >= x, items)):
+        if all([item >= x for x in items]):
             return self._where(cond_primary, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
         return self._where({
             'item is primary': cond_primary,
@@ -772,11 +772,10 @@ class DatabaseEnvironment(CommonEnvironment):
             result_cond, result_params = self._column_comparison(
                 condition[0], condition[1], force_null=force_null)
         elif isinstance(condition, dict):
-            conds, params = zip(*map(
-                lambda x: self._where(x, force_null, top_most=False, for_answers=for_answers), condition.items()))
+            conds, params = list(zip(*[self._where(x, force_null, top_most=False, for_answers=for_answers) for x in list(condition.items())]))
             params = [p for ps in params for p in ps]
             operator = ' AND ' if conjuction else ' OR '
-            if any(map(lambda x: isinstance(x, dict), condition)):
+            if any([isinstance(x, dict) for x in condition]):
                 operator = ' OR '
             result_cond, result_params = operator.join(conds), params
         else:
@@ -800,9 +799,9 @@ class DatabaseEnvironment(CommonEnvironment):
     def _column_comparison(self, column, value, force_null=True):
         if isinstance(value, list):
             value = list(set(value))
-            contains_null = any(map(lambda x: x is None, value))
+            contains_null = any([x is None for x in value])
             if contains_null:
-                value = filter(lambda x: x is not None, value)
+                value = [x for x in value if x is not None]
             null_contains_return = (column + ' IS NULL OR ') if contains_null else ''
             if len(value) > 0:
                 sorted_values = sorted(value)
@@ -983,7 +982,7 @@ class PracticeContext(models.Model):
         }
 
     def __unicode__(self):
-        return u"{0.content}".format(self)
+        return "{0.content}".format(self)
 
 
 class AnswerManager(models.Manager):
@@ -1117,7 +1116,7 @@ class Audit(models.Model):
 
 
 def get_content_hash(content):
-    return hashlib.sha1(content).hexdigest()
+    return hashlib.sha1(content.encode()).hexdigest()
 
 
 ################################################################################

@@ -2,7 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
 from proso.django.request import get_user_id, json_body, is_user_id_overridden
-from models import Session, UserProfile, TimeZone, UserQuestion, UserQuestionAnswer, UserQuestionPossibleAnswer, migrate_google_openid_user
+from .models import Session, UserProfile, TimeZone, UserQuestion, UserQuestionAnswer, UserQuestionPossibleAnswer, migrate_google_openid_user
 from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
@@ -16,7 +16,7 @@ import proso_common
 from django.utils.translation import ugettext as _
 from proso.django.config import get_config
 import proso_common.json_enrich as common_json_enrich
-import json_enrich as user_json_enrich
+from . import json_enrich as user_json_enrich
 
 
 @allow_lazy_user
@@ -61,7 +61,7 @@ def profile(request, status=200):
                 migrated_user = migrate_google_openid_user(request.user)
                 if migrated_user is not None:
                     auth.logout(request)
-                    migrated_user.backend = 'social_auth.backends.google.GoogleOAuth2Backend'
+                    migrated_user.backend = 'social.backends.google.GoogleOAuth2'
                     auth.login(request, migrated_user)
             user_profile = get_object_or_404(UserProfile, user_id=user_id)
         return render_json(
@@ -69,7 +69,7 @@ def profile(request, status=200):
             template='user_profile.html', help_text=profile.__doc__)
     elif request.method == 'POST':
         with transaction.atomic():
-            to_save = json_body(request.body)
+            to_save = json_body(request.body.decode("utf-8"))
             user_id = get_user_id(request)
             user_profile = get_object_or_404(UserProfile, user_id=user_id)
             user = to_save.get('user', None)
@@ -145,7 +145,7 @@ def login(request):
     if request.method == 'GET':
         return render(request, 'user_login.html', {}, help_text=login.__doc__)
     elif request.method == 'POST':
-        credentials = json_body(request.body)
+        credentials = json_body(request.body.decode("utf-8"))
         user = auth.authenticate(
             username=credentials.get('username', ''),
             password=credentials.get('password', ''),
@@ -173,7 +173,7 @@ def answer_question(request):
     elif request.method == 'POST':
         with transaction.atomic():
             user_id = get_user_id(request)
-            to_save = json_body(request.body)
+            to_save = json_body(request.body.decode("utf-8"))
             for answer in to_save['answers']:
                 question = get_object_or_404(UserQuestion, pk=answer['question'])
                 if 'open_answer' in answer and 'closed_answer' in answer:
@@ -264,7 +264,7 @@ def signup(request):
                 'error': _('User already logged in'),
                 'error_type': 'username_logged'
             }, template='user_json.html', status=400)
-        credentials = json_body(request.body)
+        credentials = json_body(request.body.decode("utf-8"))
         error = _save_user(request, credentials, new=True)
         if error is not None:
             return render_json(request, error, template='user_json.html', status=400)
@@ -313,7 +313,7 @@ def session(request):
         current_session = Session.objects.get_current_session()
         if current_session is None:
             return HttpResponseBadRequest("there is no current session to modify")
-        data = json_body(request.body)
+        data = json_body(request.body.decode("utf-8"))
         locale = data.get('locale', None)
         time_zone = data.get('time_zone', None)
         display_width = data.get('display_width', None)
@@ -366,7 +366,7 @@ def initmobile_view(request):
 
 def _to_json(request, value, **kwargs):
     if isinstance(value, list):
-        json = map(lambda x: x if isinstance(x, dict) else x.to_json(**kwargs), value)
+        json = [x if isinstance(x, dict) else x.to_json(**kwargs) for x in value]
     elif not isinstance(value, dict):
         json = value.to_json(**kwargs)
     else:

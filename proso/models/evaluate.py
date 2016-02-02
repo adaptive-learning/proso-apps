@@ -1,6 +1,6 @@
 import proso.geography.dfutil
 import numpy as np
-import metric
+from . import metric
 from clint.textui import progress
 
 

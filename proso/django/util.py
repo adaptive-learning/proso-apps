@@ -30,7 +30,7 @@ def cache_pure(f, expiration=60 * 60 * 24 * 30):
             key_args = args
 
         key = "{}:args:{}-kwargs:{}".format(f.__name__, repr(key_args), repr(kwargs))
-        hash_key = hashlib.sha1(key).hexdigest()
+        hash_key = hashlib.sha1(key.encode()).hexdigest()
         value = cache.get(hash_key, CACHE_MISS)
         if value != CACHE_MISS:
             LOGGER.debug("loaded function result (%s...) form CACHE; key: %s..., hash %s", str(value)[:300], key[:300], hash_key)

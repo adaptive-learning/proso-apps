@@ -1,4 +1,4 @@
-from models import Rating, Comment
+from .models import Rating, Comment
 from django.contrib import admin
 
 

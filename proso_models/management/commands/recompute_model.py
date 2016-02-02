@@ -57,10 +57,10 @@ class Command(BaseCommand):
 
     def handle_gc(self, options):
         timer('recompute_gc')
-        print ' -- collecting garbage'
-        to_gc = map(lambda x: str(x.id), EnvironmentInfo.objects.filter(status=EnvironmentInfo.STATUS_DISABLED).all())
+        print(' -- collecting garbage')
+        to_gc = [str(x.id) for x in EnvironmentInfo.objects.filter(status=EnvironmentInfo.STATUS_DISABLED).all()]
         if not to_gc:
-            print ' -- no environment info to collect'
+            print(' -- no environment info to collect')
             return
         to_gc_str = ','.join(to_gc)
         with closing(connection.cursor()) as cursor:
@@ -70,11 +70,11 @@ class Command(BaseCommand):
             audits = cursor.rowcount
             cursor.execute('DELETE FROM proso_models_environmentinfo WHERE id IN (%s)' % to_gc_str)
             infos = cursor.rowcount
-        print ' -- collecting garbage, time:', timer('recompute_gc'), 'seconds, deleted', variables, 'variables,', audits, 'audit records,', infos, 'environment info records'
+        print(' -- collecting garbage, time:', timer('recompute_gc'), 'seconds, deleted', variables, 'variables,', audits, 'audit records,', infos, 'environment info records')
 
     def handle_cancel(self, options):
         info = self.load_environment_info(False, options['config_name'])
-        print ' -- cancelling'
+        print(' -- cancelling')
         info.status = EnvironmentInfo.STATUS_DISABLED
         info.save()
 
@@ -89,18 +89,18 @@ class Command(BaseCommand):
                 self.recompute(info, options)
         else:
             self.recompute(info, options)
-        print ' -- total time:', timer('recompute_all'), 'seconds'
+        print(' -- total time:', timer('recompute_all'), 'seconds')
 
     def recompute(self, info, options):
-        print ' -- preparing phase'
+        print(' -- preparing phase')
         timer('recompute_prepare')
         environment = self.load_environment(info)
         users, items = self.load_user_and_item_ids(info, options['batch_size'])
         environment.prefetch(users, items)
         predictive_model = get_predictive_model()
-        print ' -- preparing phase, time:', timer('recompute_prepare'), 'seconds'
+        print(' -- preparing phase, time:', timer('recompute_prepare'), 'seconds')
         timer('recompute_model')
-        print ' -- model phase'
+        print(' -- model phase')
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
@@ -131,14 +131,14 @@ class Command(BaseCommand):
                     guess=guess,
                     answer_id=answer_id)
                 environment.process_answer(user, item, asked, answered, time, answer_id, response_time, guess)
-        print ' -- model phase, time:', timer('recompute_model'), 'seconds'
+        print(' -- model phase, time:', timer('recompute_model'), 'seconds')
         timer('recompute_flush')
-        print ' -- flushing phase'
+        print(' -- flushing phase')
         environment.flush(clean=options['finish'])
-        print ' -- flushing phase, time:', timer('recompute_flush'), 'seconds, total number of answers:', info.load_progress
+        print(' -- flushing phase, time:', timer('recompute_flush'), 'seconds, total number of answers:', info.load_progress)
         if options['finish']:
             timer('recompute_finish')
-            print ' -- finishing phase'
+            print(' -- finishing phase')
             try:
                 previous_info = EnvironmentInfo.objects.get(status=EnvironmentInfo.STATUS_ACTIVE)
                 previous_info.status = EnvironmentInfo.STATUS_DISABLED
@@ -147,7 +147,7 @@ class Command(BaseCommand):
             except EnvironmentInfo.DoesNotExist:
                 pass
             info.status = EnvironmentInfo.STATUS_ACTIVE
-            print ' -- finishing phase, time:', timer('recompute_finish'), 'seconds'
+            print(' -- finishing phase, time:', timer('recompute_finish'), 'seconds')
         info.save()
 
     def load_environment_info(self, initial, config_name):
@@ -184,11 +184,11 @@ class Command(BaseCommand):
                 ORDER BY id
                 OFFSET %s LIMIT %s
                 ''', [info.load_progress, batch_size])
-            unzipped = zip(*cursor.fetchall())
+            unzipped = list(zip(*cursor.fetchall()))
             if len(unzipped) == 0:
                 return [], []
             else:
-                return list(set(unzipped[0])), filter(lambda x: x is not None, list(set(unzipped[1]) | set(unzipped[2]) | set(unzipped[3])))
+                return list(set(unzipped[0])), [x for x in list(set(unzipped[1]) | set(unzipped[2]) | set(unzipped[3])) if x is not None]
 
     def number_of_answers_to_process(self, info):
         with closing(connection.cursor()) as cursor:

@@ -1,4 +1,4 @@
-from models import Value
+from .models import Value
 from proso.django.response import pass_get_parameters
 from django.core.urlresolvers import reverse
 
@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 def values(request, json_list, nested):
     if nested:
         return json_list
-    object_ids = map(lambda x: x['id'], json_list)
+    object_ids = [x['id'] for x in json_list]
     values = Value.objects.filter(experiment_id__in=object_ids)
     values_dict = {}
     for v in values:

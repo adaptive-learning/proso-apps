@@ -2,7 +2,7 @@
 import abc
 import random
 import datetime
-import prediction
+from . import prediction
 import proso.models.metric
 import pandas
 import numpy
@@ -39,7 +39,7 @@ class ConstantUserKnowledgeProvider(UserKnowledgeProvider):
 
     def user_type(self, user):
         skill = self._skill[user]
-        percentiles = numpy.percentile(self._skill.values(), [75, 25])
+        percentiles = numpy.percentile(list(self._skill.values()), [75, 25])
         if skill > percentiles[0]:
             return 'High skill'
         elif skill < percentiles[1]:
@@ -49,7 +49,7 @@ class ConstantUserKnowledgeProvider(UserKnowledgeProvider):
 
     def item_type(self, item):
         difficulty = self._difficulty[item]
-        percentiles = numpy.percentile(self._difficulty.values(), [75, 25])
+        percentiles = numpy.percentile(list(self._difficulty.values()), [75, 25])
         if difficulty > percentiles[0]:
             return 'High difficulty'
         elif difficulty < percentiles[1]:
@@ -79,7 +79,7 @@ class ImprovingUserKnowledgeProvider(ConstantUserKnowledgeProvider):
             options = []
         if item in options:
             options.remove(item)
-        options_skill = map(lambda opt: self._current_skill.get((user, opt), self._skill[user] - self._difficulty[item]), options)
+        options_skill = [self._current_skill.get((user, opt), self._skill[user] - self._difficulty[item]) for opt in options]
         return prediction.predict(skill, options_skill)[0]
 
     def process_answer(self, user, item, correct, time, response_time, options=None):
@@ -106,7 +106,7 @@ class OneUserActivity(Activity):
         self._user = user
         self._time = time_start
 
-    def next(self):
+    def __next__(self):
         self._time + datetime.timedelta(seconds=10)
         return self._user, self._time
 
@@ -116,9 +116,9 @@ class MoreUsersActivity(Activity):
     def __init__(self, users, time_start=datetime.datetime.now()):
         self._next_user = -1
         self._users = users
-        self._times = dict(zip(users, [time_start for u in users]))
+        self._times = dict(list(zip(users, [time_start for u in users])))
 
-    def next(self):
+    def __next__(self):
         self._next_user = (self._next_user + 1) % len(self._users)
         next_user = self._users[self._next_user]
         self._times[next_user] += datetime.timedelta(seconds=10)
@@ -137,7 +137,7 @@ class Simulator:
         knowledge_provider.reset()
         answers = []
         for i in range(n):
-            user, time = activity.next()
+            user, time = next(activity)
             item = item_selector.select(environment, user, self.items, time, 1)
             options = []
             if option_selector is not None:
@@ -282,8 +282,8 @@ class Evaluator:
     def items_with_more_answers(self):
 
         def _filtered_len(data):
-            items = data.groupby('item').apply(len).to_dict().items()
-            items = map(lambda (i, n): i, filter(lambda (item, n): n > 1, items))
+            items = list(data.groupby('item').apply(len).to_dict().items())
+            items = [i_n[0] for i_n in [item_n for item_n in items if item_n[1] > 1]]
             return len(items)
         lens = self._answers.groupby('user').apply(_filtered_len)
         return lens.mean(), lens.std()
@@ -291,20 +291,16 @@ class Evaluator:
     def time_gap(self):
 
         def _user_time_gap(data):
-            items = data.groupby('item').apply(len).to_dict().items()
-            items = map(lambda (i, n): i, filter(lambda (item, n): n > 1, items))
+            items = list(data.groupby('item').apply(len).to_dict().items())
+            items = [i_n2[0] for i_n2 in [item_n1 for item_n1 in items if item_n1[1] > 1]]
             data = data[data['item'].isin(items)]
             return data.groupby('item').apply(lambda _data: (_data['time'] - _data['time'].shift(1)).mean())
 
         gaps = self._answers.groupby('user').apply(_user_time_gap)
         if len(gaps) == 0:
             return float('inf'), float('inf'), float('inf')
-        stats = map(
-            lambda x: x.item()if isinstance(x, pandas.Series) else x,
-            [gaps.mean(), gaps.std(), gaps.min()])
-        [time_mean, time_std, time_min] = map(
-            lambda x: x.total_seconds() if isinstance(x, pandas.Timedelta) else x / (10.0 ** 9),
-            stats)
+        stats = [x.item()if isinstance(x, pandas.Series) else x for x in [gaps.mean(), gaps.std(), gaps.min()]]
+        [time_mean, time_std, time_min] = [x.total_seconds() if isinstance(x, pandas.Timedelta) else x / (10.0 ** 9) for x in stats]
         return time_mean, time_std, time_min
 
     def rmse(self):

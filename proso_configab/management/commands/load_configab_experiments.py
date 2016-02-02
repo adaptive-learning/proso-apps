@@ -28,7 +28,7 @@ class Command(BaseCommand):
             if 'paused' in experiment and experiment['paused'] != experiment_db.is_paused:
                 experiment_db.is_paused = experiment['paused']
                 experiment_db.save()
-                print ' -- experiment', experiment['id'], ('paused' if experiment['paused'] else 'unpaused')
+                print(' -- experiment', experiment['id'], ('paused' if experiment['paused'] else 'unpaused'))
             if 'disabled' in experiment:
                 if not experiment_db.is_enabled:
                     if not experiment['disabled']:
@@ -37,14 +37,14 @@ class Command(BaseCommand):
                     experiment_db.is_enabled = False
                     experiment_db.time_disabled = datetime.now()
                     experiment_db.save()
-                    print ' -- experiment', experiment['id'], 'disabled'
+                    print(' -- experiment', experiment['id'], 'disabled')
 
             if not created:
-                print ' -- experiment', experiment['id'], 'already created, skipping'
+                print(' -- experiment', experiment['id'], 'already created, skipping')
                 continue
             for variable in experiment['variables']:
                 variable_db, _ = Variable.objects.get_or_create(app_name=variable['app_name'], name=variable['name'])
-                prob_sum = sum(map(lambda val: val['probability'], variable['values']))
+                prob_sum = sum([val['probability'] for val in variable['values']])
                 if prob_sum != 100:
                     raise CommandError('The total sum of probs for variable "{}.{}" is {}, expected 100'.format(variable['app_name'], variable['name'], prob_sum))
                 for value in variable['values']:
@@ -54,7 +54,7 @@ class Command(BaseCommand):
                         value=value['value'],
                         probability=value['probability'],
                     )
-            print ' -- experiment', experiment['id'], 'created'
+            print(' -- experiment', experiment['id'], 'created')
         enabled_experiments = Experiment.objects.filter(is_enabled=True)
         if len(enabled_experiments) > 1:
             raise CommandError('Number of enabled experiments is not allowed to be larger than 1, found {}: {}'.format(

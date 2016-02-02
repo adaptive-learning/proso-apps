@@ -57,7 +57,7 @@ class Command(BaseCommand):
     def _analyse(self):
         for module in self.modules:
             self.stdout.write("{}:".format(module.__name__))
-            for dataset, analysis in module.DS2A_MAP.items():
+            for dataset, analysis in list(module.DS2A_MAP.items()):
                 df = self._prepare_dataset(module, dataset)
                 for analyse in analysis:
                     t = time()

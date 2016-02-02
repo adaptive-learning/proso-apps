@@ -10,7 +10,7 @@ from proso_flashcards.models import Category, Context, Term, Flashcard
 
 
 class Command(BaseCommand):
-    help = u"Dump flashcards to JSON file"
+    help = "Dump flashcards to JSON file"
 
     option_list = BaseCommand.option_list + (
         make_option(
@@ -60,7 +60,7 @@ class Command(BaseCommand):
             data["flashcards"] = self._dump_flashcards()
 
         validate(data, schema)
-        print json.dumps(data, 'utf-8', indent=4)
+        print((json.dumps(data, 'utf-8', indent=4)))
 
     def _dump_categories(self, data=None):
         data = []

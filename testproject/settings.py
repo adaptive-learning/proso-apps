@@ -46,11 +46,10 @@ INSTALLED_APPS = (
     'proso_common',
     'proso_configab',
     'proso_models',
-    'proso_questions',
     'proso_user',
     'proso_feedback',
     'proso_flashcards',
-    'social_auth',
+    'social.apps.django_app.default',
     'testproject.testapp',
 )
 
@@ -71,21 +70,14 @@ MIDDLEWARE_CLASSES = (
     'proso.django.cache.RequestCacheMiddleware',
     'proso.django.log.RequestLogMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'proso_questions_client.middleware.AuthAlreadyAssociatedMiddleware',
 )
 
 ROOT_URLCONF = 'testproject.urls'
 
 TEMPLATE_CONTEXT_PROCESSORS = \
-    settings.TEMPLATE_CONTEXT_PROCESSORS + ("proso_common.context_processors.config_processor", )
+    settings.TEMPLATE_CONTEXT_PROCESSORS + ["proso_common.context_processors.config_processor"]
 
-TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-    os.path.join(BASE_DIR, '..', 'proso_questions', 'templates'),
-    os.path.join(BASE_DIR, '..', 'proso_questions_client', 'templates'),
-)
+TEMPLATE_DIRS = ()
 
 if TESTING:
     DATABASES = {
@@ -135,13 +127,13 @@ STATICFILES_FINDERS = (
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'lazysignup.backends.LazySignupBackend',
-    'social_auth.backends.facebook.FacebookBackend',
-    'social_auth.backends.google.GoogleOAuth2Backend',
+    'social.backends.facebook.FacebookOAuth2',
+    'social.backends.google.GoogleOAuth2',
 )
 
-FACEBOOK_APP_ID = os.getenv('PROSO_FACEBOOK_APP_ID', '955349341155915')
-FACEBOOK_API_SECRET = os.getenv('PROSO_FACEBOOK_API_SECRET', '1afe2e6e6ccc3266d81708c89d4515d4')
-FACEBOOK_EXTENDED_PERMISSIONS = ['email']
+SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('PROSO_FACEBOOK_APP_ID', '955349341155915')
+SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('PROSO_FACEBOOK_API_SECRET', '1afe2e6e6ccc3266d81708c89d4515d4')
+SOCIAL_AUTH_FACEBOOK_EXTENDED_PERMISSIONS = ['email']
 
 SOCIAL_AUTH_CREATE_USERS = True
 SOCIAL_AUTH_FORCE_RANDOM_USERNAME = False
@@ -149,8 +141,8 @@ SOCIAL_AUTH_DEFAULT_USERNAME = 'socialauth_user'
 LOGIN_ERROR_URL = '/login/error/'
 SOCIAL_AUTH_ERROR_KEY = 'socialauth_error'
 SOCIAL_AUTH_RAISE_EXCEPTIONS = False
-GOOGLE_OAUTH2_CLIENT_ID = os.getenv('PROSO_GOOGLE_OAUTH2_CLIENT_ID', '191094260688-97ergmtbuj34jf518ol60cuili58aml9.apps.googleusercontent.com')
-GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('PROSO_GOOGLE_OAUTH2_CLIENT_SECRET', 'blQDABue66taqP__DVAHHb_Y')
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('PROSO_GOOGLE_OAUTH2_CLIENT_ID', '191094260688-97ergmtbuj34jf518ol60cuili58aml9.apps.googleusercontent.com')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('PROSO_GOOGLE_OAUTH2_CLIENT_SECRET', 'blQDABue66taqP__DVAHHb_Y')
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/user/close_popup/'
 
 # http://stackoverflow.com/questions/22005841/is-not-json-serializable-django-social-auth-facebook-login

@@ -19,11 +19,9 @@ def get_direction():
     )
 
 
-class OptionSet():
+class OptionSet(metaclass=abc.ABCMeta):
     def __init__(self, **kwargs):
         pass
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def get_option_for_flashcards(self, flashcards):
@@ -32,7 +30,7 @@ class OptionSet():
 
 class EmptyOptionSet(OptionSet):
     def get_option_for_flashcards(self, flashcards):
-        return dict(map(lambda fc: (fc.item_id, []), flashcards))
+        return dict([(fc.item_id, []) for fc in flashcards])
 
 
 class ContextOptionSet(OptionSet):
@@ -51,14 +49,12 @@ class ContextOptionSet(OptionSet):
         for context, term_type, item in Flashcard.objects.filter(**options_filter).values_list("context", "term__type", "item_id"):
             option_sets[context, term_type].add(item)
 
-        return dict(map(lambda fc: (fc.item_id, list(option_sets[fc.context_id, fc.term.type])), flashcards))
+        return dict([(fc.item_id, list(option_sets[fc.context_id, fc.term.type])) for fc in flashcards])
 
 
-class Direction():
+class Direction(metaclass=abc.ABCMeta):
     def __init__(self, **kwargs):
         pass
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def get_direction(self, flashcard):

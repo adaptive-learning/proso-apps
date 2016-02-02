@@ -4,7 +4,7 @@ import datetime
 import importlib
 import json as simplejson
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 
 def load_query_json(query_dict, key, default_json=None):
@@ -12,7 +12,7 @@ def load_query_json(query_dict, key, default_json=None):
     try:
         return simplejson.loads(value)
     except ValueError:
-        return simplejson.loads(urllib.unquote(value))
+        return simplejson.loads(urllib.parse.unquote(value))
 
 
 def json_body(body):
@@ -25,7 +25,7 @@ def json_body(body):
 def parse_common_body_to_json(body):
     body = body.replace('%5B', '[').replace('%5D', ']')
     result = {}
-    pairs = map(lambda x: x[0], re.findall(r'(.*?[^\\])(\&|$)', body))
+    pairs = [x[0] for x in re.findall(r'(.*?[^\\])(\&|$)', body)]
     for pair in pairs:
         key, value = pair.split('=')
         result = _store_body_value(key, value, result)
@@ -35,7 +35,7 @@ def parse_common_body_to_json(body):
 def _store_body_value(key_string, value, result):
     if value.isdigit():
         value = int(value)
-    keys = map(lambda x: x.strip(']'), re.split('\[', key_string))
+    keys = [x.strip(']') for x in re.split('\[', key_string)]
     old = result
     for i in range(len(keys)):
         k = keys[i]

@@ -1,5 +1,5 @@
 from proso.django.test import TestCase
-from models import Comment, Rating
+from .models import Comment, Rating
 import json
 
 

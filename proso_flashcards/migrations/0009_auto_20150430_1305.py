@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 from django.db import migrations
 from proso_flashcards.management.commands.load_flashcards import check_and_set_category_type

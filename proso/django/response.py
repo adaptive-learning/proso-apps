@@ -20,8 +20,8 @@ def redirect_pass_get(request, view, *args, **kwargs):
 
 def pass_get_parameters_string(request, ignore=None):
     ignore = [] if ignore is None else ignore
-    to_pass = filter(lambda (k, v): k not in ignore, request.GET.items())
-    return '&'.join(map(lambda (key, value): '%s=%s' % (key, value), to_pass))
+    to_pass = [k_v for k_v in list(request.GET.items()) if k_v[0] not in ignore]
+    return '&'.join(['%s=%s' % (key_value[0], key_value[1]) for key_value in to_pass])
 
 
 def append_get_parameters(dest_url, get_parameters_string):
@@ -47,7 +47,7 @@ def render(request, template, data, *args, **kwargs):
 
 def render_json(request, json, template=None, status=None, help_text=None, version=proso.release.VERSION):
     time_start = time()
-    if status is None or status / 100 == 2:
+    if status is None or status // 100 == 2:
         json = {'data': json, 'version': version}
     if 'error' in json and 'error_type' in json:
         LOGGER.warning('%s: %s', json['error_type'], json['error'])

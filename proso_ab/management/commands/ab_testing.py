@@ -48,7 +48,7 @@ class Command(BaseCommand):
 
     def enable_disable(self, args, options, active):
         if options.get('command_help', False):
-            print self.help_enable_disable()
+            print(self.help_enable_disable())
             return
         name = args[0]
         experiment = Experiment.objects.get(name=name)
@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
     def init(self, args, options):
         if options.get('command_help', False):
-            print self.help_init()
+            print(self.help_init())
             return
         values = []
         (group_name, default_value) = args[0].split('=')

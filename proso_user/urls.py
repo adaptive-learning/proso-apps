@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import TemplateView
-from models import UserQuestion, UserQuestionPossibleAnswer
+from .models import UserQuestion, UserQuestionPossibleAnswer
 
 
 urlpatterns = patterns(

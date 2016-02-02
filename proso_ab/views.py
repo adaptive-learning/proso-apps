@@ -1,8 +1,8 @@
 from proso.django.response import render, render_json
-import json_enrich
+from . import json_enrich
 import proso_common.json_enrich as common_json_enrich
 from django.shortcuts import get_object_or_404
-from models import Experiment
+from .models import Experiment
 from lazysignup.decorators import allow_lazy_user
 
 
@@ -46,7 +46,7 @@ def profile(request):
 
 def _to_json(request, value):
     if isinstance(value, list):
-        json = map(lambda x: x if isinstance(x, dict) else x.to_json(), value)
+        json = [x if isinstance(x, dict) else x.to_json() for x in value]
     else:
         if isinstance(value, dict):
             json = value

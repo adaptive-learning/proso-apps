@@ -14,8 +14,8 @@ class DictIterator:
     def __len__(self):
         return len(self._dataframe)
 
-    def next(self):
-        return dict(zip(self._columns, self._iter.next()))
+    def __next__(self):
+        return dict(list(zip(self._columns, next(self._iter))))
 
 
 def iterdicts(dataframe):

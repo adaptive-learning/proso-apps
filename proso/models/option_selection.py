@@ -11,9 +11,7 @@ from proso.models.item_selection import adjust_target_probability
 LOGGER = logging.getLogger('django.request')
 
 
-class OptionSelection:
-    __metaclass__ = abc.ABCMeta
-
+class OptionSelection(metaclass=abc.ABCMeta):
     def __init__(self, item_selector, max_options=6, allow_zero_options_restriction=False, **kwargs):
         self._item_selector = item_selector
         self._allow_zero_options_restriction = allow_zero_options_restriction
@@ -63,7 +61,7 @@ class RandomOptionSelection(OptionSelection):
 class ConfusingOptionSelection(OptionSelection):
 
     def select_options(self, environment, user, item, time, options, allow_zero_options=True, **kwargs):
-        options = filter(lambda i: i != item, options)
+        options = [i for i in options if i != item]
         if len(options) == 0:
             if self.is_zero_options_restriction_allowed() and not allow_zero_options:
                 raise Exception("Zero options are not allowed, but there are no candidates for options in case of item {}.".format(item))
@@ -87,10 +85,7 @@ class ConfusingOptionSelection(OptionSelection):
                 number_of_options = self.max_options() - 1
         # confusing places
         confusing_factor = environment.confusing_factor_more_items(item, options)
-        confusing_items = map(
-            lambda (a, b): (b, a + 1),
-            sorted(zip(confusing_factor, options), reverse=True)
-        )
+        confusing_items = [(a_b[1], a_b[0] + 1) for a_b in sorted(zip(confusing_factor, options), reverse=True)]
         confusing_factor_total = float(sum(confusing_factor) + len(confusing_items))
         # options
         result_options = []
@@ -119,9 +114,9 @@ class ConfusingOptionSelection(OptionSelection):
 class TestOptionSelection(unittest.TestCase):
 
     def test_questions_with_low_number_of_options(self):
-        for i in xrange(3):
+        for i in range(3):
             # setup
-            options = range(1, i + 1)
+            options = list(range(1, i + 1))
             environment = self.get_environment([0] * 100)
             # test
             option_selector = self.get_option_selector(self.get_item_selector(0.75))
@@ -132,15 +127,15 @@ class TestOptionSelection(unittest.TestCase):
 
     def test_questions_with_one_option_are_forbidden(self):
         # setup
-        options = range(1, 101)
+        options = list(range(1, 101))
         environment = self.get_environment([0] * 100)
         # test
         option_selector = self.get_option_selector(self.get_item_selector(0.75))
         selected = option_selector.select_options(environment, 0, 0, None, options)
         self.assertNotEqual(1, len(selected), 'There is no question with one option.')
         selected = option_selector.select_options_more_items(
-            environment, 0, range(100, 110), None, dict(zip(range(100, 110), ([options] * 10))))
-        for i, opts in zip(range(100, 110), selected):
+            environment, 0, list(range(100, 110)), None, dict(list(zip(list(range(100, 110)), ([options] * 10)))))
+        for i, opts in zip(list(range(100, 110)), selected):
             self.assertNotEqual(1, len(opts), 'There is no question with one option.')
             if len(opts) > 0:
                 self.assertTrue(i in opts, "The asked item is in options in case of non-zero options.")
@@ -153,6 +148,7 @@ class TestOptionSelection(unittest.TestCase):
     def get_item_selector(self, target_probability):
         item_selector = MagicMock()
         item_selector.get_target_probability.return_value = target_probability
+        item_selector.get_predictions.return_value = defaultdict(lambda: 0.5)
         return item_selector
 
 

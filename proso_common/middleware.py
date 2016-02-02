@@ -1,13 +1,13 @@
-from __future__ import absolute_import, unicode_literals
+
 from django.template.loader import render_to_string
 import re
 from django.conf import settings
 from django.utils.encoding import force_text
 from django.utils import translation
-from social_auth.exceptions import AuthAlreadyAssociated
 from django.contrib.auth import logout
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
+from social.exceptions import AuthAlreadyAssociated
 from proso.django.response import HttpError, render_json
 import datetime
 import logging
@@ -102,7 +102,7 @@ class LanguageInDomainMiddleware(object):
         language_code = translation.get_language()
         target_domain = settings.LANGUAGE_DOMAINS[language_code]
         if target_domain != request.META['HTTP_HOST']:
-            domain_to_lang_dict = dict((v, k) for k, v in settings.LANGUAGE_DOMAINS.iteritems())
+            domain_to_lang_dict = dict((v, k) for k, v in settings.LANGUAGE_DOMAINS.items())
             language_code = domain_to_lang_dict.get(request.META['HTTP_HOST'])
             if language_code is not None:
                 set_lang(request, language_code)

@@ -38,7 +38,7 @@ def answer_distribution_in_week(df):
     df.groupby(lambda t: t.dayofweek).size().plot()
     plt.ylabel("Answers")
     plt.title("Answer distribution in week")
-    plt.xticks(range(7), ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"])
+    plt.xticks(list(range(7)), ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"])
     plt.ylim(0)
     return fig
 

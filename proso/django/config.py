@@ -25,7 +25,7 @@ class ConfigMiddleware(object):
         reset_overridden()
         if not request.user.is_staff:
             return
-        for key, value in request.GET.iteritems():
+        for key, value in request.GET.items():
             if key.startswith('config.'):
                 _is_overriden_from_url[currentThread()] = True
                 key = key.replace('config.', '')
@@ -37,7 +37,7 @@ def override(app_name_key, value):
         raise Exception("The value can not be None.")
     if isinstance(value, dict) or isinstance(value, list):
         raise Exception("The value has to be scalar.")
-    if isinstance(value, str) or isinstance(value, unicode):
+    if isinstance(value, str) or isinstance(value, str):
         if value.isdigit():
             value = int(value)
         elif value.lower() == 'true':
@@ -148,7 +148,7 @@ def _override_value_all(app_name, key, value):
         app_name_key = '{}.{}'.format(app_name, key)
     if isinstance(value, dict):
         value = copy.deepcopy(value)
-    for override_key, override_value in _overridden[currentThread()].iteritems():
+    for override_key, override_value in _overridden[currentThread()].items():
         value = _override_value(app_name_key, value, override_key, override_value)
     return value
 
