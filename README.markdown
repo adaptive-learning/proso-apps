@@ -53,7 +53,7 @@ In case of final micro version:
 
 details at http://psa.matiasaguirre.net/docs/configuration/porting_from_dsa.html
 
- - replace'social_auth' with 'social.apps.django_app.default' in INSTALLED_APPS in settings.py
+ - replace 'social_auth' with 'social.apps.django_app.default' in INSTALLED_APPS in settings.py
  - replace old include with 'url('', include('social.apps.django_app.urls', namespace='social'))' in urls.py
  - change setting vars names to connect to google and facebook in setting.py
  - change facebook and google backends in AUTHENTICATION_BACKENDS  in settings.py
