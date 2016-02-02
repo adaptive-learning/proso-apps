@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('inserted', models.DateTimeField(default=datetime.datetime.now)),
-                ('value', models.SmallIntegerField(default=0, choices=[(0, b'Unknown'), (1, b'Too Easy'), (2, b'Just Right'), (3, b'Too Hard')])),
+                ('value', models.SmallIntegerField(default=0, choices=[(0, 'Unknown'), (1, 'Too Easy'), (2, 'Just Right'), (3, 'Too Hard')])),
                 ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
             options={

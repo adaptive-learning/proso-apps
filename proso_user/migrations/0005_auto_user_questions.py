@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('lang', models.CharField(max_length=10)),
                 ('content', models.TextField()),
                 ('active', models.BooleanField(default=True)),
-                ('answer_type', models.CharField(default=b'o', max_length=1, choices=[(b'c', b'closed'), (b'm', b'mixed'), (b'o', b'open')])),
+                ('answer_type', models.CharField(default='o', max_length=1, choices=[('c', 'closed'), ('m', 'mixed'), ('o', 'open')])),
                 ('repeat', models.BooleanField(default=False)),
             ],
             options={

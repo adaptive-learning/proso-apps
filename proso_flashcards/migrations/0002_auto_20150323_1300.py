@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
             name='FlashcardAnswer',
             fields=[
                 ('answer_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='proso_models.Answer')),
-                ('direction', models.CharField(max_length=3, choices=[(b't2d', b'From term to description'), (b'd2t', b'From description to term')])),
+                ('direction', models.CharField(max_length=3, choices=[('t2d', 'From term to description'), ('d2t', 'From description to term')])),
                 ('meta', models.TextField(null=True, blank=True)),
             ],
             options={

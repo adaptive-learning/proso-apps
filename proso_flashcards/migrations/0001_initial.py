@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('language', models.CharField(max_length=50)),
-                ('direction', models.IntegerField(choices=[(1, b'reverse_asked'), (2, b'obverse_asked')])),
+                ('direction', models.IntegerField(choices=[(1, 'reverse_asked'), (2, 'obverse_asked')])),
                 ('category', models.ForeignKey(default=None, blank=True, to='proso_flashcards.Category', null=True)),
                 ('general_answer', models.ForeignKey(related_name=b'flashcard_decoratedanswer_set', to='proso_models.Answer', unique=True)),
                 ('options', models.ManyToManyField(related_name=b'flashcard_decoratedanswer_set', to='proso_models.Item')),

@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             name='EnvironmentInfo',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('status', models.IntegerField(default=1, choices=[(0, b'disabled'), (1, b'loading'), (2, b'enabled'), (3, b'active')])),
+                ('status', models.IntegerField(default=1, choices=[(0, 'disabled'), (1, 'loading'), (2, 'enabled'), (3, 'active')])),
                 ('revision', models.IntegerField()),
                 ('load_progress', models.IntegerField(default=0)),
                 ('updated', models.DateTimeField(auto_now=True)),
