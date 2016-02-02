@@ -451,7 +451,7 @@ class DatabaseEnvironment(CommonEnvironment):
             else:
                 result = [(x_y_z1[0], x_y_z1[2]) if x_y_z1[1] == item else (x_y_z1[1], x_y_z1[2]) for x_y_z1 in result]
             result = dict(result)
-            return [result.get(key, default) for key in items]
+            return [result.get(k, default) for k in items]
 
     def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
@@ -492,7 +492,7 @@ class DatabaseEnvironment(CommonEnvironment):
             else:
                 result = [(x_y_z3[0], x_y_z3[2]) if x_y_z3[1] == item else (x_y_z3[1], x_y_z3[2]) for x_y_z3 in result]
             result = dict(result)
-            return [result.get(key) for key in items]
+            return [result.get(k) for k in items]
 
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         if permanent:

@@ -285,7 +285,7 @@ class Command(BaseCommand):
                 db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
 
         print("\nChecking flashcards for loaded contexts")
-        context_id_loaded = set([db_flashcard.context_id for db_flashcard in list(db_flashcards_loaded.values())])
+        context_id_loaded = set([f.context_id for f in list(db_flashcards_loaded.values())])
         db_flashcards_ignored = {
             key: db_flashcards[key]
             for key in (
