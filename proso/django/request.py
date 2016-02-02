@@ -4,7 +4,7 @@ import datetime
 import importlib
 import json as simplejson
 import re
-import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 
 def load_query_json(query_dict, key, default_json=None):

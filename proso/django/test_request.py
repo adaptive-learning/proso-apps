@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from . import request
+import proso.django.request as request
 
 class TestParseCommonBodyToJson(unittest.TestCase):
 
