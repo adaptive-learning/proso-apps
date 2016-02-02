@@ -43,11 +43,11 @@ In case of final micro version:
 
 ### virtualenv
 
- - (only for testing )install sqlite-devel or libsqlite3-dev from repository  
+ - (only for testing )install sqlite-devel or libsqlite3-dev from repository
  - install python3.5 (http://techglimpse.com/install-update-python-pip-linux-tutorial/)
  - create virtualenv with python3.5 (use -p in mkvirtualenv command)
  - install requirements (make install)
- 
+
 
 ### social-auth
 
@@ -62,7 +62,7 @@ details at http://psa.matiasaguirre.net/docs/configuration/porting_from_dsa.html
 
 
 ### migrations
- 
+
     python manage.py migrate default 0001 --fake
     run somehow migration 0006_migrate_to_psa.py (dir: proso_user) - move to migrations, run, move back
     python manage.py migrate default
