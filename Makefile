@@ -2,8 +2,7 @@ TEST_DIR=$(CURDIR)/test
 RESOURCES_DIR=$(CURDIR)/resources
 
 PEP8=pep8 --ignore=E501,E225,E123,E128
-APPS=proso_common proso_configab proso_feedback proso_flashcards proso_models proso_questions proso_questions_client proso_user
-GRUNT_APPS=proso_questions_client
+APPS=proso_common proso_configab proso_feedback proso_flashcards proso_models proso_user
 
 VERSION_FULL:=$(shell grep "VERSION = '.*'" proso/release.py | awk -F ' = ' '{print $$2}' | tr -d "'")
 VERSION:=$(shell echo $(VERSION_FULL) | awk -F '-' '{print $$1}')

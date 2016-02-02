@@ -46,7 +46,6 @@ INSTALLED_APPS = (
     'proso_common',
     'proso_configab',
     'proso_models',
-    'proso_questions',
     'proso_user',
     'proso_feedback',
     'proso_flashcards',
@@ -71,7 +70,6 @@ MIDDLEWARE_CLASSES = (
     'proso.django.cache.RequestCacheMiddleware',
     'proso.django.log.RequestLogMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'proso_questions_client.middleware.AuthAlreadyAssociatedMiddleware',
 )
 
 ROOT_URLCONF = 'testproject.urls'
@@ -79,13 +77,7 @@ ROOT_URLCONF = 'testproject.urls'
 TEMPLATE_CONTEXT_PROCESSORS = \
     settings.TEMPLATE_CONTEXT_PROCESSORS + ["proso_common.context_processors.config_processor"]
 
-TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-    os.path.join(BASE_DIR, '..', 'proso_questions', 'templates'),
-    os.path.join(BASE_DIR, '..', 'proso_questions_client', 'templates'),
-)
+TEMPLATE_DIRS = ()
 
 if TESTING:
     DATABASES = {
