@@ -512,7 +512,7 @@ class DatabaseEnvironment(CommonEnvironment):
             raise Exception('Value has to be specified')
         items = [item_secondary, item]
         if symmetric and item is not None and item_secondary is not None:
-            items = sorted(items)
+            items = self._sorted(items)
         data = {
             'user_id': user,
             'item_primary_id': items[1],
@@ -554,7 +554,7 @@ class DatabaseEnvironment(CommonEnvironment):
             raise Exception('Key has to be specified')
         items = [item_secondary, item]
         if symmetric and item is not None and item_secondary is not None:
-            items = sorted(items)
+            items = self._sorted(items)
         data = {
             'user_id': user,
             'item_primary_id': items[1],
@@ -689,7 +689,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def confusing_factor_more_items(self, item, items, user=None):
         cached_all = {}
         for item_secondary in items:
-            _items = sorted([item, item_secondary])
+            _items = self._sorted([item, item_secondary])
             cache_key = 'confusing_factor_per_item_{}_{}_{}'.format(_items[0], _items[1], user)
             cached_item = cache.get(cache_key)
             if cached_item:
@@ -724,7 +724,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 for i in to_find:
                     found[i] = found.get(i, 0)
                 for item_secondary, count in found.items():
-                    _items = sorted([item, item_secondary])
+                    _items = self._sorted([item, item_secondary])
                     cache_key = 'confusing_factor_per_item_{}_{}_{}'.format(_items[0], _items[1], user)
                     cache.set(
                         cache_key,
@@ -745,7 +745,7 @@ class DatabaseEnvironment(CommonEnvironment):
             raise Exception('Key has to be specified')
         items = [item_secondary, item]
         if symmetric and item is not None and item_secondary is not None:
-            items = sorted(items)
+            items = self._sorted(items)
         return self._where({
             'user_id': user,
             'item_primary_id': items[1],
@@ -813,7 +813,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 value = [x for x in value if x is not None]
             null_contains_return = (column + ' IS NULL OR ') if contains_null else ''
             if len(value) > 0:
-                sorted_values = sorted(value)
+                sorted_values = self._sorted(value)
                 if is_on_postgresql():
                     return '({} {} = ANY(VALUES {}))'.format(
                         null_contains_return,
@@ -845,6 +845,10 @@ class DatabaseEnvironment(CommonEnvironment):
             if matched is not None:
                 value = matched.groups()[0]
             return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+
+    def _sorted(self, xs):
+        inter =  sorted([x for x in xs if x is not None])
+        return [None] * (len(xs) - len(inter)) + inter
 
 
 ################################################################################
