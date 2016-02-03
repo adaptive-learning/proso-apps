@@ -41,13 +41,14 @@ class OptionSelection(metaclass=abc.ABCMeta):
         result = []
         for item in items:
             prediction = predictions[item]
+            item_options = [o for o in options[item] if o != item]
             if prediction is None:
                 raise ValueError("Prediction for item {} is missing.".format(item))
-            number_of_options = self.options_number().get_number_of_options(target_probability, prediction, allow_zero_options[item], len(options[item]))
+            number_of_options = self.options_number().get_number_of_options(target_probability, prediction, allow_zero_options[item], len(item_options))
             if number_of_options == 0:
                 result.append([])
                 continue
-            confusing_factors = dict(zip(options[item], environment.confusing_factor_more_items(item, options[item])))
+            confusing_factors = dict(zip(item_options, environment.confusing_factor_more_items(item, item_options)))
             result_options = self.compute_options(target_probability, prediction, number_of_options, confusing_factors)
             if len(result_options) != number_of_options:
                 raise Exception('There is a wrong number of options for multiple-choice question! Number of options set to: {}, confusing factors {}'.format(number_of_options, confusing_factors))
