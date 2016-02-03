@@ -86,11 +86,20 @@ def get_item_selector():
     return item_selector
 
 
-def get_option_selector(item_selector):
+def get_options_number():
+    return instantiate_from_config(
+        'proso_models', 'options_count',
+        default_class='proso.models.option_selection.AdjustedOptionsNumber'
+    )
+
+
+def get_option_selector(item_selector, options_number=None):
+    if options_number is None:
+        options_number = get_options_number()
     return instantiate_from_config(
         'proso_models', 'option_selector',
-        default_class='proso.models.option_selection.ConfusingOptionSelection',
-        pass_parameters=[item_selector]
+        default_class='proso.models.option_selection.CompetitiveOptionSelection',
+        pass_parameters=[item_selector, options_number]
     )
 
 
