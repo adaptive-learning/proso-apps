@@ -67,7 +67,7 @@ class Command(BaseCommand):
             print("\nLoading categories")
         db_categories = {}
         item_mapping = {}
-        for db_category in Category.objects.all().select_related("parents"):
+        for db_category in Category.objects.all().prefetch_related("parents"):
             db_categories[db_category.identifier + db_category.lang] = db_category
             item_mapping[db_category.identifier] = db_category.item_id
         if data is None:
