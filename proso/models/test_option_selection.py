@@ -48,3 +48,9 @@ class TestCompetitiveOptionSelection(proso.models.option_selection.TestOptionSel
 
     def get_option_selector(self, item_selector, options_number):
         return proso.models.option_selection.CompetitiveOptionSelection(item_selector, options_number)
+
+
+class TestAdjustedOptionSelection(proso.models.option_selection.TestOptionSelection):
+
+    def get_option_selector(self, item_selector, options_number):
+        return proso.models.option_selection.AdjustedOptionSelection(item_selector, options_number)

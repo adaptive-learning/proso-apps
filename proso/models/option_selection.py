@@ -166,6 +166,32 @@ class CompetitiveOptionSelection(OptionSelection):
         )
 
 
+class AdjustedOptionSelection(OptionSelection):
+
+    def compute_options(self, target_probability, prediction, number_of_options, confusing_factors):
+        level = min(prediction / max(target_probability, 0.00001), 1.0)
+        weights = list(confusing_factors.items())
+        weights = list(zip(weights, list(zip(*weights))[1][::-1]))
+        weight_median = numpy.median(list(zip(*weights))[1])
+        return proso.rand.roulette(
+            {i: self.adjust_to_level(level, w, w_op, weight_median) for ((i, w), w_op) in weights},
+            number_of_options
+        )
+
+    def adjust_to_level(self, level, x, op, median):
+        if x > median:
+            if level > 0.5:
+                result = median + (x - median) * ((level - 0.5) / 0.5)
+            else:
+                result = op + (median - op) * (level / 0.5)
+        else:
+            if level > 0.5:
+                result = x + (median - x) * ((level - 0.5) / 0.5)
+            else:
+                result = median + (op - median) * (level / 0.5)
+        return result
+
+
 
 ################################################################################
 # Tests
