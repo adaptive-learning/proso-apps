@@ -174,7 +174,7 @@ class AdjustedOptionSelection(OptionSelection):
         weights = list(zip(weights, list(zip(*weights))[1][::-1]))
         weight_median = numpy.median(list(zip(*weights))[1])
         return proso.rand.roulette(
-            {i: self.adjust_to_level(level, w, w_op, weight_median) for ((i, w), w_op) in weights},
+            {i: self.adjust_to_level(level, w, w_op, weight_median) + 1 for ((i, w), w_op) in weights},
             number_of_options
         )
 
