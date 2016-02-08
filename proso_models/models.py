@@ -847,7 +847,7 @@ class DatabaseEnvironment(CommonEnvironment):
             return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
 
     def _sorted(self, xs):
-        inter =  sorted([x for x in xs if x is not None])
+        inter = sorted([x for x in xs if x is not None])
         return [None] * (len(xs) - len(inter)) + inter
 
 
