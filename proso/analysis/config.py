@@ -83,15 +83,6 @@ def get_argument_parser():
     return p
 
 
-def _convert_json_keys(json_struct):
-    if isinstance(json_struct, list):
-        return list(map(_convert_json_keys, json_struct))
-    elif isinstance(json_struct, dict):
-        return {_maybe_convert_str(key): _convert_json_keys(val) for (key, val) in json_struct.items()}
-    else:
-        return json_struct
-
-
 def init_data_kwargs(parsed_kwargs):
     data_kwargs = {}
     for kwarg_key in DATA_KWARGS_KEYS:
@@ -118,6 +109,10 @@ def init_output_kwargs(parsed_kwargs):
         store_palette(palette_name=parsed_kwargs['palette'])
     if 'palette' in parsed_kwargs:
         del parsed_kwargs['palette']
+
+
+def process_kwargs(parsed_kwargs):
+    return {key: _convert_kwarg_value(val) for (key, val) in parsed_kwargs.items()}
 
 
 def store_data_kwargs(**kwargs):
@@ -150,6 +145,7 @@ def store_palette(palette=None, palette_name=None):
         _sns_palette[currentThread()] = palette
     else:
         _sns_palette[currentThread()] = sns.color_palette(palette_name)
+    sns.set_palette(_sns_palette[currentThread()])
 
 
 def load_palette():
@@ -165,5 +161,24 @@ def store_output_kwargs(**kwargs):
 def load_output_kwargs():
     global _output_kwargs
     return _output_kwargs[currentThread()]
+
+
+def _convert_kwarg_value(val):
+    if not isinstance(val, str):
+        return val
+    if val == 'False':
+        return False
+    elif val == 'True':
+        return True
+    else:
+        try:
+            return int(val)
+        except ValueError:
+            pass
+        try:
+            return float(val)
+        except ValueError:
+            return val
+    return val
 
 

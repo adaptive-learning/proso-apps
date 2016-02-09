@@ -81,7 +81,7 @@ class abstract_cache_analysis(metaclass=abc.ABCMeta):
             if not os.path.exists('{}/{}'.format(self.cache_dir(), full_func_name)):
                 os.makedirs('{}/{}'.format(self.cache_dir(), full_func_name))
             with open(filename_template.format('description.json'), 'w') as f:
-                f.write(json.dumps(kwargs, sort_keys=True))
+                f.write(json.dumps(kwargs_for_hash, sort_keys=True))
             if isinstance(result, dict):
                 if self.is_debug():
                     print('writing cache', filename_template.format('json'))
@@ -101,20 +101,30 @@ class abstract_cache_analysis(metaclass=abc.ABCMeta):
 
 class cache_analysis(abstract_cache_analysis):
 
+    def __init__(self, cache_dir=None, active=None, in_memory=None, override=None):
+        self._cache_dir = cache_dir
+        self._is_cache_active = active
+        self._cache_in_memory = in_memory
+        self._override_cache = override
+
     def cache_dir(self):
-        return proso.analysis.config.load_cache_kwargs().get('cache_dir', 'cache')
+        return self._cache_dir if self._cache_dir is not None else \
+            proso.analysis.config.load_cache_kwargs().get('cache_dir', 'cache')
 
     def is_active(self):
-        return bool(proso.analysis.config.load_cache_kwargs().get('is_cache_active', True))
+        return self._is_cache_active if self._is_cache_active is not None else \
+            bool(proso.analysis.config.load_cache_kwargs().get('is_cache_active', True))
 
     def is_debug(self):
         return True
 
     def in_memory(self):
-        return bool(proso.analysis.config.load_cache_kwargs().get('cache_in_memory', True))
+        return self._cache_in_memory if self._cache_in_memory is not None else \
+             bool(proso.analysis.config.load_cache_kwargs().get('cache_in_memory', True))
 
     def override(self):
-        return bool(proso.analysis.config.load_cache_kwargs().get('override_cache', True))
+        return self._override_cache if self._override_cache is not None else \
+            bool(proso.analysis.config.load_cache_kwargs().get('override_cache', True))
 
     def preprocess_kwargs_for_hash(self, **kwargs):
         for key, value in proso.analysis.config.load_data_kwargs().items():

@@ -14,6 +14,7 @@ setup(
     include_package_data = True,
     packages=[
         'proso',
+        'proso.analysis',
         'proso.django',
         'proso.models',
         'proso_ab',
