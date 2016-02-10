@@ -1,4 +1,5 @@
-from proso.django.request import get_user_id, get_time
+from proso_user.models import get_user_id
+from proso.django.request import get_time
 from proso_models.json_enrich import _environment
 from proso_models.models import get_predictive_model
 from proso_flashcards.models import Flashcard
@@ -14,7 +15,7 @@ def avg_prediction(request, json_list, nested):
                      for json in json_list if json["object_type"] == "fc_context"}
     all_items = list(set(reduce(lambda a, b: a + b,
                                 list(category_items.values()) + list(term_items.values()) + list(context_items.values()))))
-    user = get_user_id(request)
+    user = get_user_id(request, allow_override=True)
     time = get_time(request)
     predictions = dict(list(zip(all_items, get_predictive_model().predict_more_items(
         _environment(request),
@@ -53,7 +54,7 @@ def answer_flashcards(request, json_list, nested):
 
 def practiced(request, json_list, nested):
     flashcards_ids = [json["id"] for json in json_list if json["object_type"] == "fc_flashcard"]
-    user = get_user_id(request)
+    user = get_user_id(request, allow_override=True)
     counts = Flashcard.objects.number_of_answers_per_fc(flashcards_ids, user)
     for json in json_list:
         json["practiced"] = counts[json["id"]] > 0

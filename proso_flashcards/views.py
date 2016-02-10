@@ -11,9 +11,10 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 
+from proso_user.models import get_user_id
 from proso.django.cache import cache_page_conditional
 from proso.django.config import get_config
-from proso.django.request import get_user_id, get_time, is_time_overridden, load_query_json
+from proso.django.request import get_time, is_time_overridden, load_query_json
 from proso.django.response import render, render_json
 import proso_common.views
 import proso_common.json_enrich as common_json_enrich
@@ -106,7 +107,7 @@ def show_more(request, object_class, should_cache=True):
             language = request.GET.get("language", request.LANGUAGE_CODE)
             flashcard_ids, item_ids = Flashcard.objects.filtered_ids(categories, contexts, types, avoid, language)
             if object_class == FlashcardAnswer:
-                user_id = get_user_id(request)
+                user_id = get_user_id(request, allow_override=True)
                 objs = objs.filter(user_id=user_id, item_asked__in=item_ids).order_by('-time')
             if object_class == Flashcard:
                 objs = objs.filter(pk__in=flashcard_ids)
