@@ -41,6 +41,8 @@ setup(
         'proso_questions_client.management',
         'proso_questions_client.management.commands',
         'proso_user',
+        'proso_user.management',
+        'proso_user.management.commands',
         'proso_user.migrations',
         'proso_flashcards',
         'proso_flashcards.management',
