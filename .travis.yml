@@ -23,7 +23,5 @@ install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib pandas
   - pip install flake8
   - make install
--notifications:
-  - email: false
 script:
   - make test
