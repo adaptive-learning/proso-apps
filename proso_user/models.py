@@ -13,10 +13,40 @@ from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_
 from proso.django.util import disable_for_loaddata
 from django.db import transaction
 from collections import defaultdict
+from proso.django.response import HttpError
+from django.utils.translation import ugettext as _
 import logging
 
 
 LOGGER = logging.getLogger('django.request')
+
+
+def _load_user_id_from_GET(request, allow_override=False):
+    if 'user' not in request.GET and 'username' not in request.GET:
+        return None
+    if 'user' in request.GET and request.user.is_staff:
+        return int(request.GET['user'])
+    if not allow_override:
+        return None
+    if 'user' in request.GET:
+        profile = UserProfile.objects.filter(user_id=int(request.GET['user'])).first()
+    else:
+        profile = UserProfile.objects.filter(user__username=request.GET['username']).first()
+    if profile is None:
+        raise HttpError(404, _('There is no profile for the given user'))
+    if profile.active:
+        return profile.user_id
+    else:
+        return None
+
+
+def is_user_id_overridden(request, allow_override=False):
+    return _load_user_id_from_GET(request, allow_override=allow_override) is not None
+
+
+def get_user_id(request, allow_override=False):
+    loaded_user_id = _load_user_id_from_GET(request, allow_override=allow_override)
+    return request.user.id if loaded_user_id is None else loaded_user_id
 
 
 def get_content_hash(content):
