@@ -4,12 +4,26 @@ cache:
   - pip
   - apt
 before_install:
+  # Install miniconda
+  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  # Setup
+  - conda update --yes conda
+  - conda create --yes -n condaenv python=$TRAVIS_PYTHON_VERSION
+  - conda install --yes -n condaenv pip
+  - source activate condaenv
+  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libblas-dev liblapack-dev gfortran python-numpy python-scipy >/dev/null 2>&1
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib pandas
   - pip install flake8
-install:
   - make install
+-notifications:
+  - email: false
 script:
   - make test
-notifications:
-    email: false
