@@ -34,6 +34,8 @@ setup(
         'proso_models.management.commands',
         'proso_models.migrations',
         'proso_user',
+        'proso_user.management',
+        'proso_user.management.commands',
         'proso_user.migrations',
         'proso_flashcards',
         'proso_flashcards.management',
