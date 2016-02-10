@@ -57,14 +57,14 @@ def practice_image(request):
     return HttpResponse(str(svg), content_type="image/svg+xml")
 
 
-@cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
+@cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
 def show_one(request, object_class, id):
     return proso_common.views.show_one(
         request, _to_json, object_class, id, template='flashcards_json.html')
 
 
 @cache_page_conditional(
-    condition=lambda request: 'stats' not in request.GET)
+    condition=lambda request, args, kwargs: 'stats' not in request.GET and kwargs['object_class'] != FlashcardAnswer)
 def show_more(request, object_class, should_cache=True):
 
     to_json_kwargs = {}

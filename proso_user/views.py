@@ -90,13 +90,13 @@ def profile(request, status=200):
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 
 
-@cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
+@cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
 def show_one(request, object_class, id):
     return proso_common.views.show_one(
         request, _to_json, object_class, id, template='user_json.html')
 
 
-@cache_page_conditional(condition=lambda request: 'stats' not in request.GET)
+@cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
 def show_more(request, object_class, should_cache=True):
 
     to_json_kwargs = {}
