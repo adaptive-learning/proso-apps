@@ -19,7 +19,7 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq libblas-dev liblapack-dev gfortran python-numpy python-scipy >/dev/null 2>&1
+  - sudo apt-get install -qq libblas-dev liblapack-dev gfortran >/dev/null 2>&1
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib pandas
   - pip install flake8
   - make install
