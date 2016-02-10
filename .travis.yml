@@ -3,8 +3,6 @@ python: 3.5
 cache:
   - pip
   - apt
-virtualenv:
-  system_site_packages: true
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libblas-dev liblapack-dev gfortran python-numpy python-scipy >/dev/null 2>&1
