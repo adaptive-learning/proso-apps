@@ -19,6 +19,7 @@ class TestPartiallyRandomNumber(proso.models.option_selection.TestOptionsNumber)
             allow_zero_options_restriction=allow_zero_options_restriction
         )
 
+
 class TestAdjustedOptionsNumber(proso.models.option_selection.TestOptionsNumber):
 
     def get_options_number(self, max_options, allow_zero_options_restriction):

@@ -2,6 +2,7 @@
 import unittest
 import proso.django.request as request
 
+
 class TestParseCommonBodyToJson(unittest.TestCase):
 
     def test_simple(self):
@@ -27,4 +28,3 @@ class TestParseCommonBodyToJson(unittest.TestCase):
             {'x': [{'y': 1}, {'y': 2}]},
             request.parse_common_body_to_json('x[0][y]=1&x[1][y]=2')
         )
-

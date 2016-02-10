@@ -33,19 +33,23 @@ def _svg_line(x1, y1, x2, y2, color, width):
     color = _svg_color(color)
     return '<line x1="{}" y1="{}" x2="{}" y2="{}" style="stroke-linecap:round;stroke:{};stroke-width:{};" />\n'.format(x1, y1, x2, y2, color, width)
 
+
 def _svg_circle(x, y, r, color, width, border_color):
     color = _svg_color(color)
     border_color = _svg_color(color)
     return '<circle cx="{}" cy="{}" r="{}" style="fill:{}; stroke:{}; stroke-width:{};" />\n'.format(x, y, r, color, border_color, width)
+
 
 def _svg_rectangle(x, y, a, b, color, width, border_color):
     color = _svg_color(color)
     border_color = _svg_color(border_color)
     return '<rect x="{}" y="{}" width="{}" height="{}" style="fill:{}; stroke:{}; stroke-width:{};" />\n'.format(x, y, a, b, color, border_color, width)
 
+
 def _svg_text(x, y, text, color, font_size):
     color = _svg_color(color)
     return '<text x="{}" y="{}" font-family="Nimbus Sans L" font-size="{}" fill="{}">{}</text>\n'.format(x, y, font_size, color, text)
+
 
 def _svg_color(color):
     if isinstance(color, str):

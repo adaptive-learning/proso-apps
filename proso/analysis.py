@@ -88,8 +88,7 @@ def get_raw_data(name, load_fun, cache_dir, cached=True, debug=False, **kwargs):
     kwargs_hash = hashlib.sha1(json.dumps(kwargs, sort_keys=True).encode()).hexdigest()
     filename = '{}/{}_{}.pd'.format(cache_dir, name, kwargs_hash)
     if cached and os.path.exists(filename):
-        with open(filename, 'r') as f:
-            result = pandas.read_pickle(filename)
+        result = pandas.read_pickle(filename)
         if debug:
             print('reading cache ({})'.format(len(result)), filename, 'for the function "{}" with parameters:'.format(load_fun.__name__))
             for key, value in sorted(kwargs.items()):
@@ -122,4 +121,3 @@ def _maybe_convert_str(x):
         return float(x)
     except ValueError:
         return x
-

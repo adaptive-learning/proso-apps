@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 import os
 import sys
 
@@ -105,8 +106,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = False
-
-from django.utils.translation import ugettext_lazy as _
 
 LANGUAGES = (
     ('en', _('English')),

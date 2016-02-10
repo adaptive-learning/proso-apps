@@ -1,9 +1,6 @@
 from collections import defaultdict
 from django.conf import settings
-from django.dispatch import receiver
-from django.db.models.signals import pre_save
 from threading import currentThread
-from django.contrib.sessions.models import Session
 import json
 import yaml
 import proso.util

@@ -1,7 +1,5 @@
-from django.conf import settings
 from threading import currentThread
 import datetime
-import importlib
 import json as simplejson
 import re
 import urllib.parse
@@ -51,7 +49,7 @@ def _store_body_value(key_string, value, result):
             if i == len(keys) - 1:
                 new = value
             else:
-                if keys[i+1] == '0':
+                if keys[i + 1] == '0':
                     new = []
                 else:
                     new = {}

@@ -8,8 +8,6 @@ import unittest
 import numpy
 from mock import MagicMock
 
-from proso.models.item_selection import adjust_target_probability
-
 
 LOGGER = logging.getLogger('django.request')
 
@@ -78,7 +76,7 @@ class OptionsNumber(metaclass=abc.ABCMeta):
     def get_number_of_options(self, target_probability, prediction, allow_zero_options, options_available):
         if options_available == 0:
             if self.is_zero_options_restriction_allowed() and not allow_zero_options:
-                raise Exception("Zero options are not allowed, but there are no candidates for options in case of item {}.".format(item))
+                raise Exception("Zero options are not allowed, but there are no candidates for options in case of item.")
             else:
                 return 0
         number_of_options = self.compute_number_of_options(target_probability, prediction)
@@ -190,7 +188,6 @@ class AdjustedOptionSelection(OptionSelection):
             else:
                 result = median + (op - median) * (level / 0.5)
         return result
-
 
 
 ################################################################################

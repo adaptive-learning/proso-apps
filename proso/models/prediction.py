@@ -270,7 +270,7 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
         skill = self._load_skill(item, data)
         difficulty = data['difficulties'][item]
         return predict_simple(
-            self._load_skill(parent, data) - difficulty,
+            skill - difficulty,
             number_of_options=len(kwargs['options']) if 'options' in kwargs else 0,
             guess=kwargs.get('guess'))[0]
 

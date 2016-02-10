@@ -1,4 +1,4 @@
-from proso.django.response import render, render_json
+from proso.django.response import render_json
 from . import json_enrich
 import proso_common.json_enrich as common_json_enrich
 from django.shortcuts import get_object_or_404

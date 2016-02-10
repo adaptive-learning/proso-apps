@@ -131,7 +131,7 @@ class ScoreItemSelection(ItemSelection):
             parent_ids = set(sum([[p for p, v in ps] for ps in list(parents.values())], []))
             children = dict(list(zip(parent_ids, environment.get_items_with_values_more_items('child', items=parent_ids))))
             related_items = sum([[i for i, v in c] for c in list(children.values())], [])
-            parents = defaultdict(lambda:[])
+            parents = defaultdict(lambda: [])
             for parent, childs in list(children.items()):
                 for child, v in childs:
                     parents[child].append((parent, v))

@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from proso_flashcards.models import Term, Context, Flashcard
+from proso_flashcards.models import Term, Context
 from proso.django.util import disable_for_loaddata
 
 

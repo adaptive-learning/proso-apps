@@ -330,6 +330,7 @@ class InMemoryEnvironment(CommonEnvironment):
         else:
             return None
 
+
 ################################################################################
 # Tests
 ################################################################################
@@ -480,7 +481,6 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.number_of_correct_answers(item=items[0]), 10)
         self.assertEqual(env.number_of_correct_answers_more_items(items), [10 for i in items])
 
-
     def test_number_of_first_answers(self):
         env = self.generate_environment()
         user_1 = self.generate_user()
@@ -557,10 +557,10 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1]), 0)
         self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1), 0)
         for i in items:
-            for guess in [0, 1./3, 1./5]:
+            for guess in [0, 1. / 3, 1. / 5]:
                 env.process_answer(user_1, items[0], items[0], i, datetime.datetime.now(), self.generate_answer_id(), 1000, guess)
         for i in items:
-            for guess in [0, 1./3, 1./5]:
+            for guess in [0, 1. / 3, 1. / 5]:
                 env.process_answer(user_2, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, guess)
         self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1]), 1)
         self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1), 1)

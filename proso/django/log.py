@@ -40,6 +40,7 @@ class RequestHandler(Handler):
                 'level': record.levelname
             })
 
+
 class AdminJavascriptEmailHandler(AdminEmailHandler):
 
     def format(self, record):
