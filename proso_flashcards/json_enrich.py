@@ -1,3 +1,4 @@
+from collections import defaultdict
 from proso_user.models import get_user_id
 from proso.django.request import get_time
 from proso_models.json_enrich import _environment
@@ -42,14 +43,21 @@ def answer_flashcards(request, json_list, nested):
     flashcard_item_ids = asked_item_ids + [x for x in answered_item_ids if x is not None]
     if len(flashcard_item_ids) == 0:
         return
-    flashcards = {
-        f.item_id: f.to_json(nested=True)
-        for f in Flashcard.objects.filter(item_id__in=flashcard_item_ids).select_related(Flashcard.related_term())
-    }
+
+    flashcards = defaultdict(dict)
+    for f in Flashcard.objects.filter(item_id__in=flashcard_item_ids).select_related(Flashcard.related_term()):
+        flashcards[f.item_id][f.lang] = f
+
     for answer in json_list:
-        answer['flashcard_asked'] = flashcards[answer['item_asked_id']]
+        if 'lang' in answer:
+            answer_lang = answer['lang']
+        elif 'options' in answer and len(answer['options']) > 0:
+            answer_lang = answer['options'][0]['lang']
+        else:
+            answer_lang = list(flashcards[answer['item_asked_id']].keys())[0]
+        answer['flashcard_asked'] = flashcards[answer['item_asked_id']][answer_lang].to_json(nested=True)
         if answer['item_answered_id']:
-            answer['flashcard_answered'] = flashcards[answer['item_answered_id']]
+            answer['flashcard_answered'] = flashcards[answer['item_answered_id']][answer_lang].to_json(nested=True)
 
 
 def practiced(request, json_list, nested):

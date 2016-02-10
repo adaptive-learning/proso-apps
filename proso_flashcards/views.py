@@ -441,6 +441,7 @@ def _save_answer(request, answers, practice_context):
             direction=direction,
             context=practice_context,
             metainfo=answer_meta,
+            lang=flashcard.lang
         )
         if "time_gap" in a:
             db_answer.time = datetime.now() - timedelta(seconds=a["time_gap"])

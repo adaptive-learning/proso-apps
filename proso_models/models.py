@@ -1025,6 +1025,9 @@ class Answer(models.Model):
     config = models.ForeignKey(Config, null=True, blank=True, default=None)
     context = models.ForeignKey(PracticeContext, null=True, blank=True, default=None)
     metainfo = models.ForeignKey(AnswerMeta, null=True, blank=True, default=None)
+    # This field should not be NULL, but historically there is a huge number of
+    # answer in running systems without specified language.
+    lang = models.CharField(max_length=2, null=True, blank=True, default=None)
 
     objects = AnswerManager()
 
@@ -1045,6 +1048,8 @@ class Answer(models.Model):
             'time': self.time.strftime('%Y-%m-%d %H:%M:%S'),
             'response_time': self.response_time
         }
+        if self.lang is not None:
+            result['lang'] = self.lang
         if self.context is not None:
             result['context'] = self.context.to_json(nested=True)
         if self.metainfo is not None:
