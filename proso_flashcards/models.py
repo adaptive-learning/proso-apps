@@ -455,6 +455,30 @@ PROSO_MODELS_TO_EXPORT = [Category, Flashcard, FlashcardAnswer,
                           settings.PROSO_FLASHCARDS.get("context_extension", Context),
                           settings.PROSO_FLASHCARDS.get("term_extension", Term)]
 
+PROSO_CUSTOM_EXPORT = {
+    'answer': '''
+        SELECT
+            proso_models_answer.*,
+            proso_flashcards_flashcardanswer.direction
+        FROM proso_models_answer
+        INNER JOIN proso_flashcards_flashcardanswer
+            ON proso_models_answer.id = answer_ptr_id
+    ''',
+    'context': '''
+        SELECT
+            proso_flashcards_context.id,
+            proso_flashcards_flashcard.item_id AS item_id,
+            proso_flashcards_term.type AS term_type,
+            proso_flashcards_term.name AS term_name,
+            proso_flashcards_context.name AS context_name,
+            proso_flashcards_flashcard.lang AS language
+        FROM proso_flashcards_flashcard
+        INNER JOIN proso_flashcards_term ON term_id = proso_flashcards_term.id
+        INNER JOIN proso_flashcards_context ON context_id = proso_flashcards_context.id
+        WHERE proso_flashcards_term.lang = proso_flashcards_context.lang
+    '''
+}
+
 
 @receiver(m2m_changed, sender=Category.terms.through)
 @receiver(m2m_changed, sender=Category.subcategories.through)
