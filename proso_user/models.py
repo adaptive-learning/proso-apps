@@ -517,3 +517,15 @@ PROSO_MODELS_TO_EXPORT = [
     UserQuestionEvent, UserQuestionCondition, UserQuestion, UserQuestionAnswer,
     UserQuestionPossibleAnswer
 ]
+
+PROSO_CUSTOM_EXPORT = {
+    'session': '''
+        SELECT
+            proso_user_session.id,
+            user_id,
+            ip_address
+        FROM proso_user_session
+        INNER JOIN proso_user_location
+            ON location_id = proso_user_location.id
+    ''',
+}
