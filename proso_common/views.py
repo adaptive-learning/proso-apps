@@ -1,6 +1,6 @@
 from proso.django.response import render_json, render
 from proso_common.management.commands import analyse
-from proso_common.models import get_tables_allowed_to_export
+from proso_common.models import get_tables_allowed_to_export, get_custom_exports
 from django.conf import settings
 from wsgiref.util import FileWrapper
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -171,11 +171,14 @@ def _csv_list(request):
     apps = defaultdict(dict)
     for app, app_data in get_tables_allowed_to_export().items():
         apps[app]['tables'] = list(map(lambda d: {'name': d[1], 'url': reverse('csv_table', kwargs={'filename': d[1]})}, app_data))
+    for app, app_data in get_custom_exports().items():
+        apps[app]['custom_exports'] = list(map(lambda name: {'name': name, 'url': reverse('csv_table', kwargs={'filename': name})}, app_data))
     return render_json(request, apps, template='common_json.html')
 
 
 def _csv_table(request, filename):
-    if filename not in [x[1] for xs in get_tables_allowed_to_export().values() for x in xs]:
+    if filename not in [x[1] for xs in get_tables_allowed_to_export().values() for x in xs] and \
+            filename not in [x for xs in get_custom_exports().values() for x in xs.keys()]:
         response = {
             "error": "the requested file '%s' is not valid" % filename
         }

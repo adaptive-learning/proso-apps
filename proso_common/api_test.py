@@ -37,5 +37,7 @@ class CommonAPITest(TestCase):
         csv_items = json.loads(response.content.decode("utf-8"))['data']
         self.assertTrue(len(csv_items) > 0, "There is at least one CSV file available.")
         for app_name, app_data in csv_items.items():
-            for csv_item in app_data['tables']:
-                self.assertEqual(set(csv_item.keys()), set(['url', 'name']), "Each CSV file has url and table name.")
+            for csv_item in app_data.get('tables', []):
+                self.assertEqual(set(csv_item.keys()), set(['url', 'name']), "Each CSV file for table has url and name.")
+            for csv_item in app_data.get('custom_exports', []):
+                self.assertEqual(set(csv_item.keys()), set(['url', 'name']), "Each CSV file for custom export has url and name.")

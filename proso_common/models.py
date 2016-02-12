@@ -34,6 +34,19 @@ def get_content_hash(content):
     return hashlib.sha1(content.encode()).hexdigest()
 
 
+def get_custom_exports():
+    result = {}
+    for app in settings.INSTALLED_APPS:
+        try:
+            app_models = importlib.import_module('%s.models' % app)
+            if not hasattr(app_models, 'PROSO_CUSTOM_EXPORT'):
+                continue
+            result[app] = {'custom_{}_{}'.format(app, name): sql for (name, sql) in app_models.PROSO_CUSTOM_EXPORT.items()}
+        except ImportError:
+            continue
+    return result
+
+
 def get_tables_allowed_to_export():
     tables = {}
     for app in settings.INSTALLED_APPS:
