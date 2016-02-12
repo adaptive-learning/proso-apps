@@ -35,13 +35,13 @@ def get_content_hash(content):
 
 
 def get_tables_allowed_to_export():
-    tables = []
+    tables = {}
     for app in settings.INSTALLED_APPS:
         try:
             app_models = importlib.import_module('%s.models' % app)
             if not hasattr(app_models, 'PROSO_MODELS_TO_EXPORT'):
                 continue
-            tables += [(model._meta.pk.column, model._meta.db_table) for model in app_models.PROSO_MODELS_TO_EXPORT]
+            tables[app] = [(model._meta.pk.column, model._meta.db_table) for model in app_models.PROSO_MODELS_TO_EXPORT]
         except ImportError:
             continue
     return tables

@@ -36,5 +36,6 @@ class CommonAPITest(TestCase):
         self.assertEqual(response.status_code, 200, "Non-staff user can get CSV files.")
         csv_items = json.loads(response.content.decode("utf-8"))['data']
         self.assertTrue(len(csv_items) > 0, "There is at least one CSV file available.")
-        for csv_item in csv_items:
-            self.assertEqual(set(csv_item.keys()), set(['url', 'table']), "Each CSV file has url and table name.")
+        for app_name, app_data in csv_items.items():
+            for csv_item in app_data['tables']:
+                self.assertEqual(set(csv_item.keys()), set(['url', 'name']), "Each CSV file has url and table name.")

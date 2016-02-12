@@ -17,6 +17,7 @@ from proso.django.config import get_global_config
 from django.db.models.sql.datastructures import EmptyResultSet
 from django.views.decorators.csrf import ensure_csrf_cookie
 from proso.django.request import json_body
+from collections import defaultdict
 
 
 LOGGER = logging.getLogger('django.request')
@@ -155,36 +156,39 @@ def config(request):
     return render_json(request, get_global_config(), template='common_json.html')
 
 
-def csv(request, table_name=None):
+def csv(request, filename=None):
     if not request.user.is_staff:
         response = {
             "error": "Permission denied: you need to be staff member. If you think you should be able to access logs, contact admins."}
         return render_json(request, response, status=401, template='common_json.html')
-    if table_name:
-        return _csv_table(request, table_name)
+    if filename:
+        return _csv_table(request, filename)
     else:
         return _csv_list(request)
 
 
 def _csv_list(request):
-    response = [{'table': __table_name[1], 'url': reverse('csv_table', kwargs={'table_name': __table_name[1]})} for __table_name in get_tables_allowed_to_export()]
-    return render_json(request, response, template='common_json.html')
+    apps = defaultdict(dict)
+    for app, app_data in get_tables_allowed_to_export().items():
+        apps[app]['tables'] = list(map(lambda d: {'name': d[1], 'url': reverse('csv_table', kwargs={'filename': d[1]})}, app_data))
+    return render_json(request, apps, template='common_json.html')
 
 
-def _csv_table(request, table_name):
-    if table_name not in [xs[1] for xs in get_tables_allowed_to_export()]:
+def _csv_table(request, filename):
+    if filename not in [x[1] for xs in get_tables_allowed_to_export().values() for x in xs]:
         response = {
-            "error": "the requested table '%s' is not valid" % table_name
+            "error": "the requested file '%s' is not valid" % filename
         }
         return render_json(request, response, status=400, template='common_json.html')
-    zip_file = settings.DATA_DIR + '/' + table_name + ".zip"
-    if not os.path.exists(zip_file):
+    download_file = settings.DATA_DIR + '/' + filename + ".csv"
+    if not os.path.exists(download_file):
         response = {
             "error": "there is no data for the given table"
         }
         return render_json(request, response, status=204, template='common_json.html')
-    response = HttpResponse(FileWrapper(open(zip_file)), content_type='application/zip')
-    response['Content-Disposition'] = 'attachment; filename=' + table_name + '.zip'
+    response = HttpResponse(FileWrapper(open(download_file)), content_type='application/csv')
+    response['Content-Length'] = os.path.getsize(download_file)
+    response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
     return response
 
 
