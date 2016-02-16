@@ -923,15 +923,50 @@ class EnvironmentInfo(models.Model):
         }
 
 
-class Item(models.Model):
-    pass
+class ItemType(models.Model):
+
+    model = models.CharField(max_length=100, null=False, blank=False)
+    table = models.CharField(max_length=100, null=False, blank=False)
+    foreign_key = models.CharField(max_length=100, null=False, blank=False)
+    language = models.CharField(max_length=100, null=True, blank=True, default=None)
+    valid = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = (
+            ('table', 'foreign_key'),
+            ('model', 'foreign_key'),
+        )
 
     def to_json(self, nested=False):
-        return {
+        result = {
+            'id': self.id,
+            'object_type': 'item_type',
+            'valid': self.valid,
+            'table': self.table,
+            'model': self.model,
+            'foreign_key': self.foreign_key,
+        }
+        if self.language:
+            result['language'] = self.language
+        return result
+
+
+class Item(models.Model):
+
+    # This field should not be NULL, but historically there is a huge number of
+    # items in running systems without specified item type.
+    # TODO: remove 'null=True'
+    item_type = models.ForeignKey(ItemType, null=True)
+
+    def to_json(self, nested=False):
+        result = {
             'object_type': 'item',
             'item_id': self.id,
             'id': self.id
         }
+        if not nested and self.item_type:
+            result['item_type'] = self.item_type.to_json(nested=True)
+        return result
 
     class Meta:
         app_label = 'proso_models'
