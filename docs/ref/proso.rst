@@ -28,6 +28,14 @@ proso.dfutil module
     :undoc-members:
     :show-inheritance:
 
+proso.func module
+-------------------
+
+.. automodule:: proso.func
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 proso.rand module
 -----------------
 
