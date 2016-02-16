@@ -861,7 +861,7 @@ class LonelyItems(IntegrityCheck):
         referenced = set()
         for django_model in django.apps.apps.get_models():
             for django_field in django_model._meta.fields:
-                if isinstance(django_field, models.ForeignKey) and django_field.related.parent_model == Item:
+                if isinstance(django_field, models.ForeignKey) and django_field.related.to == Item:
                     db_column = django_field.get_attname_column()[1]
                     db_table = django_field.model._meta.db_table
                     if db_table in ['proso_models_variable', 'proso_models_audit']:
