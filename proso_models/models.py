@@ -968,7 +968,32 @@ class ItemType(models.Model):
             result['language'] = self.language
         return result
 
+
 class ItemManager(models.Manager):
+
+    @cache_pure
+    def get_children_graph(self, item_ids):
+
+        def _children(item_ids):
+            item_ids = [ii for iis in item_ids.values() for ii in iis]
+            items = Item.objects.filter(id__in=item_ids).prefetch_related('children')
+            return {item.id: sorted([_item.id for _item in item.children.all()]) for item in items}
+        return self._reachable_graph(item_ids, _children)
+
+    @cache_pure
+    def get_parents_graph(self, item_ids):
+
+        def _parents(item_ids):
+            item_ids = [ii for iis in item_ids.values() for ii in iis]
+            items = Item.objects.filter(id__in=item_ids).prefetch_related('parents')
+            return {item.id: sorted([_item.id for _item in item.parents.all()]) for item in items}
+        return self._reachable_graph(item_ids, _parents)
+
+    def get_leaves(self, item_ids):
+        children = self.get_children_graph(item_ids)
+        froms = set(children.keys())
+        tos = set([ii for iis in children.values() for ii in iis])
+        return tos - froms
 
     def get_reference_fields(self, exclude_models=None):
         if exclude_models is None:
@@ -982,6 +1007,14 @@ class ItemManager(models.Manager):
                     result = [(m, f) for (m, f) in result if not issubclass(django_model, m)]
                     result.append((django_model, django_field))
         return result
+
+    def _reachable_graph(self, item_ids, neighbors):
+        return {i: deps for i, deps in fixed_point(
+            is_zero=lambda xs: len(xs) == 0,
+            minus=lambda xs, ys: {x: vs for (x, vs) in xs.items() if x not in ys},
+            plus=lambda xs, ys: dict(list(xs.items()) + list(ys.items())),
+            f=neighbors,
+            x={None: item_ids}).items() if len(deps) > 0}
 
 
 class Item(models.Model):
