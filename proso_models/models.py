@@ -990,6 +990,11 @@ class Item(models.Model):
     # items in running systems without specified item type.
     # TODO: remove 'null=True'
     item_type = models.ForeignKey(ItemType, null=True)
+    children = models.ManyToManyField(
+        'self', related_name='parents',
+        symmetrical=False, through='ItemRelation',
+        through_fields=('parent', 'child')
+    )
 
     objects = ItemManager()
 
@@ -1005,6 +1010,13 @@ class Item(models.Model):
 
     class Meta:
         app_label = 'proso_models'
+
+
+class ItemRelation(models.Model):
+
+    parent = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='parent_relations')
+    child = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='child_relations')
+    visible = models.BooleanField(default=True)
 
 
 class AnswerMetaManager(models.Manager):
