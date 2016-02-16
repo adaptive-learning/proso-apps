@@ -1,31 +1,31 @@
+from .decorator import cache_environment_for_item
+from collections import defaultdict
+from contextlib import closing
+from datetime import datetime
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.db import connection
 from django.db import models
+from django.db import transaction
 from django.db.models import F
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from proso.models.environment import CommonEnvironment, InMemoryEnvironment
-from proso.models.item_selection import TestWrapperItemSelection
-from datetime import datetime
-from contextlib import closing
-from django.db import connection
-from django.conf import settings
-from proso_user.models import Session
-import re
-import os.path
-from .decorator import cache_environment_for_item
-from collections import defaultdict
-from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
-from proso_common.models import Config
-import json
-from django.core.cache import cache
 from proso.django.cache import get_request_cache, is_cache_prepared
-from django.db import transaction
+from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
 from proso.django.util import disable_for_loaddata, is_on_postgresql
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
-import logging
-import hashlib
-import django.apps
+from proso.models.environment import CommonEnvironment, InMemoryEnvironment
+from proso.models.item_selection import TestWrapperItemSelection
+from proso_common.models import Config
 from proso_common.models import IntegrityCheck
+from proso_user.models import Session
+import django.apps
+import hashlib
+import json
+import logging
+import os.path
+import re
 
 
 LOGGER = logging.getLogger('django.request')
