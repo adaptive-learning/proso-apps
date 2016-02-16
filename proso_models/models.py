@@ -859,18 +859,14 @@ class LonelyItems(IntegrityCheck):
 
     def check(self):
         referenced = set()
-        for django_model in django.apps.apps.get_models():
-            for django_field in django_model._meta.fields:
-                if isinstance(django_field, models.ForeignKey) and django_field.related.to == Item:
-                    db_column = django_field.get_attname_column()[1]
-                    db_table = django_field.model._meta.db_table
-                    if db_table in ['proso_models_variable', 'proso_models_audit']:
-                        continue
-                    with closing(connection.cursor()) as cursor:
-                        cursor.execute('SELECT DISTINCT(%s) FROM %s' % (db_column, db_table))
-                        for (item_id,) in cursor:
-                            if item_id is not None:
-                                referenced.add(item_id)
+        for django_field in Item.objects.get_reference_fields(exclude_models=[Audit, Variable]):
+            db_column = django_field.get_attname_column()[1]
+            db_table = django_field.model._meta.db_table
+            with closing(connection.cursor()) as cursor:
+                cursor.execute('SELECT DISTINCT(%s) FROM %s' % (db_column, db_table))
+                for (item_id,) in cursor:
+                    if item_id is not None:
+                        referenced.add(item_id)
         with closing(connection.cursor()) as cursor:
             cursor.execute('SELECT id from proso_models_item WHERE id NOT IN (%s)' % ','.join(map(str, referenced)))
             lonely_items = cursor.fetchall()
@@ -923,6 +919,25 @@ class EnvironmentInfo(models.Model):
         }
 
 
+class ItemTypeManager(models.Manager):
+
+    def find_object_types(self, with_answers=True):
+        result = []
+        langs = {}
+        for django_model, django_field in Item.objects.get_reference_fields(exclude_models=[Answer, Audit, Variable]):
+            db_column = django_field.get_attname_column()[1]
+            db_table = django_field.model._meta.db_table
+            # HACK: I haven't found other way to obtain the class, because
+            # "type" function returns ModelBase from Django.
+            model = str(django_model).replace("<class '", "").replace("'>", "")
+            if db_table not in langs:
+                for _django_field in django_field.model._meta.fields:
+                    if _django_field.get_attname_column()[1] == 'lang':
+                        langs[db_table] = 'lang'
+            result.append((model, db_table, db_column, langs.get(db_table)))
+        return result
+
+
 class ItemType(models.Model):
 
     model = models.CharField(max_length=100, null=False, blank=False)
@@ -930,6 +945,8 @@ class ItemType(models.Model):
     foreign_key = models.CharField(max_length=100, null=False, blank=False)
     language = models.CharField(max_length=100, null=True, blank=True, default=None)
     valid = models.BooleanField(default=True)
+
+    objects = ItemTypeManager()
 
     class Meta:
         unique_together = (
@@ -951,12 +968,30 @@ class ItemType(models.Model):
         return result
 
 
+class ItemManager(models.Manager):
+
+    def get_reference_fields(self, exclude_models=None):
+        if exclude_models is None:
+            exclude_models = []
+        result = []
+        for django_model in django.apps.apps.get_models():
+            if any([issubclass(django_model, m) for m in exclude_models]):
+                continue
+            for django_field in django_model._meta.fields:
+                if isinstance(django_field, models.ForeignKey) and django_field.related.to == Item:
+                    result = [(m, f) for (m, f) in result if not issubclass(django_model, m)]
+                    result.append((django_model, django_field))
+        return result
+
+
 class Item(models.Model):
 
     # This field should not be NULL, but historically there is a huge number of
     # items in running systems without specified item type.
     # TODO: remove 'null=True'
     item_type = models.ForeignKey(ItemType, null=True)
+
+    objects = ItemManager()
 
     def to_json(self, nested=False):
         result = {
