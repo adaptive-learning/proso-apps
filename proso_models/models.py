@@ -23,6 +23,7 @@ from proso_common.models import IntegrityCheck
 from proso_user.models import Session
 import django.apps
 import hashlib
+import importlib
 import json
 import logging
 import os.path
@@ -922,6 +923,10 @@ class EnvironmentInfo(models.Model):
 
 class ItemTypeManager(models.Manager):
 
+    @cache_pure
+    def get_item_type(self, item_id):
+        return Item.objects.select_related('item_type').get(id=item_id).item_type.to_json()
+
     def find_object_types(self, with_answers=True):
         result = []
         langs = {}
@@ -988,6 +993,26 @@ class ItemManager(models.Manager):
             items = Item.objects.filter(id__in=item_ids).prefetch_related('parents')
             return {item.id: sorted([_item.id for _item in item.parents.all()]) for item in items}
         return self._reachable_graph(item_ids, _parents)
+
+    def get_json_objects(self, item_ids, language):
+        item_types = {item_id: ItemType.objects.get_item_type(item_id) for item_id in item_ids}
+        groupped = defaultdict(list)
+        item_type_info = {}
+        for item_id, item_type in item_types.items():
+            key = item_type['model'], item_type['foreign_key']
+            groupped[key].append(item_id)
+            item_type_info[key] = item_type
+        result = {}
+        for (model, foreign_key), items in groupped.items():
+            item_type = item_type_info[model, foreign_key]
+            matched = re.match('(.*)\.(\w+)', model)
+            module = importlib.import_module(matched.groups()[0])
+            kwargs = {'{}__in'.format(foreign_key): items}
+            if 'language' in item_type:
+                kwargs[item_type['language']] = language
+            for obj in getattr(module, matched.groups()[1]).objects.filter(**kwargs):
+                result[getattr(obj, foreign_key)] = obj.to_json(nested=True)
+        return result
 
     def get_leaves(self, item_ids):
         children = self.get_children_graph(item_ids)
