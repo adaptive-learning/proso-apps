@@ -923,9 +923,17 @@ class EnvironmentInfo(models.Model):
 
 class ItemTypeManager(models.Manager):
 
-    @cache_pure
     def get_item_type(self, item_id):
-        return Item.objects.select_related('item_type').get(id=item_id).item_type.to_json()
+        return self.get_all_types[self._get_item_type_id()]
+
+    @cache_pure
+    def _get_item_type_id(self, item_id):
+        return Item.objects.get(id=item_id).item_type_id
+
+    @cache_pure
+    def get_all_types(self):
+        return {item_type.id: item_type.to_json() for item_type in self.all()}
+
 
     def find_object_types(self, with_answers=True):
         result = []
