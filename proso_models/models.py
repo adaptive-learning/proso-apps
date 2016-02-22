@@ -924,16 +924,21 @@ class EnvironmentInfo(models.Model):
 class ItemTypeManager(models.Manager):
 
     def get_item_type(self, item_id):
-        return self.get_all_types[self._get_item_type_id()]
+        return self.get_all_types()[self.get_item_type_id(item_id)]
 
     @cache_pure
-    def _get_item_type_id(self, item_id):
+    def get_item_type_id(self, item_id):
         return Item.objects.get(id=item_id).item_type_id
 
     @cache_pure
     def get_all_types(self):
         return {item_type.id: item_type.to_json() for item_type in self.all()}
 
+    def get_model(self, item_type_id):
+        item_type = self.get_all_types()[item_type_id]
+        matched = re.match('(.*)\.(\w+)', item_type['model'])
+        module = importlib.import_module(matched.groups()[0])
+        return getattr(module, matched.groups()[1])
 
     def find_object_types(self, with_answers=True):
         result = []
@@ -1014,23 +1019,19 @@ class ItemManager(models.Manager):
         Returns:
             dict: item id -> JSON object
         """
-        item_types = {item_id: ItemType.objects.get_item_type(item_id) for item_id in item_ids}
+        item_types = {item_id: ItemType.objects.get_item_type_id(item_id) for item_id in item_ids}
         groupped = defaultdict(list)
-        item_type_info = {}
-        for item_id, item_type in item_types.items():
-            key = item_type['model'], item_type['foreign_key']
-            groupped[key].append(item_id)
-            item_type_info[key] = item_type
+        for item_id, item_type_id in item_types.items():
+            groupped[item_type_id].append(item_id)
         result = {}
-        for (model, foreign_key), items in groupped.items():
-            item_type = item_type_info[model, foreign_key]
-            matched = re.match('(.*)\.(\w+)', model)
-            module = importlib.import_module(matched.groups()[0])
-            kwargs = {'{}__in'.format(foreign_key): items}
+        for item_type_id, items in groupped.items():
+            item_type = ItemType.objects.get_all_types()[item_type_id]
+            model = ItemType.objects.get_model(item_type_id)
+            kwargs = {'{}__in'.format(item_type['foreign_key']): items}
             if 'language' in item_type:
                 kwargs[item_type['language']] = language
-            for obj in getattr(module, matched.groups()[1]).objects.filter(**kwargs):
-                result[getattr(obj, foreign_key)] = obj.to_json(nested=True)
+            for obj in model.objects.filter(**kwargs):
+                result[getattr(obj, item_type['foreign_key'])] = obj.to_json(nested=True)
         return result
 
     def get_leaves(self, item_ids):
