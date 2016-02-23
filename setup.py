@@ -43,8 +43,8 @@ setup(
         'proso_flashcards.migrations',
     ],
     setup_requires=[
-        'Sphinx==1.3.5',
-        'sphinxcontrib-napoleon==0.5.0',
+        'Sphinx>=1.3',
+        'sphinxcontrib-napoleon>=0.5.0',
     ],
     install_requires=[
         'Django==1.9.1',
