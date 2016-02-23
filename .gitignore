@@ -6,6 +6,7 @@ dist
 *.sw[pon]
 .sass-cache
 build
+_build
 image
 .django_cache
 local_settings.py

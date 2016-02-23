@@ -22,6 +22,9 @@ register:
 
 ################################################################################
 
+sphinx-apidoc:
+	sphinx-apidoc -o docs/ref . `find . -name test_*.py -or -name *test.py -or -name migrations -or -name management -or -name setup.py -or -name testproject -or -name manage.py`
+
 unittest:
 	python -m unittest discover -p test_*.py -s proso;
 
@@ -58,7 +61,7 @@ uninstall:
 
 check:
 	pip install flake8
-	flake8 --ignore=E501,E225,E123,E128,W503,E731 --exclude=*/migrations/*.py,*/static/bower_components,setup.py .
+	flake8 --ignore=E501,E225,E123,E128,W503,E731 --exclude=*/migrations/*.py,*/static/bower_components,setup.py,docs/conf.py .
 
 
 ################################################################################
