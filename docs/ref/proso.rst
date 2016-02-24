@@ -20,6 +20,14 @@ proso.db module
     :undoc-members:
     :show-inheritance:
 
+proso.dict module
+-----------------
+
+.. automodule:: proso.dict
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 proso.dfutil module
 -------------------
 
@@ -32,6 +40,14 @@ proso.func module
 -------------------
 
 .. automodule:: proso.func
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+proso.list module
+-----------------
+
+.. automodule:: proso.list
     :members:
     :undoc-members:
     :show-inheritance:
