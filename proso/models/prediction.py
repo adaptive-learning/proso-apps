@@ -9,12 +9,10 @@ class PredictiveModel(metaclass=abc.ABCMeta):
     """
     This class handles the logic behind the predictive models, which is
     divided into 3 phases:
-        prepare:
-            the model loads the necessary data from the environment
-        predict
-            the model uses the loaded data to predict the correctness of the answer
-        update
-            the model updates environment to persist it for the future prediction
+
+    * **prepare**: the model loads the necessary data from the environment
+    * **predict**: the model uses the loaded data to predict the correctness of the answer
+    * **update**: the model updates environment to persist it for the future prediction
     """
 
     def predict_more_items(self, environment, user, items, time, **kwargs):
