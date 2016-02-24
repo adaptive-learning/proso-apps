@@ -1,31 +1,34 @@
+from .decorator import cache_environment_for_item
+from collections import defaultdict
+from contextlib import closing
+from datetime import datetime
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.db import connection
 from django.db import models
+from django.db import transaction
 from django.db.models import F
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from proso.django.cache import get_request_cache, is_cache_prepared
+from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
+from proso.django.util import disable_for_loaddata, is_on_postgresql, cache_pure
+from proso.func import fixed_point
+from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.environment import CommonEnvironment, InMemoryEnvironment
 from proso.models.item_selection import TestWrapperItemSelection
-from datetime import datetime
-from contextlib import closing
-from django.db import connection
-from django.conf import settings
-from proso_user.models import Session
-import re
-import os.path
-from .decorator import cache_environment_for_item
-from collections import defaultdict
-from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
 from proso_common.models import Config
-import json
-from django.core.cache import cache
-from proso.django.cache import get_request_cache, is_cache_prepared
-from django.db import transaction
-from proso.django.util import disable_for_loaddata, is_on_postgresql
-from proso.metric import binomial_confidence_mean, confidence_value_to_json
-import logging
-import hashlib
-import django.apps
 from proso_common.models import IntegrityCheck
+from proso_user.models import Session
+import django.apps
+import hashlib
+import importlib
+import json
+import logging
+import os.path
+import proso.list
+import re
 
 
 LOGGER = logging.getLogger('django.request')
@@ -859,18 +862,14 @@ class LonelyItems(IntegrityCheck):
 
     def check(self):
         referenced = set()
-        for django_model in django.apps.apps.get_models():
-            for django_field in django_model._meta.fields:
-                if isinstance(django_field, models.ForeignKey) and django_field.related.parent_model == Item:
-                    db_column = django_field.get_attname_column()[1]
-                    db_table = django_field.model._meta.db_table
-                    if db_table in ['proso_models_variable', 'proso_models_audit']:
-                        continue
-                    with closing(connection.cursor()) as cursor:
-                        cursor.execute('SELECT DISTINCT(%s) FROM %s' % (db_column, db_table))
-                        for (item_id,) in cursor:
-                            if item_id is not None:
-                                referenced.add(item_id)
+        for django_field in Item.objects.get_reference_fields(exclude_models=[Audit, Variable]):
+            db_column = django_field.get_attname_column()[1]
+            db_table = django_field.model._meta.db_table
+            with closing(connection.cursor()) as cursor:
+                cursor.execute('SELECT DISTINCT(%s) FROM %s' % (db_column, db_table))
+                for (item_id,) in cursor:
+                    if item_id is not None:
+                        referenced.add(item_id)
         with closing(connection.cursor()) as cursor:
             cursor.execute('SELECT id from proso_models_item WHERE id NOT IN (%s)' % ','.join(map(str, referenced)))
             lonely_items = cursor.fetchall()
@@ -923,18 +922,222 @@ class EnvironmentInfo(models.Model):
         }
 
 
-class Item(models.Model):
-    pass
+class ItemTypeManager(models.Manager):
+
+    def get_item_type(self, item_id):
+        return self.get_all_types()[self.get_item_type_id(item_id)]
+
+    @cache_pure
+    def get_item_type_id(self, item_id):
+        return Item.objects.get(id=item_id).item_type_id
+
+    @cache_pure
+    def get_all_types(self):
+        return {item_type.id: item_type.to_json() for item_type in self.all()}
+
+    def get_model(self, item_type_id):
+        item_type = self.get_all_types()[item_type_id]
+        matched = re.match('(.*)\.(\w+)', item_type['model'])
+        module = importlib.import_module(matched.groups()[0])
+        return getattr(module, matched.groups()[1])
+
+    def find_object_types(self, with_answers=True):
+        result = []
+        langs = {}
+        for django_model, django_field in Item.objects.get_reference_fields(exclude_models=[Answer, Audit, Variable]):
+            db_column = django_field.get_attname_column()[1]
+            db_table = django_field.model._meta.db_table
+            # HACK: I haven't found other way to obtain the class, because
+            # "type" function returns ModelBase from Django.
+            model = str(django_model).replace("<class '", "").replace("'>", "")
+            if db_table not in langs:
+                for _django_field in django_field.model._meta.fields:
+                    if _django_field.get_attname_column()[1] == 'lang':
+                        langs[db_table] = 'lang'
+            result.append((model, db_table, db_column, langs.get(db_table)))
+        return result
+
+
+class ItemType(models.Model):
+
+    model = models.CharField(max_length=100, null=False, blank=False)
+    table = models.CharField(max_length=100, null=False, blank=False)
+    foreign_key = models.CharField(max_length=100, null=False, blank=False)
+    language = models.CharField(max_length=100, null=True, blank=True, default=None)
+    valid = models.BooleanField(default=True)
+
+    objects = ItemTypeManager()
+
+    class Meta:
+        unique_together = (
+            ('table', 'foreign_key'),
+            ('model', 'foreign_key'),
+        )
 
     def to_json(self, nested=False):
-        return {
+        result = {
+            'id': self.id,
+            'object_type': 'item_type',
+            'valid': self.valid,
+            'table': self.table,
+            'model': self.model,
+            'foreign_key': self.foreign_key,
+        }
+        if self.language:
+            result['language'] = self.language
+        return result
+
+
+class ItemManager(models.Manager):
+
+    @cache_pure
+    def get_children_graph(self, item_ids):
+
+        def _children(item_ids):
+            item_ids = [ii for iis in item_ids.values() for ii in iis]
+            items = Item.objects.filter(id__in=item_ids).prefetch_related('children')
+            return {item.id: sorted([_item.id for _item in item.children.all()]) for item in items}
+        return self._reachable_graph(item_ids, _children)
+
+    @cache_pure
+    def get_parents_graph(self, item_ids):
+
+        def _parents(item_ids):
+            item_ids = [ii for iis in item_ids.values() for ii in iis]
+            items = Item.objects.filter(id__in=item_ids).prefetch_related('parents')
+            return {item.id: sorted([_item.id for _item in item.parents.all()]) for item in items}
+        return self._reachable_graph(item_ids, _parents)
+
+    def translate_identifiers(self, identifiers, language):
+        """
+        Translate a list of identifiers to item ids. Identifier is a string of
+        the following form:
+
+        <model_prefix>/<model_identifier>
+
+        where <model_prefix> is any suffix of database table of the given model
+        which uniquely specifies the table, and <model_identifier> is
+        identifier of the object.
+
+        Args:
+            identifiers (list[str]): list of identifiers
+            language (str): language used for further filtering (some objects
+                for different languages share the same item
+
+        Returns:
+            dict: identifier -> item id
+        """
+        result = {}
+        item_types = ItemType.objects.get_all_types()
+        for item_type_id, identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(item_types, identifier)).items():
+            to_find = {}
+            for identifier in identifiers:
+                identifier_split = identifier.split('/')
+                to_find[identifier_split[1]] = identifier
+            kwargs = {'identifier__in': list(to_find.keys())}
+            item_type = ItemType.objects.get_all_types()[item_type_id]
+            model = ItemType.objects.get_model(item_type_id)
+            if 'language' in item_type:
+                kwargs[item_type['language']] = language
+            for identifier, item_id in model.objects.filter(**kwargs).values_list('identifier', item_type['foreign_key']):
+                result[to_find[identifier]] = item_id
+        return result
+
+    @cache_pure
+    def get_item_type_id_from_identifier(self, item_types, identifier):
+        identifier_type, _ = identifier.split('/')
+        item_types = [it for it in item_types.values() if it['table'].endswith(identifier_type)]
+        if len(item_types) > 1:
+            raise Exception('There is more than one item type for name "{}".'.format(identifier_type))
+        if len(item_types) == 0:
+            raise Exception('There is no item type for name "{}".'.format(identifier_type))
+        return item_types[0]['id']
+
+    def translate_item_ids(self, item_ids, language):
+        """
+        Translate a list of item ids to JSON objects which reference them.
+
+        Args:
+            item_ids (list[int]): item ids
+            language (str): language used for further filtering (some objects
+                for different languages share the same item)
+
+        Returns:
+            dict: item id -> JSON object
+        """
+        groupped = proso.list.group_by(item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
+        result = {}
+        for item_type_id, items in groupped.items():
+            item_type = ItemType.objects.get_all_types()[item_type_id]
+            model = ItemType.objects.get_model(item_type_id)
+            kwargs = {'{}__in'.format(item_type['foreign_key']): items}
+            if 'language' in item_type:
+                kwargs[item_type['language']] = language
+            for obj in model.objects.filter(**kwargs):
+                result[getattr(obj, item_type['foreign_key'])] = obj.to_json(nested=True)
+        return result
+
+    def get_leaves(self, item_ids):
+        children = self.get_children_graph(item_ids)
+        froms = set(children.keys())
+        tos = set([ii for iis in children.values() for ii in iis])
+        return tos - froms
+
+    def get_reference_fields(self, exclude_models=None):
+        if exclude_models is None:
+            exclude_models = []
+        result = []
+        for django_model in django.apps.apps.get_models():
+            if any([issubclass(django_model, m) for m in exclude_models]):
+                continue
+            for django_field in django_model._meta.fields:
+                if isinstance(django_field, models.ForeignKey) and django_field.related.to == Item:
+                    result = [(m, f) for (m, f) in result if not issubclass(django_model, m)]
+                    result.append((django_model, django_field))
+        return result
+
+    def _reachable_graph(self, item_ids, neighbors):
+        return {i: deps for i, deps in fixed_point(
+            is_zero=lambda xs: len(xs) == 0,
+            minus=lambda xs, ys: {x: vs for (x, vs) in xs.items() if x not in ys},
+            plus=lambda xs, ys: dict(list(xs.items()) + list(ys.items())),
+            f=neighbors,
+            x={None: item_ids}).items() if len(deps) > 0}
+
+
+class Item(models.Model):
+
+    # This field should not be NULL, but historically there is a huge number of
+    # items in running systems without specified item type.
+    # TODO: remove 'null=True'
+    item_type = models.ForeignKey(ItemType, null=True)
+    children = models.ManyToManyField(
+        'self', related_name='parents',
+        symmetrical=False, through='ItemRelation',
+        through_fields=('parent', 'child')
+    )
+
+    objects = ItemManager()
+
+    def to_json(self, nested=False):
+        result = {
             'object_type': 'item',
             'item_id': self.id,
             'id': self.id
         }
+        if not nested and self.item_type:
+            result['item_type'] = self.item_type.to_json(nested=True)
+        return result
 
     class Meta:
         app_label = 'proso_models'
+
+
+class ItemRelation(models.Model):
+
+    parent = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='parent_relations')
+    child = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='child_relations')
+    visible = models.BooleanField(default=True)
 
 
 class AnswerMetaManager(models.Manager):
