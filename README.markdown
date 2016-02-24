@@ -1,6 +1,7 @@
 # PROSO Apps
 
 [![Build Status](https://travis-ci.org/adaptive-learning/proso-apps.png)](https://travis-ci.org/adaptive-learning/proso-apps)
+[![Documentation Status](https://readthedocs.org/projects/proso-apps/badge/?version=latest)](http://proso-apps.readthedocs.org/en/latest/)
 
 ## Development
 
