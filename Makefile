@@ -25,11 +25,16 @@ register:
 sphinx-apidoc:
 	sphinx-apidoc -o docs/ref . `find . -name test_*.py -or -name *test.py -or -name migrations -or -name management -or -name setup.py -or -name testproject -or -name manage.py`
 
+doctest:
+	cd docs; $(MAKE) doctest
+
 unittest:
 	python -m unittest discover -p test_*.py -s proso;
 
-test: unittest
+django-test:
 	python manage.py test --traceback --pattern *_test.py;
+
+test: unittest doctest django-test
 
 reinstall: check uninstall install
 
