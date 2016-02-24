@@ -6,6 +6,21 @@ def roulette(weights, n):
     Choose randomly the given number of items. The probability the item is
     chosen is proportionate to its weight.
 
+    .. testsetup::
+
+        import random
+        from proso.rand import roulette
+
+        random.seed(1)
+
+    .. testcode::
+
+        print(roulette({'cat': 2, 'dog': 1000}, 1))
+
+    .. testoutput::
+
+        ['dog']
+
     Args:
         weights (dict): item -> weight mapping, non-positive weights are forbidden
         n (int): number of chosen items
