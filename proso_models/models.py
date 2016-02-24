@@ -1008,6 +1008,51 @@ class ItemManager(models.Manager):
             return {item.id: sorted([_item.id for _item in item.parents.all()]) for item in items}
         return self._reachable_graph(item_ids, _parents)
 
+    def translate_identifiers(self, identifiers, language):
+        """
+        Translate a list of identifiers to item ids. Identifier is a string of
+        the following form:
+
+        <model_prefix>/<model_identifier>
+
+        where <model_prefix> is any suffix of database table of the given model
+        which uniquely specifies the table, and <model_identifier> is
+        identifier of the object.
+
+        Args:
+            identifiers (list[str]): list of identifiers
+            language (str): language used for further filtering (some objects
+                for different languages share the same item
+
+        Returns:
+            dict: identifier -> item id
+        """
+        result = {}
+        item_types = ItemType.objects.get_all_types()
+        for item_type_id, identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(item_types, identifier)).items():
+            to_find = {}
+            for identifier in identifiers:
+                identifier_split = identifier.split('/')
+                to_find[identifier_split[1]] = identifier
+            kwargs = {'identifier__in': list(to_find.keys())}
+            item_type = ItemType.objects.get_all_types()[item_type_id]
+            model = ItemType.objects.get_model(item_type_id)
+            if 'language' in item_type:
+                kwargs[item_type['language']] = language
+            for identifier, item_id in model.objects.filter(**kwargs).values_list('identifier', item_type['foreign_key']):
+                result[to_find[identifier]] = item_id
+        return result
+
+    @cache_pure
+    def get_item_type_id_from_identifier(self, item_types, identifier):
+        identifier_type, _ = identifier.split('/')
+        item_types = [it for it in item_types.values() if it['table'].endswith(identifier_type)]
+        if len(item_types) > 1:
+            raise Exception('There is more than one item type for name "{}".'.format(identifier_type))
+        if len(item_types) == 0:
+            raise Exception('There is no item type for name "{}".'.format(identifier_type))
+        return item_types[0]['id']
+
     def translate_item_ids(self, item_ids, language):
         """
         Translate a list of item ids to JSON objects which reference them.

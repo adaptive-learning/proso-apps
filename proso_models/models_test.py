@@ -95,6 +95,12 @@ class TestItemManager(test.TestCase):
         for item_id, json_object in json_objects.items():
             self.assertEqual(json_object, all_objects[item_id].to_json(nested=True))
 
+    def test_translate_identifiers(self, language='cs'):
+        self.assertEqual(
+            Item.objects.translate_identifiers(['flashcard/africa-bw', 'category/world'], 'cs'),
+            {'category/world': 1, 'flashcard/africa-bw': 74}
+        )
+
 
 class DatabaseEnvironmentTest(test.TestCase, environment.TestCommonEnvironment):
 
