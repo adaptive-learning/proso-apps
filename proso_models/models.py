@@ -27,6 +27,7 @@ import importlib
 import json
 import logging
 import os.path
+import proso.list
 import re
 
 
@@ -1019,10 +1020,7 @@ class ItemManager(models.Manager):
         Returns:
             dict: item id -> JSON object
         """
-        item_types = {item_id: ItemType.objects.get_item_type_id(item_id) for item_id in item_ids}
-        groupped = defaultdict(list)
-        for item_id, item_type_id in item_types.items():
-            groupped[item_type_id].append(item_id)
+        groupped = proso.list.group_by(item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
         result = {}
         for item_type_id, items in groupped.items():
             item_type = ItemType.objects.get_all_types()[item_type_id]
