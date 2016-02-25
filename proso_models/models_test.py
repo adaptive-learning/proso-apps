@@ -1,12 +1,8 @@
-from .models import DatabaseEnvironment
 from .models import Item, ItemRelation
-from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.management import call_command
 from proso_flashcards.models import Flashcard, Category
 from testproject.testapp.models import ExtendedContext, ExtendedTerm
 import django.test as test
-import proso.models.environment as environment
 
 
 class ItemManagerGraphTest(test.TestCase):
@@ -100,30 +96,3 @@ class TestItemManager(test.TestCase):
             Item.objects.translate_identifiers(['flashcard/africa-bw', 'category/world'], 'cs'),
             {'category/world': 1, 'flashcard/africa-bw': 74}
         )
-
-
-class DatabaseEnvironmentTest(test.TestCase, environment.TestCommonEnvironment):
-
-    _user = 0
-
-    @classmethod
-    def setUpClass(cls):
-        super(DatabaseEnvironmentTest, cls).setUpClass()
-        settings.DEBUG = True
-
-    def generate_item(self):
-        item = Item()
-        item.save()
-        return item.id
-
-    def generate_user(self):
-        self._user += 1
-        user = User(username=str(self._user))
-        user.save()
-        return user.id
-
-    def generate_answer_id(self):
-        return None
-
-    def generate_environment(self):
-        return DatabaseEnvironment()
