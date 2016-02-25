@@ -11,20 +11,6 @@ LOGGER = logging.getLogger('django.request')
 CACHE_EXPIRATION = 60 * 60 * 24 * 30
 
 
-def enrich(request, json, fun, nested=False, top_level=True):
-    time_start = time()
-    if isinstance(json, list):
-        result = [enrich(request, x, fun, top_level=False) for x in json]
-    elif isinstance(json, dict):
-        json = fun(request, json, nested=nested)
-        result = {k: enrich(request, v, fun, nested=True, top_level=False) for k, v in list(json.items())}
-    else:
-        result = json
-    if top_level:
-        LOGGER.debug("enrichment of JSON by '%s' function took %s seconds", fun.__name__, (time() - time_start))
-    return result
-
-
 def enrich_by_predicate(request, json, fun, predicate, skip_nested=False, **kwargs):
     time_start = time()
     collected = []
