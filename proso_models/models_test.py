@@ -86,10 +86,11 @@ class TestItemManager(test.TestCase):
                 if lang != language:
                     continue
                 all_objects[o.item_id] = o
-        json_objects = Item.objects.translate_item_ids(list(all_objects.keys()), 'cs')
+        not_nested_item = list(self._flashcards.values())[0].item_id
+        json_objects = Item.objects.translate_item_ids(list(all_objects.keys()), 'cs', is_nested=lambda i: i != not_nested_item)
         self.assertEqual(len(json_objects), len(all_objects))
         for item_id, json_object in json_objects.items():
-            self.assertEqual(json_object, all_objects[item_id].to_json(nested=True))
+            self.assertEqual(json_object, all_objects[item_id].to_json(nested=not_nested_item!=item_id))
 
     def test_translate_identifiers(self, language='cs'):
         self.assertEqual(

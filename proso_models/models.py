@@ -422,7 +422,7 @@ class ItemManager(models.Manager):
             raise Exception('There is no item type for name "{}".'.format(identifier_type))
         return item_types[0]['id']
 
-    def translate_item_ids(self, item_ids, language):
+    def translate_item_ids(self, item_ids, language, is_nested=None):
         """
         Translate a list of item ids to JSON objects which reference them.
 
@@ -430,10 +430,14 @@ class ItemManager(models.Manager):
             item_ids (list[int]): item ids
             language (str): language used for further filtering (some objects
                 for different languages share the same item)
+            is_nested (function): mapping from item ids to booleans, where the
+                boolean value indicates whether the item is nested
 
         Returns:
             dict: item id -> JSON object
         """
+        if is_nested is None:
+            is_nested = lambda x: True
         groupped = proso.list.group_by(item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
         result = {}
         for item_type_id, items in groupped.items():
@@ -442,8 +446,13 @@ class ItemManager(models.Manager):
             kwargs = {'{}__in'.format(item_type['foreign_key']): items}
             if 'language' in item_type:
                 kwargs[item_type['language']] = language
-            for obj in model.objects.filter(**kwargs):
-                result[getattr(obj, item_type['foreign_key'])] = obj.to_json(nested=True)
+            if any([not is_nested(item_id) for item_id in items]) and hasattr(model.objects, 'prepare_related'):
+                objs = model.objects.prepare_related()
+            else:
+                objs = model.objects
+            for obj in objs.filter(**kwargs):
+                item_id = getattr(obj, item_type['foreign_key'])
+                result[item_id] = obj.to_json(nested=is_nested(item_id))
         return result
 
     def get_leaves(self, item_ids):
