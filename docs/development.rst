@@ -83,8 +83,8 @@ Finally, we can run the test server::
 Sample database
 ===============
 
-You can download a dump from PostgreSQL used by `www.slepemapy.cz <www.slepemapy.cz>`_ from
-data-private.slepemapy.cz/dump (the file is referenced as ``DUMP_FILE``) and
+You can download a dump from PostgreSQL used by `www.slepemapy.cz <http://www.slepemapy.cz>`_ from
+`data-private.slepemapy.cz/dump <http://data-private.slepemapy.cz/dump>`_ (the file is referenced as ``DUMP_FILE``) and
 load it to your database::
 
   export PGPASSWORD=proso_apps
