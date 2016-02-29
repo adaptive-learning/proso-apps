@@ -1,0 +1,62 @@
+{
+  "description": "Schema for data file containing concepts",
+  "definitions": {
+    "concept": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "names": {
+          "type": "object",
+          "patternProperties":{
+            "^.*$": {
+              "type": "string"
+            }
+          }
+        },
+        "actions": {
+          "type": "object",
+          "patternProperties":{
+            "^.*$": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": ["query", "tags", "names"]
+    },
+    "action_name": {
+      "type": "object",
+      "patternProperties":{
+        "^..$": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "concepts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/concept"
+      }
+    },
+    "action_names": {
+      "type": "object",
+      "patternProperties":{
+        "^.*$": {
+          "$ref": "#/definitions/action_name"
+        }
+      }
+    }
+  },
+  "required": ["concepts", "action_names"]
+}

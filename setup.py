@@ -39,6 +39,10 @@ setup(
         'proso_flashcards.management',
         'proso_flashcards.management.commands',
         'proso_flashcards.migrations',
+        'proso_concepts',
+        'proso_concepts.management',
+        'proso_concepts.management.commands',
+        'proso_concepts.migrations',
     ],
     setup_requires=[
         'Sphinx>=1.3',
