@@ -349,17 +349,17 @@ class UserQuestion(models.Model):
     TYPE_CLOSED = 'c'
     TYPE_MIXED = 'm'
 
-    ANSWER_TYPES = {
-        TYPE_OPEN: 'open',
-        TYPE_CLOSED: 'closed',
-        TYPE_MIXED: 'mixed',
-    }
+    ANSWER_TYPES = (
+        (TYPE_CLOSED, 'closed'),
+        (TYPE_MIXED, 'mixed'),
+        (TYPE_OPEN, 'open'),
+    )
 
     identifier = models.SlugField()
     lang = models.CharField(max_length=10, null=False, blank=False)
     content = models.TextField(null=False, blank=False)
     active = models.BooleanField(null=False, blank=False, default=True)
-    answer_type = models.CharField(choices=list(ANSWER_TYPES.items()), default='o', max_length=1)
+    answer_type = models.CharField(choices=ANSWER_TYPES, default='o', max_length=1)
     on_events = models.ManyToManyField(UserQuestionEvent)
     conditions = models.ManyToManyField(UserQuestionCondition)
     repeat = models.BooleanField(default=False)
