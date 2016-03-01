@@ -57,7 +57,7 @@ class Command(BaseCommand):
                 question.conditions.clear()
                 for condition_json in question_json.get('conditions', []):
                     condition = UserQuestionCondition.objects.from_type_value(condition_json['type'], condition_json['value'])
-                    question.condition.add(condition)
+                    question.conditions.add(condition)
                 question.save()
                 for possible_answer_json in question_json.get('possible-answers', []):
                     possible_answer = UserQuestionPossibleAnswer.objects.filter(
