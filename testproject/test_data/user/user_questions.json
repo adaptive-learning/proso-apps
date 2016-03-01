@@ -22,7 +22,7 @@
           "content-cs": "Neuvedeno"
         }
       ],
-      "condtions": [
+      "conditions": [
         {
           "type": "user_status",
           "value": "registered"
