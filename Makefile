@@ -77,7 +77,8 @@ release-micro:
 	$(MAKE) increase-micro; \
 	$(MAKE) snapshot; \
 	git add proso/release.py; \
-	$(MAKE) commit-start-working;
+	$(MAKE) commit-start-working; \
+	git push;
 
 release:
 	$(MAKE) milestone; \
@@ -88,6 +89,7 @@ release:
 	$(MAKE) snapshot; \
 	git add proso/release.py; \
 	$(MAKE) commit-start-working; \
+	git push;
 
 milestone:
 	MAJOR=$(MAJOR_VERSION); \
