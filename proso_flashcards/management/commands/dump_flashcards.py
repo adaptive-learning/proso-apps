@@ -47,7 +47,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "schema.json"), "r") as schema_file:
-            schema = json.load(schema_file, 'utf-8')
+            schema = json.load(schema_file)
 
         data = {}
         if options["categories"] or options["all"]:
@@ -60,7 +60,7 @@ class Command(BaseCommand):
             data["flashcards"] = self._dump_flashcards()
 
         validate(data, schema)
-        print((json.dumps(data, 'utf-8', indent=4)))
+        print((json.dumps(data, indent=4)))
 
     def _dump_categories(self, data=None):
         data = []

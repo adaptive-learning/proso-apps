@@ -125,7 +125,7 @@ def _load_config():
         config_path = get_config_path()
         with open(config_path, 'r') as config_data:
             if config_path.endswith('.json'):
-                loaded = json.load(config_data, 'utf-8')
+                loaded = json.load(config_data)
             elif config_path.endswith('.yaml'):
                 loaded = yaml.load(config_data)
             else:

@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "user_questions_schema.json"), "r") as schema_file:
-            schema = json.load(schema_file, 'utf-8')
+            schema = json.load(schema_file)
         if len(args) < 1:
             raise CommandError(
                 "Not enough arguments. One argument required: " +
@@ -26,7 +26,7 @@ class Command(BaseCommand):
 
         with open(args[0], 'r') as json_file:
             with transaction.atomic():
-                data = json.load(json_file, 'utf-8')
+                data = json.load(json_file)
                 validate(data, schema)
                 self._load_questions(data['questions'])
 
