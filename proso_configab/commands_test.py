@@ -2,6 +2,7 @@ from django.core.management import call_command
 from django.test import TestCase
 from proso_configab.models import Experiment
 
+
 class TeadExperimentsLoading(TestCase):
 
     def test_load_configab_experiments(self):
