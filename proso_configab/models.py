@@ -234,7 +234,7 @@ class UserSetupManager(models.Manager):
 class UserSetup(models.Model):
 
     experiment_setup = models.ForeignKey(ExperimentSetup)
-    user = models.ForeignKey(User, unique=True)
+    user = models.OneToOneField(User)
 
     objects = UserSetupManager()
 
