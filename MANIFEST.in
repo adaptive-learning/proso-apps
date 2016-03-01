@@ -1,5 +1,4 @@
 recursive-include proso_*/static *
 recursive-include proso_*/templates *
 recursive-include proso_*/templatetags *
-recursive-include proso_flashcards/management/commands *.json
-recursive-include proso_configab/management/commands *.json
+recursive-include proso_*/management/commands *.json
