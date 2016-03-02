@@ -21,7 +21,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/media/'
 
-
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 DEBUG = True
@@ -83,8 +82,12 @@ TEMPLATE_DIRS = ()
 if TESTING:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'testproject.sqlite3')
+            'ENGINE': os.getenv('PROSO_DATABASE_ENGINE', 'django.db.backends.postgresql_psycopg2'),
+            'NAME': os.getenv('PROSO_DATABASE_NAME', 'travis_ci_test'),
+            'USER': os.getenv('PROSO_DATABASE_USER', 'postgres'),
+            'PASSWORD': os.getenv('PROSO_DATABASE_PASSWORD', None),
+            'HOST': os.getenv('PROSO_DATABASE_HOST', 'localhost'),
+            'PORT': os.getenv('PROSO_DATABASE_PORT', None)
         }
     }
 else:
@@ -111,7 +114,7 @@ LANGUAGES = (
     ('en', _('English')),
     ('cs', _('Czech')),
 )
-LOCALE_PATHS = (os.path.join(BASE_DIR, "locale"), )
+LOCALE_PATHS = (os.path.join(BASE_DIR, "locale"),)
 
 # Static files (CSS, JavaScript, Images)
 
@@ -145,8 +148,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('PROSO_GOOGLE_OAUTH2_CLIENT_SECRET'
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/user/close_popup/'
 
 # http://stackoverflow.com/questions/22005841/is-not-json-serializable-django-social-auth-facebook-login
-SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
-
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
 ALLOWED_HOSTS = []
 
@@ -158,7 +160,6 @@ SOCIAL_AUTH_UID_LENGTH = 222
 SOCIAL_AUTH_NONCE_SERVER_URL_LENGTH = 200
 SOCIAL_AUTH_ASSOCIATION_SERVER_URL_LENGTH = 135
 SOCIAL_AUTH_ASSOCIATION_HANDLE_LENGTH = 125
-
 
 try:
     from hashes import HASHES

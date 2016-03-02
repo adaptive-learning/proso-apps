@@ -1,5 +1,9 @@
 language: python
 python: 3.5
+services:
+  - postgresql
+addons:
+  postgresql: "9.4"
 cache:
   - pip
   - apt
@@ -26,5 +30,7 @@ install:
   - pip install sphinxcontrib-napoleon>=0.5.0
   - python setup.py install_lib
   - make install
+before_script:
+  - psql -c 'create database travis_ci_test;' -U postgres
 script:
   - make test
