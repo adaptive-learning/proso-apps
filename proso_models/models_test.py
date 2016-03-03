@@ -57,9 +57,15 @@ class ItemManagerGraphTest(test.TestCase):
             {None: [2, 4], 2: [5, 6], 4: [7]}
         )
 
+    def test_get_all_leaves(self):
+        self.assertEqual(Item.objects.get_all_leaves([4]), {7})
+        self.assertEqual(Item.objects.get_all_leaves([2, 3]), {5, 6, 7})
+        self.assertEqual(Item.objects.get_all_leaves([7]), {7})
+
     def test_get_leaves(self):
-        self.assertEqual(Item.objects.get_leaves([4]), {7})
-        self.assertEqual(Item.objects.get_leaves([2, 3]), {5, 6, 7})
+        self.assertEqual(Item.objects.get_leaves([2, 3]), {2: {5, 6}, 3: {6, 7}})
+        self.assertEqual(Item.objects.get_leaves([1, 4]), {1: {5, 6, 7}, 4: {7}})
+        self.assertEqual(Item.objects.get_leaves([7]), {7: {7}})
 
 
 class TestItemManager(test.TestCase):

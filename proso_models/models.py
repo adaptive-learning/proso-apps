@@ -13,6 +13,7 @@ from proso.django.cache import get_request_cache, is_cache_prepared
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
 from proso.django.util import disable_for_loaddata, cache_pure
 from proso.func import fixed_point
+from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
 from proso_common.models import Config
@@ -457,9 +458,32 @@ class ItemManager(models.Manager):
 
     def get_leaves(self, item_ids):
         children = self.get_children_graph(item_ids)
+
+        def _get_leaves(item_id):
+            leaves = set()
+
+            def __search(item_ids):
+                result = set(flatten([children.get(item_id, []) for item_id in item_ids]))
+                new_leaves = {item_id for item_id in result if item_id not in children.keys()}
+                leaves.update(new_leaves)
+                return result - new_leaves
+
+            fixed_point(
+                is_zero=lambda to_visit: len(to_visit) == 0,
+                minus=lambda to_visit, visited: to_visit - visited,
+                plus=lambda visited_x, visited_y: visited_x | visited_y,
+                f=__search,
+                x={item_id}
+            )
+            return leaves if len(leaves) > 0 else {item_id}
+
+        return {item_id: _get_leaves(item_id) for item_id in item_ids}
+
+    def get_all_leaves(self, item_ids):
+        children = self.get_children_graph(item_ids)
         froms = set(children.keys())
         tos = set([ii for iis in children.values() for ii in iis])
-        return tos - froms
+        return (set(item_ids) | tos) - froms
 
     def get_reference_fields(self, exclude_models=None):
         if exclude_models is None:
