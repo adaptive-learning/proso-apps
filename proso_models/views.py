@@ -1,13 +1,12 @@
+from . import json_enrich
+from .models import get_environment, get_active_environment_info, Item, recommend_users as models_recommend_users, PracticeContext, learning_curve as models_learning_curve
+from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponseBadRequest
+from lazysignup.decorators import allow_lazy_user
+from proso.django.enrichment import register_object_type_enricher
 from proso.django.request import is_time_overridden, get_time, get_user_id, load_query_json
 from proso.django.response import render_json
-from .models import get_environment, get_active_environment_info, Item, recommend_users as models_recommend_users, PracticeContext, learning_curve as models_learning_curve
 import datetime
-import numpy
-from . import json_enrich
-import proso_common.json_enrich as common_json_enrich
-from lazysignup.decorators import allow_lazy_user
-from django.contrib.admin.views.decorators import staff_member_required
 
 
 @allow_lazy_user
@@ -17,12 +16,12 @@ def status(request):
     environment = get_environment()
     if is_time_overridden(request):
         environment.shift_time(time)
-    return render_json(request, _to_json(request, {
+    return render_json(request, {
         'object_type': 'status',
         'number_of_answers': environment.number_of_answers(user=user_id),
         'number_of_correct_answers': environment.number_of_correct_answers(user=user_id),
         'environment_info': get_active_environment_info(),
-    }), template='models_json.html')
+    }, template='models_json.html')
 
 
 @staff_member_required
@@ -46,10 +45,8 @@ def learning_curve(request):
     else:
         user_length = None
     return render_json(
-        request, _to_json(
-            request, models_learning_curve(length,
-            context=context.id, user_length=user_length)
-        ),
+        request,
+        models_learning_curve(length, context=context.id, user_length=user_length),
         template='models_json.html', help_text=learning_curve.__doc__)
 
 
@@ -115,7 +112,7 @@ def model(request):
         'object_type': 'model',
         'items': [item.to_json(nested=True) for item in items]
     }
-    return render_json(request, _to_json(request, result), template='models_json.html')
+    return render_json(request, result, template='models_json.html')
 
 
 @allow_lazy_user
@@ -136,9 +133,9 @@ def audit(request, key):
     values = environment.audit(
         key, user=user, item=item, item_secondary=item_secondary, limit=limit)
 
-    def _to_json_audit(xxx_todo_changeme):
-        (time, value) = xxx_todo_changeme
-        return _to_json(request, {
+    def _to_json_audit(audit):
+        (time, value) = audit
+        return {
             'object_type': 'value',
             'key': key,
             'item_primary_id': item,
@@ -146,7 +143,7 @@ def audit(request, key):
             'user_id': user,
             'value': value,
             'time': time.strftime('%Y-%m-%d %H:%M:%S')
-        })
+        }
     return render_json(request, list(map(_to_json_audit, values)), template='models_json.html')
 
 
@@ -171,36 +168,20 @@ def read(request, key):
     else:
         return render_json(
             request,
-            _to_json(request, {
+            {
                 'object_type': 'value',
                 'key': key,
                 'item_primary_id': item,
                 'item_secondary_id': item_secondary,
                 'user_id': user,
                 'value': value
-            }),
+            },
             template='models_json.html'
         )
 
 
-def _to_json(request, value):
-    json = value
-    group_enricher = lambda key, aggr_fun: (lambda r, j, nested: json_enrich.group_item_keys(r, j, nested, key, aggr_fun))
-    common_json_enrich.enrich_by_object_type(
-        request, json, json_enrich.prediction, ['item'])
-    common_json_enrich.enrich_by_object_type(
-        request, json, json_enrich.number_of_answers, ['item'])
-    common_json_enrich.enrich_by_object_type(
-        request, json, json_enrich.number_of_correct_answers, ['item'])
-    enrichers = [
-        json_enrich.audit_url,
-        group_enricher('prediction', numpy.mean),
-        group_enricher('mastered', numpy.mean),
-        group_enricher('number_of_answers', sum),
-        group_enricher('covered', numpy.mean),
-        group_enricher('number_of_correct_answers', sum),
-        group_enricher('covered_correctly', numpy.mean)
-    ]
-    for enricher in enrichers:
-        common_json_enrich.enrich(request, json, enricher)
-    return json
+################################################################################
+# Enrichers
+################################################################################
+
+register_object_type_enricher(['item'], json_enrich.item2object, priority=-1000000000)

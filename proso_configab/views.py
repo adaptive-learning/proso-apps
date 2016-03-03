@@ -1,9 +1,8 @@
-import proso_common.views
+from . import json_enrich as json_enrich
 from .models import Experiment
-from time import time as time_lib
+from proso.django.enrichment import register_object_type_enricher, enrich_json_objects_by_object_type
 import logging
-import proso_common.json_enrich as common_json_enrich
-from . import json_enrich as configab_json_enrich
+import proso_common.views
 
 
 LOGGER = logging.getLogger('django.request')
@@ -11,7 +10,7 @@ LOGGER = logging.getLogger('django.request')
 
 def show_one(request, object_class, id):
     return proso_common.views.show_one(
-        request, _to_json, object_class, id, template='configab_json.html')
+        request, enrich_json_objects_by_object_type, object_class, id, template='configab_json.html')
 
 
 def show_more(request, object_class, should_cache=True):
@@ -38,23 +37,12 @@ def show_more(request, object_class, should_cache=True):
         return objs
 
     return proso_common.views.show_more(
-        request, _to_json, _load_objects, object_class,
+        request, enrich_json_objects_by_object_type, _load_objects, object_class,
         should_cache=should_cache, template='configab_json.html', to_json_kwargs={})
 
 
-def _to_json(request, value):
-    time_start = time_lib()
-    if isinstance(value, list):
-        json = [x if isinstance(x, dict) else x.to_json() for x in value]
-    elif not isinstance(value, dict):
-        json = value.to_json()
-    else:
-        json = value
-    LOGGER.debug("converting value to simple JSON took %s seconds", (time_lib() - time_start))
-    common_json_enrich.enrich_by_predicate(request, json, common_json_enrich.url, lambda x: True)
-    if 'stats' in request.GET:
-        common_json_enrich.enrich_by_object_type(
-            request, json, configab_json_enrich.experiment_setup_stats, ['configab_experiment_setup'], skip_nested=False)
+################################################################################
+# Enrichers
+################################################################################
 
-    LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
-    return json
+register_object_type_enricher(['configab_experiment_setup'], json_enrich.experiment_setup_stats)
