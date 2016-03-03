@@ -1,29 +1,27 @@
-import json
-import logging
-from time import time as time_lib
 from datetime import datetime, timedelta
-
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
-
-from proso_user.models import get_user_id
 from proso.django.cache import cache_page_conditional
 from proso.django.config import get_config
 from proso.django.request import get_time, is_time_overridden, load_query_json
 from proso.django.response import render, render_json
-import proso_common.views
-import proso_common.json_enrich as common_json_enrich
-import proso_models.json_enrich as models_json_enrich
-import proso_flashcards.json_enrich as flashcards_json_enrich
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
 from proso_models.models import get_environment, get_predictive_model, PracticeContext, AnswerMeta
-from django.utils.translation import ugettext as _
+from proso_user.models import get_user_id
+from time import time as time_lib
+import json
+import logging
 import proso.svg
+import proso_common.views
+import proso_common.json_enrich as common_json_enrich
+import proso_flashcards.json_enrich as flashcards_json_enrich
+import proso_models.json_enrich as models_json_enrich
 
 
 LOGGER = logging.getLogger('django.request')

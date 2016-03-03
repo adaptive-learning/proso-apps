@@ -1,22 +1,22 @@
-from django.core.exceptions import ObjectDoesNotExist
-from proso.django.response import render, render_json
-import django.contrib.auth as auth
-from proso.django.request import get_user_id, json_body, is_user_id_overridden
+from . import json_enrich as user_json_enrich
 from .models import Session, UserProfile, TimeZone, UserQuestion, UserQuestionAnswer, UserQuestionPossibleAnswer, migrate_google_openid_user
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest, Http404
+from django.middleware.csrf import get_token
+from django.shortcuts import get_object_or_404
+from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
-from django.shortcuts import get_object_or_404
-from django.db import transaction
-from django.contrib.auth.models import User
-from django.middleware.csrf import get_token
+from proso.django.config import get_config
+from proso.django.request import get_user_id, json_body, is_user_id_overridden
+from proso.django.response import render, render_json
+import django.contrib.auth as auth
 import json
 import proso_common
-from django.utils.translation import ugettext as _
-from proso.django.config import get_config
 import proso_common.json_enrich as common_json_enrich
-from . import json_enrich as user_json_enrich
 
 
 @allow_lazy_user
