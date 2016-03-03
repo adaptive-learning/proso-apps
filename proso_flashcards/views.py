@@ -9,7 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
 from proso.django.config import get_config
-from proso.django.request import get_time, is_time_overridden, load_query_json
+from proso.django.request import get_time, is_time_overridden, load_query_json, get_language
 from proso.django.response import render, render_json
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
 from proso_models.models import get_environment, get_predictive_model, PracticeContext, AnswerMeta
@@ -102,7 +102,7 @@ def show_more(request, object_class, should_cache=True):
             contexts = load_query_json(request.GET, "contexts", "[]")
             types = load_query_json(request.GET, "types", "[]")
             avoid = load_query_json(request.GET, "avoid", "[]")
-            language = request.GET.get("language", request.LANGUAGE_CODE)
+            language = get_language(request)
             flashcard_ids, item_ids = Flashcard.objects.filtered_ids(categories, contexts, types, avoid, language)
             if object_class == FlashcardAnswer:
                 user_id = get_user_id(request, allow_override=True)
@@ -111,7 +111,7 @@ def show_more(request, object_class, should_cache=True):
                 objs = objs.filter(pk__in=flashcard_ids)
         if object_class == Flashcard or object_class == settings.PROSO_FLASHCARDS.get("term_extension", Term) or \
                 object_class == settings.PROSO_FLASHCARDS.get("context_extension", Context) or object_class == Category:
-            language = request.GET.get("language", request.LANGUAGE_CODE)
+            language = get_language(request)
             objs = objs.filter(lang=language)
         return objs
 
@@ -370,7 +370,7 @@ def practice(request):
         }, status=404, template='flashcards_json.html')
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_candidates))
     time_before_practice = time_lib()
-    language = request.GET.get("language", request.LANGUAGE_CODE)
+    language = get_language(request)
     with_contexts = "without_contexts" not in request.GET
     flashcards = Flashcard.objects.practice(
         environment, user, time, limit, candidates, practice_context.id,
@@ -509,7 +509,7 @@ def _load_practice_context_content(request):
 def _candidates_to_practice(request, limit, context_content=None):
     if context_content is None:
         context_content = _load_practice_context_content(request)
-    language = request.GET.get("language", request.LANGUAGE_CODE)
+    language = get_language(request)
     avoid = load_query_json(request.GET, "avoid", "[]")
     return Flashcard.objects.candidates_to_practice(
         context_content['categories'],

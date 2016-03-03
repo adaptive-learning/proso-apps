@@ -11,7 +11,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
 from proso.django.config import get_config
-from proso.django.request import get_user_id, json_body, is_user_id_overridden
+from proso.django.request import get_user_id, json_body, is_user_id_overridden, get_language
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
 import json
@@ -221,7 +221,7 @@ def answer_question(request):
 
 
 def questions_to_ask(request):
-    language = request.GET.get("language", request.LANGUAGE_CODE)
+    language = get_language(request)
     user_id = get_user_id(request)
     questions = UserQuestion.objects.questions_to_ask(user_id, language)
     return render_json(request, _to_json(request, list(questions)), template='user_json.html')
