@@ -113,7 +113,7 @@ def model(request):
         }, template='models_json.html', status=404)
     result = {
         'object_type': 'model',
-        'items': [item.to_json() for item in items]
+        'items': [item.to_json(nested=True) for item in items]
     }
     return render_json(request, _to_json(request, result), template='models_json.html')
 
