@@ -146,6 +146,16 @@ class ConstantOptionsNumber(OptionsNumber):
         return self._number_of_options
 
 
+class PartiallyConstantOptionsNumber(OptionsNumber):
+
+    def __init__(self, number_of_options, max_options=6, allow_zero_options_restriction=True):
+        OptionsNumber.__init__(self, max_options=max_options, allow_zero_options_restriction=allow_zero_options_restriction)
+        self._number_of_options = number_of_options
+
+    def compute_number_of_options(self, target_probability, prediction):
+        return 0 if prediction >= target_probability else self._number_of_options
+
+
 ################################################################################
 # Selection of distractors
 ################################################################################
