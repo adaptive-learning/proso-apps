@@ -124,7 +124,7 @@ class AdjustedOptionsNumber(OptionsNumber):
 class UniformlyAdjustedOptionsNumber(OptionsNumber):
 
     def compute_number_of_options(self, target_probability, prediction):
-        if prediction > target_probability:
+        if prediction >= target_probability:
             return 0
         else:
             return max(int(math.ceil((prediction / max(target_probability, 0.00001)) * (self.get_max_options() - 1))), 1)
