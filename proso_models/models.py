@@ -439,6 +439,8 @@ class ItemManager(models.Manager):
         """
         if is_nested is None:
             is_nested = lambda x: True
+        if isinstance(is_nested, bool):
+            is_nested = lambda x: is_nested
         groupped = proso.list.group_by(item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
         result = {}
         for item_type_id, items in groupped.items():
