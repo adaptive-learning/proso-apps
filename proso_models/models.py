@@ -399,7 +399,7 @@ class ItemManager(models.Manager):
         """
         result = {}
         item_types = ItemType.objects.get_all_types()
-        for item_type_id, identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(item_types, identifier)).items():
+        for item_type_id, identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(identifier, item_types)).items():
             to_find = {}
             for identifier in identifiers:
                 identifier_split = identifier.split('/')
@@ -414,7 +414,9 @@ class ItemManager(models.Manager):
         return result
 
     @cache_pure
-    def get_item_type_id_from_identifier(self, item_types, identifier):
+    def get_item_type_id_from_identifier(self, identifier, item_types=None):
+        if item_types is None:
+            item_types = ItemType.objects.get_all_types()
         identifier_type, _ = identifier.split('/')
         item_types = [it for it in item_types.values() if it['table'].endswith(identifier_type)]
         if len(item_types) > 1:
