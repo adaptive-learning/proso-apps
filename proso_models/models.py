@@ -362,6 +362,17 @@ class ItemManager(models.Manager):
 
     @cache_pure
     def get_children_graph(self, item_ids):
+        """
+        Get a subgraph of items reachable from the given set of items throughr
+        the 'child' relation.
+
+        Args:
+            item_ids (list): items which are taken as roots for the reachability
+
+        Returns:
+            dict: item id -> list of items (child items), root items are
+            referenced by None key
+        """
 
         def _children(item_ids):
             item_ids = [ii for iis in item_ids.values() for ii in iis]
@@ -371,7 +382,17 @@ class ItemManager(models.Manager):
 
     @cache_pure
     def get_parents_graph(self, item_ids):
+        """
+        Get a subgraph of items reachable from the given set of items through
+        the 'parent' relation.
 
+        Args:
+            item_ids (list): items which are taken as roots for the reachability
+
+        Returns:
+            dict: item id -> list of items (parent items), root items are
+            referenced by None key
+        """
         def _parents(item_ids):
             item_ids = [ii for iis in item_ids.values() for ii in iis]
             items = Item.objects.filter(id__in=item_ids).prefetch_related('parents')
@@ -415,6 +436,23 @@ class ItemManager(models.Manager):
 
     @cache_pure
     def get_item_type_id_from_identifier(self, identifier, item_types=None):
+        """
+        Get an ID of item type for the given identifier. Identifier is a string of
+        the following form:
+
+        <model_prefix>/<model_identifier>
+
+        where <model_prefix> is any suffix of database table of the given model
+        which uniquely specifies the table, and <model_identifier> is
+        identifier of the object.
+
+        Args:
+            identifier (str): item identifier
+            item_types (dict): ID -> item type JSON
+
+        Returns:
+            int: ID of the corresponding item type
+        """
         if item_types is None:
             item_types = ItemType.objects.get_all_types()
         identifier_type, _ = identifier.split('/')
@@ -461,6 +499,15 @@ class ItemManager(models.Manager):
         return result
 
     def get_leaves(self, item_ids):
+        """
+        Get mapping of items to their reachable leaves.
+
+        Args:
+            item_ids (list): items which are taken as roots for the reachability
+
+        Returns:
+            dict: item id -> list of items (reachable leaves)
+        """
         children = self.get_children_graph(item_ids)
 
         def _get_leaves(item_id):
@@ -484,12 +531,24 @@ class ItemManager(models.Manager):
         return {item_id: _get_leaves(item_id) for item_id in item_ids}
 
     def get_all_leaves(self, item_ids):
+        """
+        Get all leaves reachable from the given set of items.
+
+        Args:
+            item_ids (list): items which are taken as roots for the reachability
+
+        Returns:
+            list: leaf items which are reachable from the given set of items
+        """
         children = self.get_children_graph(item_ids)
         froms = set(children.keys())
         tos = set([ii for iis in children.values() for ii in iis])
         return (set(item_ids) | tos) - froms
 
     def get_reference_fields(self, exclude_models=None):
+        """
+        Get all Django model fields which reference the Item model.
+        """
         if exclude_models is None:
             exclude_models = []
         result = []
