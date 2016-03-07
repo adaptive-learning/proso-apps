@@ -5,7 +5,6 @@ proso-apps
    :maxdepth: 4
 
    proso
-   proso_ab
    proso_common
    proso_configab
    proso_feedback

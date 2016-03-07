@@ -1,29 +1,27 @@
-import json
-import logging
-from time import time as time_lib
 from datetime import datetime, timedelta
-
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
-
-from proso_user.models import get_user_id
 from proso.django.cache import cache_page_conditional
 from proso.django.config import get_config
-from proso.django.request import get_time, is_time_overridden, load_query_json
+from proso.django.enrichment import enrich_json_objects_by_object_type, register_object_type_enricher
+from proso.django.request import get_time, is_time_overridden, load_query_json, get_language
 from proso.django.response import render, render_json
-import proso_common.views
-import proso_common.json_enrich as common_json_enrich
-import proso_models.json_enrich as models_json_enrich
-import proso_flashcards.json_enrich as flashcards_json_enrich
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
 from proso_models.models import get_environment, get_predictive_model, PracticeContext, AnswerMeta
-from django.utils.translation import ugettext as _
+from proso_user.models import get_user_id
+from time import time as time_lib
+import json
+import logging
 import proso.svg
+import proso_common.views
+import proso_flashcards.json_enrich as flashcards_json_enrich
+import proso_models.json_enrich as models_json_enrich
 
 
 LOGGER = logging.getLogger('django.request')
@@ -61,7 +59,7 @@ def practice_image(request):
 @cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
 def show_one(request, object_class, id):
     return proso_common.views.show_one(
-        request, _to_json, object_class, id, template='flashcards_json.html')
+        request, enrich_json_objects_by_object_type, object_class, id, template='flashcards_json.html')
 
 
 @cache_page_conditional(
@@ -104,7 +102,7 @@ def show_more(request, object_class, should_cache=True):
             contexts = load_query_json(request.GET, "contexts", "[]")
             types = load_query_json(request.GET, "types", "[]")
             avoid = load_query_json(request.GET, "avoid", "[]")
-            language = request.GET.get("language", request.LANGUAGE_CODE)
+            language = get_language(request)
             flashcard_ids, item_ids = Flashcard.objects.filtered_ids(categories, contexts, types, avoid, language)
             if object_class == FlashcardAnswer:
                 user_id = get_user_id(request, allow_override=True)
@@ -113,12 +111,12 @@ def show_more(request, object_class, should_cache=True):
                 objs = objs.filter(pk__in=flashcard_ids)
         if object_class == Flashcard or object_class == settings.PROSO_FLASHCARDS.get("term_extension", Term) or \
                 object_class == settings.PROSO_FLASHCARDS.get("context_extension", Context) or object_class == Category:
-            language = request.GET.get("language", request.LANGUAGE_CODE)
+            language = get_language(request)
             objs = objs.filter(lang=language)
         return objs
 
     return proso_common.views.show_more(
-        request, _to_json, _load_objects, object_class,
+        request, enrich_json_objects_by_object_type, _load_objects, object_class,
         should_cache=should_cache, template='flashcards_json.html', to_json_kwargs=to_json_kwargs)
 
 
@@ -372,16 +370,16 @@ def practice(request):
         }, status=404, template='flashcards_json.html')
     LOGGER.debug('choosing candidates for practice took %s seconds', (time_lib() - time_before_candidates))
     time_before_practice = time_lib()
-    language = request.GET.get("language", request.LANGUAGE_CODE)
+    language = get_language(request)
     with_contexts = "without_contexts" not in request.GET
     flashcards = Flashcard.objects.practice(
         environment, user, time, limit, candidates, practice_context.id,
         language, with_contexts,
         items_in_queue=len(load_query_json(request.GET, "avoid", "[]")))
     LOGGER.debug('choosing items for practice took %s seconds', (time_lib() - time_before_practice))
-    data = _to_json(request, {
+    data = {
         'flashcards': [x.to_json(categories=False, contexts=with_contexts) for x in flashcards]
-    })
+    }
     return render_json(request, data, template='flashcards_json.html', help_text=practice.__doc__)
 
 
@@ -462,44 +460,6 @@ def _save_answer(request, answers, practice_context):
     return saved_answers
 
 
-def _to_json(request, value):
-    time_start = time_lib()
-    if isinstance(value, list):
-        json = [x if isinstance(x, dict) else x.to_json() for x in value]
-    elif not isinstance(value, dict):
-        json = value.to_json()
-    else:
-        json = value
-    LOGGER.debug("converting value to simple JSON took %s seconds", (time_lib() - time_start))
-    common_json_enrich.enrich_by_predicate(request, json, common_json_enrich.url, lambda x: True,
-                                       ignore_get=['filter_column', 'filter_value', 'categories', 'contexts', 'types'])
-    common_json_enrich.enrich_by_object_type(request, json,
-        flashcards_json_enrich.answer_flashcards, ['fc_answer'],
-        skip_nested=True)
-    if 'environment' in request.GET:
-        common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
-                                                 ["fc_term"],
-                                                 skip_nested=True,
-                                                 variable_type=[("parent", None, True), ("child", None, True)])
-        common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
-                                                 ["fc_category"],
-                                                 skip_nested=True,
-                                                 variable_type=[("parent", None, True), ("child", None, True)])
-        common_json_enrich.enrich_by_object_type(request, json, common_json_enrich.env_variables,
-                                                 ["fc_flashcard"],
-                                                 skip_nested=True,
-                                                 variable_type=[("parent", None, True)])
-    if 'stats' in request.GET:
-        common_json_enrich.enrich_by_object_type(
-            request, json, models_json_enrich.prediction, ['fc_flashcard', 'fc_term'], skip_nested=True)
-        common_json_enrich.enrich_by_object_type(
-            request, json, flashcards_json_enrich.practiced, ['fc_flashcard'], skip_nested=True)
-        common_json_enrich.enrich_by_object_type(
-            request, json, flashcards_json_enrich.avg_prediction, ['fc_category', 'fc_term', 'fc_context'], skip_nested=True)
-    LOGGER.debug("converting value to JSON took %s seconds", (time_lib() - time_start))
-    return json
-
-
 def _load_practice_context_content(request):
     return {
         'categories': load_query_json(request.GET, "categories", "[]"),
@@ -511,10 +471,20 @@ def _load_practice_context_content(request):
 def _candidates_to_practice(request, limit, context_content=None):
     if context_content is None:
         context_content = _load_practice_context_content(request)
-    language = request.GET.get("language", request.LANGUAGE_CODE)
+    language = get_language(request)
     avoid = load_query_json(request.GET, "avoid", "[]")
     return Flashcard.objects.candidates_to_practice(
         context_content['categories'],
         context_content['contexts'],
         context_content['types'],
         avoid, language, limit=limit)
+
+
+################################################################################
+# Enrichers
+################################################################################
+
+register_object_type_enricher(['fc_answer'], flashcards_json_enrich.answer_flashcards)
+register_object_type_enricher(['fc_flashcard'], models_json_enrich.prediction)
+register_object_type_enricher(['fc_flashcard', 'fc_category', 'fc_term', 'fc_context'], models_json_enrich.number_of_answers)
+register_object_type_enricher(['fc_category', 'fc_term', 'fc_context'], models_json_enrich.avg_prediction)

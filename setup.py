@@ -17,8 +17,6 @@ setup(
         'proso.django',
         'proso.models',
         'proso_ab',
-        'proso_ab.management',
-        'proso_ab.management.commands',
         'proso_ab.migrations',
         'proso_common',
         'proso_common.management',

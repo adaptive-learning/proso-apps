@@ -13,6 +13,7 @@ from proso.django.cache import get_request_cache, is_cache_prepared
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
 from proso.django.util import disable_for_loaddata, cache_pure
 from proso.func import fixed_point
+from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
 from proso_common.models import Config
@@ -361,6 +362,17 @@ class ItemManager(models.Manager):
 
     @cache_pure
     def get_children_graph(self, item_ids):
+        """
+        Get a subgraph of items reachable from the given set of items throughr
+        the 'child' relation.
+
+        Args:
+            item_ids (list): items which are taken as roots for the reachability
+
+        Returns:
+            dict: item id -> list of items (child items), root items are
+            referenced by None key
+        """
 
         def _children(item_ids):
             item_ids = [ii for iis in item_ids.values() for ii in iis]
@@ -370,7 +382,17 @@ class ItemManager(models.Manager):
 
     @cache_pure
     def get_parents_graph(self, item_ids):
+        """
+        Get a subgraph of items reachable from the given set of items through
+        the 'parent' relation.
 
+        Args:
+            item_ids (list): items which are taken as roots for the reachability
+
+        Returns:
+            dict: item id -> list of items (parent items), root items are
+            referenced by None key
+        """
         def _parents(item_ids):
             item_ids = [ii for iis in item_ids.values() for ii in iis]
             items = Item.objects.filter(id__in=item_ids).prefetch_related('parents')
@@ -398,7 +420,7 @@ class ItemManager(models.Manager):
         """
         result = {}
         item_types = ItemType.objects.get_all_types()
-        for item_type_id, identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(item_types, identifier)).items():
+        for item_type_id, identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(identifier, item_types)).items():
             to_find = {}
             for identifier in identifiers:
                 identifier_split = identifier.split('/')
@@ -413,7 +435,26 @@ class ItemManager(models.Manager):
         return result
 
     @cache_pure
-    def get_item_type_id_from_identifier(self, item_types, identifier):
+    def get_item_type_id_from_identifier(self, identifier, item_types=None):
+        """
+        Get an ID of item type for the given identifier. Identifier is a string of
+        the following form:
+
+        <model_prefix>/<model_identifier>
+
+        where <model_prefix> is any suffix of database table of the given model
+        which uniquely specifies the table, and <model_identifier> is
+        identifier of the object.
+
+        Args:
+            identifier (str): item identifier
+            item_types (dict): ID -> item type JSON
+
+        Returns:
+            int: ID of the corresponding item type
+        """
+        if item_types is None:
+            item_types = ItemType.objects.get_all_types()
         identifier_type, _ = identifier.split('/')
         item_types = [it for it in item_types.values() if it['table'].endswith(identifier_type)]
         if len(item_types) > 1:
@@ -422,7 +463,7 @@ class ItemManager(models.Manager):
             raise Exception('There is no item type for name "{}".'.format(identifier_type))
         return item_types[0]['id']
 
-    def translate_item_ids(self, item_ids, language):
+    def translate_item_ids(self, item_ids, language, is_nested=None):
         """
         Translate a list of item ids to JSON objects which reference them.
 
@@ -430,10 +471,16 @@ class ItemManager(models.Manager):
             item_ids (list[int]): item ids
             language (str): language used for further filtering (some objects
                 for different languages share the same item)
+            is_nested (function): mapping from item ids to booleans, where the
+                boolean value indicates whether the item is nested
 
         Returns:
             dict: item id -> JSON object
         """
+        if is_nested is None:
+            is_nested = lambda x: True
+        if isinstance(is_nested, bool):
+            is_nested = lambda x: is_nested
         groupped = proso.list.group_by(item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
         result = {}
         for item_type_id, items in groupped.items():
@@ -442,17 +489,66 @@ class ItemManager(models.Manager):
             kwargs = {'{}__in'.format(item_type['foreign_key']): items}
             if 'language' in item_type:
                 kwargs[item_type['language']] = language
-            for obj in model.objects.filter(**kwargs):
-                result[getattr(obj, item_type['foreign_key'])] = obj.to_json(nested=True)
+            if any([not is_nested(item_id) for item_id in items]) and hasattr(model.objects, 'prepare_related'):
+                objs = model.objects.prepare_related()
+            else:
+                objs = model.objects
+            for obj in objs.filter(**kwargs):
+                item_id = getattr(obj, item_type['foreign_key'])
+                result[item_id] = obj.to_json(nested=is_nested(item_id))
         return result
 
     def get_leaves(self, item_ids):
+        """
+        Get mapping of items to their reachable leaves.
+
+        Args:
+            item_ids (list): items which are taken as roots for the reachability
+
+        Returns:
+            dict: item id -> list of items (reachable leaves)
+        """
+        children = self.get_children_graph(item_ids)
+
+        def _get_leaves(item_id):
+            leaves = set()
+
+            def __search(item_ids):
+                result = set(flatten([children.get(item_id, []) for item_id in item_ids]))
+                new_leaves = {item_id for item_id in result if item_id not in children.keys()}
+                leaves.update(new_leaves)
+                return result - new_leaves
+
+            fixed_point(
+                is_zero=lambda to_visit: len(to_visit) == 0,
+                minus=lambda to_visit, visited: to_visit - visited,
+                plus=lambda visited_x, visited_y: visited_x | visited_y,
+                f=__search,
+                x={item_id}
+            )
+            return leaves if len(leaves) > 0 else {item_id}
+
+        return {item_id: _get_leaves(item_id) for item_id in item_ids}
+
+    def get_all_leaves(self, item_ids):
+        """
+        Get all leaves reachable from the given set of items.
+
+        Args:
+            item_ids (list): items which are taken as roots for the reachability
+
+        Returns:
+            list: leaf items which are reachable from the given set of items
+        """
         children = self.get_children_graph(item_ids)
         froms = set(children.keys())
         tos = set([ii for iis in children.values() for ii in iis])
-        return tos - froms
+        return (set(item_ids) | tos) - froms
 
     def get_reference_fields(self, exclude_models=None):
+        """
+        Get all Django model fields which reference the Item model.
+        """
         if exclude_models is None:
             exclude_models = []
         result = []

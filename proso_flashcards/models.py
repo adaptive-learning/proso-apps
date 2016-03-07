@@ -16,6 +16,12 @@ from functools import reduce
 LOGGER = logging.getLogger('django.request')
 
 
+class TermManager(models.Manager):
+
+    def prepare_related(self):
+        return self.prefetch_related('parents')
+
+
 class Term(models.Model):
     identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_terms")
@@ -23,6 +29,8 @@ class Term(models.Model):
     lang = models.CharField(max_length=2)
     name = models.TextField()
     type = models.CharField(max_length=50, null=True, blank=True)
+
+    objects = TermManager()
 
     def to_json(self, nested=False):
         json = {
@@ -42,6 +50,12 @@ class Term(models.Model):
         return "{0.lang} - {0.name}".format(self)
 
 
+class ContextManager(models.Manager):
+
+    def prepare_related(self):
+        return self.prefetch_related('categories')
+
+
 class Context(models.Model):
     identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_contexts")
@@ -49,6 +63,8 @@ class Context(models.Model):
     lang = models.CharField(max_length=2)
     name = models.TextField(null=True, blank=True)
     content = models.TextField(null=True, blank=True)
+
+    objects = ContextManager()
 
     def to_json(self, nested=False, with_content=True):
         json = {
@@ -123,6 +139,10 @@ class FlashcardQuerySet(models.query.QuerySet):
 
 
 class FlashcardManager(models.Manager):
+
+    def prepare_related(self):
+        return self.select_related(Flashcard.related_term(), Flashcard.related_context()).prefetch_related('categories')
+
     def get_queryset(self):
         return FlashcardQuerySet(self.model, using=self._db)
 
@@ -417,6 +437,12 @@ class Category(models.Model):
 
     def __unicode__(self):
         return "{0.lang} - {0.name}".format(self)
+
+
+class FlashcardAnswerManager(models.Manager):
+
+    def prepare_related(self):
+        return self.prefetch_related('options__{}'.format(Flashcard.related_term()))
 
 
 class FlashcardAnswer(Answer):

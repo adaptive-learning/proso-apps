@@ -1,5 +1,4 @@
 import logging
-from time import time
 from django.core.cache import cache
 import json as json_lib
 from django.core.urlresolvers import reverse
@@ -11,54 +10,23 @@ LOGGER = logging.getLogger('django.request')
 CACHE_EXPIRATION = 60 * 60 * 24 * 30
 
 
-def enrich(request, json, fun, nested=False, top_level=True):
-    time_start = time()
-    if isinstance(json, list):
-        result = [enrich(request, x, fun, top_level=False) for x in json]
-    elif isinstance(json, dict):
-        json = fun(request, json, nested=nested)
-        result = {k: enrich(request, v, fun, nested=True, top_level=False) for k, v in list(json.items())}
-    else:
-        result = json
-    if top_level:
-        LOGGER.debug("enrichment of JSON by '%s' function took %s seconds", fun.__name__, (time() - time_start))
-    return result
-
-
-def enrich_by_predicate(request, json, fun, predicate, skip_nested=False, **kwargs):
-    time_start = time()
-    collected = []
-    memory = {'nested': False}
-
-    def _collect(json_inner, nested):
-        if nested and skip_nested:
-            return
-        if isinstance(json_inner, list):
-            list(map(lambda x: _collect(x, nested), json_inner))
-        elif isinstance(json_inner, dict):
-            if predicate(json_inner):
-                collected.append(json_inner)
-                if nested:
-                    memory['nested'] = True
-            list(map(lambda x: _collect(x, True), list(json_inner.values())))
-    _collect(json, False)
-    if len(collected) > 0:
-        fun(request, collected, memory['nested'], **kwargs)
-    LOGGER.debug("enrichment of JSON by predicate by '%s' function took %s seconds", fun.__name__, (time() - time_start))
-    return json
-
-
-def enrich_by_object_type(request, json, fun, object_type, skip_nested=False, **kwargs):
-    if isinstance(object_type, list):
-        f = lambda x: 'object_type' in x and x['object_type'] in object_type
-    else:
-        f = lambda x: 'object_type' in x and x['object_type'] == object_type
-    return enrich_by_predicate(request, json, fun, f, skip_nested=skip_nested, **kwargs)
-
-
 def url(request, json_list, nested, url_name='show_{}', ignore_get=None):
+    """
+    Enrich the given list of objects, so they have URL.
+
+    Args:
+        request (django.http.request.HttpRequest): request which is currently processed
+        json_list (list): list of dicts (JSON objects to be enriched)
+        url_name (str|fun): pattern to create a url name taking object_type
+        ignore_get (list): list of GET parameters which are ignored when the URL is generated
+
+    Returns:
+        list: list of dicts (enriched JSON objects)
+    """
     if not ignore_get:
         ignore_get = []
+    if isinstance(url_name, str):
+        url_name = lambda x: url_name.format(x)
     urls = cache.get('proso_urls')
     if urls is None:
         urls = {}
@@ -74,7 +42,7 @@ def url(request, json_list, nested, url_name='show_{}', ignore_get=None):
             json['url'] = urls[key]
         else:
             cache_updated = True
-            json['url'] = reverse(url_name.format(json['object_type']), kwargs={'id': json['id']})
+            json['url'] = reverse(url_name(json['object_type']), kwargs={'id': json['id']})
             urls[key] = json['url']
         json['url'] = append_get_parameters(json['url'], pass_string)
     if cache_updated:
@@ -82,6 +50,8 @@ def url(request, json_list, nested, url_name='show_{}', ignore_get=None):
 
 
 def env_variables(request, json_list, nested, variable_type):
+    if 'environment' not in request.GET:
+        return
     environment = get_environment()
     items = [json["item_id"] for json in json_list]
 
