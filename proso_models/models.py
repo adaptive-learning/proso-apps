@@ -364,6 +364,57 @@ class ItemType(models.Model):
 
 class ItemManager(models.Manager):
 
+    def filter_all_reachable_leaves(self, identifier_filter, language):
+        """
+        Get all leaves corresponding to the given filter:
+
+        * the filter is a list of lists;
+        * each of the inner list carries identifiers;
+        * for each identifier, we find an item and all its reachable leaf items;
+        * within the inner list we intersect the reachable items;
+        * with the outer list we union the reachable items;
+        * when an identifier starts with the prfix '-', we find its reachable
+          leaf items and then complement them
+
+        Example::
+
+                A
+               / \\
+              B   C
+             / \ / \\
+            D   E   F
+
+            [[A, C]] ----> [E, F]
+            [[B, C]] ----> [E]
+            [[B, -C]] ---> [D]
+
+        Args::
+            identifier_filter (list): list of lists of identifiers (some of them
+                can start with the prefix '-')
+            language (str): language used for further filtering (some objects
+                for different languages share the same item
+
+        Returns:
+            list: list of item ids
+        """
+        if any([len(xs) == 1 and xs[1].startswith('-') for xs in identifier_filter]):
+            raise Exception('Filter containing only one identifier with "-" prefix is not allowed.')
+        item_identifiers = [identifier[1:] if identifier.startswith('-') else identifier for identifier in set(flatten(identifier_filter))]
+        leaves = self.get_leaves(self.translate_identifiers(item_identifiers))
+        result = set()
+        for inner_filter in identifier_filter:
+            inner_result = None
+            inner_neg_result = set()
+            for identifier in inner_filter:
+                if identifier.startswith('-'):
+                    inner_neg_result |= set(leaves[identifier[1:]])
+                elif inner_result is None:
+                    inner_result = set(leaves[identifier])
+                else:
+                    inner_result &= set(leaves[identifier])
+            result |= inner_result - inner_neg_result
+        return result
+
     @cache_pure
     def get_children_graph(self, item_ids):
         """
