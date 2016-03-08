@@ -595,5 +595,5 @@ def delete_parent(sender, instance, **kwargs):
     environment = get_environment()
     parent = instance.term.item_id
     child = instance.item_id
-    environment.delete("child", 1, item=parent, item_secondary=child, symmetric=False)
-    environment.delete("parent", 1, item=child, item_secondary=parent, symmetric=False)
+    environment.delete("child", item=parent, item_secondary=child, symmetric=False)
+    environment.delete("parent", item=child, item_secondary=parent, symmetric=False)
