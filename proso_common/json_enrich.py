@@ -26,7 +26,8 @@ def url(request, json_list, nested, url_name='show_{}', ignore_get=None):
     if not ignore_get:
         ignore_get = []
     if isinstance(url_name, str):
-        url_name = lambda x: url_name.format(x)
+        url_string = str(url_name)
+        url_name = lambda x: url_string.format(x)
     urls = cache.get('proso_urls')
     if urls is None:
         urls = {}
