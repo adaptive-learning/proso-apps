@@ -89,7 +89,7 @@ def enrich_json_objects_by_object_type(request, value):
     """
     time_start_globally = time()
     if isinstance(value, list):
-        json = [x if isinstance(x, dict) else x.to_json() for x in value]
+        json = [x.to_json() if hasattr(x, "to_json") else x for x in value]
     else:
         if isinstance(value, dict):
             json = value
