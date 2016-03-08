@@ -7,7 +7,7 @@ from django.db import connection
 from django.db import models
 from django.db import transaction
 from django.db.models import F
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from proso.django.cache import get_request_cache, is_cache_prepared
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
@@ -567,6 +567,82 @@ class ItemManager(models.Manager):
                     result.append((django_model, django_field))
         return result
 
+    def override_parent_subgraph(self, parent_subgraph, invisible_edges=None):
+        """
+        Get all items with outcoming edges from the given subgraph, drop all
+        their child relations, and then add children according to the given
+        subgraph.
+
+        Args:
+            children_subgraph (dict): item id -> list of chidlren (item ids)
+            invisible_edges (list|set): set of (from, to) tuples specifying
+                invisible edges
+        """
+        with transaction.atomic():
+            if invisible_edges is None:
+                invisible_edges = set()
+            children = list(parent_subgraph.keys())
+            all_old_relations = dict(proso.list.group_by(
+                list(ItemRelation.objects.filter(child_id__in=children)),
+                by=lambda relation: relation.child_id
+            ))
+            to_delete = set()
+            for child_id, parents in parent_subgraph.items():
+                old_relations = {
+                    relation.parent_id: relation
+                    for relation in all_old_relations.get(child_id, [])
+                }
+                for parent_id in parents:
+                    if parent_id not in old_relations:
+                        ItemRelation.objects.create(
+                            parent_id=parent_id,
+                            child_id=child_id,
+                            visible=(child_id, parent_id) not in invisible_edges
+                        )
+                    elif old_relations[parent_id].visible != (child_id, parent_id) not in invisible_edges:
+                        old_relations[parent_id].visible = (child_id, parent_id) not in invisible_edges
+                        old_relations[parent_id].save()
+                to_delete |= {old_relations[parent_id].pk for parent_id in set(old_relations.keys()) - set(parents)}
+            ItemRelation.objects.filter(pk__in=to_delete).delete()
+
+    def override_children_subgraph(self, children_subgraph, invisible_edges=None):
+        """
+        Get all items with outcoming edges from the given subgraph, drop all
+        their child relations, and then add children according to the given
+        subgraph.
+
+        Args:
+            children_subgraph (dict): item id -> list of chidlren (item ids)
+            invisible_edges (list|set): set of (from, to) tuples specifying
+                invisible edges
+        """
+        with transaction.atomic():
+            if invisible_edges is None:
+                invisible_edges = set()
+            parents = list(children_subgraph.keys())
+            all_old_relations = dict(proso.list.group_by(
+                list(ItemRelation.objects.filter(parent_id__in=parents)),
+                by=lambda relation: relation.parent_id
+            ))
+            to_delete = set()
+            for parent_id, children in children_subgraph.items():
+                old_relations = {
+                    relation.child_id: relation
+                    for relation in all_old_relations.get(parent_id, [])
+                }
+                for child_id in children:
+                    if child_id not in old_relations:
+                        ItemRelation.objects.create(
+                            parent_id=parent_id,
+                            child_id=child_id,
+                            visible=(parent_id, child_id) not in invisible_edges
+                        )
+                    elif old_relations[child_id].visible != (parent_id, child_id) not in invisible_edges:
+                        old_relations[child_id].visible = (parent_id, child_id) not in invisible_edges
+                        old_relations[child_id].save()
+                to_delete |= {old_relations[child_id].pk for child_id in set(old_relations.keys()) - set(children)}
+            ItemRelation.objects.filter(pk__in=to_delete).delete()
+
     def _reachable_graph(self, item_ids, neighbors):
         return {i: deps for i, deps in fixed_point(
             is_zero=lambda xs: len(xs) == 0,
@@ -897,6 +973,30 @@ def log_audit(sender, instance, **kwargs):
             info_id=instance.info_id,
             answer=instance.answer)
         audit.save()
+
+
+@receiver(post_save, sender=ItemRelation)
+def init_environment_relation(sender, instance, **kwargs):
+    environment = get_environment()
+    if instance.visible:
+        parent = instance.parent_id
+        child = instance.child_id
+        environment.write("child", 1, item=parent, item_secondary=child, symmetric=False, permanent=True)
+        environment.write("parent", 1, item=child, item_secondary=parent, symmetric=False, permanent=True)
+    elif not instance.visible and not kwargs['created']:
+        parent = instance.parent_id
+        child = instance.child_id
+        environment.delete("child", item=parent, item_secondary=child, symmetric=False)
+        environment.delete("parent", item=child, item_secondary=parent, symmetric=False)
+
+
+@receiver(post_delete, sender=ItemRelation)
+def drop_environment_relation(sender, instance, **kwargs):
+    environment = get_environment()
+    parent = instance.parent_id
+    child = instance.child_id
+    environment.delete("child", item=parent, item_secondary=child, symmetric=False)
+    environment.delete("parent", item=child, item_secondary=parent, symmetric=False)
 
 
 PROSO_MODELS_TO_EXPORT = [Answer]
