@@ -1,6 +1,6 @@
+from proso_models.models import get_mastery_trashold
 from . import models
 from django.core.urlresolvers import reverse
-from proso.django.config import get_config
 from proso.django.request import is_time_overridden, get_time, get_user_id, get_language
 from proso.django.response import pass_get_parameters
 from proso.list import flatten
@@ -22,7 +22,7 @@ def prediction(request, json_list, nested):
     user = get_user_id(request)
     time = get_time(request)
     predictions = _predictive_model().predict_more_items(_environment(request), user, object_item_ids, time)
-    mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
+    mastery_threshold = get_mastery_trashold()
     for object_json, prediction in zip(json_list, predictions):
         object_json['prediction'] = float("{0:.2f}".format(prediction))
         object_json['mastered'] = prediction >= mastery_threshold
@@ -48,7 +48,7 @@ def avg_prediction(request, json_list, nested):
         all_leaves,
         time
     ))))
-    mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
+    mastery_threshold = get_mastery_trashold()
     for object_json in json_list:
         leaf_predictions = [predictions[leave] for leave in leaves[object_json['item_id']]]
         object_json['avg_predicton'] = numpy.mean(leaf_predictions)

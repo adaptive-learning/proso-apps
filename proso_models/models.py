@@ -89,6 +89,10 @@ def get_options_number():
     )
 
 
+def get_mastery_trashold():
+    return get_config("proso_models", "mastery_threshold", default=0.9)
+
+
 def get_option_selector(item_selector, options_number=None):
     if options_number is None:
         options_number = get_options_number()

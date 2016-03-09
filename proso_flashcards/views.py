@@ -8,12 +8,11 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
-from proso.django.config import get_config
 from proso.django.enrichment import enrich_json_objects_by_object_type, register_object_type_enricher
 from proso.django.request import get_time, is_time_overridden, load_query_json, get_language
 from proso.django.response import render, render_json
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
-from proso_models.models import get_environment, get_predictive_model, PracticeContext, AnswerMeta
+from proso_models.models import get_environment, get_predictive_model, PracticeContext, AnswerMeta, get_mastery_trashold
 from proso_user.models import get_user_id
 from time import time as time_lib
 import json
@@ -184,7 +183,7 @@ def user_stats(request):
 
     if request.GET.get("mastered"):
         time_start = time_lib()
-        mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
+        mastery_threshold = get_mastery_trashold()
         predictions = get_predictive_model().predict_more_items(environment, user, all_items, get_time(request))
         mastered = dict(list(zip(all_items, [p >= mastery_threshold for p in predictions])))
         LOGGER.debug("user_stats - getting predictions for flashcards took %s seconds", (time_lib() - time_start))
