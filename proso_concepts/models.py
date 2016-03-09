@@ -17,6 +17,7 @@ from proso_models.models import Answer, get_environment, get_mastery_trashold, g
 
 LOGGER = logging.getLogger('django.request')
 
+
 class Tag(models.Model):
     """
     Arbitrary tag for concepts.
@@ -241,7 +242,7 @@ class UserStat(models.Model):
                                                       defaults={"value": value})
 
     @staticmethod
-    def get_user_stats(users, lang, concepts=None):
+    def get_user_stats(users, lang, concepts=None, since=None):
         """
         Finds all UserStats of given concepts and users.
         Recompute UserStats if necessary
@@ -274,6 +275,8 @@ class UserStat(models.Model):
             qs = qs.filter(concept__in=concepts)
         if lang is not None:
             qs = qs.filter(concept__lang=lang)
+        if since is not None:
+            qs = qs.filter(time__gte=since)
 
         data = defaultdict(lambda: defaultdict(lambda: {}))
         for user_stat in qs.select_related("concept"):
