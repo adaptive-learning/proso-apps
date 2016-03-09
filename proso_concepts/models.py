@@ -5,13 +5,14 @@ from urllib.parse import parse_qs
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Count, Sum, Max, Min
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 from proso.django.util import cache_pure
+from proso.list import flatten
 from proso_flashcards.models import Flashcard
-from proso_models.models import Answer
+from proso_models.models import Answer, get_environment, get_mastery_trashold, get_predictive_model
 
 
 class Tag(models.Model):
@@ -101,7 +102,7 @@ class Concept(models.Model):
         if concepts is None:
             concepts = Concept.objects.filter(active=True)
             if lang is not None:
-                concepts = concepts.filter(lang=None)
+                concepts = concepts.filter(lang=lang)
 
         item_lists = {}
         for concept in concepts:
@@ -184,19 +185,55 @@ class UserStat(models.Model):
         unique_together = ("concept", "user", "stat")
 
     def __str__(self):
-        return "{} - {}: {}".format(self.user, self.concept, self.value)
+        return "{} - {}: {}".format(self.stat, self.concept, self.value)
 
     @staticmethod
-    def recalculate_concepts(concepts):
+    def recalculate_concepts(concepts, lang=None):
         """
         Recalculated given concepts for given users
 
         Args:
             concepts (dict): user (User or int -> set of concepts to recalculate)
+            lang(Optional[str]): language used to get items in all concepts (cached).
+                Defaults to None, in that case are get items only in used concepts
         """
+
+        if lang is None:
+            items = Concept.get_items(concepts=Concept.objects.filter(pk__in=set(flatten(concepts.values()))))
+        else:
+            items = Concept.get_items(lang=lang)
+
+        environment = get_environment()
+        mastery_threshold = get_mastery_trashold()
         for user, concepts in concepts.items():
-            pass
-            # TODO recalculate user stats
+            all_items = set(flatten([items[c] for c in concepts]))
+            answer_counts = dict(list(zip(all_items, environment.number_of_answers_more_items(all_items, user))))
+            correct_answer_counts = dict(list(zip(all_items,
+                                            environment.number_of_correct_answers_more_items(all_items, user))))
+            predictions = dict(list(zip(all_items, get_predictive_model().
+                                        predict_more_items(environment, user, all_items, time=None))))
+            for concept in concepts:
+                answer_aggregates = Answer.objects.filter(user=user, item__in=items[concept]).aggregate(
+                    time_spent=Sum("response_time"),
+                    sessions=Count("session", True),
+                    time_first=Min("time"),
+                    time_last=Max("time"),
+                )
+                stats = {
+                    "answer_count": sum(answer_counts[i] for i in items[concept]),
+                    "correct_answer_count": sum(correct_answer_counts[i] for i in items[concept]),
+                    "item_count": len(items[concept]),
+                    "practiced_items_count": sum([answer_counts[i] > 0 for i in items[concept]]),
+                    "mastered_items_count": sum([predictions[i] >= mastery_threshold for i in items[concept]]),
+                    "prediction": sum([predictions[i] for i in items[concept]]) / len(items[concept]),
+                    "time_spent": answer_aggregates["time_spent"] / 1000,
+                    "session_count": answer_aggregates["sessions"],
+                    "time_first": answer_aggregates["time_first"].timestamp(),
+                    "time_last": answer_aggregates["time_last"].timestamp(),
+                }
+                for stat_name, value in stats.items():
+                    UserStat.objects.update_or_create(user_id=user, concept_id=concept, stat=stat_name,
+                                                      defaults={"value": value})
 
     @staticmethod
     def get_user_stats(users, lang, concepts=None):
@@ -218,7 +255,7 @@ class UserStat(models.Model):
             users = [users]
 
         concepts_to_recalculate = get_concepts_to_recalculate(users, lang, concepts)
-        UserStat.recalculate_concepts(concepts_to_recalculate)
+        UserStat.recalculate_concepts(concepts_to_recalculate, lang)
 
         qs = UserStat.objects.filter(user__in=users)
         if concepts is not None:
@@ -249,11 +286,11 @@ def get_concepts_to_recalculate(users, lang, concepts=None):
 
     mapping = Concept.get_item_concept_mapping(lang)
     current_user_stats = defaultdict(lambda: {})
-    user_stats_qs = UserStat.objects.filter(user__in=users)
+    user_stats_qs = UserStat.objects.filter(user__in=users, stat="answer_count")     # we need only one type
     if concepts is not None:
         user_stats_qs = user_stats_qs.filter(concept__in=concepts)
     for user_stat in user_stats_qs:
-        current_user_stats[user_stat.pk][user_stat.concept_id] = user_stat
+        current_user_stats[user_stat.user_id][user_stat.concept_id] = user_stat
 
     concepts_to_recalculate = defaultdict(lambda: set())
     for user, item, time in Answer.objects.filter(Q(lang=lang) | Q(lang__isnull=True), user__in=users)\
