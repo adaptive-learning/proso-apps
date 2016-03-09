@@ -1,6 +1,4 @@
 import logging
-from collections import defaultdict
-
 import proso_common.views
 # from proso_common import json_enrich
 from proso.django.cache import cache_page_conditional
@@ -74,11 +72,7 @@ def user_stats(request):
     if "concepts" in request.GET:
         concepts = Concept.objects.filter(lang=language, active=True,
                                           identifier__in=load_query_json(request.GET, "concepts"))
-
-    data = defaultdict(lambda: {})
-    for user_stat in UserStat.get_user_stats(user, language, concepts):
-        data[user_stat.concept.identifier][user_stat.stat] = user_stat.value
-
+    data = UserStat.get_user_stats(user, language, concepts)
     return render_json(request, data, template='concepts_json.html', help_text=user_stats.__doc__)
 
 

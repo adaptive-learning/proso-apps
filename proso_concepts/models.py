@@ -1,8 +1,9 @@
 import json
+import logging
 from collections import defaultdict
 from hashlib import sha1
 from urllib.parse import parse_qs
-
+from time import time as time_lib
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Q, Count, Sum, Max, Min
@@ -14,6 +15,7 @@ from proso.list import flatten
 from proso_flashcards.models import Flashcard
 from proso_models.models import Answer, get_environment, get_mastery_trashold, get_predictive_model
 
+LOGGER = logging.getLogger('django.request')
 
 class Tag(models.Model):
     """
@@ -198,6 +200,9 @@ class UserStat(models.Model):
                 Defaults to None, in that case are get items only in used concepts
         """
 
+        if len(concepts) == 0:
+            return
+
         if lang is None:
             items = Concept.get_items(concepts=Concept.objects.filter(pk__in=set(flatten(concepts.values()))))
         else:
@@ -249,20 +254,33 @@ class UserStat(models.Model):
                 Defaults to None meaning all concepts.
 
         Returns:
-            QuerySet: qs of UserStats
+            dict: user_id  -> dict (concept_identifier - > (stat_name  -> value)) -- for more users
+            dict: concept_identifier - > (stat_name  -> value) -- for one user
         """
+        only_one_user = False
         if not isinstance(users, list):
             users = [users]
+            only_one_user = True
 
+        time_start = time_lib()
         concepts_to_recalculate = get_concepts_to_recalculate(users, lang, concepts)
+        LOGGER.debug("user_stats - getting identifying concepts to recalculate: %ss", (time_lib() - time_start))
+        time_start = time_lib()
         UserStat.recalculate_concepts(concepts_to_recalculate, lang)
+        LOGGER.debug("user_stats - recalculating concepts: %ss", (time_lib() - time_start))
 
         qs = UserStat.objects.filter(user__in=users)
         if concepts is not None:
             qs = qs.filter(concept__in=concepts)
         if lang is not None:
             qs = qs.filter(concept__lang=lang)
-        return qs.select_related("concept")
+
+        data = defaultdict(lambda: defaultdict(lambda: {}))
+        for user_stat in qs.select_related("concept"):
+            data[user_stat.user_id][user_stat.concept.identifier][user_stat.stat] = user_stat.value
+        if only_one_user:
+            return data[users[0].pk if type(users[0]) == User else users[0]]
+        return data
 
 
 def get_concepts_to_recalculate(users, lang, concepts=None):
