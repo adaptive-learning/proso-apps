@@ -85,12 +85,13 @@ class Concept(models.Model):
 
     @staticmethod
     @cache_pure
-    def get_items(concepts=None):
+    def get_items(concepts=None, lang=None):
         """
         Get mapping of concepts to items belonging to concept.
 
         Args:
             concepts (list of Concept): Defaults to None meaning all concepts
+            lang (str): language of concepts used if concepts is None
 
         Returns:
             dict: concept (int) -> list of item ids (int)
@@ -99,6 +100,8 @@ class Concept(models.Model):
         # TODO born to be reimplemented, now assuming flashcards
         if concepts is None:
             concepts = Concept.objects.filter(active=True)
+            if lang is not None:
+                concepts = concepts.filter(lang=None)
 
         item_lists = {}
         for concept in concepts:
@@ -117,8 +120,8 @@ class Concept(models.Model):
     @cache_pure
     def get_item_concept_mapping(lang):
         """ Get mapping of items_ids to concepts containing these items
-        Args:
 
+        Args:
             lang (str): language of concepts
 
         Returns:
