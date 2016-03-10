@@ -131,8 +131,8 @@ class ConceptManager(models.Manager):
             current_user_stats[user_stat.user_id][user_stat.concept_id] = user_stat
 
         concepts_to_recalculate = defaultdict(lambda: set())
-        for user, item, time in Answer.objects.filter(Q(lang=lang) | Q(lang__isnull=True), user__in=users) \
-                .values_list("user_id", "item", "time"):
+        for user, item, time in Answer.objects.filter(Q(lang=lang) | Q(lang__isnull=True), user__in=users)\
+                .values_list("user_id", "item").annotate(Max("time")):
             if item not in mapping:
                 # in reality this should by corner case, so it is efficient to not filter Answers
                 continue    # item is not in concept
