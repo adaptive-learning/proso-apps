@@ -35,7 +35,7 @@ def practice_image(request):
     predictive_model = get_predictive_model()
     environment = get_environment()
     predictions = predictive_model.predict_more_items(environment, user=-1, items=item_ids, time=datetime.now())
-    items_in_order = zip(*sorted(zip(predictions, item_ids), reverse=True))[1] if len(item_ids) > 1 else []
+    items_in_order = list(zip(*sorted(zip(predictions, item_ids), reverse=True)))[1] if len(item_ids) > 1 else []
     item_prediction = dict(list(zip(item_ids, predictions)))
     item_position = dict(list(zip(items_in_order, list(range(len(item_ids))))))
     svg = proso.svg.Printer()
