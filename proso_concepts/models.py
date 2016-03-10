@@ -80,11 +80,11 @@ class ConceptManager(models.Manager):
         for concept in concepts:
             parameters = {k: json.loads(v[0].replace("'", '"')) for k, v in parse_qs(concept.query).items()}
             _, items = Flashcard.objects.filtered_ids(
-                    categories=parameters["categories"],
-                    contexts=parameters["contexts"],
-                    types=parameters["types"],
-                    avoid=[],
-                    language=concept.lang
+                categories=parameters["categories"],
+                contexts=parameters["contexts"],
+                types=parameters["types"],
+                avoid=[],
+                language=concept.lang
             )
             item_lists[concept.pk] = items
         return item_lists
@@ -146,7 +146,6 @@ class ConceptManager(models.Manager):
         if only_one_user:
             return concepts_to_recalculate[users[0]]
         return concepts_to_recalculate
-
 
 
 class Concept(models.Model):
@@ -266,10 +265,10 @@ class UserStatManager(models.Manager):
                                         predict_more_items(environment, user, all_items, time=None))))
             for concept in concepts:
                 answer_aggregates = Answer.objects.filter(user=user, item__in=items[concept]).aggregate(
-                        time_spent=Sum("response_time"),
-                        sessions=Count("session", True),
-                        time_first=Min("time"),
-                        time_last=Max("time"),
+                    time_spent=Sum("response_time"),
+                    sessions=Count("session", True),
+                    time_first=Min("time"),
+                    time_last=Max("time"),
                 )
                 stats = {
                     "answer_count": sum(answer_counts[i] for i in items[concept]),
@@ -285,7 +284,7 @@ class UserStatManager(models.Manager):
                 }
                 for stat_name, value in stats.items():
                     self.update_or_create(user_id=user, concept_id=concept, stat=stat_name,
-                                                      defaults={"value": value})
+                                          defaults={"value": value})
 
     def get_user_stats(self, users, lang, concepts=None, since=None):
         """

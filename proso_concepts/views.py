@@ -9,7 +9,7 @@ from proso.django.cache import cache_page_conditional
 from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import get_user_id, load_query_json, get_language
 from proso.django.response import render_json
-from proso_concepts.models import Concept, Tag, UserStat
+from proso_concepts.models import Concept, UserStat
 
 LOGGER = logging.getLogger('django.request')
 
