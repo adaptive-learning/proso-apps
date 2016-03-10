@@ -5,7 +5,6 @@ from django.contrib.admin.views.decorators import staff_member_required
 from lazysignup.decorators import allow_lazy_user
 
 import proso_common.views
-# from proso_common import json_enrich
 from proso.django.cache import cache_page_conditional
 from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import get_user_id, load_query_json, get_language
@@ -103,9 +102,3 @@ def user_stats_bulk(request):
             "concepts": s,
         })
     return render_json(request, data, template='concepts_json.html', help_text=user_stats_bulk.__doc__)
-
-################################################################################
-# Enrichers
-################################################################################
-
-# register_object_type_enricher(["concept", "tag"], json_enrich.url)
