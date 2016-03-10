@@ -456,6 +456,8 @@ class FlashcardAnswer(Answer):
     direction = models.CharField(choices=DIRECTIONS, max_length=3)
     options = models.ManyToManyField(Flashcard, related_name="answers_with_this_as_option")
 
+    objects = FlashcardAnswerManager()
+
     def to_json(self, nested=False):
         json = Answer.to_json(self)
         json['direction'] = self.direction
