@@ -27,26 +27,15 @@ def show_more(request, object_class, should_cache=True):
     to_json_kwargs = {}
 
     def _load_objects(request, object_class):
-        select_related_all = {
-            Concept: [],
-        }
-        prefetch_related_all = {
-            Concept: ["tags", "actions"],
-            Tag: ["concepts"],
-        }
-        select_related = select_related_all.get(object_class, [])
-        prefetch_related = prefetch_related_all.get(object_class, [])
-        objs = object_class.objects
-        if len(select_related) > 0:
-            objs = objs.select_related(*select_related)
+        objs = object_class.objects.prepare_related()
         if 'filter_column' in request.GET and 'filter_value' in request.GET:
             column = request.GET['filter_column']
             value = request.GET['filter_value']
             if value.isdigit():
                 value = int(value)
-            objs = objs.prefetch_related(*prefetch_related).filter(**{column: value})
+            objs = objs.filter(**{column: value})
         else:
-            objs = objs.prefetch_related(*prefetch_related).all()
+            objs = objs.all()
         if object_class == Concept:
             objs = objs.filter(active=True)
         return objs
@@ -78,7 +67,7 @@ def user_stats(request):
     if "concepts" in request.GET:
         concepts = Concept.objects.filter(lang=language, active=True,
                                           identifier__in=load_query_json(request.GET, "concepts"))
-    data = UserStat.get_user_stats(user, language, concepts)
+    data = UserStat.objects.get_user_stats(user, language, concepts)
     return render_json(request, data, template='concepts_json.html', help_text=user_stats.__doc__)
 
 
@@ -106,7 +95,7 @@ def user_stats_bulk(request):
     if "concepts" in request.GET:
         concepts = Concept.objects.filter(lang=language, active=True,
                                           identifier__in=load_query_json(request.GET, "concepts"))
-    stats = UserStat.get_user_stats(users, language, concepts=concepts, since=since)
+    stats = UserStat.objects.get_user_stats(users, language, concepts=concepts, since=since)
     data = {"users": []}
     for user, s in stats.items():
         data["users"].append({
