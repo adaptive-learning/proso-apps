@@ -263,6 +263,8 @@ class UserStatManager(models.Manager):
                                                   environment.number_of_correct_answers_more_items(all_items, user))))
             predictions = dict(list(zip(all_items, get_predictive_model().
                                         predict_more_items(environment, user, all_items, time=None))))
+            new_user_stats = []
+            stats_to_delete_condition = Q()
             for concept in concepts:
                 answer_aggregates = Answer.objects.filter(user=user, item__in=items[concept]).aggregate(
                     time_spent=Sum("response_time"),
@@ -282,9 +284,11 @@ class UserStatManager(models.Manager):
                     "time_first": answer_aggregates["time_first"].timestamp(),
                     "time_last": answer_aggregates["time_last"].timestamp(),
                 }
+                stats_to_delete_condition |= Q(user=user, concept=concept)
                 for stat_name, value in stats.items():
-                    self.update_or_create(user_id=user, concept_id=concept, stat=stat_name,
-                                          defaults={"value": value})
+                    new_user_stats.append(UserStat(user_id=user, concept_id=concept, stat=stat_name, value=value))
+            self.filter(stats_to_delete_condition).delete()
+            self.bulk_create(new_user_stats)
 
     def get_user_stats(self, users, lang, concepts=None, since=None):
         """
