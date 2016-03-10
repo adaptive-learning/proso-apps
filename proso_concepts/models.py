@@ -10,6 +10,7 @@ from django.db.models import Q, Count, Sum, Max, Min
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
+from proso.dict import group_keys_by_value_lists
 from proso.django.util import cache_pure
 from proso.list import flatten
 from proso_flashcards.models import Flashcard
@@ -100,12 +101,7 @@ class ConceptManager(models.Manager):
 
         """
         concepts = self.filter(active=True, lang=lang)
-        mapping = defaultdict(lambda: set())
-        for concept, items in self.get_concept_item_mapping(concepts).items():
-            for item in items:
-                mapping[item].add(concept)
-
-        return dict(mapping)
+        return group_keys_by_value_lists(Concept.objects.get_concept_item_mapping(concepts))
 
     def get_concepts_to_recalculate(self, users, lang, concepts=None):
         """
@@ -251,7 +247,6 @@ class UserStatManager(models.Manager):
             lang(Optional[str]): language used to get items in all concepts (cached).
                 Defaults to None, in that case are get items only in used concepts
         """
-
         if len(concepts) == 0:
             return
 
