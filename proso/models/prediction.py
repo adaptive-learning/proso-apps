@@ -2,6 +2,7 @@ import abc
 import operator
 from math import exp
 from functools import reduce
+from proso.util import timeit
 
 
 class PredictiveModel(metaclass=abc.ABCMeta):
@@ -15,6 +16,7 @@ class PredictiveModel(metaclass=abc.ABCMeta):
     * **update**: the model updates environment to persist it for the future prediction
     """
 
+    @timeit(name='prediction')
     def predict_more_items(self, environment, user, items, time, **kwargs):
         data = self.prepare_phase_more_items(environment, user, items, time, **kwargs)
         return self.predict_phase_more_items(data, user, items, time, **kwargs)
