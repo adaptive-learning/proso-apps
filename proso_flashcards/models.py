@@ -11,6 +11,7 @@ from proso.django.config import get_config
 import random
 import logging
 from functools import reduce
+from proso.util import timer
 
 
 LOGGER = logging.getLogger('django.request')
@@ -173,9 +174,12 @@ class FlashcardManager(models.Manager):
         item_selector = get_item_selector()
         option_selector = get_option_selector(item_selector)
 
+        timer('item_selector')
         selected_items, meta = item_selector.select(environment, user, items, time, practice_context, limit, items_in_queue=items_in_queue)
+        LOGGER.debug('choosing items by item selector took %s seconds', timer('item_selector'))
 
         # get selected flashcards
+        timer('flashcards')
         flashcards = Flashcard.objects.filter(item_id__in=selected_items).prefetch_related(Flashcard.related_term())
         if with_contexts:
             flashcards = flashcards.prefetch_related(Flashcard.related_context())
@@ -185,10 +189,12 @@ class FlashcardManager(models.Manager):
         for f, m in zip(flashcards, meta):
             if m is not None:
                 f.practice_meta = m
+        LOGGER.debug('loading flashcards for selected items took %s seconds', timer('flashcards'))
 
+        timer('option_selector')
         test_position = self._test_index(meta)
         if test_position is None:
-            return self._load_options(
+            result = self._load_options(
                 option_selector, selected_items, flashcards, environment,
                 user, time, limit, items, practice_context, language,
                 with_contexts)
@@ -203,7 +209,9 @@ class FlashcardManager(models.Manager):
                     with_contexts)
             else:
                 other = []
-            return other[:test_position] + [test_flashcard] + other[test_position:]
+            result = other[:test_position] + [test_flashcard] + other[test_position:]
+        LOGGER.debug('choosing options by option selector took %s seconds', timer('option_selector'))
+        return result
 
     @cache_pure
     def under_categories_as_items(self, categories):
