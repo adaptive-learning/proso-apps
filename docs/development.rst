@@ -2,6 +2,30 @@
 Development Guide
 #################
 
+*******************************
+Optional fast start with docker
+*******************************
+
+Docker-compose installation
+===========================
+In case of Ubuntu 14.04::
+    sudo apt-get update
+    sudo apt-get install apt-transport-https ca-certificates apparmor
+    sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+    echo 'deb https://apt.dockerproject.org/repo ubuntu-trusty main' | sudo tee /etc/apt/sources.list.d/docker.list
+    sudo apt-get update
+    sudo apt-get install -y docker-engine
+    sudo bash -c "curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose"
+    sudo chmod +x /usr/local/bin/docker-compose
+
+More detailed info available at `Docker page <https://docs.docker.com/compose/install/>`_.
+
+Available make commands (requires sudo)
+=======================================
+``docker-up`` -> run local development server at localhost:8000
+``docker-tests`` -> run all tests in docker environment
+``docker-bash`` -> attach to docker environment command line
+
 ********
 Starting
 ********
@@ -94,3 +118,4 @@ If you want to create a new dump file, just run::
 
   export PGPASSWORD=...
   pg_dump -h db.fi.muni.cz -Uweb_slepemapy -nweb_slepemapy_prod --exclude-table=proso_models_audit "dbname=pgdb sslmode=require" > $DUMP_FILE
+
