@@ -13,9 +13,9 @@ class Command(BaseCommand):
         parser.add_argument('filename')
 
     def handle(self, *args, **options):
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "experiments_schema.json"), "r") as schema_file:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "experiments_schema.json"), "r", encoding='utf8') as schema_file:
             schema = json.load(schema_file)
-        with open(options['filename'], 'r') as json_file:
+        with open(options['filename'], 'r', encoding='utf8') as json_file:
             with transaction.atomic():
                 data = json.load(json_file)
                 validate(data, schema)
