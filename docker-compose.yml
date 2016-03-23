@@ -1,0 +1,11 @@
+version: '2'
+services:
+  proso-apps:
+    image: quay.io/adaptivelearning/proso-apps-env
+    command: bash -c "cd /proso-apps && python3 manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/proso-apps
+    ports:
+      - "8000:8000"
+    environment:
+      SQLITE_ENVIRONMENT: 'True'
