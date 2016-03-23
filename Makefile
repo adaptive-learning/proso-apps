@@ -22,6 +22,16 @@ register:
 
 ################################################################################
 
+docker-up:
+	docker-compose build
+	docker-compose up
+
+docker-bash:
+	docker-compose run --rm proso-apps bash
+
+docker-tests:
+	docker-compose run --rm proso-apps bash -c "cd /proso-apps && make test"
+
 sphinx-apidoc:
 	sphinx-apidoc -o docs/ref . `find . -name test_*.py -or -name *test.py -or -name migrations -or -name management -or -name setup.py -or -name testproject -or -name manage.py`
 

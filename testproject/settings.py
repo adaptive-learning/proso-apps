@@ -22,7 +22,7 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/media/'
 
 
-TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
+TESTING = (len(sys.argv) > 1 and sys.argv[1] == 'test') or bool(os.getenv('SQLITE_ENVIRONMENT', False))
 
 DEBUG = True
 
