@@ -13,7 +13,7 @@ MICRO_VERSION=$(word 3,$(subst ., ,$(VERSION)))
 
 ################################################################################
 
-upload: grunt test register
+upload: reinstall grunt test register
 	python setup.py sdist upload
 
 register:
@@ -66,7 +66,7 @@ uninstall:
 
 check:
 	pip install flake8
-	flake8 --ignore=E501,E225,E123,E128,W503,E731 --exclude=*/migrations/*.py,*/static/bower_components,setup.py,docs/conf.py .
+	flake8 --ignore=E501,E225,E123,E128,W503,E731 --exclude=*/migrations/*.py,*/static/bower_components,setup.py,docs/conf.py,.ropeproject .
 
 
 ################################################################################

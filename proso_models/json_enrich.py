@@ -1,9 +1,20 @@
-from proso.django.config import get_config
-from proso.django.response import pass_get_parameters
-from django.core.urlresolvers import reverse
-from proso.django.request import is_time_overridden, get_time, get_user_id
 from . import models
+from django.core.urlresolvers import reverse
+from proso.django.config import get_config
+from proso.django.request import is_time_overridden, get_time, get_user_id, get_language
+from proso.django.response import pass_get_parameters
+from proso.list import flatten
 import numpy
+
+
+def item2object(request, json_list, nested):
+    if any([x.get('object_type', '') != 'item' for x in json_list]):
+        raise Exception('Only items can be translated to objects!')
+    item_ids = [x['id'] for x in json_list]
+    translated = models.Item.objects.translate_item_ids(item_ids, get_language(request), is_nested=nested)
+    for object_json in json_list:
+        for key, value in translated[object_json['id']].items():
+            object_json[key] = value
 
 
 def prediction(request, json_list, nested):
@@ -23,25 +34,56 @@ def prediction(request, json_list, nested):
     return json_list
 
 
+def avg_prediction(request, json_list, nested):
+    if 'stats' not in request.GET:
+        return
+    object_item_ids = [x['item_id'] for x in json_list]
+    leaves = models.Item.objects.get_leaves(object_item_ids)
+    all_leaves = list(set(flatten(leaves.values())))
+    user = get_user_id(request)
+    time = get_time(request)
+    predictions = dict(list(zip(all_leaves, _predictive_model().predict_more_items(
+        _environment(request),
+        user,
+        all_leaves,
+        time
+    ))))
+    mastery_threshold = get_config("proso_models", "mastery_threshold", default=0.9)
+    for object_json in json_list:
+        leaf_predictions = [predictions[leave] for leave in leaves[object_json['item_id']]]
+        object_json['avg_predicton'] = numpy.mean(leaf_predictions)
+        object_json['mastered'] = sum([p > mastery_threshold for p in leaf_predictions])
+
+
 def number_of_answers(request, json_list, nested):
+    if 'stats' not in request.GET:
+        return
     object_item_ids = [x['item_id'] for x in json_list]
     user = get_user_id(request)
-    number_of_answers = _environment(request).number_of_answers_more_items(
-        user=user, items=object_item_ids)
-    for object_json, num in zip(json_list, number_of_answers):
+    leaves = models.Item.objects.get_leaves(object_item_ids)
+    all_leaves = list(set(flatten(leaves.values())))
+    number_of_answers = dict(list(zip(leaves, _environment(request).number_of_answers_more_items(
+        user=user, items=all_leaves))))
+    for object_json in json_list:
+        num = sum([number_of_answers[leave] for leave in leaves[object_json['item_id']]])
         object_json['number_of_answers'] = num
-        object_json['covered'] = num > 0
+        object_json['practiced'] = num > 0
     return json_list
 
 
 def number_of_correct_answers(request, json_list, nested):
+    if 'stats' not in request.GET:
+        return
     object_item_ids = [x['item_id'] for x in json_list]
     user = get_user_id(request)
-    number_of_correct_answers = _environment(request).number_of_correct_answers_more_items(
-        user=user, items=object_item_ids)
-    for object_json, num in zip(json_list, number_of_correct_answers):
+    leaves = models.Item.objects.get_leaves(object_item_ids)
+    all_leaves = set(flatten(leaves.values()))
+    number_of_correct_answers = dict(list(zip(leaves, _environment(request).number_of_correct_answers_more_items(
+        user=user, items=all_leaves))))
+    for object_json in json_list:
+        num = sum([number_of_correct_answers[leave] for leave in leaves[object_json['item_id']]])
         object_json['number_of_correct_answers'] = num
-        object_json['covered_correctly'] = num > 0
+        object_json['practiced_correctly'] = num > 0
     return json_list
 
 

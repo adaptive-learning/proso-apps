@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from django.shortcuts import render as original_render, redirect
 from django.http import HttpResponse
-import json as simplejson
-import markdown
-import logging
+from django.shortcuts import render as original_render, redirect
+from proso.django.enrichment import enrich_json_objects_by_object_type
 from time import time
+import json as simplejson
+import logging
+import markdown
 import proso.django.log
 import proso.release
 
@@ -47,6 +48,7 @@ def render(request, template, data, *args, **kwargs):
 
 def render_json(request, json, template=None, status=None, help_text=None, version=proso.release.VERSION):
     time_start = time()
+    json = enrich_json_objects_by_object_type(request, json)
     if status is None or status // 100 == 2:
         json = {'data': json, 'version': version}
     if 'error' in json and 'error_type' in json:

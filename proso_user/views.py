@@ -1,22 +1,22 @@
-from django.core.exceptions import ObjectDoesNotExist
-from proso.django.response import render, render_json
-import django.contrib.auth as auth
-from proso.django.request import get_user_id, json_body, is_user_id_overridden
+from . import json_enrich
 from .models import Session, UserProfile, TimeZone, UserQuestion, UserQuestionAnswer, UserQuestionPossibleAnswer, migrate_google_openid_user
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest, Http404
+from django.middleware.csrf import get_token
+from django.shortcuts import get_object_or_404
+from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
-from django.shortcuts import get_object_or_404
-from django.db import transaction
-from django.contrib.auth.models import User
-from django.middleware.csrf import get_token
+from proso.django.config import get_config
+from proso.django.enrichment import enrich_json_objects_by_object_type, register_object_type_enricher
+from proso.django.request import get_user_id, json_body, is_user_id_overridden, get_language
+from proso.django.response import render, render_json
+import django.contrib.auth as auth
 import json
 import proso_common
-from django.utils.translation import ugettext as _
-from proso.django.config import get_config
-import proso_common.json_enrich as common_json_enrich
-from . import json_enrich as user_json_enrich
 
 
 @allow_lazy_user
@@ -65,7 +65,7 @@ def profile(request, status=200):
                     auth.login(request, migrated_user)
             user_profile = get_object_or_404(UserProfile, user_id=user_id)
         return render_json(
-            request, _to_json(request, user_profile, stats=request.GET.get("stats", False)), status=status,
+            request, user_profile, status=status,
             template='user_profile.html', help_text=profile.__doc__)
     elif request.method == 'POST':
         with transaction.atomic():
@@ -93,7 +93,7 @@ def profile(request, status=200):
 @cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
 def show_one(request, object_class, id):
     return proso_common.views.show_one(
-        request, _to_json, object_class, id, template='user_json.html')
+        request, enrich_json_objects_by_object_type, object_class, id, template='user_json.html')
 
 
 @cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
@@ -123,7 +123,7 @@ def show_more(request, object_class, should_cache=True):
         return objs
 
     return proso_common.views.show_more(
-        request, _to_json, _load_objects, object_class,
+        request, enrich_json_objects_by_object_type, _load_objects, object_class,
         should_cache=should_cache, template='user_json.html', to_json_kwargs=to_json_kwargs)
 
 
@@ -221,10 +221,10 @@ def answer_question(request):
 
 
 def questions_to_ask(request):
-    language = request.GET.get("language", request.LANGUAGE_CODE)
+    language = get_language(request)
     user_id = get_user_id(request)
     questions = UserQuestion.objects.questions_to_ask(user_id, language)
-    return render_json(request, _to_json(request, list(questions)), template='user_json.html')
+    return render_json(request, list(questions), template='user_json.html')
 
 
 def logout(request):
@@ -307,7 +307,7 @@ def session(request):
     if request.method == 'GET':
         return render_json(
             request,
-            _to_json(request, Session.objects.get_current_session()),
+            Session.objects.get_current_session(),
             template='user_session.html', help_text=session.__doc__)
     elif request.method == 'POST':
         current_session = Session.objects.get_current_session()
@@ -362,22 +362,6 @@ def initmobile_view(request):
         user.save()
         response['password'] = password
     return HttpResponse(json.dumps(response))
-
-
-def _to_json(request, value, **kwargs):
-    if isinstance(value, list):
-        json = [x if isinstance(x, dict) else x.to_json(**kwargs) for x in value]
-    elif not isinstance(value, dict):
-        json = value.to_json(**kwargs)
-    else:
-        json = value
-    common_json_enrich.enrich_by_object_type(request, json,
-        user_json_enrich.user_answers, ['user_question'],
-        skip_nested=True)
-    common_json_enrich.enrich_by_object_type(request, json,
-        user_json_enrich.url, ['user_question', 'user_question_possible_answer'],
-        skip_nested=False)
-    return json
 
 
 def _check_credentials(credentials, new=False):
@@ -445,3 +429,10 @@ def user_service(request):
     else:
         user = json.dumps(request.user.userprofile.to_json())
     return render(request, "user_service.html", {"user": user})
+
+
+################################################################################
+# Enrichers
+################################################################################
+
+register_object_type_enricher(['user_question'], json_enrich.user_answers)

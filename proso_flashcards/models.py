@@ -16,6 +16,12 @@ from functools import reduce
 LOGGER = logging.getLogger('django.request')
 
 
+class TermManager(models.Manager):
+
+    def prepare_related(self):
+        return self.prefetch_related('parents')
+
+
 class Term(models.Model):
     identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_terms")
@@ -23,6 +29,8 @@ class Term(models.Model):
     lang = models.CharField(max_length=2)
     name = models.TextField()
     type = models.CharField(max_length=50, null=True, blank=True)
+
+    objects = TermManager()
 
     def to_json(self, nested=False):
         json = {
@@ -42,6 +50,12 @@ class Term(models.Model):
         return "{0.lang} - {0.name}".format(self)
 
 
+class ContextManager(models.Manager):
+
+    def prepare_related(self):
+        return self.prefetch_related('categories')
+
+
 class Context(models.Model):
     identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_contexts")
@@ -49,6 +63,8 @@ class Context(models.Model):
     lang = models.CharField(max_length=2)
     name = models.TextField(null=True, blank=True)
     content = models.TextField(null=True, blank=True)
+
+    objects = ContextManager()
 
     def to_json(self, nested=False, with_content=True):
         json = {
@@ -72,10 +88,8 @@ class Context(models.Model):
 
 
 class FlashcardQuerySet(models.query.QuerySet):
-    def filter_fc(self, categories, contexts, types, avoid, language=None):
-        if get_config('proso_flashcards', 'avoid_also_related_flaschcards', default=False):
-            avoid = Flashcard.objects.filter(term__flashcards__pk__in=avoid).values_list("pk", flat=True)
-        qs = self.filter(Q(active=True) & ~Q(id__in=avoid))
+    def filter_fc(self, categories, contexts, types, language=None):
+        qs = self.filter(active=True)
         if language is not None:
             qs = qs.filter(lang=language)
         if isinstance(contexts, list) and len(contexts) > 0:
@@ -123,6 +137,10 @@ class FlashcardQuerySet(models.query.QuerySet):
 
 
 class FlashcardManager(models.Manager):
+
+    def prepare_related(self):
+        return self.select_related(Flashcard.related_term(), Flashcard.related_context()).prefetch_related('categories')
+
     def get_queryset(self):
         return FlashcardQuerySet(self.model, using=self._db)
 
@@ -133,13 +151,25 @@ class FlashcardManager(models.Manager):
         else:
             return item_ids
 
-    @cache_pure
     def filtered_ids(self, categories, contexts, types, avoid, language):
-        i = tuple(zip(*self.get_queryset().filter_fc(
-            categories, contexts, types, avoid, language).values_list("pk", "item_id")))
-        if len(i) != 2:
+        """
+        Get ids and item ids for flashcards in the given filter.
+        """
+        tuples = self._filtered_ids(categories, contexts, types, language)
+        if get_config('proso_flashcards', 'avoid_also_related_flaschcards', default=False):
+            avoid = Flashcard.objects.filter(term__flashcards__pk__in=avoid).values_list("pk", flat=True)
+        avoid = set(avoid)
+        tuples = [(f_id, i_id) for f_id, i_id in tuples if f_id not in avoid]
+        result = tuple(zip(*tuples))
+        if len(result) != 2:
             return [], []
-        return i
+        return result
+
+    @cache_pure
+    def _filtered_ids(self, categories, contexts, types, language):
+        return self.get_queryset().filter_fc(
+            categories, contexts, types, language
+        ).values_list("pk", "item_id")
 
     @cache_pure
     def filtered_ids_group(self, data, language, empty_groups=False):
@@ -419,6 +449,12 @@ class Category(models.Model):
         return "{0.lang} - {0.name}".format(self)
 
 
+class FlashcardAnswerManager(models.Manager):
+
+    def prepare_related(self):
+        return self.prefetch_related('options__{}'.format(Flashcard.related_term()))
+
+
 class FlashcardAnswer(Answer):
     FROM_TERM = "t2d"
     FROM_DESCRIPTION = "d2t"
@@ -429,6 +465,8 @@ class FlashcardAnswer(Answer):
 
     direction = models.CharField(choices=DIRECTIONS, max_length=3)
     options = models.ManyToManyField(Flashcard, related_name="answers_with_this_as_option")
+
+    objects = FlashcardAnswerManager()
 
     def to_json(self, nested=False):
         json = Answer.to_json(self)

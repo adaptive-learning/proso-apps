@@ -90,6 +90,10 @@ def get_time(request):
         return datetime.datetime.now()
 
 
+def get_language(request):
+    return request.GET.get("language", request.LANGUAGE_CODE)
+
+
 ###############################################################################
 # currect request
 ###############################################################################
