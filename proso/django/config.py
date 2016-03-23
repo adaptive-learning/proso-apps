@@ -123,9 +123,9 @@ def get_global_config(config_name=None):
 def _load_config():
     if currentThread() not in _config:
         config_path = get_config_path()
-        with open(config_path, 'r') as config_data:
+        with open(config_path, 'r', encoding='utf8') as config_data:
             if config_path.endswith('.json'):
-                loaded = json.load(config_data)
+                loaded = json.load(config_data, )
             elif config_path.endswith('.yaml'):
                 loaded = yaml.load(config_data)
             else:
