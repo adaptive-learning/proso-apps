@@ -39,7 +39,7 @@ class Term(models.Model):
             json["parents"] = [parent.to_json(nested=True) for parent in self.parents.all()]
         return json
 
-    def __unicode__(self):
+    def __str__(self):
         return "{0.lang} - {0.name}".format(self)
 
 
@@ -68,7 +68,7 @@ class Context(models.Model):
                                   flashcard in self.flashcards.all().prefetch_related("term")]
         return json
 
-    def __unicode__(self):
+    def __str__(self):
         return "{0.lang} - {0.name}".format(self)
 
 
@@ -358,7 +358,7 @@ class Flashcard(models.Model):
         else:
             return "context__{}".format(extension.__name__.lower())
 
-    def __unicode__(self):
+    def __str__(self):
         return "{0.term} - {0.context}".format(self)
 
 
@@ -433,7 +433,7 @@ class Category(models.Model):
             "not-in-model": self.not_in_model,
         }
 
-    def __unicode__(self):
+    def __str__(self):
         return "{0.lang} - {0.name}".format(self)
 
 

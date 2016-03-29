@@ -84,7 +84,7 @@ class UserProfile(models.Model):
             data["number_of_correct_answers"] = Answer.objects.correct_count(self.user)
         return data
 
-    def __unicode__(self):
+    def __str__(self):
         return "Profile: '{0.user.username}'".format(self)
 
     def save_properties(self, properties_json):
@@ -153,7 +153,7 @@ class HttpUserAgent(models.Model):
             'device_family': self.device_family
         }
 
-    def __unicode__(self):
+    def __str__(self):
         return ("{0.os_family} - {0.os_version} - {0.browser_family}" +
                 "- {0.browser_version} - {0.device_family}").format(self)
 
@@ -195,7 +195,7 @@ class Location(models.Model):
             'ip_address': self.ip_address
         }
 
-    def __unicode__(self):
+    def __str__(self):
         return self.ip_address
 
 
@@ -213,7 +213,7 @@ class TimeZone(models.Model):
             'content': self.content
         }
 
-    def __unicode__(self):
+    def __str__(self):
         return self.content
 
 

@@ -1007,7 +1007,7 @@ class PracticeContext(models.Model):
             'content_hash': self.content_hash,
         }
 
-    def __unicode__(self):
+    def __str__(self):
         return "{0.content}".format(self)
 
 
