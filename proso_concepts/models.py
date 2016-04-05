@@ -257,7 +257,7 @@ class UserStatManager(models.Manager):
         environment = get_environment()
         mastery_threshold = get_mastery_trashold()
         for user, concepts in concepts.items():
-            all_items = set(flatten([items[c] for c in concepts]))
+            all_items = list(set(flatten([items[c] for c in concepts])))
             answer_counts = dict(list(zip(all_items, environment.number_of_answers_more_items(all_items, user))))
             correct_answer_counts = dict(list(zip(all_items,
                                                   environment.number_of_correct_answers_more_items(all_items, user))))
