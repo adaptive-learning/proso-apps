@@ -123,7 +123,7 @@ class Config(models.Model):
 @receiver(pre_save)
 def check_user_or_time_overridden(sender, instance, **kwargs):
     instance_class = '{}.{}'.format(instance.__class__.__module__, instance.__class__.__name__)
-    if instance_class.endswith('Session'):
+    if instance_class.endswith('Session') or instance_class.endswith('UserStat'):
         return
     if _is_user_overriden_from_url.get(currentThread(), False):
         raise BadRequestException("Nothing ({}) can be saved when the user is overridden from URL.".format(instance_class))

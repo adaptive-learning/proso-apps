@@ -196,7 +196,7 @@ class PriorCurrentPredictiveModel(PredictiveModel):
         if data['current_skill'] is None:
             skill = data['prior_skill'] - data['difficulty']
         else:
-            seconds_ago = (time - data['last_time']).total_seconds() if data['last_time'] else 315460000
+            seconds_ago = (time - data['last_time']).total_seconds() if data['last_time'] and time else 315460000
             skill = data['current_skill'] + self._time_shift / max(seconds_ago, 0.001)
         return predict_simple(
             skill,

@@ -1,0 +1,68 @@
+{
+  "action_names": {
+    "practice": {
+      "en": "Practice",
+      "cs": "Procvičovat",
+      "es": "Práctica"
+    },
+    "view": {
+      "en": "View",
+      "cs": "Prohlížet",
+      "es": "Ver"
+    }
+  },
+  "concepts": [
+    {
+      "query": "contexts=[\"world\"]&categories=[]&types=[\"state\"]",
+      "tags": ["type:state", "context:world"],
+      "names": {
+        "en": "World states",
+        "cs": "Státy světa",
+        "es": "Estados del mundo"
+      },
+      "actions": {
+        "practice": "/practice/world/state",
+        "view": "/view/world/state"
+      }
+    },
+    {
+      "query": "contexts=[\"africa\"]&categories=[]&types=[\"city\"]",
+      "tags": ["type:city", "context:africa"],
+      "names": {
+        "en": "African cities",
+        "cs": "Africká města",
+        "es": "Ciudades africanas"
+      },
+      "actions": {
+        "practice": "/practice/africa/city",
+        "view": "/view/africa/city"
+      }
+    },
+    {
+      "query": "contexts=[\"africa\"]&categories=[]&types=[\"state\"]",
+      "tags": ["type:state", "context:africa"],
+      "names": {
+        "en": "African states",
+        "cs": "Africké státy",
+        "es": "Estados africanos"
+      },
+      "actions": {
+        "practice": "/practice/africa/state",
+        "view": "/view/africa/state"
+      }
+    },
+    {
+      "query": "contexts=[\"cz\"]&categories=[]&types=[\"city\"]",
+      "tags": ["type:city", "context:cz"],
+      "names": {
+        "en": "Czech cities",
+        "cs": "České státy",
+        "es": "Ciudades checas"
+      },
+      "actions": {
+        "practice": "/practice/europe/city",
+        "view": "/view/europe/city"
+      }
+    }
+  ]
+}
