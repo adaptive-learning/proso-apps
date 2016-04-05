@@ -36,7 +36,7 @@ def show_more(request, object_class, should_cache=True):
         else:
             objs = objs.all()
         if object_class == Concept:
-            objs = objs.filter(active=True)
+            objs = objs.filter(active=True, lang=get_language(request))
         return objs
 
     return proso_common.views.show_more(
