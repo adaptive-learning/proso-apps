@@ -1,6 +1,6 @@
 from collections import defaultdict
 from contextlib import closing
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db import connection
@@ -825,6 +825,31 @@ class AnswerManager(models.Manager):
 
     def correct_count(self, user):
         return self.filter(user=user, item_asked=F("item_answered")).count()
+
+    def from_json(self, json_object, practice_context, user_id, object_class=None):
+        if object_class is None:
+            object_class = Answer
+        kwargs = {}
+        for key in ['item_id', 'item_asked_id', 'item_answered_id', 'response_time', 'lang', 'guess']:
+            if key in json_object:
+                kwargs[key] = json_object[key]
+        if 'time_gap' in json_object:
+            kwargs.time = datetime.now() - timedelta(seconds=json_object["time_gap"])
+        kwargs['metainfo'] = None if 'meta' not in json_object else AnswerMeta.objects.from_content(json_object['meta'])
+        return object_class.objects.create(
+            context=practice_context, user_id=user_id, **kwargs)
+
+    def answer_class(self, name):
+        camel_case = ''.join([x.capitalize() for x in name.split('_')])
+        result = []
+        for subclass in Answer.__subclasses__():
+            if _model_class_name(subclass).endswith(camel_case):
+                result.append(subclass)
+        if len(result) > 1:
+            raise Exception('There is more than one answer class for name "{}".'.format(name))
+        if len(result) == 0:
+            raise Exception('There is no answer class for name "{}".'.format(name))
+        return result[0]
 
 
 class Answer(models.Model):
