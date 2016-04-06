@@ -367,6 +367,19 @@ class ItemType(models.Model):
 
 class ItemManager(models.Manager):
 
+    def item_id_to_json(self, item_id):
+        return {
+            'object_type': 'item',
+            'id': item_id,
+            'item_id': item_id,
+        }
+
+    def get_all_available_leaves(self):
+        """
+        Get all available leaves.
+        """
+        return set(Item.objects.filter(children=None).values_list('id', flat=True))
+
     def filter_all_reachable_leaves(self, identifier_filter, language):
         """
         Get all leaves corresponding to the given filter:
