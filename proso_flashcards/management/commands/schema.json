@@ -73,9 +73,6 @@
         "type": {
           "type": "string"
         },
-        "not-in-model": {
-          "type": "boolean"
-        },
         "parent-categories": {
           "type": "array",
           "items": {
