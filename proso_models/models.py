@@ -318,7 +318,7 @@ class ItemTypeManager(models.Manager):
     def find_object_types(self, with_answers=True):
         result = []
         langs = {}
-        for django_model, django_field in Item.objects.get_reference_fields(exclude_models=[Answer, Audit, Variable]):
+        for django_model, django_field in Item.objects.get_reference_fields(exclude_models=[Answer, Audit, Variable, ItemRelation]):
             db_column = django_field.get_attname_column()[1]
             db_table = django_field.model._meta.db_table
             # HACK: I haven't found other way to obtain the class, because
