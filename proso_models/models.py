@@ -321,9 +321,7 @@ class ItemTypeManager(models.Manager):
         for django_model, django_field in Item.objects.get_reference_fields(exclude_models=[Answer, Audit, Variable, ItemRelation]):
             db_column = django_field.get_attname_column()[1]
             db_table = django_field.model._meta.db_table
-            # HACK: I haven't found other way to obtain the class, because
-            # "type" function returns ModelBase from Django.
-            model = str(django_model).replace("<class '", "").replace("'>", "")
+            model = _model_class_name(django_model)
             if db_table not in langs:
                 for _django_field in django_field.model._meta.fields:
                     if _django_field.get_attname_column()[1] == 'lang':
@@ -936,6 +934,12 @@ class Audit(models.Model):
 
 def get_content_hash(content):
     return hashlib.sha1(content.encode()).hexdigest()
+
+
+def _model_class_name(django_model):
+    # HACK: I haven't found other way to obtain the class, because
+    # "type" function returns ModelBase from Django.
+    return str(django_model).replace("<class '", "").replace("'>", "")
 
 
 ################################################################################
