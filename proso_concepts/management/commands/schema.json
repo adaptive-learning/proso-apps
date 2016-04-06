@@ -25,7 +25,7 @@
           "type": "object",
           "patternProperties":{
             "^.*$": {
-              "type": "string"
+              "$ref": "#/definitions/action_name"
             }
           }
         }
@@ -33,6 +33,14 @@
       "required": ["query", "tags", "names"]
     },
     "action_name": {
+      "type": "object",
+      "patternProperties":{
+        "^..$": {
+          "type": "string"
+        }
+      }
+    },
+    "domain": {
       "type": "object",
       "patternProperties":{
         "^..$": {

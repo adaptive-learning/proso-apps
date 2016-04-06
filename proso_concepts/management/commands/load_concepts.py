@@ -73,9 +73,9 @@ class Command(BaseCommand):
                     db_concept.tags.remove(tag)
 
                 # handle actions
-                for identifier, url in concept["actions"].items():
+                for identifier, urls in concept["actions"].items():
                     action, created = Action.objects.get_or_create(concept=db_concept, identifier=identifier)
-                    action.url = url
+                    action.url = urls[lang]
                     action.name = action_names[identifier][lang]
                     action.save()
                 db_concept.actions.all().exclude(identifier__in=concept["actions"]).delete()

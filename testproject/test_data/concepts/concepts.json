@@ -21,8 +21,16 @@
         "es": "Estados del mundo"
       },
       "actions": {
-        "practice": "/practice/world/state",
-        "view": "/view/world/state"
+        "practice": {
+          "en": "http://en.slepemapy.cz/practice/world/state",
+          "cs": "http://slepemapy.cz/practice/world/state",
+          "es": "http://es.slepemapy.cz/practice/world/state"
+        },
+        "view": {
+          "en": "http://en.slepemapy.cz/view/world/state",
+          "cs": "http://slepemapy.cz/view/world/state",
+          "es": "http://es.slepemapy.cz/view/world/state"
+        }
       }
     },
     {
@@ -34,8 +42,16 @@
         "es": "Ciudades africanas"
       },
       "actions": {
-        "practice": "/practice/africa/city",
-        "view": "/view/africa/city"
+        "practice": {
+          "en": "http://en.slepemapy.cz/practice/africa/city",
+          "cs": "http://slepemapy.cz/practice/africa/city",
+          "es": "http://es.slepemapy.cz/practice/africa/city"
+        },
+        "view": {
+          "en": "http://en.slepemapy.cz/view/africa/city",
+          "cs": "http://slepemapy.cz/view/africa/city",
+          "es": "http://es.slepemapy.cz/view/africa/city"
+        }
       }
     },
     {
@@ -47,8 +63,16 @@
         "es": "Estados africanos"
       },
       "actions": {
-        "practice": "/practice/africa/state",
-        "view": "/view/africa/state"
+        "practice": {
+          "en": "http://en.slepemapy.cz/practice/africa/state",
+          "cs": "http://slepemapy.cz/practice/africa/state",
+          "es": "http://es.slepemapy.cz/practice/africa/state"
+        },
+        "view": {
+          "en": "http://en.slepemapy.cz/view/africa/state",
+          "cs": "http://slepemapy.cz/view/africa/state",
+          "es": "http://es.slepemapy.cz/view/africa/state"
+        }
       }
     },
     {
@@ -60,8 +84,16 @@
         "es": "Ciudades checas"
       },
       "actions": {
-        "practice": "/practice/europe/city",
-        "view": "/view/europe/city"
+        "practice": {
+          "en": "http://en.slepemapy.cz/practice/cz/city",
+          "cs": "http://slepemapy.cz/practice/cz/city",
+          "es": "http://es.slepemapy.cz/practice/cz/city"
+        },
+        "view": {
+          "en": "http://en.slepemapy.cz/view/cz/city",
+          "cs": "http://slepemapy.cz/view/cz/city",
+          "es": "http://es.slepemapy.cz/view/cz/city"
+        }
       }
     }
   ]
