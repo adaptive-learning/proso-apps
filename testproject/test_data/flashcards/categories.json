@@ -3,8 +3,7 @@
     {
       "id": "0001",
       "name-en": "my first category",
-      "name-cs": "moje první kategorie",
-      "not-in-model": true
+      "name-cs": "moje první kategorie"
     },
     {
       "id": "0002",
@@ -35,14 +34,12 @@
     {
       "id": "0006",
       "name-en": "flashcard-category",
-      "name-cs": "kategorie kartiček",
-      "not-in-model": true
+      "name-cs": "kategorie kartiček"
     },
     {
       "id": "0007",
       "name-en": "context-category",
-      "name-cs": "kategorie kontextů",
-      "not-in-model": true
+      "name-cs": "kategorie kontextů"
     }
   ]
 }
