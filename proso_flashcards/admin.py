@@ -21,7 +21,6 @@ class FlashcardAdmin(admin.ModelAdmin):
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'identifier', 'lang', 'name', 'type')
     search_fields = ('name', 'type')
-    raw_id_fields = ('terms', 'subcategories', 'flashcards', 'contexts')
 
 
 class AnswerAdmin(admin.ModelAdmin):
