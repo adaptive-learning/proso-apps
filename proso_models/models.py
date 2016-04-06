@@ -378,7 +378,7 @@ class ItemManager(models.Manager):
         """
         Get all available leaves.
         """
-        return set(Item.objects.filter(children=None).values_list('id', flat=True))
+        return sorted(Item.objects.filter(children=None).values_list('id', flat=True))
 
     def filter_all_reachable_leaves(self, identifier_filter, language):
         """
@@ -432,7 +432,7 @@ class ItemManager(models.Manager):
                 else:
                     inner_result &= set(leaves[translated[identifier]])
             result |= inner_result - inner_neg_result
-        return result
+        return sorted(list(result))
 
     @cache_pure
     def get_children_graph(self, item_ids):
@@ -619,7 +619,7 @@ class ItemManager(models.Manager):
         children = self.get_children_graph(item_ids)
         froms = set(children.keys())
         tos = set([ii for iis in children.values() for ii in iis])
-        return (set(item_ids) | tos) - froms
+        return sorted(list((set(item_ids) | tos) - froms))
 
     def get_reference_fields(self, exclude_models=None):
         """
