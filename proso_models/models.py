@@ -11,6 +11,7 @@ from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from proso.django.cache import get_request_cache, is_cache_prepared
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
+from proso.django.request import load_query_json
 from proso.django.util import disable_for_loaddata, cache_pure
 from proso.func import fixed_point
 from proso.list import flatten
@@ -91,6 +92,10 @@ def get_options_number():
 
 def get_mastery_trashold():
     return get_config("proso_models", "mastery_threshold", default=0.9)
+
+
+def get_filter(request):
+    return load_query_json(request.GET, "filter", "[]")
 
 
 def get_option_selector(item_selector, options_number=None):
