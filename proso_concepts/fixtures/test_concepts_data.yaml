@@ -17,7 +17,7 @@
   pk: 1
   fields:
     identifier: e6a50615744c5caa5f4e
-    query: contexts=["world"]&categories=[]&types=["state"]
+    query: "[[\"context/world\", \"category/state\"]]"
     name: "St\xE1ty sv\u011Bta"
     lang: cs
     active: true
@@ -26,7 +26,7 @@
   pk: 2
   fields:
     identifier: e6a50615744c5caa5f4e
-    query: contexts=["world"]&categories=[]&types=["state"]
+    query: "[[\"context/world\", \"category/state\"]]"
     name: World states
     lang: en
     active: true
@@ -34,91 +34,37 @@
 - model: proso_concepts.concept
   pk: 3
   fields:
-    identifier: e6a50615744c5caa5f4e
-    query: contexts=["world"]&categories=[]&types=["state"]
-    name: Estados del mundo
-    lang: es
+    identifier: cdc9f5634998d568e838
+    query: "[[\"context/africa\", \"category/state\"]]"
+    name: "Africk\xE1 st\xE1ty"
+    lang: cs
     active: true
-    tags: [1, 2]
+    tags: [3, 4]
 - model: proso_concepts.concept
   pk: 4
   fields:
     identifier: cdc9f5634998d568e838
-    query: contexts=["africa"]&categories=[]&types=["city"]
-    name: "Africk\xE1 m\u011Bsta"
-    lang: cs
+    query: "[[\"context/africa\", \"category/state\"]]"
+    name: African states
+    lang: en
     active: true
     tags: [3, 4]
 - model: proso_concepts.concept
   pk: 5
   fields:
-    identifier: cdc9f5634998d568e838
-    query: contexts=["africa"]&categories=[]&types=["city"]
-    name: African cities
-    lang: en
+    identifier: c8922dbde0d513211439
+    query: "[[\"context/cz\", \"category/city\"]]"
+    name: "Ceska mesta"
+    lang: cs
     active: true
-    tags: [3, 4]
+    tags: [3, 5]
 - model: proso_concepts.concept
   pk: 6
   fields:
-    identifier: cdc9f5634998d568e838
-    query: contexts=["africa"]&categories=[]&types=["city"]
-    name: Ciudades africanas
-    lang: es
-    active: true
-    tags: [3, 4]
-- model: proso_concepts.concept
-  pk: 7
-  fields:
-    identifier: 6229bff47866cdc67e01
-    query: contexts=["africa"]&categories=[]&types=["state"]
-    name: "Africk\xE9 st\xE1ty"
-    lang: cs
-    active: true
-    tags: [1, 4]
-- model: proso_concepts.concept
-  pk: 8
-  fields:
-    identifier: 6229bff47866cdc67e01
-    query: contexts=["africa"]&categories=[]&types=["state"]
-    name: African states
-    lang: en
-    active: true
-    tags: [1, 4]
-- model: proso_concepts.concept
-  pk: 9
-  fields:
-    identifier: 6229bff47866cdc67e01
-    query: contexts=["africa"]&categories=[]&types=["state"]
-    name: Estados africanos
-    lang: es
-    active: true
-    tags: [1, 4]
-- model: proso_concepts.concept
-  pk: 10
-  fields:
     identifier: c8922dbde0d513211439
-    query: contexts=["cz"]&categories=[]&types=["city"]
-    name: "\u010Cesk\xE9 st\xE1ty"
-    lang: cs
-    active: true
-    tags: [3, 5]
-- model: proso_concepts.concept
-  pk: 11
-  fields:
-    identifier: c8922dbde0d513211439
-    query: contexts=["cz"]&categories=[]&types=["city"]
+    query: "[[\"context/cz\", \"category/city\"]]"
     name: Czech cities
     lang: en
-    active: true
-    tags: [3, 5]
-- model: proso_concepts.concept
-  pk: 12
-  fields:
-    identifier: c8922dbde0d513211439
-    query: contexts=["cz"]&categories=[]&types=["city"]
-    name: Ciudades checas
-    lang: es
     active: true
     tags: [3, 5]
 - model: proso_concepts.action
@@ -135,61 +81,25 @@
   fields: {concept: 2, identifier: view, name: View, url: /view/world/state}
 - model: proso_concepts.action
   pk: 5
-  fields: {concept: 3, identifier: practice, name: "Pr\xE1ctica", url: /practice/world/state}
+  fields: {concept: 3, identifier: practice, name: "Procvi\u010Dovat", url: /practice/africa/state}
 - model: proso_concepts.action
   pk: 6
-  fields: {concept: 3, identifier: view, name: Ver, url: /view/world/state}
+  fields: {concept: 3, identifier: view, name: "Prohl\xED\u017Eet", url: /view/africa/state}
 - model: proso_concepts.action
   pk: 7
-  fields: {concept: 4, identifier: practice, name: "Procvi\u010Dovat", url: /practice/africa/city}
+  fields: {concept: 4, identifier: practice, name: Practice, url: /practice/africa/state}
 - model: proso_concepts.action
   pk: 8
-  fields: {concept: 4, identifier: view, name: "Prohl\xED\u017Eet", url: /view/africa/city}
+  fields: {concept: 4, identifier: view, name: View, url: /view/africa/state}
 - model: proso_concepts.action
   pk: 9
-  fields: {concept: 5, identifier: practice, name: Practice, url: /practice/africa/city}
+  fields: {concept: 5, identifier: practice, name: "Procvi\u010Dovat", url: /practice/cz/city}
 - model: proso_concepts.action
   pk: 10
-  fields: {concept: 5, identifier: view, name: View, url: /view/africa/city}
+  fields: {concept: 5, identifier: view, name: "Prohl\xED\u017Eet", url: /view/cz/city}
 - model: proso_concepts.action
   pk: 11
-  fields: {concept: 6, identifier: practice, name: "Pr\xE1ctica", url: /practice/africa/city}
+  fields: {concept: 6, identifier: practice, name: Practice, url: /practice/cz/city}
 - model: proso_concepts.action
   pk: 12
-  fields: {concept: 6, identifier: view, name: Ver, url: /view/africa/city}
-- model: proso_concepts.action
-  pk: 13
-  fields: {concept: 7, identifier: practice, name: "Procvi\u010Dovat", url: /practice/africa/state}
-- model: proso_concepts.action
-  pk: 14
-  fields: {concept: 7, identifier: view, name: "Prohl\xED\u017Eet", url: /view/africa/state}
-- model: proso_concepts.action
-  pk: 15
-  fields: {concept: 8, identifier: practice, name: Practice, url: /practice/africa/state}
-- model: proso_concepts.action
-  pk: 16
-  fields: {concept: 8, identifier: view, name: View, url: /view/africa/state}
-- model: proso_concepts.action
-  pk: 17
-  fields: {concept: 9, identifier: practice, name: "Pr\xE1ctica", url: /practice/africa/state}
-- model: proso_concepts.action
-  pk: 18
-  fields: {concept: 9, identifier: view, name: Ver, url: /view/africa/state}
-- model: proso_concepts.action
-  pk: 19
-  fields: {concept: 10, identifier: practice, name: "Procvi\u010Dovat", url: /practice/europe/city}
-- model: proso_concepts.action
-  pk: 20
-  fields: {concept: 10, identifier: view, name: "Prohl\xED\u017Eet", url: /view/europe/city}
-- model: proso_concepts.action
-  pk: 21
-  fields: {concept: 11, identifier: practice, name: Practice, url: /practice/europe/city}
-- model: proso_concepts.action
-  pk: 22
-  fields: {concept: 11, identifier: view, name: View, url: /view/europe/city}
-- model: proso_concepts.action
-  pk: 23
-  fields: {concept: 12, identifier: practice, name: "Pr\xE1ctica", url: /practice/europe/city}
-- model: proso_concepts.action
-  pk: 24
-  fields: {concept: 12, identifier: view, name: Ver, url: /view/europe/city}
+  fields: {concept: 6, identifier: view, name: View, url: /view/cz/city}
