@@ -179,7 +179,7 @@ class TestItemManager(test.TestCase):
     def setUp(self):
         self._categories = dict([((c.identifier, c.lang), c) for c in Category.objects.all()])
         self._contexts = dict([((c.identifier, c.lang), c) for c in ExtendedContext.objects.all()])
-        self._terms = dict([((t.identifier, t.lang), t) for t in ExtendedTerm.objects.prefetch_related('parents').all()])
+        self._terms = dict([((t.identifier, t.lang), t) for t in ExtendedTerm.objects.all()])
         self._flashcards = dict([((f.identifier, f.lang), f) for f in Flashcard.objects.select_related('term', 'context').all()])
         call_command('find_item_types')
         call_command('fill_item_types')
@@ -200,5 +200,5 @@ class TestItemManager(test.TestCase):
     def test_translate_identifiers(self, language='cs'):
         self.assertEqual(
             Item.objects.translate_identifiers(['flashcard/africa-bw', 'category/world'], 'cs'),
-            {'category/world': 1, 'flashcard/africa-bw': 74}
+            {'category/world': 2, 'flashcard/africa-bw': 188}
         )
