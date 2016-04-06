@@ -1,12 +1,25 @@
 from . import json_enrich
-from .models import get_environment, get_active_environment_info, Item, recommend_users as models_recommend_users, PracticeContext, learning_curve as models_learning_curve
+from .models import get_environment, get_predictive_model, get_item_selector, get_active_environment_info, \
+    Answer, Item, recommend_users as models_recommend_users, PracticeContext, \
+    learning_curve as models_learning_curve, get_filter
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpResponseBadRequest
+from django.db import transaction
+from django.http import HttpResponse, HttpResponseBadRequest
+from django.utils.translation import ugettext as _
+from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
+from proso.django.cache import cache_page_conditional
 from proso.django.enrichment import register_object_type_enricher
-from proso.django.request import is_time_overridden, get_time, get_user_id, load_query_json
-from proso.django.response import render_json
+from proso.django.request import is_time_overridden, get_time, get_user_id, get_language, load_query_json
+from proso.django.response import render, render_json, BadRequestException
+from proso.util import timer
 import datetime
+import json
+import logging
+import proso.svg
+
+
+LOGGER = logging.getLogger('django.request')
 
 
 @allow_lazy_user
@@ -24,6 +37,116 @@ def status(request):
     }, template='models_json.html')
 
 
+@cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
+def to_practice(request):
+    practice_filter = get_filter(request)
+    if len(practice_filter) > 0:
+        item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
+    else:
+        item_ids = Item.objects.get_all_available_leaves()
+    if len(item_ids) == 0:
+        return render_json(request, {
+            'error': _('There is no item for the given filter to practice.'),
+            'error_type': 'empty_practice'
+        }, status=404, template='models_json.html')
+    result = [Item.objects.item_id_to_json(item_id) for item_id in item_ids]
+    return render_json(request, result, template='models_json.html', help_text=to_practice.__doc__)
+
+
+def practice_image(request):
+    user_id = get_user_id(request)
+    limit = min(int(request.GET.get('limit', 10)), 100)
+    item_ids = Item.objects.filter_all_reachable_leaves(get_filter(request), get_language(request))
+    answers = Answer.objects.filter(user_id=user_id).filter(item_asked_id__in=item_ids).order_by('-id')[:limit]
+    predictive_model = get_predictive_model()
+    environment = get_environment()
+    predictions = predictive_model.predict_more_items(environment, user=-1, items=item_ids, time=datetime.datetime.now())
+    items_in_order = list(zip(*sorted(zip(predictions, item_ids), reverse=True)))[1] if len(item_ids) > 1 else []
+    item_prediction = dict(list(zip(item_ids, predictions)))
+    item_position = dict(list(zip(items_in_order, list(range(len(item_ids))))))
+    svg = proso.svg.Printer()
+    answers = sorted(list(answers), key=lambda a: a.id)
+    SQUARE_SIZE = 10
+    OFFSET_X = SQUARE_SIZE
+    OFFSET_Y = SQUARE_SIZE * 3
+    for i, item in enumerate(items_in_order):
+        svg.print_square(OFFSET_X + SQUARE_SIZE * i, OFFSET_Y - SQUARE_SIZE, SQUARE_SIZE, int(255 * item_prediction[item]))
+    for i, answer in enumerate(answers):
+        for j in range(len(items_in_order)):
+            svg.print_square(OFFSET_X + SQUARE_SIZE * j, OFFSET_Y + SQUARE_SIZE * i, SQUARE_SIZE, 255, border_color=200)
+        color = 'green' if answer.item_asked_id == answer.item_answered_id else 'red'
+        svg.print_square(
+            OFFSET_X + SQUARE_SIZE * item_position[answer.item_asked_id],
+            OFFSET_Y + SQUARE_SIZE * i, SQUARE_SIZE, color, border_color=0)
+        svg.print_text(OFFSET_X + SQUARE_SIZE * (len(items_in_order) + 1), OFFSET_Y + SQUARE_SIZE * i + 0.8 * SQUARE_SIZE, answer.time.strftime('%H:%M:%S %Y-%m-%d'), font_size=10)
+    return HttpResponse(str(svg), content_type="image/svg+xml")
+
+
+@ensure_csrf_cookie
+@allow_lazy_user
+@transaction.atomic
+def answer(request):
+    if request.method == 'GET':
+        return render(request, 'models_answer.html', {}, help_text=answer.__doc__)
+    elif request.method == 'POST':
+        practice_filter = get_filter(request)
+        practice_context = PracticeContext.objects.from_content(practice_filter)
+        saved_answers = _save_answers(request, practice_context)
+        return render_json(request, saved_answers, status=200, template='models_answer.html')
+    else:
+        return HttpResponseBadRequest("method %s is not allowed".format(request.method))
+
+
+@ensure_csrf_cookie
+@allow_lazy_user
+@transaction.atomic
+def practice(request):
+    if request.user.id is None:  # Google Bot
+        return render_json(request, {
+            'error': _('There is no user available for the practice.'),
+            'error_type': 'user_undefined'
+        }, status=400, template='models_json.html')
+
+    limit = min(int(request.GET.get('limit', 10)), 100)
+    # prepare
+    user = get_user_id(request)
+    time = get_time(request)
+    avoid = load_query_json(request.GET, "avoid", "[]")
+    practice_filter = get_filter(request)
+    practice_context = PracticeContext.objects.from_content(practice_filter)
+    environment = get_environment()
+    item_selector = get_item_selector()
+    if is_time_overridden(request):
+        environment.shift_time(time)
+
+    # save answers
+    if request.method == 'POST':
+        _save_answers(request, practice_context)
+
+    if len(practice_filter) > 0:
+        item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
+    else:
+        item_ids = Item.objects.get_all_available_leaves()
+    item_ids = list(set(item_ids) - set(avoid))
+    if len(item_ids) == 0:
+        return render_json(request, {
+            'error': _('There is no item for the given filter to practice.'),
+            'error_type': 'empty_practice'
+        }, status=404, template='models_json.html')
+    selected_items, meta = item_selector.select(environment, user, item_ids, time, practice_context.id, limit, items_in_queue=avoid)
+    result = []
+    for item, item_meta in zip(selected_items, meta):
+        question = {
+            'object_type': 'question',
+            'payload': Item.objects.item_id_to_json(item),
+        }
+        if item_meta is not None:
+            question['meta'] = item_meta
+        result.append(question)
+
+    return render_json(request, result, template='models_json.html', help_text=practice.__doc__)
+
+
 @staff_member_required
 def learning_curve(request):
     '''
@@ -38,7 +161,7 @@ def learning_curve(request):
         if present stop filtering users based on the minimal number of testing
         answers (=length)
     '''
-    context = PracticeContext.objects.from_content(load_query_json(request.GET, 'context', '{}'))
+    context = PracticeContext.objects.from_content(get_filter(request))
     length = int(request.GET.get('length', 10))
     if 'all_users' in request.GET:
         user_length = 1
@@ -98,9 +221,18 @@ def recommend_users(request):
 
 @allow_lazy_user
 def model(request):
-    if 'items' not in request.GET:
-        return HttpResponseBadRequest('GET parameter "items" has to be specified')
-    item_ids = list(set(map(int, request.GET['items'].split(','))))
+    item_ids = load_query_json(request.GET, 'items', '[]')
+    items_filter = get_filter(request)
+    if len(items_filter) == 0 and len(item_ids) == 0:
+        raise BadRequestException('At least filter or items has to be specified!')
+    if len(items_filter) > 0 and len(item_ids) > 0:
+        raise BadRequestException('Either filter, or items has to be specified!')
+    if len(item_ids) > 0:
+        if any([isinstance(item_id, str) for item_id in item_ids]):
+            translated = Item.objects.translate_identifiers(item_ids, get_language(request))
+            item_ids = [translated[item_id] for item_id in item_ids]
+    else:
+        item_ids = Item.objects.filter_all_reachable_leaves(items_filter, get_language(request))
     items = Item.objects.filter(id__in=item_ids).all()
     if len(items) != len(item_ids):
         found_item_ids = [item.id for item in items]
@@ -108,10 +240,7 @@ def model(request):
         return render_json(request, {
             'error': 'There are no items with the following ids: %s' % list(not_found_item_ids)
         }, template='models_json.html', status=404)
-    result = {
-        'object_type': 'model',
-        'items': [item.to_json(nested=True) for item in items]
-    }
+    result = [item.to_json(nested=True) for item in items]
     return render_json(request, result, template='models_json.html')
 
 
@@ -179,6 +308,30 @@ def read(request, key):
             template='models_json.html'
         )
 
+
+def _get_answers(request):
+    data = json.loads(request.body.decode("utf-8"))
+    if "answer" in data:
+        answers = [data["answer"]]
+    elif "answers" in data:
+        answers = data["answers"]
+    else:
+        raise BadRequestException("Answer(s) not found")
+
+    return answers
+
+
+def _save_answers(request, practice_context):
+    timer('_save_answers')
+    json_objects = _get_answers(request)
+    answers = []
+    for json_object in json_objects:
+        if 'answer_class' not in json_object:
+            raise BadRequestException('The answer does not contain key "answer_class".')
+        answer_class = Answer.objects.answer_class(json_object['answer_class'])
+        answers.append(answer_class.objects.from_json(json_object, practice_context, request.user.id))
+    LOGGER.debug("saving of %s answers took %s seconds", len(answers), timer('_save_answers'))
+    return answers
 
 ################################################################################
 # Enrichers
