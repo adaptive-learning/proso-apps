@@ -326,7 +326,6 @@ class DatabaseEnvironment(CommonEnvironment):
             if variable.permanent != permanent:
                 raise Exception("Variable %s changed permanency." % key)
         if variable.value == value:
-            LOGGER.warn('Trying to set the same value for the variable with the following data: {}.'.format(data))
             return
         variable.value = value
         variable.audit = audit
