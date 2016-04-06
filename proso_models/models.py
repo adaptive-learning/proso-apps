@@ -840,7 +840,7 @@ class Answer(models.Model):
         result = {
             'id': self.pk,
             'object_type': 'answer',
-            'question_item_id': self.item_id,
+            'item_id': self.item_id,
             'item_asked_id': self.item_asked_id,
             'item_answered_id': self.item_answered_id,
             'user_id': self.user_id,
