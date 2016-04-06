@@ -413,21 +413,24 @@ class ItemManager(models.Manager):
         Returns:
             list: list of item ids
         """
-        if any([len(xs) == 1 and xs[1].startswith('-') for xs in identifier_filter]):
+        if len(identifier_filter) == 1 and not isinstance(identifier_filter[0], list):
+            identifier_filter = [identifier_filter]
+        if any([len(xs) == 1 and xs[0].startswith('-') for xs in identifier_filter]):
             raise Exception('Filter containing only one identifier with "-" prefix is not allowed.')
         item_identifiers = [identifier[1:] if identifier.startswith('-') else identifier for identifier in set(flatten(identifier_filter))]
-        leaves = self.get_leaves(self.translate_identifiers(item_identifiers))
+        translated = self.translate_identifiers(item_identifiers, language)
+        leaves = self.get_leaves(list(translated.values()))
         result = set()
         for inner_filter in identifier_filter:
             inner_result = None
             inner_neg_result = set()
             for identifier in inner_filter:
                 if identifier.startswith('-'):
-                    inner_neg_result |= set(leaves[identifier[1:]])
+                    inner_neg_result |= set(leaves[translated[identifier[1:]]])
                 elif inner_result is None:
-                    inner_result = set(leaves[identifier])
+                    inner_result = set(leaves[translated[identifier]])
                 else:
-                    inner_result &= set(leaves[identifier])
+                    inner_result &= set(leaves[translated[identifier]])
             result |= inner_result - inner_neg_result
         return result
 
@@ -611,7 +614,7 @@ class ItemManager(models.Manager):
             item_ids (list): items which are taken as roots for the reachability
 
         Returns:
-            list: leaf items which are reachable from the given set of items
+            set: leaf items which are reachable from the given set of items
         """
         children = self.get_children_graph(item_ids)
         froms = set(children.keys())
