@@ -331,7 +331,7 @@ class Command(BaseCommand):
                     if modified:
                         db_flashcard.categories.clear()
                         for p in parents:
-                            db_flashcard.parents.add(p)
+                            db_flashcard.categories.add(p)
                         db_flashcard.save()
                 else:
                     print(("Warning: Missing flashcard '%s' in language '%s'" % (flashcard["id"], lang)))
