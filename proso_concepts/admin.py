@@ -18,5 +18,5 @@ class ConceptAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('type', 'value')
-    search_fields = ('type', 'value')
+    list_display = ('type', 'value', 'lang')
+    search_fields = ('type', 'value', 'lang')
