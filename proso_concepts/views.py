@@ -1,6 +1,7 @@
 import logging
 
 import datetime
+from collections import defaultdict
 from django.contrib.admin.views.decorators import staff_member_required
 from lazysignup.decorators import allow_lazy_user
 
@@ -9,7 +10,7 @@ from proso.django.cache import cache_page_conditional
 from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import get_user_id, load_query_json, get_language
 from proso.django.response import render_json
-from proso_concepts.models import Concept, UserStat
+from proso_concepts.models import Concept, UserStat, Tag
 
 LOGGER = logging.getLogger('django.request')
 
@@ -102,3 +103,19 @@ def user_stats_bulk(request):
             "concepts": s,
         })
     return render_json(request, data, template='concepts_json.html', help_text=user_stats_bulk.__doc__)
+
+
+def tag_values(request):
+    """
+    Get tags types and values with localized names
+
+    language:
+      language of tags
+    """
+
+    data = defaultdict(lambda: {"values": {}})
+    for tag in Tag.objects.filter(lang=get_language(request)):
+        data[tag.type]["name"] = tag.type_name
+        data[tag.type]["values"][tag.value] = tag.value_name
+
+    return render_json(request, data, template='concepts_json.html', help_text=tag_values.__doc__)
