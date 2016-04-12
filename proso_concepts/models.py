@@ -30,11 +30,14 @@ class Tag(models.Model):
     """
     type = models.CharField(max_length=50)
     value = models.CharField(max_length=50)
+    lang = models.CharField(max_length=2)
+    type_name = models.CharField(max_length=100)
+    value_name = models.CharField(max_length=100)
 
     objects = TagManager()
 
     class Meta:
-        unique_together = ("type", "value")
+        unique_together = ("type", "value", "lang")
 
     def to_json(self, nested=False):
         data = {
@@ -42,6 +45,9 @@ class Tag(models.Model):
             "object_type": "tag",
             "type": self.type,
             "value": self.value,
+            "lang": self.lang,
+            "type_name": self.type_name,
+            "value_name": self.value_name,
         }
 
         if not nested:

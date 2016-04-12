@@ -27,9 +27,9 @@ class Command(BaseCommand):
                 data = json.load(json_file)
                 validate(data, schema)
 
-                self.prepare_tags()
+                self.prepare_tags(data)
                 self.prepare_concepts()
-                self.process_concepts(data["concepts"], data["action_names"])
+                self.process_concepts(data["concepts"], data["action_names"], data["tags"])
 
                 cache.clear()
 
@@ -37,19 +37,33 @@ class Command(BaseCommand):
         self.stdout.write("Total {} concepts and {} tags in DB".format(Concept.objects.all().count(),
                                                                     Tag.objects.all().count()))
 
-    def prepare_tags(self):
-        for tag in Tag.objects.all():
-            self.tags["{}:{}".format(tag.type, tag.value)] = tag
+    def prepare_tags(self, data):
+        self.tag_names = data["tags"]
 
-    def add_tag(self, tag):
+        for tag in Tag.objects.all():
+            self.tags["{}:{}:{}".format(tag.type, tag.value, tag.lang)] = tag
+            new_type_name = self.tag_names[tag.type]["names"][tag.lang]
+            new_value_name=self.tag_names[tag.type]["values"][tag.value][tag.lang]
+            if tag.type_name != new_type_name or tag.value_name != new_value_name:
+                tag.type_name = new_type_name
+                tag.value_name = new_value_name
+                tag.save()
+
+    def add_tag(self, tag, lang):
         parts = tag.split(":")
-        self.tags[tag] = Tag.objects.create(type=parts[0], value=":".join(parts[1:]))
+        self.tags["{}:{}".format(tag, lang)] = Tag.objects.create(
+            type=parts[0],
+            value=":".join(parts[1:]),
+            lang=lang,
+            type_name=self.tag_names[parts[0]]["names"][lang],
+            value_name=self.tag_names[parts[0]]["values"][parts[1]][lang],
+        )
 
     def prepare_concepts(self):
         for concept in Concept.objects.all().prefetch_related("tags"):
             self.concepts["{}-{}".format(concept.identifier, concept.lang)] = concept
 
-    def process_concepts(self, concepts, action_names):
+    def process_concepts(self, concepts, action_names, tags):
         Concept.objects.all().update(active=False)
         for concept in concepts:
             for lang, name in concept["names"].items():
@@ -64,9 +78,9 @@ class Command(BaseCommand):
 
                 # handle tags
                 for tag in concept["tags"]:
-                    if tag not in self.tags:
-                        self.add_tag(tag)
-                new_tags = set([self.tags[t] for t in concept["tags"]])
+                    if tag + ":" + lang not in self.tags:
+                        self.add_tag(tag, lang)
+                new_tags = set([self.tags[t + ":" + lang] for t in concept["tags"]])
                 for tag in new_tags - set(db_concept.tags.all()):
                     db_concept.tags.add(tag)
                 for tag in set(db_concept.tags.all()) - new_tags:

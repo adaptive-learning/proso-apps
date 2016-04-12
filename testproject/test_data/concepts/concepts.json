@@ -1,4 +1,49 @@
 {
+  "tags": {
+    "type": {
+      "names": {
+        "en": "Place type",
+        "cs": "Typ místa",
+        "es": "Place type"
+      },
+      "values": {
+        "state": {
+          "en": "States",
+          "cs": "Státy",
+          "es": "Estados"
+        },
+        "city": {
+          "en": "Cities",
+          "cs": "Města",
+          "es": "Ciudades"
+        }
+      }
+    },
+    "context": {
+      "names": {
+        "en": "Map",
+        "cs": "Mapa",
+        "es": "Map"
+      },
+      "values": {
+        "world": {
+          "en": "World",
+          "cs": "Svět",
+          "es": "Mundo"
+        },
+        "cz": {
+          "en": "Czech",
+          "cs": "Česko",
+          "es": "CZ"
+        },
+        "africa": {
+          "en": "Africa",
+          "cs": "Afrika",
+          "es": "Africana"
+        }
+      }
+    }
+  },
   "action_names": {
     "practice": {
       "en": "Practice",

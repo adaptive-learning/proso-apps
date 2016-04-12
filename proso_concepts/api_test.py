@@ -14,7 +14,7 @@ class LoadConceptsTest(TestCase):
         call_command('load_concepts', 'testproject/test_data/concepts/concepts.json')
         self.assertEquals(Concept.objects.all().count(), 3 * 4, "All concepts are loaded.")
         self.assertSetEqual(set(Concept.objects.all().values_list("lang", flat=True).distinct()), {"en", "es", "cs"}, "Concepts have correct languages.")
-        self.assertEquals(Tag.objects.all().count(), 5, "All tags are created.")
+        self.assertEquals(Tag.objects.all().count(), 3 * 5, "All tags are created.")
         self.assertEquals(Action.objects.all().count(), 3 * 4 * 2, "All actions are created.")
 
 
