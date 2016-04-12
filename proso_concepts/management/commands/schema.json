@@ -64,7 +64,39 @@
           "$ref": "#/definitions/action_name"
         }
       }
+    },
+    "tags": {
+      "type": "object",
+      "patternProperties":{
+        "^.*$":{
+          "type": "object",
+          "properties": {
+            "names": {
+              "type": "object",
+              "patternProperties": {
+                "^..$": {
+                  "type": "string"
+                }
+              }
+            },
+            "values": {
+              "type": "object",
+              "patternProperties": {
+                "^.*$": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^..$": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": ["names", "values"]
+        }
+      }
     }
   },
-  "required": ["concepts", "action_names"]
+  "required": ["concepts", "action_names", "tags"]
 }
