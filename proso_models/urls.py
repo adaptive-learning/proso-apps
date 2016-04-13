@@ -15,4 +15,6 @@ urlpatterns = patterns(
     url(r'^recommend_users/', 'recommend_users', name='models_recommend_user'),
     url(r'^status/', 'status', name='models_status'),
     url(r'^to_practice/', 'to_practice', name='models_to_practice'),
+    url(r'^to_practice_counts/', 'to_practice_counts', name='models_to_practice_counts'),
+    url(r'^user_stats/', 'user_stats', name='models_user_stats'),
 )

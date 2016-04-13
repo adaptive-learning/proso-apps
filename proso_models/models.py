@@ -381,6 +381,50 @@ class ItemManager(models.Manager):
         """
         return sorted(Item.objects.filter(children=None).values_list('id', flat=True))
 
+    def filter_all_reachable_leaves_many(self, identifier_filters, language):
+        """
+        Provides the same functionality as .. py:method:: ItemManager.filter_all_reachable_leaves(),
+        but for more filters in the same time.
+
+        Args:
+            identifier_filters: list of identifier filters
+            language (str): language used for further filtering (some objects
+                for different languages share the same item
+
+        Returns:
+            list: list of list of item ids
+        """
+        for i, identifier_filter in enumerate(identifier_filters):
+            if len(identifier_filter) == 1 and not isinstance(identifier_filter[0], list):
+                identifier_filters[i] = [identifier_filter]
+            if any([len(xs) == 1 and xs[0].startswith('-') for xs in identifier_filter]):
+                raise Exception('Filter containing only one identifier with "-" prefix is not allowed.')
+        item_identifiers = [
+            identifier[1:] if identifier.startswith('-') else identifier
+            for identifier_filter in identifier_filters
+            for identifier in set(flatten(identifier_filter))
+        ]
+        translated = self.translate_identifiers(item_identifiers, language)
+        leaves = self.get_leaves(list(translated.values()))
+        result = []
+        for identifier_filter in identifier_filters:
+            filter_result = set()
+            for inner_filter in identifier_filter:
+                inner_result = None
+                inner_neg_result = set()
+                if len(inner_filter) == 0:
+                    raise Exception('Empty nested filters are not allowed.')
+                for identifier in inner_filter:
+                    if identifier.startswith('-'):
+                        inner_neg_result |= set(leaves[translated[identifier[1:]]])
+                    elif inner_result is None:
+                        inner_result = set(leaves[translated[identifier]])
+                    else:
+                        inner_result &= set(leaves[translated[identifier]])
+                filter_result |= inner_result - inner_neg_result
+            result.append(sorted(list(filter_result)))
+        return result
+
     def filter_all_reachable_leaves(self, identifier_filter, language):
         """
         Get all leaves corresponding to the given filter:
@@ -414,26 +458,7 @@ class ItemManager(models.Manager):
         Returns:
             list: list of item ids
         """
-        if len(identifier_filter) == 1 and not isinstance(identifier_filter[0], list):
-            identifier_filter = [identifier_filter]
-        if any([len(xs) == 1 and xs[0].startswith('-') for xs in identifier_filter]):
-            raise Exception('Filter containing only one identifier with "-" prefix is not allowed.')
-        item_identifiers = [identifier[1:] if identifier.startswith('-') else identifier for identifier in set(flatten(identifier_filter))]
-        translated = self.translate_identifiers(item_identifiers, language)
-        leaves = self.get_leaves(list(translated.values()))
-        result = set()
-        for inner_filter in identifier_filter:
-            inner_result = None
-            inner_neg_result = set()
-            for identifier in inner_filter:
-                if identifier.startswith('-'):
-                    inner_neg_result |= set(leaves[translated[identifier[1:]]])
-                elif inner_result is None:
-                    inner_result = set(leaves[translated[identifier]])
-                else:
-                    inner_result &= set(leaves[translated[identifier]])
-            result |= inner_result - inner_neg_result
-        return sorted(list(result))
+        return self.filter_all_reachable_leaves_many([identifier_filter], language)[0]
 
     @cache_pure
     def get_children_graph(self, item_ids):
