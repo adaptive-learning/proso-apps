@@ -18,7 +18,7 @@ class TermManager(models.Manager):
         return self
 
 
-class Term(models.Model):
+class Term(models.Model, ModelDiffMixin):
     identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_terms")
 
@@ -49,7 +49,7 @@ class ContextManager(models.Manager):
         return self
 
 
-class Context(models.Model):
+class Context(models.Model, ModelDiffMixin):
     identifier = models.SlugField()
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_contexts")
 
@@ -151,7 +151,7 @@ class Flashcard(models.Model, ModelDiffMixin):
         return "{0.term} - {0.context}".format(self)
 
 
-class Category(models.Model):
+class Category(models.Model, ModelDiffMixin):
     class Meta:
         verbose_name_plural = "categories"
 
@@ -295,8 +295,21 @@ def create_items(sender, instance, **kwargs):
     """
     if instance.item_id is None and instance.item is None:
         item = Item()
+        if hasattr(instance, 'active'):
+            item.active = getattr(instance, 'active')
         item.save()
         instance.item = item
+
+
+@receiver(pre_save, sender=Term)
+@receiver(pre_save, sender=Context)
+@receiver(pre_save, sender=Flashcard)
+@receiver(pre_save, sender=Category)
+@disable_for_loaddata
+def change_activity(sender, instance, **kwargs):
+    if 'active' in instance.diff:
+        instance.item.active = instance.active
+        instance.item.save()
 
 
 @receiver(post_save, sender=Flashcard)
