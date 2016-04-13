@@ -1,7 +1,7 @@
 from . import json_enrich
 from .models import get_environment, get_predictive_model, get_item_selector, get_active_environment_info, \
     Answer, Item, recommend_users as models_recommend_users, PracticeContext, \
-    learning_curve as models_learning_curve, get_filter
+    learning_curve as models_learning_curve, get_filter, get_mastery_trashold
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -12,6 +12,8 @@ from proso.django.cache import cache_page_conditional
 from proso.django.enrichment import register_object_type_enricher
 from proso.django.request import is_time_overridden, get_time, get_user_id, get_language, load_query_json
 from proso.django.response import render, render_json, BadRequestException
+from django.views.decorators.cache import cache_page
+from proso.list import flatten
 from proso.util import timer
 import datetime
 import json
@@ -53,6 +55,45 @@ def to_practice(request):
     return render_json(request, result, template='models_json.html', help_text=to_practice.__doc__)
 
 
+@cache_page(60 * 60 * 24 * 7)
+def to_practice_counts(request):
+    """
+    Get number of items available to practice.
+
+    filters:                -- use this or body
+      json as in BODY
+    language:
+      language of the items
+
+    BODY
+      json in following format:
+      {
+        "#identifier": []         -- custom identifier (str) and filter
+        ...
+      }
+    """
+    data = None
+    if request.method == "POST":
+        data = json.loads(request.body.decode("utf-8"))
+    if "filters" in request.GET:
+        data = load_query_json(request.GET, "filters")
+    if data is None:
+        return render_json(request, {}, template='models_json.html', help_text=to_practice_counts.__doc__)
+    language = get_language(request)
+    timer('to_practice_counts')
+    filter_names, filter_filters = list(zip(*sorted(data.items())))
+    reachable_leaves = Item.objects.filter_all_reachable_leaves_many(filter_filters, language)
+    response = {
+        group_id: {
+            'filter': data[group_id],
+            'number_of_items': len(items),
+        }
+        for group_id, items in zip(filter_names, reachable_leaves)
+    }
+    LOGGER.debug("flashcard_counts - getting flashcards in groups took %s seconds", (timer('to_practice_counts')))
+    return render_json(request, response, template='models_json.html', help_text=to_practice_counts.__doc__)
+
+
 def practice_image(request):
     user_id = get_user_id(request)
     limit = min(int(request.GET.get('limit', 10)), 100)
@@ -86,6 +127,29 @@ def practice_image(request):
 @allow_lazy_user
 @transaction.atomic
 def answer(request):
+    """
+    Save the answer.
+
+    GET parameters:
+        html:
+            turn on the HTML version of the API
+
+    BODY
+    json in following format:
+    {
+        "answer": #answer,                          -- for one answer
+        "answers": [#answer, #answer, #answer ...]  -- for multiple answers
+    }
+
+    answer = {
+        "answer_type": str,             -- type of answer to save (e.g., flashcard_answer)
+        "response_time": int,           -- response time in milliseconds
+        "meta": "str"                   -- optional information
+        "time_gap": int                 -- waiting time in frontend in seconds
+        ...                             -- other fields depending on aswer type
+                                          (see from_json method of Django model class)
+    }
+    """
     if request.method == 'GET':
         return render(request, 'models_answer.html', {}, help_text=answer.__doc__)
     elif request.method == 'POST':
@@ -99,8 +163,104 @@ def answer(request):
 
 @ensure_csrf_cookie
 @allow_lazy_user
+def user_stats(request):
+    """
+    Get user statistics for selected groups of items
+
+    time:
+      time in format '%Y-%m-%d_%H:%M:%S' used for practicing
+    user:
+      identifier of the user (only for stuff users)
+    username:
+      username of user (only for users with public profile)
+    filters:                -- use this or body
+      json as in BODY
+    mastered:
+      use model to compute number of mastered items - can be slowed
+    language:
+      language of the items
+
+    BODY
+      json in following format:
+      {
+        "#identifier": []         -- custom identifier (str) and filter
+        ...
+      }
+    """
+    timer('user_stats')
+    response = {}
+    data = None
+    if request.method == "POST":
+        data = json.loads(request.body.decode("utf-8"))
+    if "filters" in request.GET:
+        data = load_query_json(request.GET, "filters")
+    if data is None:
+        return render_json(request, {}, template='models_user_stats.html', help_text=user_stats.__doc__)
+    environment = get_environment()
+    if is_time_overridden(request):
+        environment.shift_time(get_time(request))
+    user_id = get_user_id(request)
+    language = get_language(request)
+    filter_names, filter_filters = list(zip(*sorted(data.items())))
+    reachable_leaves = Item.objects.filter_all_reachable_leaves_many(filter_filters, language)
+    all_leaves = flatten(reachable_leaves)
+    answers = dict(list(zip(all_leaves, environment.number_of_answers_more_items(all_leaves, user_id))))
+    correct_answers = dict(list(zip(all_leaves, environment.number_of_correct_answers_more_items(all_leaves, user_id))))
+    if request.GET.get("mastered"):
+        timer('user_stats_mastered')
+        mastery_threshold = get_mastery_trashold()
+        predictions = get_predictive_model().predict_more_items(environment, user_id, all_leaves, get_time(request))
+        mastered = dict(list(zip(all_leaves, [p >= mastery_threshold for p in predictions])))
+        LOGGER.debug("user_stats - getting predictions for flashcards took %s seconds", (timer('user_stats_mastered')))
+    for identifier, items in zip(filter_names, reachable_leaves):
+        if len(items) == 0:
+            response[identifier] = {
+                "filter": data[identifier],
+                "number_of_flashcards": 0,
+            }
+        else:
+            response[identifier] = {
+                "filter": data[identifier],
+                "number_of_flashcards": len(items),
+                "number_of_practiced_flashcards": sum(answers[i] > 0 for i in items),
+                "number_of_answers": sum(answers[i] for i in items),
+                "number_of_correct_answers": sum(correct_answers[i] for i in items),
+            }
+            if request.GET.get("mastered"):
+                response[identifier]["number_of_mastered_flashcards"]= sum(mastered[i] for i in items)
+    return render_json(request, response, template='models_user_stats.html', help_text=user_stats.__doc__)
+
+
+@ensure_csrf_cookie
+@allow_lazy_user
 @transaction.atomic
 def practice(request):
+    """
+    Return the given number of questions to practice adaptively. In case of
+    POST request, try to save the answer(s).
+
+    GET parameters:
+        filter:
+            list of lists of identifiers (may be prefixed by minus sign to
+            mark complement)
+        language:
+            language (str) of flashcards
+        avoid:
+            list of item ids to avoid
+        limit:
+            number of returned questions (default 10, maximum 100)
+        time:
+            time in format '%Y-%m-%d_%H:%M:%S' used for practicing
+        user:
+            identifier for the practicing user (only for stuff users)
+        stats:
+            turn on the enrichment of the objects by some statistics
+        html:
+            turn on the HTML version of the API
+
+    BODY:
+        see answer resource
+    """
     if request.user.id is None:  # Google Bot
         return render_json(request, {
             'error': _('There is no user available for the practice.'),

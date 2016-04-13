@@ -1,0 +1,30 @@
+{% extends 'models_base.html' %}
+
+{% load jsonify staticfiles %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+    <hr/>
+    <div>
+    <h2>JSON object</h2>
+        <code>{{ json|obj2richjson }}</code>
+        {% verbatim %}
+        <pre>{{ json | json:4}}</pre>
+        <hr/>
+        <form action="" method="get" class="pure-form">
+            <fieldset>
+                <input type="text" name="filters" value='{"example_identifier": [[]]}' style="width: 40%"/>
+            </fieldset>
+            <fieldset>
+                <input type="text" placeholder="Language" name="language" />
+                <input type="checkbox" name="mastered"/> number of mastered
+            </fieldset>
+            <input type="hidden" name="html" />
+            <button class="pure-button pure-button-primary" type="submit">Send</button>
+        </form>
+    {% endverbatim %}
+    </div>
+{% endblock %}
