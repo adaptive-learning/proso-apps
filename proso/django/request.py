@@ -91,7 +91,8 @@ def get_time(request):
 
 
 def get_language(request):
-    return request.GET.get("language", request.LANGUAGE_CODE)
+    language = request.GET.get("language", None)
+    return language if language else request.LANGUAGE_CODE
 
 
 ###############################################################################
