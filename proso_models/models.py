@@ -6,11 +6,12 @@ from django.core.cache import cache
 from django.db import connection
 from django.db import models
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from proso.django.cache import get_request_cache, is_cache_prepared
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
+from proso.django.models import ModelDiffMixin
 from proso.django.request import load_query_json
 from proso.django.util import disable_for_loaddata, cache_pure
 from proso.func import fixed_point
@@ -450,7 +451,7 @@ class ItemManager(models.Manager):
 
         def _children(item_ids):
             item_ids = [ii for iis in item_ids.values() for ii in iis]
-            items = Item.objects.filter(id__in=item_ids).prefetch_related('children')
+            items = Item.objects.filter(id__in=item_ids, active=True).prefetch_related('children')
             return {item.id: sorted([_item.id for _item in item.children.all()]) for item in items}
         return self._reachable_graph(item_ids, _children)
 
@@ -722,7 +723,7 @@ class ItemManager(models.Manager):
             x={None: item_ids}).items() if len(deps) > 0}
 
 
-class Item(models.Model):
+class Item(models.Model, ModelDiffMixin):
 
     # This field should not be NULL, but historically there is a huge number of
     # items in running systems without specified item type.
@@ -733,6 +734,7 @@ class Item(models.Model):
         symmetrical=False, through='ItemRelation',
         through_fields=('parent', 'child')
     )
+    active = models.BooleanField(default=True)
 
     objects = ItemManager()
 
@@ -750,11 +752,12 @@ class Item(models.Model):
         app_label = 'proso_models'
 
 
-class ItemRelation(models.Model):
+class ItemRelation(models.Model, ModelDiffMixin):
 
     parent = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='parent_relations')
     child = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='child_relations')
     visible = models.BooleanField(default=True)
+    active = models.BooleanField(default=True)
 
 
 class AnswerMetaManager(models.Manager):
@@ -1077,14 +1080,22 @@ def log_audit(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=ItemRelation)
+def activity_of_environment_relation(sender, instance, **kwargs):
+    if not kwargs['created'] and 'active' in instance.diff:
+        for relation in ItemRelation.objects.filter(Q(parent_id=instance.id) | Q(child_id=instance.id)):
+            relation.active = instance.active
+            relation.save()
+
+
+@receiver(post_save, sender=ItemRelation)
 def init_environment_relation(sender, instance, **kwargs):
     environment = get_environment()
-    if instance.visible:
+    if instance.visible and instance.active:
         parent = instance.parent_id
         child = instance.child_id
         environment.write("child", 1, item=parent, item_secondary=child, symmetric=False, permanent=True)
         environment.write("parent", 1, item=child, item_secondary=parent, symmetric=False, permanent=True)
-    elif not instance.visible and not kwargs['created']:
+    elif (not instance.visible or not instance.active) and not kwargs['created']:
         parent = instance.parent_id
         child = instance.child_id
         environment.delete("child", item=parent, item_secondary=child, symmetric=False)
