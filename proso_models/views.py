@@ -380,31 +380,6 @@ def recommend_users(request):
 
 
 @allow_lazy_user
-def model(request):
-    item_ids = load_query_json(request.GET, 'items', '[]')
-    items_filter = get_filter(request)
-    if len(items_filter) == 0 and len(item_ids) == 0:
-        raise BadRequestException('At least filter or items has to be specified!')
-    if len(items_filter) > 0 and len(item_ids) > 0:
-        raise BadRequestException('Either filter, or items has to be specified!')
-    if len(item_ids) > 0:
-        if any([isinstance(item_id, str) for item_id in item_ids]):
-            translated = Item.objects.translate_identifiers(item_ids, get_language(request))
-            item_ids = [translated[item_id] for item_id in item_ids]
-    else:
-        item_ids = Item.objects.filter_all_reachable_leaves(items_filter, get_language(request))
-    items = Item.objects.filter(id__in=item_ids).all()
-    if len(items) != len(item_ids):
-        found_item_ids = [item.id for item in items]
-        not_found_item_ids = set(item_ids) - set(found_item_ids)
-        return render_json(request, {
-            'error': 'There are no items with the following ids: %s' % list(not_found_item_ids)
-        }, template='models_json.html', status=404)
-    result = [item.to_json(nested=True) for item in items]
-    return render_json(request, result, template='models_json.html')
-
-
-@allow_lazy_user
 def audit(request, key):
     if 'user' in request.GET:
         user = get_user_id(request)
