@@ -532,6 +532,8 @@ class ItemManager(models.Manager):
                 kwargs[item_type['language']] = language
             for identifier, item_id in model.objects.filter(**kwargs).values_list('identifier', item_type['foreign_key']):
                 result[to_find[identifier]] = item_id
+        if len(result) != len(identifiers):
+            raise Exception("Can't translate the following identifiers: {}".format(set(identifiers) - set(result.keys())))
         return result
 
     @cache_pure
