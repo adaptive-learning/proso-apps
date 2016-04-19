@@ -293,7 +293,7 @@ def practice(request):
             'error': _('There is no item for the given filter to practice.'),
             'error_type': 'empty_practice'
         }, status=404, template='models_json.html')
-    selected_items, meta = item_selector.select(environment, user, item_ids, time, practice_context.id, limit, items_in_queue=avoid)
+    selected_items, meta = item_selector.select(environment, user, item_ids, time, practice_context.id, limit, items_in_queue=len(avoid))
     result = []
     for item, item_meta in zip(selected_items, meta):
         question = {
