@@ -8,7 +8,6 @@ urlpatterns = patterns(
     url(r'^answer/$', 'answer', name='models_answer'),
     url(r'^audit/(?P<key>[\w_]+)', 'audit', name='models_audit'),
     url(r'^learning_curve/', 'learning_curve', name='models_learning_curve'),
-    url(r'^model/', 'model', name='models_model'),
     url(r'^practice_image/', 'practice_image', name='models_practice_image'),
     url(r'^practice/', 'practice', name='models_practice'),
     url(r'^read/(?P<key>[\w_]+)', 'read', name='models_read'),
