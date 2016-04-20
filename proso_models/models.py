@@ -520,9 +520,9 @@ class ItemManager(models.Manager):
         """
         result = {}
         item_types = ItemType.objects.get_all_types()
-        for item_type_id, identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(identifier, item_types)).items():
+        for item_type_id, type_identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(identifier, item_types)).items():
             to_find = {}
-            for identifier in identifiers:
+            for identifier in type_identifiers:
                 identifier_split = identifier.split('/')
                 to_find[identifier_split[1]] = identifier
             kwargs = {'identifier__in': list(to_find.keys())}
