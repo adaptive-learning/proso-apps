@@ -11,4 +11,5 @@ urlpatterns = patterns(
     url(r'^analysis/$', 'analysis', name='analysis'),
     url(r'^analysis/(?P<app_name>\w+)$', 'analysis', name='analysis'),
     url(r'^config_bar/$', (TemplateView.as_view(template_name="common_config_bar.html")), name='config_bar'),
+    url(r'^languages/$', 'languages', name='languages'),
 )

@@ -215,3 +215,8 @@ CACHES = {
 
 PROSO_JS_FILES = ['dist/js/bower-libs.js']
 PROSO_FLASHCARDS = {}
+
+LANGUAGE_DOMAINS = {
+    'cs': 'localhost:8000',
+    'en': '127.0.0.1:8000',
+}
