@@ -70,6 +70,11 @@ class ItemManagerGraphTest(test.TestCase):
         self.assertEqual(Item.objects.get_leaves([2, 3]), {2: {5, 6}, 3: {6, 7}})
         self.assertEqual(Item.objects.get_leaves([1, 4]), {1: {5, 6, 7}, 4: {7}})
         self.assertEqual(Item.objects.get_leaves([7]), {7: {7}})
+        ItemRelation.objects.create(
+            parent=Item.objects.get(id=7),
+            child=Item.objects.create(id=8, active=False)
+        )
+        self.assertEqual(Item.objects.get_leaves([3]), {3: {6}})
 
     def test_signals_building_graph(self):
         environment = get_environment()
