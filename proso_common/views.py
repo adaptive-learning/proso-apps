@@ -156,6 +156,18 @@ def config(request):
     return render_json(request, get_global_config(), template='common_json.html')
 
 
+def languages(request):
+    """
+    Returns languages that are available in the system.
+
+    Returns Dict: language_code -> domain
+    """
+    return render_json(request,
+                       settings.LANGUAGE_DOMAINS if hasattr(settings, 'LANGUAGE_DOMAINS') else
+                       {"error": "Languages are not set. (Set LANGUAGE_DOMAINS in settings.py)"},
+                       template='common_json.html', help_text=languages.__doc__)
+
+
 def csv(request, filename=None):
     if not request.user.is_staff:
         response = {

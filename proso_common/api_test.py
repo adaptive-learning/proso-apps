@@ -4,6 +4,8 @@ from proso.django.config import reset_overridden
 from proso.django.test import TestCase
 import json
 
+from testproject import settings
+
 
 class CommonAPITest(TestCase):
 
@@ -48,3 +50,8 @@ class CommonAPITest(TestCase):
                 self.assertEqual(set(csv_item.keys()), set(['url', 'name']), "Each CSV file for custom export has url and name.")
                 response = self.client.get(csv_item['url'])
                 self.assertTrue(response.status_code in [200, 204], 'The CSV file can be downloaded or is empty.')
+
+    def testLanguages(self):
+        response = self.client.get('/common/languages/')
+        self.assertDictEqual(json.loads(response.content.decode("utf-8"))['data'], settings.LANGUAGE_DOMAINS,
+                             'API returns languages set in settings.py')
