@@ -477,7 +477,7 @@ class ItemManager(models.Manager):
         def _children(item_ids):
             item_ids = [ii for iis in item_ids.values() for ii in iis]
             items = Item.objects.filter(id__in=item_ids, active=True).prefetch_related('children')
-            return {item.id: sorted([_item.id for _item in item.children.all()]) for item in items}
+            return {item.id: sorted([_item.id for _item in item.children.all() if _item.active]) for item in items}
         return self._reachable_graph(item_ids, _children)
 
     @cache_pure
@@ -605,7 +605,8 @@ class ItemManager(models.Manager):
 
     def get_leaves(self, item_ids):
         """
-        Get mapping of items to their reachable leaves.
+        Get mapping of items to their reachable leaves. Leaves having
+        inactive relations to other items are omitted.
 
         Args:
             item_ids (list): items which are taken as roots for the reachability
@@ -631,13 +632,16 @@ class ItemManager(models.Manager):
                 f=__search,
                 x={item_id}
             )
+            counts = self.get_children_counts(active=None)
+            leaves = {leaf for leaf in leaves if counts[leaf] == 0}
             return leaves if len(leaves) > 0 else {item_id}
 
         return {item_id: _get_leaves(item_id) for item_id in item_ids}
 
     def get_all_leaves(self, item_ids):
         """
-        Get all leaves reachable from the given set of items.
+        Get all leaves reachable from the given set of items. Leaves having
+        inactive relations to other items are omitted.
 
         Args:
             item_ids (list): items which are taken as roots for the reachability
@@ -648,7 +652,8 @@ class ItemManager(models.Manager):
         children = self.get_children_graph(item_ids)
         froms = set(children.keys())
         tos = set([ii for iis in children.values() for ii in iis])
-        return sorted(list((set(item_ids) | tos) - froms))
+        counts = self.get_children_counts(active=None)
+        return sorted([leaf for leaf in ((set(item_ids) | tos) - froms) if counts[leaf] == 0])
 
     def get_reference_fields(self, exclude_models=None):
         """
@@ -741,6 +746,13 @@ class ItemManager(models.Manager):
                         old_relations[child_id].save()
                 to_delete |= {old_relations[child_id].pk for child_id in set(old_relations.keys()) - set(children)}
             ItemRelation.objects.filter(pk__in=to_delete).delete()
+
+    @cache_pure
+    def get_children_counts(self, active=True):
+        query = self
+        if active is not None:
+            query = query.filter(children__active=active)
+        return dict(query.annotate(c=Count('children')).values_list('pk', 'c'))
 
     def _reachable_graph(self, item_ids, neighbors):
         return {i: deps for i, deps in fixed_point(
