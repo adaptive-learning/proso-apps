@@ -519,6 +519,7 @@ class ItemManager(models.Manager):
             dict: identifier -> item id
         """
         result = {}
+        identifiers = set(identifiers)
         item_types = ItemType.objects.get_all_types()
         for item_type_id, type_identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(identifier, item_types)).items():
             to_find = {}
