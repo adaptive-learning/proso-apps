@@ -2,7 +2,6 @@ import json
 import logging
 from collections import defaultdict
 from hashlib import sha1
-from urllib.parse import parse_qs
 from time import time as time_lib
 from django.contrib.auth.models import User
 from django.db import models
@@ -13,8 +12,7 @@ from django.dispatch import receiver
 from proso.dict import group_keys_by_value_lists
 from proso.django.util import cache_pure
 from proso.list import flatten
-from proso_flashcards.models import Flashcard
-from proso_models.models import Answer, get_environment, get_mastery_trashold, get_predictive_model
+from proso_models.models import Answer, Item, get_environment, get_mastery_trashold, get_predictive_model
 
 LOGGER = logging.getLogger('django.request')
 
@@ -75,24 +73,14 @@ class ConceptManager(models.Manager):
         Returns:
             dict: concept (int) -> list of item ids (int)
         """
-
-        # TODO born to be reimplemented, now assuming flashcards
         if concepts is None:
             concepts = self.filter(active=True)
             if lang is not None:
                 concepts = concepts.filter(lang=lang)
-
         item_lists = {}
         for concept in concepts:
-            parameters = {k: json.loads(v[0].replace("'", '"')) for k, v in parse_qs(concept.query).items()}
-            _, items = Flashcard.objects.filtered_ids(
-                categories=parameters["categories"],
-                contexts=parameters["contexts"],
-                types=parameters["types"],
-                avoid=[],
-                language=concept.lang
-            )
-            item_lists[concept.pk] = items
+            practice_filter = json.loads(concept.query)
+            item_lists[concept.pk] = Item.objects.filter_all_reachable_leaves(practice_filter, concept.lang)
         return item_lists
 
     @cache_pure

@@ -7,9 +7,6 @@
         "id": {
           "type": "string"
         },
-        "type": {
-          "type": "string"
-        },
         "categories": {
           "type": "array",
           "items": {
@@ -75,9 +72,6 @@
         },
         "type": {
           "type": "string"
-        },
-        "not-in-model": {
-          "type": "boolean"
         },
         "parent-categories": {
           "type": "array",

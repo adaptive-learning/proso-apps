@@ -1,45 +1,38 @@
 {
   "tags": {
-    "type": {
+    "category": {
       "names": {
-        "en": "Place type",
-        "cs": "Typ místa",
-        "es": "Place type"
+        "en": "Kategorie",
+        "cs": "Category"
       },
       "values": {
         "state": {
           "en": "States",
-          "cs": "Státy",
-          "es": "Estados"
+          "cs": "Státy"
         },
         "city": {
           "en": "Cities",
-          "cs": "Města",
-          "es": "Ciudades"
+          "cs": "Města"
         }
       }
     },
     "context": {
       "names": {
         "en": "Map",
-        "cs": "Mapa",
-        "es": "Map"
+        "cs": "Mapa"
       },
       "values": {
         "world": {
           "en": "World",
-          "cs": "Svět",
-          "es": "Mundo"
+          "cs": "Svět"
         },
         "cz": {
           "en": "Czech",
-          "cs": "Česko",
-          "es": "CZ"
+          "cs": "Česko"
         },
         "africa": {
           "en": "Africa",
-          "cs": "Afrika",
-          "es": "Africana"
+          "cs": "Afrika"
         }
       }
     }
@@ -47,97 +40,65 @@
   "action_names": {
     "practice": {
       "en": "Practice",
-      "cs": "Procvičovat",
-      "es": "Práctica"
+      "cs": "Procvičovat"
     },
     "view": {
       "en": "View",
-      "cs": "Prohlížet",
-      "es": "Ver"
+      "cs": "Prohlížet"
     }
   },
   "concepts": [
     {
-      "query": "contexts=[\"world\"]&categories=[]&types=[\"state\"]",
-      "tags": ["type:state", "context:world"],
+      "query": "[[\"context/world\", \"category/state\"]]",
+      "tags": ["category:state", "context:world"],
       "names": {
         "en": "World states",
-        "cs": "Státy světa",
-        "es": "Estados del mundo"
+        "cs": "Státy světa"
       },
       "actions": {
         "practice": {
           "en": "http://en.slepemapy.cz/practice/world/state",
-          "cs": "http://slepemapy.cz/practice/world/state",
-          "es": "http://es.slepemapy.cz/practice/world/state"
+          "cs": "http://slepemapy.cz/practice/world/state"
         },
         "view": {
           "en": "http://en.slepemapy.cz/view/world/state",
-          "cs": "http://slepemapy.cz/view/world/state",
-          "es": "http://es.slepemapy.cz/view/world/state"
+          "cs": "http://slepemapy.cz/view/world/state"
         }
       }
     },
     {
-      "query": "contexts=[\"africa\"]&categories=[]&types=[\"city\"]",
-      "tags": ["type:city", "context:africa"],
-      "names": {
-        "en": "African cities",
-        "cs": "Africká města",
-        "es": "Ciudades africanas"
-      },
-      "actions": {
-        "practice": {
-          "en": "http://en.slepemapy.cz/practice/africa/city",
-          "cs": "http://slepemapy.cz/practice/africa/city",
-          "es": "http://es.slepemapy.cz/practice/africa/city"
-        },
-        "view": {
-          "en": "http://en.slepemapy.cz/view/africa/city",
-          "cs": "http://slepemapy.cz/view/africa/city",
-          "es": "http://es.slepemapy.cz/view/africa/city"
-        }
-      }
-    },
-    {
-      "query": "contexts=[\"africa\"]&categories=[]&types=[\"state\"]",
-      "tags": ["type:state", "context:africa"],
+      "query": "[[\"context/africa\", \"category/state\"]]",
+      "tags": ["category:state", "context:africa"],
       "names": {
         "en": "African states",
-        "cs": "Africké státy",
-        "es": "Estados africanos"
+        "cs": "Africké státy"
       },
       "actions": {
         "practice": {
           "en": "http://en.slepemapy.cz/practice/africa/state",
-          "cs": "http://slepemapy.cz/practice/africa/state",
-          "es": "http://es.slepemapy.cz/practice/africa/state"
+          "cs": "http://slepemapy.cz/practice/africa/state"
         },
         "view": {
           "en": "http://en.slepemapy.cz/view/africa/state",
-          "cs": "http://slepemapy.cz/view/africa/state",
-          "es": "http://es.slepemapy.cz/view/africa/state"
+          "cs": "http://slepemapy.cz/view/africa/state"
         }
       }
     },
     {
-      "query": "contexts=[\"cz\"]&categories=[]&types=[\"city\"]",
-      "tags": ["type:city", "context:cz"],
+      "query": "[[\"context/cz\", \"category/city\"]]",
+      "tags": ["category:city", "context:cz"],
       "names": {
         "en": "Czech cities",
-        "cs": "České státy",
-        "es": "Ciudades checas"
+        "cs": "Ceska mesta"
       },
       "actions": {
         "practice": {
           "en": "http://en.slepemapy.cz/practice/cz/city",
-          "cs": "http://slepemapy.cz/practice/cz/city",
-          "es": "http://es.slepemapy.cz/practice/cz/city"
+          "cs": "http://slepemapy.cz/practice/cz/city"
         },
         "view": {
           "en": "http://en.slepemapy.cz/view/cz/city",
-          "cs": "http://slepemapy.cz/view/cz/city",
-          "es": "http://es.slepemapy.cz/view/cz/city"
+          "cs": "http://slepemapy.cz/view/cz/city"
         }
       }
     }

@@ -1,11 +1,14 @@
 from clint.textui import progress
 from django.conf import settings
 from django.core.cache import cache
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.db.models import Count
 from jsonschema import validate
 from optparse import make_option
+from proso.list import flatten
+from proso_models.models import Item
 from proso_flashcards.models import Category, Context, Term, Flashcard
 import copy
 import json
@@ -16,12 +19,6 @@ import re
 class Command(BaseCommand):
     help = "Load flashcards from JSON file"
     option_list = BaseCommand.option_list + (
-        make_option(
-            '--skip-category-check',
-            dest='skip_category_check',
-            default=False,
-            action="store_true",
-            help='Do not check if categories children are only of one type. Also correct type of categories is not set.'),
         make_option(
             '--skip-language-check',
             dest='skip_language_check',
@@ -56,8 +53,6 @@ class Command(BaseCommand):
                     self._load_terms(data["terms"])
                 if "flashcards" in data:
                     self._load_flashcards(data["flashcards"], options['ignored_flashcards'])
-                if not options["skip_category_check"]:
-                    check_and_set_category_type(Category)
                 if not options["skip_language_check"]:
                     check_db_lang_integrity()
                 cache.clear()
@@ -67,14 +62,14 @@ class Command(BaseCommand):
             print("\nLoading categories")
         db_categories = {}
         item_mapping = {}
-        for db_category in Category.objects.all().prefetch_related("parents"):
+        for db_category in Category.objects.all():
             db_categories[db_category.identifier + db_category.lang] = db_category
             item_mapping[db_category.identifier] = db_category.item_id
         if data is None:
-            return db_categories
+            return
 
-        for category in progress.bar(data, every=max(1, len(data) / 100)):
-            langs = [k[-2:] for k in list(category.keys()) if re.match(r'^name-\w\w$', k)]
+        for category in progress.bar(data, every=max(1, len(data) // 100)):
+            langs = [k[-2:] for k in category.keys() if re.match(r'^name-\w\w$', k)]
             for lang in langs:
                 db_category = Category.objects.filter(identifier=category["id"], lang=lang).first()
                 if db_category is None:
@@ -83,8 +78,6 @@ class Command(BaseCommand):
                         lang=lang,
                     )
                 db_category.name = category["name-{}".format(lang)]
-                if "not-in-model" in category:
-                    db_category.not_in_model = category["not-in-model"]
                 if "type" in category:
                     db_category.type = category["type"]
                 if db_category.identifier in item_mapping:
@@ -93,24 +86,10 @@ class Command(BaseCommand):
                 else:
                     db_category.save()
                     item_mapping[db_category.identifier] = db_category.item_id
-                db_categories[db_category.identifier + db_category.lang] = db_category
+                db_categories[db_category.identifier, db_category.lang] = db_category
 
-        print("\nBuilding dependencies")
-        for category in progress.bar(data, every=max(1, len(data) / 100)):
-            for lang in [k[-2:] for k in list(category.keys()) if re.match(r'^name-\w\w$', k)]:
-                db_category = db_categories[category["id"] + lang]
-                db_category.parents.clear()
-                if "parent-categories" in category:
-                    for parent in category["parent-categories"]:
-                        if parent + lang not in db_categories:
-                            raise CommandError(
-                                "Parent category {} (lang {}) for category {} doesn't exist".format(parent, lang,
-                                                                                          category["id"]))
-                        db_category.parents.add(db_categories[parent + lang])
-                db_category.save()
-
+        self._load_item_relations(data, db_categories, 'parent-categories')
         print(("New total number of categories in DB: {}".format(len(db_categories))))
-        return db_categories
 
     def _load_contexts(self, data=None):
         if data is not None:
@@ -122,9 +101,9 @@ class Command(BaseCommand):
             db_contexts[db_context.identifier + db_context.lang] = db_context
             item_mapping[db_context.identifier] = db_context.item_id
         if data is None:
-            return db_contexts
+            return
 
-        for context in progress.bar(data, every=max(1, len(data) / 100)):
+        for context in progress.bar(data, every=max(1, len(data) // 100)):
             langs = [k[-2:] for k in list(context.keys()) if re.match(r'^name-\w\w$', k)]
             for lang in langs:
                 db_context = model.objects.filter(identifier=context["id"], lang=lang).first()
@@ -150,24 +129,10 @@ class Command(BaseCommand):
                 else:
                     db_context.save()
                     item_mapping[db_context.identifier] = db_context.item_id
-                db_contexts[db_context.identifier + db_context.lang] = db_context
+                db_contexts[db_context.identifier, db_context.lang] = db_context
 
-        categories = self._load_categories()
-        print("\nBuilding dependencies")
-        for context in progress.bar(data, every=max(1, len(data) / 100)):
-            for lang in [k[-2:] for k in list(context.keys()) if re.match(r'^name-\w\w$', k)]:
-                db_context = db_contexts[context["id"] + lang]
-                db_context.categories.clear()
-                if "categories" in context:
-                    for parent in context["categories"]:
-                        if parent + lang not in categories:
-                            raise CommandError(
-                                "Parent category {} for context {} doesn't exist".format(parent + lang, context["id"]))
-                        db_context.categories.add(categories[parent + lang])
-                db_context.save()
-
+        self._load_item_relations(data, db_contexts, 'categories')
         print(("New total number of contexts in DB: {}".format(len(db_contexts))))
-        return db_contexts
 
     def _load_terms(self, data=None):
         if data is not None:
@@ -179,9 +144,9 @@ class Command(BaseCommand):
             db_terms[db_term.identifier + db_term.lang] = db_term
             item_mapping[db_term.identifier] = db_term.item_id
         if data is None:
-            return db_terms
+            return
 
-        for term in progress.bar(data, every=max(1, len(data) / 100)):
+        for term in progress.bar(data, every=max(1, len(data) // 100)):
             langs = [k[-2:] for k in list(term.keys()) if re.match(r'^name-\w\w$', k)]
             for lang in langs:
                 db_term = model.objects.filter(identifier=term["id"], lang=lang).first()
@@ -201,38 +166,10 @@ class Command(BaseCommand):
                 else:
                     db_term.save()
                     item_mapping[db_term.identifier] = db_term.item_id
-                db_terms[db_term.identifier + db_term.lang] = db_term
+                db_terms[db_term.identifier, db_term.lang] = db_term
 
-        categories = self._load_categories()
-        print("\nBuilding dependencies")
-        for term in progress.bar(data, every=max(1, len(data) / 100)):
-            for lang in [k[-2:] for k in list(term.keys()) if re.match(r'^name-\w\w$', k)]:
-                if term["id"] + lang in db_terms:
-                    db_term = db_terms[term["id"] + lang]
-                    parents = []
-                    modified = False
-                    db_term_parents = db_term.parents.all()
-                    if "categories" in term:
-                        for parent in term["categories"]:
-                            if parent + lang not in categories:
-                                raise CommandError(
-                                    "Parent category {} for term {} doesn't exist".format(parent + lang, term["id"]))
-                            category = categories[parent + lang]
-                            parents.append(category)
-                            if category not in db_term_parents:
-                                modified = True
-                    if len(parents) != db_term.parents.count():
-                        modified = True
-                    if modified:
-                        db_term.parents.clear()
-                        for p in parents:
-                            db_term.parents.add(p)
-                        db_term.save()
-                else:
-                    print(("Warning: Missing term '%s' in language '%s'" % (term["id"], lang)))
-
+        self._load_item_relations(data, db_terms, 'categories')
         print(("New total number of terms in DB: {}".format(len(db_terms))))
-        return db_terms
 
     def _load_flashcards(self, data, ignored_flashcards_strategy):
         if data is not None:
@@ -245,7 +182,7 @@ class Command(BaseCommand):
             item_mapping[db_flashcard.identifier] = db_flashcard.item_id
         db_flascards_before_load = copy.copy(db_flashcards)
 
-        for flashcard in progress.bar(data, every=max(1, len(data) / 100)):
+        for flashcard in progress.bar(data, every=max(1, len(data) // 100)):
             terms = Term.objects.filter(identifier=flashcard["term"])
             if len(terms) == 0:
                 raise CommandError("Term {} for flashcard {} doesn't exist".format(flashcard["term"], flashcard["id"]))
@@ -307,37 +244,33 @@ class Command(BaseCommand):
                     db_flashcard.active = False
                     db_flashcard.save()
 
-        categories = self._load_categories()
-        print("\nBuilding dependencies")
-        for flashcard in progress.bar(data, every=max(1, len(data) / 100)):
-            for lang in Category.objects.all().values_list("lang", flat=True).distinct():
-                if flashcard["id"] + lang in db_flashcards:
-                    db_flashcard = db_flashcards[flashcard["id"] + lang]
-                    parents = []
-                    modified = False
-                    db_flashcard_parents = db_flashcard.categories.all()
-                    if "categories" in flashcard:
-                        for parent in flashcard["categories"]:
-                            if parent + lang not in categories:
-                                raise CommandError(
-                                    "Parent category {} for flashcard {} doesn't exist".format(parent + lang, flashcard["id"]))
-                            db_flashcard.categories.add(categories[parent + lang])
-                            category = categories[parent + lang]
-                            parents.append(category)
-                            if category not in db_flashcard_parents:
-                                modified = True
-                    if len(parents) != db_flashcard.categories.count():
-                        modified = True
-                    if modified:
-                        db_flashcard.categories.clear()
-                        for p in parents:
-                            db_flashcard.categories.add(p)
-                        db_flashcard.save()
-                else:
-                    print(("Warning: Missing flashcard '%s' in language '%s'" % (flashcard["id"], lang)))
-
         print(("New total number of flashcards in DB: {}".format(len(db_flashcards))))
         return db_flashcards
+
+    def _load_item_relations(self, data, db_objects, categories_json_key):
+        print("\nFilling item types")
+        call_command('fill_item_types')
+        print("\nBuilding dependencies")
+        parent_subgraph = {}
+        lang_intersect = None
+        for json_object in progress.bar(data, every=max(1, len(data) / 100)):
+            # The language is not important here.
+            langs = [k[-2:] for k in json_object.keys() if re.match(r'^name-\w\w$', k)]
+            lang_intersect = set(langs) if lang_intersect is None else lang_intersect & set(langs)
+            lang = langs[0]
+            db_object = db_objects[json_object["id"], lang]
+            parent_items = parent_subgraph.get(db_object.item_id, set())
+            for parent in json_object.get(categories_json_key, []):
+                parent_items.add('proso_flashcards_category/{}'.format(parent))
+            parent_subgraph[db_object.item_id] = parent_items
+        lang = lang_intersect.pop()
+        translated = Item.objects.translate_identifiers(
+            flatten(parent_subgraph.values()), lang
+        )
+        Item.objects.override_parent_subgraph({
+            item: [translated[parent] for parent in parents]
+            for item, parents in parent_subgraph.items()
+        })
 
 
 def check_db_lang_integrity():
@@ -350,29 +283,3 @@ def check_db_lang_integrity():
         if len(bad_objects) > 0:
             raise CommandError(" -- {}s with wrong number of languages: {}".format(model.__name__, bad_objects))
     print(" -- OK")
-
-
-def check_and_set_category_type(dbCategory):
-    for category in dbCategory.objects.all():
-        terms = category.terms.all().count()
-        flashcards = category.flashcards.all().count()
-        contexts = category.contexts.all().count()
-        subcategories = category.subcategories.all().count()
-        all = terms + flashcards + contexts + subcategories
-        if all == 0:
-            print(("Info: Category {} have no children".format(category.identifier)))
-
-        category.children_type = None
-        if terms == all:
-            category.children_type = Category.TERMS
-        if flashcards == all:
-            category.children_type = Category.FLASHCARDS
-        if contexts == all:
-            category.children_type = Category.CONTEXTS
-        if subcategories == all:
-            category.children_type = Category.CATEGORIES
-
-        if category.children_type is None:
-            raise AttributeError("Category {} have more types of children".format(category.identifier))
-
-        category.save()

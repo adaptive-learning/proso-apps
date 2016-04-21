@@ -2,15 +2,10 @@
 {% block menu_heading_block %}Flashcards{% endblock %}
 {% block menu_list_block %}
     <ul>
-        <li><a href="{% url 'show_fc_flashcards' %}?html=True&stats=True&environment=True&contexts=[]&categories=[]&types=[]&avoid=[]">Flashcards</a></li>
+        <li><a href="{% url 'show_fc_flashcards' %}?html=True&stats=True&environment=True">Flashcards</a></li>
         <li><a href="{% url 'show_fc_terms' %}?html=True&stats=True&environment=True">Terms</a></li>
         <li><a href="{% url 'show_fc_contexts' %}?html=True&stats=True&environment=True">Contexts</a></li>
         <li><a href="{% url 'show_fc_categorys' %}?html=True&stats=True&environment=True">Categories</a></li>
-        <li><a href="{% url 'flashcard_answer' %}?html=True&environment=True">Answer</a></li>
-        <li><a href="{% url 'show_fc_answers' %}?html=True&stats=True&environment=True&contexts=[]&categories=[]&types=[]&avoid=[]">Answers</a></li>
-        <li><a href="{% url 'flashcard_practice' %}?html=True&contexts=[]&categories=[]&types=[]&avoid=[]">Practice</a></li>
-        <li><a href="{% url 'flashcard_user_stats' %}?html=True">User stats</a></li>
-        <li><a href='{% url 'flashcard_counts' %}?html=True&filters={"all":{"categories":[]}}'>Flashcard counts</a></li>
-        <li><a href="{% url 'practice_service' %}">ngPractice</a></li>
+        <li><a href="{% url 'show_fc_answers' %}?html=True&stats=True&environment=True&filter=[]">Answers</a></li>
     </ul>
 {% endblock %}

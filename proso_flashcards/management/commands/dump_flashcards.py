@@ -68,8 +68,6 @@ class Command(BaseCommand):
             c = {"id": category.identifier}
             if category.type is not None:
                 c["type"] = category.type
-            if category.not_in_model:
-                c["not-in-model"] = category.not_in_model
             for c2 in Category.objects.filter(identifier=category.identifier).order_by("lang"):
                 c["name-{}".format(c2.lang)] = c2.name
             categories = category.parents.all().values_list("identifier", flat=True)

@@ -12,10 +12,10 @@ class LoadConceptsTest(TestCase):
 
     def test_load(self):
         call_command('load_concepts', 'testproject/test_data/concepts/concepts.json')
-        self.assertEquals(Concept.objects.all().count(), 3 * 4, "All concepts are loaded.")
-        self.assertSetEqual(set(Concept.objects.all().values_list("lang", flat=True).distinct()), {"en", "es", "cs"}, "Concepts have correct languages.")
-        self.assertEquals(Tag.objects.all().count(), 3 * 5, "All tags are created.")
-        self.assertEquals(Action.objects.all().count(), 3 * 4 * 2, "All actions are created.")
+        self.assertEquals(Concept.objects.all().count(), 2 * 3, "All concepts are loaded.")
+        self.assertSetEqual(set(Concept.objects.all().values_list("lang", flat=True).distinct()), {"en", "cs"}, "Concepts have correct languages.")
+        self.assertEquals(Tag.objects.all().count(), 2 * 5, "All tags are created.")
+        self.assertEquals(Action.objects.all().count(), 2 * 3 * 2, "All actions are created.")
 
 
 class ConceptsAPITest(TestCase):
@@ -29,9 +29,9 @@ class ConceptsAPITest(TestCase):
     ]
 
     def test_get_concepts(self):
-        for lang in [None, 'cs', 'en', 'es']:
+        for lang in [None, 'cs', 'en']:
             content = self._get_concepts(lang=lang)
-            self.assertEquals(len(content), 4, "API returns all concepts of requested language")
+            self.assertEquals(len(content), 3, "API returns all concepts of requested language")
             if lang is None:
                 lang = settings.LANGUAGE_CODE[:2]
             for concept in content:
@@ -45,7 +45,7 @@ class ConceptsAPITest(TestCase):
         self.assertEquals(len(self._get_stats()), 0, "Return no stats for user without answer.")
         ids, corrects, time = [], 0, 0
 
-        time_first = datetime.today().timestamp()
+        time_first = None
         for i in range(20):
             flashcard_id = flashcards[random.randint(0, len(flashcards) - 1)]["id"]
             flashcard2_id = flashcards2[random.randint(0, len(flashcards2) - 1)]["id"]
@@ -55,7 +55,10 @@ class ConceptsAPITest(TestCase):
             corrects += correct
             time += response_time / 1000
             self._answer_flashcard(flashcard_id, correct, response_time)
+            if time_first is None:
+                time_first = datetime.today().timestamp()
             self._answer_flashcard(flashcard2_id, 1 - correct, response_time // 2)        # answer to different concept
+            time_last = datetime.today().timestamp()
             stats = self._get_stats()[concept["identifier"]]
             self.assertEquals(stats["item_count"], len(flashcards), "Stats has correct 'item_count'")
             self.assertEquals(stats["practiced_items_count"], len(set(ids)), "Stats has correct 'practiced_items_count'")
@@ -64,7 +67,7 @@ class ConceptsAPITest(TestCase):
             self.assertAlmostEqual(stats["time_spent"], time, 3, "Stats has correct 'time_spent'")
             self.assertEquals(stats["session_count"], 1, "Stats has correct 'session_count'")
             self.assertAlmostEqual(stats["time_first"], time_first, 0, "Stats has correct 'time_first'")
-            self.assertAlmostEqual(stats["time_last"], datetime.today().timestamp(), 0, "Stats has correct 'time_last'")
+            self.assertAlmostEqual(stats["time_last"], time_last, 0, "Stats has correct 'time_last'")
 
     def _get_concepts(self, lang=None):
         url = '/concepts/concepts?all=True'
@@ -73,13 +76,13 @@ class ConceptsAPITest(TestCase):
         return json.loads(self.client.get(url).content.decode("utf-8"))["data"]
 
     def _get_flashcards_in_concept(self, concept):
-        url = '/flashcards/flashcards?all=True&{}'.format(concept["query"])
-        print(url)
+        url = '/models/to_practice/?filter={}'.format(concept["query"])
         return json.loads(self.client.get(url).content.decode("utf-8"))["data"]
 
     def _answer_flashcard(self, flashcard_id, correct, response_time, direction="t2d"):
-        url = '/flashcards/answer/'
+        url = '/models/answer/'
         data = {"answer": {
+            "answer_class": "flashcard_answer",
             "flashcard_id": flashcard_id,
             "flashcard_answered_id": flashcard_id if correct else None,
             "response_time": response_time,

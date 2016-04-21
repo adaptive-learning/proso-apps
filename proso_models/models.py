@@ -1,16 +1,18 @@
 from collections import defaultdict
 from contextlib import closing
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db import connection
 from django.db import models
 from django.db import transaction
-from django.db.models import F
-from django.db.models.signals import post_save, pre_save
+from django.db.models import Count, F
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from proso.django.cache import get_request_cache, is_cache_prepared
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
+from proso.django.models import ModelDiffMixin
+from proso.django.request import load_query_json
 from proso.django.util import disable_for_loaddata, cache_pure
 from proso.func import fixed_point
 from proso.list import flatten
@@ -91,6 +93,10 @@ def get_options_number():
 
 def get_mastery_trashold():
     return get_config("proso_models", "mastery_threshold", default=0.9)
+
+
+def get_filter(request):
+    return load_query_json(request.GET, "filter", "[]")
 
 
 def get_option_selector(item_selector, options_number=None):
@@ -318,12 +324,10 @@ class ItemTypeManager(models.Manager):
     def find_object_types(self, with_answers=True):
         result = []
         langs = {}
-        for django_model, django_field in Item.objects.get_reference_fields(exclude_models=[Answer, Audit, Variable]):
+        for django_model, django_field in Item.objects.get_reference_fields(exclude_models=[Answer, Audit, Variable, ItemRelation]):
             db_column = django_field.get_attname_column()[1]
             db_table = django_field.model._meta.db_table
-            # HACK: I haven't found other way to obtain the class, because
-            # "type" function returns ModelBase from Django.
-            model = str(django_model).replace("<class '", "").replace("'>", "")
+            model = _model_class_name(django_model)
             if db_table not in langs:
                 for _django_field in django_field.model._meta.fields:
                     if _django_field.get_attname_column()[1] == 'lang':
@@ -364,6 +368,98 @@ class ItemType(models.Model):
 
 class ItemManager(models.Manager):
 
+    def item_id_to_json(self, item_id):
+        return {
+            'object_type': 'item',
+            'id': item_id,
+            'item_id': item_id,
+        }
+
+    def get_all_available_leaves(self):
+        """
+        Get all available leaves.
+        """
+        return sorted(Item.objects.filter(children=None).values_list('id', flat=True))
+
+    def filter_all_reachable_leaves_many(self, identifier_filters, language):
+        """
+        Provides the same functionality as .. py:method:: ItemManager.filter_all_reachable_leaves(),
+        but for more filters in the same time.
+
+        Args:
+            identifier_filters: list of identifier filters
+            language (str): language used for further filtering (some objects
+                for different languages share the same item
+
+        Returns:
+            list: list of list of item ids
+        """
+        for i, identifier_filter in enumerate(identifier_filters):
+            if len(identifier_filter) == 1 and not isinstance(identifier_filter[0], list):
+                identifier_filters[i] = [identifier_filter]
+            if any([len(xs) == 1 and xs[0].startswith('-') for xs in identifier_filter]):
+                raise Exception('Filter containing only one identifier with "-" prefix is not allowed.')
+        item_identifiers = [
+            identifier[1:] if identifier.startswith('-') else identifier
+            for identifier_filter in identifier_filters
+            for identifier in set(flatten(identifier_filter))
+        ]
+        translated = self.translate_identifiers(item_identifiers, language)
+        leaves = self.get_leaves(list(translated.values()))
+        result = []
+        for identifier_filter in identifier_filters:
+            filter_result = set()
+            for inner_filter in identifier_filter:
+                inner_result = None
+                inner_neg_result = set()
+                if len(inner_filter) == 0:
+                    raise Exception('Empty nested filters are not allowed.')
+                for identifier in inner_filter:
+                    if identifier.startswith('-'):
+                        inner_neg_result |= set(leaves[translated[identifier[1:]]])
+                    elif inner_result is None:
+                        inner_result = set(leaves[translated[identifier]])
+                    else:
+                        inner_result &= set(leaves[translated[identifier]])
+                filter_result |= inner_result - inner_neg_result
+            result.append(sorted(list(filter_result)))
+        return result
+
+    def filter_all_reachable_leaves(self, identifier_filter, language):
+        """
+        Get all leaves corresponding to the given filter:
+
+        * the filter is a list of lists;
+        * each of the inner list carries identifiers;
+        * for each identifier, we find an item and all its reachable leaf items;
+        * within the inner list we intersect the reachable items;
+        * with the outer list we union the reachable items;
+        * when an identifier starts with the prfix '-', we find its reachable
+          leaf items and then complement them
+
+        Example::
+
+                A
+               / \\
+              B   C
+             / \ / \\
+            D   E   F
+
+            [[A, C]] ----> [E, F]
+            [[B, C]] ----> [E]
+            [[B, -C]] ---> [D]
+
+        Args::
+            identifier_filter (list): list of lists of identifiers (some of them
+                can start with the prefix '-')
+            language (str): language used for further filtering (some objects
+                for different languages share the same item
+
+        Returns:
+            list: list of item ids
+        """
+        return self.filter_all_reachable_leaves_many([identifier_filter], language)[0]
+
     @cache_pure
     def get_children_graph(self, item_ids):
         """
@@ -380,8 +476,8 @@ class ItemManager(models.Manager):
 
         def _children(item_ids):
             item_ids = [ii for iis in item_ids.values() for ii in iis]
-            items = Item.objects.filter(id__in=item_ids).prefetch_related('children')
-            return {item.id: sorted([_item.id for _item in item.children.all()]) for item in items}
+            items = Item.objects.filter(id__in=item_ids, active=True).prefetch_related('children')
+            return {item.id: sorted([_item.id for _item in item.children.all() if _item.active]) for item in items}
         return self._reachable_graph(item_ids, _children)
 
     @cache_pure
@@ -423,10 +519,11 @@ class ItemManager(models.Manager):
             dict: identifier -> item id
         """
         result = {}
+        identifiers = set(identifiers)
         item_types = ItemType.objects.get_all_types()
-        for item_type_id, identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(identifier, item_types)).items():
+        for item_type_id, type_identifiers in proso.list.group_by(identifiers, by=lambda identifier: self.get_item_type_id_from_identifier(identifier, item_types)).items():
             to_find = {}
-            for identifier in identifiers:
+            for identifier in type_identifiers:
                 identifier_split = identifier.split('/')
                 to_find[identifier_split[1]] = identifier
             kwargs = {'identifier__in': list(to_find.keys())}
@@ -436,6 +533,8 @@ class ItemManager(models.Manager):
                 kwargs[item_type['language']] = language
             for identifier, item_id in model.objects.filter(**kwargs).values_list('identifier', item_type['foreign_key']):
                 result[to_find[identifier]] = item_id
+        if len(result) != len(identifiers):
+            raise Exception("Can't translate the following identifiers: {}".format(set(identifiers) - set(result.keys())))
         return result
 
     @cache_pure
@@ -482,9 +581,11 @@ class ItemManager(models.Manager):
             dict: item id -> JSON object
         """
         if is_nested is None:
-            is_nested = lambda x: True
+            def is_nested(x):
+                return True
         if isinstance(is_nested, bool):
-            is_nested = lambda x: is_nested
+            def is_nested(x):
+                return is_nested
         groupped = proso.list.group_by(item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
         result = {}
         for item_type_id, items in groupped.items():
@@ -504,7 +605,8 @@ class ItemManager(models.Manager):
 
     def get_leaves(self, item_ids):
         """
-        Get mapping of items to their reachable leaves.
+        Get mapping of items to their reachable leaves. Leaves having
+        inactive relations to other items are omitted.
 
         Args:
             item_ids (list): items which are taken as roots for the reachability
@@ -530,24 +632,28 @@ class ItemManager(models.Manager):
                 f=__search,
                 x={item_id}
             )
+            counts = self.get_children_counts(active=None)
+            leaves = {leaf for leaf in leaves if counts[leaf] == 0}
             return leaves if len(leaves) > 0 else {item_id}
 
         return {item_id: _get_leaves(item_id) for item_id in item_ids}
 
     def get_all_leaves(self, item_ids):
         """
-        Get all leaves reachable from the given set of items.
+        Get all leaves reachable from the given set of items. Leaves having
+        inactive relations to other items are omitted.
 
         Args:
             item_ids (list): items which are taken as roots for the reachability
 
         Returns:
-            list: leaf items which are reachable from the given set of items
+            set: leaf items which are reachable from the given set of items
         """
         children = self.get_children_graph(item_ids)
         froms = set(children.keys())
         tos = set([ii for iis in children.values() for ii in iis])
-        return (set(item_ids) | tos) - froms
+        counts = self.get_children_counts(active=None)
+        return sorted([leaf for leaf in ((set(item_ids) | tos) - froms) if counts[leaf] == 0])
 
     def get_reference_fields(self, exclude_models=None):
         """
@@ -565,6 +671,89 @@ class ItemManager(models.Manager):
                     result.append((django_model, django_field))
         return result
 
+    def override_parent_subgraph(self, parent_subgraph, invisible_edges=None):
+        """
+        Get all items with outcoming edges from the given subgraph, drop all
+        their child relations, and then add children according to the given
+        subgraph.
+
+        Args:
+            children_subgraph (dict): item id -> list of chidlren (item ids)
+            invisible_edges (list|set): set of (from, to) tuples specifying
+                invisible edges
+        """
+        with transaction.atomic():
+            if invisible_edges is None:
+                invisible_edges = set()
+            children = list(parent_subgraph.keys())
+            all_old_relations = dict(proso.list.group_by(
+                list(ItemRelation.objects.filter(child_id__in=children)),
+                by=lambda relation: relation.child_id
+            ))
+            to_delete = set()
+            for child_id, parents in parent_subgraph.items():
+                old_relations = {
+                    relation.parent_id: relation
+                    for relation in all_old_relations.get(child_id, [])
+                }
+                for parent_id in parents:
+                    if parent_id not in old_relations:
+                        ItemRelation.objects.create(
+                            parent_id=parent_id,
+                            child_id=child_id,
+                            visible=(child_id, parent_id) not in invisible_edges
+                        )
+                    elif old_relations[parent_id].visible != (child_id, parent_id) not in invisible_edges:
+                        old_relations[parent_id].visible = (child_id, parent_id) not in invisible_edges
+                        old_relations[parent_id].save()
+                to_delete |= {old_relations[parent_id].pk for parent_id in set(old_relations.keys()) - set(parents)}
+            ItemRelation.objects.filter(pk__in=to_delete).delete()
+
+    def override_children_subgraph(self, children_subgraph, invisible_edges=None):
+        """
+        Get all items with outcoming edges from the given subgraph, drop all
+        their child relations, and then add children according to the given
+        subgraph.
+
+        Args:
+            children_subgraph (dict): item id -> list of chidlren (item ids)
+            invisible_edges (list|set): set of (from, to) tuples specifying
+                invisible edges
+        """
+        with transaction.atomic():
+            if invisible_edges is None:
+                invisible_edges = set()
+            parents = list(children_subgraph.keys())
+            all_old_relations = dict(proso.list.group_by(
+                list(ItemRelation.objects.filter(parent_id__in=parents)),
+                by=lambda relation: relation.parent_id
+            ))
+            to_delete = set()
+            for parent_id, children in children_subgraph.items():
+                old_relations = {
+                    relation.child_id: relation
+                    for relation in all_old_relations.get(parent_id, [])
+                }
+                for child_id in children:
+                    if child_id not in old_relations:
+                        ItemRelation.objects.create(
+                            parent_id=parent_id,
+                            child_id=child_id,
+                            visible=(parent_id, child_id) not in invisible_edges
+                        )
+                    elif old_relations[child_id].visible != (parent_id, child_id) not in invisible_edges:
+                        old_relations[child_id].visible = (parent_id, child_id) not in invisible_edges
+                        old_relations[child_id].save()
+                to_delete |= {old_relations[child_id].pk for child_id in set(old_relations.keys()) - set(children)}
+            ItemRelation.objects.filter(pk__in=to_delete).delete()
+
+    @cache_pure
+    def get_children_counts(self, active=True):
+        query = self
+        if active is not None:
+            query = query.filter(children__active=active)
+        return dict(query.annotate(c=Count('children')).values_list('pk', 'c'))
+
     def _reachable_graph(self, item_ids, neighbors):
         return {i: deps for i, deps in fixed_point(
             is_zero=lambda xs: len(xs) == 0,
@@ -574,7 +763,7 @@ class ItemManager(models.Manager):
             x={None: item_ids}).items() if len(deps) > 0}
 
 
-class Item(models.Model):
+class Item(models.Model, ModelDiffMixin):
 
     # This field should not be NULL, but historically there is a huge number of
     # items in running systems without specified item type.
@@ -585,6 +774,7 @@ class Item(models.Model):
         symmetrical=False, through='ItemRelation',
         through_fields=('parent', 'child')
     )
+    active = models.BooleanField(default=True)
 
     objects = ItemManager()
 
@@ -602,11 +792,12 @@ class Item(models.Model):
         app_label = 'proso_models'
 
 
-class ItemRelation(models.Model):
+class ItemRelation(models.Model, ModelDiffMixin):
 
     parent = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='parent_relations')
     child = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='child_relations')
     visible = models.BooleanField(default=True)
+    active = models.BooleanField(default=True)
 
 
 class AnswerMetaManager(models.Manager):
@@ -678,6 +869,31 @@ class AnswerManager(models.Manager):
     def correct_count(self, user):
         return self.filter(user=user, item_asked=F("item_answered")).count()
 
+    def from_json(self, json_object, practice_context, user_id, object_class=None):
+        if object_class is None:
+            object_class = Answer
+        kwargs = {}
+        for key in ['item_id', 'item_asked_id', 'item_answered_id', 'response_time', 'lang', 'guess']:
+            if key in json_object:
+                kwargs[key] = json_object[key]
+        if 'time_gap' in json_object:
+            kwargs.time = datetime.now() - timedelta(seconds=json_object["time_gap"])
+        kwargs['metainfo'] = None if 'meta' not in json_object else AnswerMeta.objects.from_content(json_object['meta'])
+        return object_class.objects.create(
+            context=practice_context, user_id=user_id, **kwargs)
+
+    def answer_class(self, name):
+        camel_case = ''.join([x.capitalize() for x in name.split('_')])
+        result = []
+        for subclass in Answer.__subclasses__():
+            if _model_class_name(subclass).endswith(camel_case):
+                result.append(subclass)
+        if len(result) > 1:
+            raise Exception('There is more than one answer class for name "{}".'.format(name))
+        if len(result) == 0:
+            raise Exception('There is no answer class for name "{}".'.format(name))
+        return result[0]
+
 
 class Answer(models.Model):
 
@@ -713,7 +929,7 @@ class Answer(models.Model):
         result = {
             'id': self.pk,
             'object_type': 'answer',
-            'question_item_id': self.item_id,
+            'item_id': self.item_id,
             'item_asked_id': self.item_asked_id,
             'item_answered_id': self.item_answered_id,
             'user_id': self.user_id,
@@ -809,6 +1025,12 @@ def get_content_hash(content):
     return hashlib.sha1(content.encode()).hexdigest()
 
 
+def _model_class_name(django_model):
+    # HACK: I haven't found other way to obtain the class, because
+    # "type" function returns ModelBase from Django.
+    return str(django_model).replace("<class '", "").replace("'>", "")
+
+
 ################################################################################
 # Signals
 ################################################################################
@@ -895,6 +1117,43 @@ def log_audit(sender, instance, **kwargs):
             info_id=instance.info_id,
             answer=instance.answer)
         audit.save()
+
+
+@receiver(pre_save, sender=ItemRelation)
+def relation_activity(sender, instance, **kwargs):
+    instance.active = instance.child.active
+
+
+@receiver(post_save, sender=Item)
+def activity_of_environment_relation(sender, instance, **kwargs):
+    if not kwargs['created'] and 'active' in instance.diff:
+        for relation in ItemRelation.objects.filter(child_id=instance.id):
+            relation.active = instance.active
+            relation.save()
+
+
+@receiver(post_save, sender=ItemRelation)
+def init_environment_relation(sender, instance, **kwargs):
+    environment = get_environment()
+    if instance.visible and instance.active:
+        parent = instance.parent_id
+        child = instance.child_id
+        environment.write("child", 1, item=parent, item_secondary=child, symmetric=False, permanent=True)
+        environment.write("parent", 1, item=child, item_secondary=parent, symmetric=False, permanent=True)
+    elif (not instance.visible or not instance.active) and not kwargs['created']:
+        parent = instance.parent_id
+        child = instance.child_id
+        environment.delete("child", item=parent, item_secondary=child, symmetric=False)
+        environment.delete("parent", item=child, item_secondary=parent, symmetric=False)
+
+
+@receiver(post_delete, sender=ItemRelation)
+def drop_environment_relation(sender, instance, **kwargs):
+    environment = get_environment()
+    parent = instance.parent_id
+    child = instance.child_id
+    environment.delete("child", item=parent, item_secondary=child, symmetric=False)
+    environment.delete("parent", item=child, item_secondary=parent, symmetric=False)
 
 
 PROSO_MODELS_TO_EXPORT = [Answer]
