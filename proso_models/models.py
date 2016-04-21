@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.db import connection
 from django.db import models
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import Count, F
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from proso.django.cache import get_request_cache, is_cache_prepared
@@ -1107,10 +1107,15 @@ def log_audit(sender, instance, **kwargs):
         audit.save()
 
 
-@receiver(post_save, sender=ItemRelation)
+@receiver(pre_save, sender=ItemRelation)
+def relation_activity(sender, instance, **kwargs):
+    instance.active = instance.child.active
+
+
+@receiver(post_save, sender=Item)
 def activity_of_environment_relation(sender, instance, **kwargs):
     if not kwargs['created'] and 'active' in instance.diff:
-        for relation in ItemRelation.objects.filter(Q(parent_id=instance.id) | Q(child_id=instance.id)):
+        for relation in ItemRelation.objects.filter(child_id=instance.id):
             relation.active = instance.active
             relation.save()
 

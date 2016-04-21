@@ -102,6 +102,26 @@ class ItemManagerGraphTest(test.TestCase):
                     environment.read("parent", item=child, item_secondary=item_id, symmetric=False),
                     1
                 )
+                child_item = Item.objects.get(id=child)
+                child_item.active = False
+                child_item.save()
+                self.assertIsNone(
+                    environment.read("child", item=item_id, item_secondary=child, symmetric=False)
+                )
+                self.assertIsNone(
+                    environment.read("parent", item=child, item_secondary=item_id, symmetric=False)
+                )
+                child_item = Item.objects.get(id=child)
+                child_item.active = True
+                child_item.save()
+                self.assertEquals(
+                    environment.read("child", item=item_id, item_secondary=child, symmetric=False),
+                    1
+                )
+                self.assertEquals(
+                    environment.read("parent", item=child, item_secondary=item_id, symmetric=False),
+                    1
+                )
                 relation.delete()
                 self.assertIsNone(
                     environment.read("child", item=item_id, item_secondary=child, symmetric=False)
