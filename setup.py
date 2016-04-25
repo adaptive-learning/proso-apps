@@ -27,6 +27,7 @@ setup(
         'proso_configab.management.commands',
         'proso_configab.migrations',
         'proso_feedback',
+        'proso_feedback.migrations',
         'proso_models',
         'proso_models.management',
         'proso_models.management.commands',
