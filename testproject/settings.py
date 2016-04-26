@@ -129,7 +129,10 @@ AUTHENTICATION_BACKENDS = (
     'lazysignup.backends.LazySignupBackend',
     'social.backends.facebook.FacebookOAuth2',
     'social.backends.google.GoogleOAuth2',
+    'proso.django.edookit.EdookitOAuth2',
 )
+SOCIAL_AUTH_EDOOKIT_KEY = os.getenv('PROSO_EDOOKIT_APP_ID', 'demoapp')
+SOCIAL_AUTH_EDOOKIT_SECRET = os.getenv('PROSO_EDOOKIT_API_SECRET', 'dddemoaaapp')
 
 SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('PROSO_FACEBOOK_APP_ID', '955349341155915')
 SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('PROSO_FACEBOOK_API_SECRET', '1afe2e6e6ccc3266d81708c89d4515d4')
