@@ -47,6 +47,10 @@ class ItemManagerGraphTest(test.TestCase):
             {None: [6, 7], 6: [2, 3], 7: [3, 4], 2: [1], 3: [1]}
         )
 
+    def test_reachable_parents(self):
+        self.assertEqual(Item.objects.get_reachable_parents([4]), {4: []})
+        self.assertEqual(Item.objects.get_reachable_parents([5, 7]), {5: [1, 2], 7: [1, 3, 4]})
+
     def test_children_graph(self):
         self.assertEqual(Item.objects.get_children_graph([7]), {None: [7]})
         self.assertEqual(
@@ -57,6 +61,10 @@ class ItemManagerGraphTest(test.TestCase):
             Item.objects.get_children_graph([2, 4]),
             {None: [2, 4], 2: [5, 6], 4: [7]}
         )
+
+    def test_reachable_children(self):
+        self.assertEqual(Item.objects.get_reachable_children([7]), {7: []})
+        self.assertEqual(Item.objects.get_reachable_children([1, 4]), {1: [2, 3, 5, 6, 7], 4: [7]})
 
     def test_get_all_available_leaves(self):
         self.assertEqual(Item.objects.get_all_available_leaves(), [5, 6, 7])

@@ -10,6 +10,7 @@ from django.db.models import Count, F
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from proso.django.cache import get_request_cache, is_cache_prepared, get_from_request_permenent_cache, set_to_request_permanent_cache
+from functools import reduce
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
 from proso.django.models import ModelDiffMixin
 from proso.django.request import load_query_json
@@ -485,6 +486,9 @@ class ItemManager(models.Manager):
             return {item.id: sorted([_item.id for _item in item.children.all() if _item.active]) for item in items}
         return self._reachable_graph(item_ids, _children)
 
+    def get_reachable_children(self, item_ids):
+        return self._reachable_items(self.get_children_graph(item_ids))
+
     @cache_pure
     def get_parents_graph(self, item_ids):
         """
@@ -503,6 +507,9 @@ class ItemManager(models.Manager):
             items = Item.objects.filter(id__in=item_ids).prefetch_related('parents')
             return {item.id: sorted([_item.id for _item in item.parents.all()]) for item in items}
         return self._reachable_graph(item_ids, _parents)
+
+    def get_reachable_parents(self, item_ids):
+        return self._reachable_items(self.get_parents_graph(item_ids))
 
     def translate_identifiers(self, identifiers, language):
         """
@@ -766,6 +773,15 @@ class ItemManager(models.Manager):
             plus=lambda xs, ys: dict(list(xs.items()) + list(ys.items())),
             f=neighbors,
             x={None: item_ids}).items() if len(deps) > 0}
+
+    def _reachable_items(self, graph):
+        return {i: sorted(list(fixed_point(
+            is_zero=lambda xs: len(xs) == 0,
+            minus=lambda xs, ys: xs - ys,
+            plus=lambda xs, ys: xs | ys,
+            f=lambda xs: reduce(lambda a, b: a | b, [set(graph.get(x, [])) for x in xs], set()),
+            x={i}
+        ) - {i})) for i in graph[None]}
 
 
 class Item(models.Model, ModelDiffMixin):
