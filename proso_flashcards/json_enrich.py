@@ -2,6 +2,12 @@ from collections import defaultdict
 from proso_flashcards.models import Flashcard
 
 
+def answer_type(request, json_list, nested):
+    for question in json_list:
+        if question['payload']['object_type'] == 'fc_flashcard':
+            question['answer_class'] = 'flashcard_answer'
+
+
 def answer_flashcards(request, json_list, nested):
     asked_item_ids = [a['item_asked_id'] for a in json_list]
     answered_item_ids = [a.get('item_answered_id', None) for a in json_list]

@@ -68,3 +68,4 @@ register_object_type_enricher(['fc_answer'], flashcards_json_enrich.answer_flash
 register_object_type_enricher(['fc_flashcard'], models_json_enrich.prediction)
 register_object_type_enricher(['fc_flashcard', 'fc_category', 'fc_term', 'fc_context'], models_json_enrich.number_of_answers)
 register_object_type_enricher(['fc_category', 'fc_term', 'fc_context'], models_json_enrich.avg_prediction)
+register_object_type_enricher(['question'], flashcards_json_enrich.answer_type)
