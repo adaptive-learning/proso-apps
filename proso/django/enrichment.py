@@ -107,11 +107,15 @@ def enrich_json_objects_by_object_type(request, value):
             time_start = time()
             enricher_info['enricher'](request, enricher_objects, enricher_nested)
             LOGGER.debug('enrichment "{}" took {} seconds'.format(enricher_info['enricher_name'], time() - time_start))
+            if not enricher_info['pure']:
+                # if the enricher modified object types we must collect objects
+                # again
+                objects, nested = _collect_json_objects(json, by='object_type')
     LOGGER.debug('The whole enrichment of json objects by their object_type took {} seconds.'.format(time() - time_start_globally))
     return json
 
 
-def register_object_type_enricher(object_types, enricher, dependencies=None, priority=0):
+def register_object_type_enricher(object_types, enricher, dependencies=None, priority=0, pure=True):
     if dependencies is None:
         dependencies = []
     global _OBJECT_TYPE_ENRICHERS
@@ -128,6 +132,7 @@ def register_object_type_enricher(object_types, enricher, dependencies=None, pri
                 'enricher_name': enricher_name,
                 'dependencies': dependency_names,
                 'priority': priority,
+                'pure': pure,
             }
         global _OBJECT_TYPE_ENRICHER_ORDER
         _OBJECT_TYPE_ENRICHER_ORDER = None

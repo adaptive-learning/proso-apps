@@ -472,4 +472,4 @@ def _save_answers(request, practice_context):
 # Enrichers
 ################################################################################
 
-register_object_type_enricher(['item'], json_enrich.item2object, priority=-1000000000)
+register_object_type_enricher(['item'], json_enrich.item2object, priority=-1000000000, pure=False)

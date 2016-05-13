@@ -18,6 +18,8 @@ def item2object(request, json_list, nested):
 
 
 def prediction(request, json_list, nested):
+    if 'stats' not in request.GET:
+        return
     object_item_ids = [x['item_id'] for x in json_list]
     user = get_user_id(request)
     time = get_time(request)
