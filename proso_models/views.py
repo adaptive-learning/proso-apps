@@ -142,7 +142,7 @@ def answer(request):
     }
 
     answer = {
-        "answer_type": str,             -- type of answer to save (e.g., flashcard_answer)
+        "answer_class": str,            -- class of answer to save (e.g., flashcard_answer)
         "response_time": int,           -- response time in milliseconds
         "meta": "str"                   -- optional information
         "time_gap": int                 -- waiting time in frontend in seconds
