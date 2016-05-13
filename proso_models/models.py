@@ -878,6 +878,8 @@ class AnswerManager(models.Manager):
                 kwargs[key] = json_object[key]
         if 'time_gap' in json_object:
             kwargs.time = datetime.now() - timedelta(seconds=json_object["time_gap"])
+        if 'question_type' in json_object:
+            kwargs['type'] = json_object['question_type']
         kwargs['metainfo'] = None if 'meta' not in json_object else AnswerMeta.objects.from_content(json_object['meta'])
         return object_class.objects.create(
             context=practice_context, user_id=user_id, **kwargs)
@@ -913,6 +915,7 @@ class Answer(models.Model):
     config = models.ForeignKey(Config, null=True, blank=True, default=None)
     context = models.ForeignKey(PracticeContext, null=True, blank=True, default=None)
     metainfo = models.ForeignKey(AnswerMeta, null=True, blank=True, default=None)
+    type = models.CharField(max_length=10)
     # This field should not be NULL, but historically there is a huge number of
     # answer in running systems without specified language.
     lang = models.CharField(max_length=2, null=True, blank=True, default=None)

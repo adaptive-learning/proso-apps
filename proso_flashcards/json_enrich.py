@@ -1,3 +1,4 @@
+from .flashcard_construction import get_direction
 from collections import defaultdict
 from proso_flashcards.models import Flashcard
 
@@ -6,6 +7,13 @@ def answer_type(request, json_list, nested):
     for question in json_list:
         if question['payload']['object_type'] == 'fc_flashcard':
             question['answer_class'] = 'flashcard_answer'
+
+
+def question_type(request, json_list, nested):
+    direction = get_direction()
+    for question in json_list:
+        if question['payload']['object_type'] == 'fc_flashcard':
+            question['question_type'] = direction.get_direction(question['payload'])
 
 
 def answer_flashcards(request, json_list, nested):

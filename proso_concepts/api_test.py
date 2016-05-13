@@ -86,7 +86,7 @@ class ConceptsAPITest(TestCase):
             "flashcard_id": flashcard_id,
             "flashcard_answered_id": flashcard_id if correct else None,
             "response_time": response_time,
-            "direction": direction,
+            "question_type": direction,
         }}
         self.client.post(url, data=json.dumps(data), content_type="application/json")
 

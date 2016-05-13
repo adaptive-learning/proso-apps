@@ -105,8 +105,6 @@ class Flashcard(models.Model, ModelDiffMixin):
         }
         if hasattr(self, "options"):
             data["options"] = [o.to_json(nested=True) for o in sorted(self.options, key=lambda f: f.term.name)]
-        if hasattr(self, "direction"):
-            data["direction"] = self.direction
         if hasattr(self, 'practice_meta'):
             data['practice_meta'] = self.practice_meta
         if not nested and contexts:
@@ -189,7 +187,7 @@ class FlashcardAnswerManager(models.Manager):
             flashcard_ids.add(json_object['flashcard_answered_id'])
         if 'option_ids' in json_object:
             option_ids = set(json_object['option_ids'])
-            if option_ids < 1:
+            if len(option_ids) < 1:
                 raise Exception('If option_ids is given, it has to contain at least 1 items!')
             flashcard_ids |= option_ids
             if json_object['flashcard_id'] in option_ids:
@@ -197,8 +195,6 @@ class FlashcardAnswerManager(models.Manager):
             json_object['guess'] = 1.0 / (len(option_ids) + 1)
         else:
             json_object['guess'] = 0
-        if json_object['direction'] not in {FlashcardAnswer.FROM_DESCRIPTION, FlashcardAnswer.FROM_TERM}:
-            raise Exception("Invalid format of direction; allowed '{}' or '{}'".format(FlashcardAnswer.FROM_TERM, FlashcardAnswer.FROM_DESCRIPTION))
         flashcards = dict([(fc.id, fc) for fc in Flashcard.objects.filter(pk__in=flashcard_ids)])
         if len(flashcard_ids) != len(flashcards):
             raise Exception("Invalid flashcard id (asked, answered or as option)")
@@ -210,7 +206,6 @@ class FlashcardAnswerManager(models.Manager):
         if 'option_ids' in json_object:
             for option_id in set(json_object['option_ids']):
                 answer.options.add(flashcard_ids[option_id])
-        answer.direction = json_object['direction']
         answer.save()
         return answer
 
@@ -218,19 +213,13 @@ class FlashcardAnswerManager(models.Manager):
 class FlashcardAnswer(Answer):
     FROM_TERM = "t2d"
     FROM_DESCRIPTION = "d2t"
-    DIRECTIONS = (
-        (FROM_TERM, "From term to description"),
-        (FROM_DESCRIPTION, "From description to term"),
-    )
 
-    direction = models.CharField(choices=DIRECTIONS, max_length=3)
     options = models.ManyToManyField(Flashcard, related_name="answers_with_this_as_option")
 
     objects = FlashcardAnswerManager()
 
     def to_json(self, nested=False):
         json = Answer.to_json(self)
-        json['direction'] = self.direction
         json['object_type'] = "fc_answer"
         if not nested:
             json["options"] = [flashcard.to_json(nested=True) for flashcard in self.options.all()]
@@ -244,8 +233,7 @@ PROSO_MODELS_TO_EXPORT = [Category, Flashcard, FlashcardAnswer,
 PROSO_CUSTOM_EXPORT = {
     'answer': '''
         SELECT
-            proso_models_answer.*,
-            proso_flashcards_flashcardanswer.direction
+            proso_models_answer.*
         FROM proso_models_answer
         INNER JOIN proso_flashcards_flashcardanswer
             ON proso_models_answer.id = answer_ptr_id
