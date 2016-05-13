@@ -13,10 +13,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RemoveField(
-            model_name='category',
-            name='type',
-        ),
-        migrations.RemoveField(
             model_name='term',
             name='type',
         ),
