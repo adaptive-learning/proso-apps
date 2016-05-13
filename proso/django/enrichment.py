@@ -278,6 +278,8 @@ def _get_OBJECT_TYPE_ENRICHER_ORDER():
             stack = set()
             order = []
             enrichers = _OBJECT_TYPE_ENRICHERS
+            refs = set(flatten([enricher_info['dependencies'] for enricher_info in enrichers.values()]))
+            roots = set(enrichers.keys()) - refs
 
             def _visit(enricher_info):
                 if enricher_info['enricher_name'] in visited:
@@ -286,15 +288,15 @@ def _get_OBJECT_TYPE_ENRICHER_ORDER():
                     raise Exception('There is a cycle in dependencies of enrichers.')
                 stack.add(enricher_info['enricher_name'])
                 visited.add(enricher_info['enricher_name'])
-                for enricher_dep in enricher_info['dependencies']:
+                for enricher_dep in sorted(enricher_info['dependencies'], key=lambda name: enrichers[name]['priority']):
                     _visit(enrichers[enricher_dep])
                 stack.remove(enricher_info['enricher_name'])
                 order.append(enricher_info)
 
-            for enricher_name, enricher_info in enrichers.items():
-                if enricher_name in visited:
+            for enricher_name, enricher_info in sorted(enrichers.items(), key=lambda x: x[1]['priority']):
+                if enricher_name not in roots:
                     continue
                 _visit(enricher_info)
             indexes = dict([(enricher_info['enricher_name'], i) for (i, enricher_info) in enumerate(order)])
-            _OBJECT_TYPE_ENRICHER_ORDER = sorted(order, key=lambda e: (indexes[e['enricher_name']], e['priority']))
+            _OBJECT_TYPE_ENRICHER_ORDER = sorted(order, key=lambda e: indexes[e['enricher_name']])
         return _OBJECT_TYPE_ENRICHER_ORDER
