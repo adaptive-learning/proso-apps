@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Count, F
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from proso.django.cache import get_request_cache, is_cache_prepared
+from proso.django.cache import get_request_cache, is_cache_prepared, get_from_request_permenent_cache, set_to_request_permanent_cache
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
 from proso.django.models import ModelDiffMixin
 from proso.django.request import load_query_json
@@ -32,6 +32,7 @@ import re
 
 ENVIRONMENT_INFO_CACHE_EXPIRATION = 30 * 60
 ENVIRONMENT_INFO_CACHE_KEY = 'proso_models_env_info'
+ITEM_SELECTOR_CACHE_KEY = 'proso_models_item_selector'
 LOGGER = logging.getLogger('django.request')
 
 
@@ -73,15 +74,19 @@ def get_predictive_model():
 
 
 def get_item_selector():
-    item_selector = instantiate_from_config(
-        'proso_models', 'item_selector',
-        default_class='proso.models.item_selection.ScoreItemSelection',
-        pass_parameters=[get_predictive_model()]
-    )
-    nth = get_config('proso_models', 'random_test.nth')
-    if nth is not None and nth > 0:
-        item_selector = TestWrapperItemSelection(item_selector, nth)
-    return item_selector
+    cached = get_from_request_permenent_cache(ITEM_SELECTOR_CACHE_KEY)
+    if cached is None:
+        item_selector = instantiate_from_config(
+            'proso_models', 'item_selector',
+            default_class='proso.models.item_selection.ScoreItemSelection',
+            pass_parameters=[get_predictive_model()]
+        )
+        nth = get_config('proso_models', 'random_test.nth')
+        if nth is not None and nth > 0:
+            item_selector = TestWrapperItemSelection(item_selector, nth)
+        cached = item_selector
+        set_to_request_permanent_cache(ITEM_SELECTOR_CACHE_KEY, cached)
+    return cached
 
 
 def get_options_number():
