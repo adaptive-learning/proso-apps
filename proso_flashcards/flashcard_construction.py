@@ -1,8 +1,9 @@
-from collections import defaultdict
-import random
-import abc
-from proso_flashcards.models import Flashcard, FlashcardAnswer
+from functools import reduce
 from proso.django.config import instantiate_from_config
+from proso_flashcards.models import FlashcardAnswer, Category, Context
+from proso_models.models import Item
+import abc
+import random
 
 
 def get_option_set():
@@ -30,26 +31,26 @@ class OptionSet(metaclass=abc.ABCMeta):
 
 class EmptyOptionSet(OptionSet):
     def get_option_for_flashcards(self, flashcards):
-        return dict([(fc.item_id, []) for fc in flashcards])
+        return dict([(fc['item_id'], []) for fc in flashcards])
 
 
 class ContextOptionSet(OptionSet):
     def get_option_for_flashcards(self, flashcards):
-        contexts = set()
-        types = set()
-        for flashcard in flashcards:
-            contexts.add(flashcard.context_id)
-            if flashcard.term.type is not None:
-                types.add(flashcard.term.type)
+        context_ids = {flashcard['context_id'] for flashcard in flashcards}
+        types_all_item_ids = set([c.item_id for c in Category.objects.filter(type='flashcard_type')])
+        flashcard_item_ids = set([flashcard['item_id'] for flashcard in flashcards])
+        reachable_parents = Item.objects.get_reachable_parents(flashcard_item_ids)
+        flashcard_types = {item_id: set(reachable_parents.get(item_id, [])) & types_all_item_ids for item_id in flashcard_item_ids}
 
-        options_filter = {'context_id__in': contexts, 'active': True}
-        if types:
-            options_filter['term__type__in'] = types
-        option_sets = defaultdict(set)
-        for context, term_type, item in Flashcard.objects.filter(**options_filter).values_list("context", "term__type", "item_id"):
-            option_sets[context, term_type].add(item)
+        context_item_ids = dict(Context.objects.filter(pk__in=context_ids).values_list('id', 'item_id'))
 
-        return dict([(fc.item_id, list(option_sets[fc.context_id, fc.term.type])) for fc in flashcards])
+        return {
+            flashcard['item_id']: list(reduce(
+                lambda xs, ys: set(xs) & set(ys),
+                Item.objects.get_leaves({context_item_ids[flashcard['context_id']]} | flashcard_types[flashcard['item_id']]).values()
+            ))
+            for flashcard in flashcards
+        }
 
 
 class Direction(metaclass=abc.ABCMeta):
