@@ -1,1105 +1,1085 @@
 - model: proso_flashcards.term
   pk: 1
-  fields: {identifier: dz, item: 9, lang: cs, name: "Al\u017E\xEDrsko", type: null}
+  fields: {identifier: dz, item: 9, lang: cs, name: "Al\u017E\xEDrsko"}
 - model: proso_flashcards.term
   pk: 2
-  fields: {identifier: dz, item: 9, lang: en, name: Algeria, type: null}
+  fields: {identifier: dz, item: 9, lang: en, name: Algeria}
 - model: proso_flashcards.term
   pk: 3
-  fields: {identifier: ao, item: 10, lang: cs, name: Angola, type: null}
+  fields: {identifier: ao, item: 10, lang: cs, name: Angola}
 - model: proso_flashcards.term
   pk: 4
-  fields: {identifier: ao, item: 10, lang: en, name: Angola, type: null}
+  fields: {identifier: ao, item: 10, lang: en, name: Angola}
 - model: proso_flashcards.term
   pk: 5
-  fields: {identifier: bj, item: 11, lang: cs, name: Benin, type: null}
+  fields: {identifier: bj, item: 11, lang: cs, name: Benin}
 - model: proso_flashcards.term
   pk: 6
-  fields: {identifier: bj, item: 11, lang: en, name: Benin, type: null}
+  fields: {identifier: bj, item: 11, lang: en, name: Benin}
 - model: proso_flashcards.term
   pk: 7
-  fields: {identifier: bw, item: 12, lang: cs, name: Botswana, type: null}
+  fields: {identifier: bw, item: 12, lang: cs, name: Botswana}
 - model: proso_flashcards.term
   pk: 8
-  fields: {identifier: bw, item: 12, lang: en, name: Botswana, type: null}
+  fields: {identifier: bw, item: 12, lang: en, name: Botswana}
 - model: proso_flashcards.term
   pk: 9
-  fields: {identifier: bf, item: 13, lang: cs, name: Burkina Faso, type: null}
+  fields: {identifier: bf, item: 13, lang: cs, name: Burkina Faso}
 - model: proso_flashcards.term
   pk: 10
-  fields: {identifier: bf, item: 13, lang: en, name: Burkina Faso, type: null}
+  fields: {identifier: bf, item: 13, lang: en, name: Burkina Faso}
 - model: proso_flashcards.term
   pk: 11
-  fields: {identifier: bi, item: 14, lang: cs, name: Burundi, type: null}
+  fields: {identifier: bi, item: 14, lang: cs, name: Burundi}
 - model: proso_flashcards.term
   pk: 12
-  fields: {identifier: bi, item: 14, lang: en, name: Burundi, type: null}
+  fields: {identifier: bi, item: 14, lang: en, name: Burundi}
 - model: proso_flashcards.term
   pk: 13
-  fields: {identifier: td, item: 15, lang: cs, name: "\u010Cad", type: null}
+  fields: {identifier: td, item: 15, lang: cs, name: "\u010Cad"}
 - model: proso_flashcards.term
   pk: 14
-  fields: {identifier: td, item: 15, lang: en, name: Chad, type: null}
+  fields: {identifier: td, item: 15, lang: en, name: Chad}
 - model: proso_flashcards.term
   pk: 15
-  fields: {identifier: cd, item: 16, lang: cs, name: "Demokratick\xE1 republika Kongo",
-    type: null}
+  fields: {identifier: cd, item: 16, lang: cs, name: "Demokratick\xE1 republika Kongo"}
 - model: proso_flashcards.term
   pk: 16
-  fields: {identifier: cd, item: 16, lang: en, name: Dem. Rep. Congo, type: null}
+  fields: {identifier: cd, item: 16, lang: en, name: Dem. Rep. Congo}
 - model: proso_flashcards.term
   pk: 17
-  fields: {identifier: dj, item: 17, lang: cs, name: "D\u017Eibutsko", type: null}
+  fields: {identifier: dj, item: 17, lang: cs, name: "D\u017Eibutsko"}
 - model: proso_flashcards.term
   pk: 18
-  fields: {identifier: dj, item: 17, lang: en, name: Djibouti, type: null}
+  fields: {identifier: dj, item: 17, lang: en, name: Djibouti}
 - model: proso_flashcards.term
   pk: 19
-  fields: {identifier: eg, item: 18, lang: cs, name: Egypt, type: null}
+  fields: {identifier: eg, item: 18, lang: cs, name: Egypt}
 - model: proso_flashcards.term
   pk: 20
-  fields: {identifier: eg, item: 18, lang: en, name: Egypt, type: null}
+  fields: {identifier: eg, item: 18, lang: en, name: Egypt}
 - model: proso_flashcards.term
   pk: 21
-  fields: {identifier: er, item: 19, lang: cs, name: Eritrea, type: null}
+  fields: {identifier: er, item: 19, lang: cs, name: Eritrea}
 - model: proso_flashcards.term
   pk: 22
-  fields: {identifier: er, item: 19, lang: en, name: Eritrea, type: null}
+  fields: {identifier: er, item: 19, lang: en, name: Eritrea}
 - model: proso_flashcards.term
   pk: 23
-  fields: {identifier: et, item: 20, lang: cs, name: Etiopie, type: null}
+  fields: {identifier: et, item: 20, lang: cs, name: Etiopie}
 - model: proso_flashcards.term
   pk: 24
-  fields: {identifier: et, item: 20, lang: en, name: Ethiopia, type: null}
+  fields: {identifier: et, item: 20, lang: en, name: Ethiopia}
 - model: proso_flashcards.term
   pk: 25
-  fields: {identifier: ga, item: 21, lang: cs, name: Gabon, type: null}
+  fields: {identifier: ga, item: 21, lang: cs, name: Gabon}
 - model: proso_flashcards.term
   pk: 26
-  fields: {identifier: ga, item: 21, lang: en, name: Gabon, type: null}
+  fields: {identifier: ga, item: 21, lang: en, name: Gabon}
 - model: proso_flashcards.term
   pk: 27
-  fields: {identifier: gm, item: 22, lang: cs, name: Gambie, type: null}
+  fields: {identifier: gm, item: 22, lang: cs, name: Gambie}
 - model: proso_flashcards.term
   pk: 28
-  fields: {identifier: gm, item: 22, lang: en, name: Gambia, type: null}
+  fields: {identifier: gm, item: 22, lang: en, name: Gambia}
 - model: proso_flashcards.term
   pk: 29
-  fields: {identifier: gh, item: 23, lang: cs, name: Ghana, type: null}
+  fields: {identifier: gh, item: 23, lang: cs, name: Ghana}
 - model: proso_flashcards.term
   pk: 30
-  fields: {identifier: gh, item: 23, lang: en, name: Ghana, type: null}
+  fields: {identifier: gh, item: 23, lang: en, name: Ghana}
 - model: proso_flashcards.term
   pk: 31
-  fields: {identifier: gn, item: 24, lang: cs, name: Guinea, type: null}
+  fields: {identifier: gn, item: 24, lang: cs, name: Guinea}
 - model: proso_flashcards.term
   pk: 32
-  fields: {identifier: gn, item: 24, lang: en, name: Guinea, type: null}
+  fields: {identifier: gn, item: 24, lang: en, name: Guinea}
 - model: proso_flashcards.term
   pk: 33
-  fields: {identifier: gw, item: 25, lang: cs, name: Guinea-Bissau, type: null}
+  fields: {identifier: gw, item: 25, lang: cs, name: Guinea-Bissau}
 - model: proso_flashcards.term
   pk: 34
-  fields: {identifier: gw, item: 25, lang: en, name: Guinea-Bissau, type: null}
+  fields: {identifier: gw, item: 25, lang: en, name: Guinea-Bissau}
 - model: proso_flashcards.term
   pk: 35
-  fields: {identifier: za, item: 26, lang: cs, name: "Jihoafrick\xE1 republika", type: null}
+  fields: {identifier: za, item: 26, lang: cs, name: "Jihoafrick\xE1 republika"}
 - model: proso_flashcards.term
   pk: 36
-  fields: {identifier: za, item: 26, lang: en, name: South Africa, type: null}
+  fields: {identifier: za, item: 26, lang: en, name: South Africa}
 - model: proso_flashcards.term
   pk: 37
-  fields: {identifier: ss, item: 27, lang: cs, name: "Ji\u017En\xED S\xFAd\xE1n",
-    type: null}
+  fields: {identifier: ss, item: 27, lang: cs, name: "Ji\u017En\xED S\xFAd\xE1n"}
 - model: proso_flashcards.term
   pk: 38
-  fields: {identifier: ss, item: 27, lang: en, name: S. Sudan, type: null}
+  fields: {identifier: ss, item: 27, lang: en, name: S. Sudan}
 - model: proso_flashcards.term
   pk: 39
-  fields: {identifier: cm, item: 28, lang: cs, name: Kamerun, type: null}
+  fields: {identifier: cm, item: 28, lang: cs, name: Kamerun}
 - model: proso_flashcards.term
   pk: 40
-  fields: {identifier: cm, item: 28, lang: en, name: Cameroon, type: null}
+  fields: {identifier: cm, item: 28, lang: en, name: Cameroon}
 - model: proso_flashcards.term
   pk: 41
-  fields: {identifier: ke, item: 29, lang: cs, name: "Ke\u0148a", type: null}
+  fields: {identifier: ke, item: 29, lang: cs, name: "Ke\u0148a"}
 - model: proso_flashcards.term
   pk: 42
-  fields: {identifier: ke, item: 29, lang: en, name: Kenya, type: null}
+  fields: {identifier: ke, item: 29, lang: en, name: Kenya}
 - model: proso_flashcards.term
   pk: 43
-  fields: {identifier: cg, item: 30, lang: cs, name: Kongo, type: null}
+  fields: {identifier: cg, item: 30, lang: cs, name: Kongo}
 - model: proso_flashcards.term
   pk: 44
-  fields: {identifier: cg, item: 30, lang: en, name: Congo, type: null}
+  fields: {identifier: cg, item: 30, lang: en, name: Congo}
 - model: proso_flashcards.term
   pk: 45
-  fields: {identifier: ls, item: 31, lang: cs, name: Lesotho, type: null}
+  fields: {identifier: ls, item: 31, lang: cs, name: Lesotho}
 - model: proso_flashcards.term
   pk: 46
-  fields: {identifier: ls, item: 31, lang: en, name: Lesotho, type: null}
+  fields: {identifier: ls, item: 31, lang: en, name: Lesotho}
 - model: proso_flashcards.term
   pk: 47
-  fields: {identifier: lr, item: 32, lang: cs, name: "Lib\xE9rie", type: null}
+  fields: {identifier: lr, item: 32, lang: cs, name: "Lib\xE9rie"}
 - model: proso_flashcards.term
   pk: 48
-  fields: {identifier: lr, item: 32, lang: en, name: Liberia, type: null}
+  fields: {identifier: lr, item: 32, lang: en, name: Liberia}
 - model: proso_flashcards.term
   pk: 49
-  fields: {identifier: ly, item: 33, lang: cs, name: Libye, type: null}
+  fields: {identifier: ly, item: 33, lang: cs, name: Libye}
 - model: proso_flashcards.term
   pk: 50
-  fields: {identifier: ly, item: 33, lang: en, name: Libya, type: null}
+  fields: {identifier: ly, item: 33, lang: en, name: Libya}
 - model: proso_flashcards.term
   pk: 51
-  fields: {identifier: mg, item: 34, lang: cs, name: Madagaskar, type: null}
+  fields: {identifier: mg, item: 34, lang: cs, name: Madagaskar}
 - model: proso_flashcards.term
   pk: 52
-  fields: {identifier: mg, item: 34, lang: en, name: Madagascar, type: null}
+  fields: {identifier: mg, item: 34, lang: en, name: Madagascar}
 - model: proso_flashcards.term
   pk: 53
-  fields: {identifier: mw, item: 35, lang: cs, name: Malawi, type: null}
+  fields: {identifier: mw, item: 35, lang: cs, name: Malawi}
 - model: proso_flashcards.term
   pk: 54
-  fields: {identifier: mw, item: 35, lang: en, name: Malawi, type: null}
+  fields: {identifier: mw, item: 35, lang: en, name: Malawi}
 - model: proso_flashcards.term
   pk: 55
-  fields: {identifier: ml, item: 36, lang: cs, name: Mali, type: null}
+  fields: {identifier: ml, item: 36, lang: cs, name: Mali}
 - model: proso_flashcards.term
   pk: 56
-  fields: {identifier: ml, item: 36, lang: en, name: Mali, type: null}
+  fields: {identifier: ml, item: 36, lang: en, name: Mali}
 - model: proso_flashcards.term
   pk: 57
-  fields: {identifier: ma, item: 37, lang: cs, name: Maroko, type: null}
+  fields: {identifier: ma, item: 37, lang: cs, name: Maroko}
 - model: proso_flashcards.term
   pk: 58
-  fields: {identifier: ma, item: 37, lang: en, name: Morocco, type: null}
+  fields: {identifier: ma, item: 37, lang: en, name: Morocco}
 - model: proso_flashcards.term
   pk: 59
-  fields: {identifier: mr, item: 38, lang: cs, name: "Maurit\xE1nie", type: null}
+  fields: {identifier: mr, item: 38, lang: cs, name: "Maurit\xE1nie"}
 - model: proso_flashcards.term
   pk: 60
-  fields: {identifier: mr, item: 38, lang: en, name: Mauritania, type: null}
+  fields: {identifier: mr, item: 38, lang: en, name: Mauritania}
 - model: proso_flashcards.term
   pk: 61
-  fields: {identifier: mz, item: 39, lang: cs, name: Mosambik, type: null}
+  fields: {identifier: mz, item: 39, lang: cs, name: Mosambik}
 - model: proso_flashcards.term
   pk: 62
-  fields: {identifier: mz, item: 39, lang: en, name: Mozambique, type: null}
+  fields: {identifier: mz, item: 39, lang: en, name: Mozambique}
 - model: proso_flashcards.term
   pk: 63
-  fields: {identifier: na, item: 40, lang: cs, name: Namibie, type: null}
+  fields: {identifier: na, item: 40, lang: cs, name: Namibie}
 - model: proso_flashcards.term
   pk: 64
-  fields: {identifier: na, item: 40, lang: en, name: Namibia, type: null}
+  fields: {identifier: na, item: 40, lang: en, name: Namibia}
 - model: proso_flashcards.term
   pk: 65
-  fields: {identifier: ne, item: 41, lang: cs, name: Niger, type: null}
+  fields: {identifier: ne, item: 41, lang: cs, name: Niger}
 - model: proso_flashcards.term
   pk: 66
-  fields: {identifier: ne, item: 41, lang: en, name: Niger, type: null}
+  fields: {identifier: ne, item: 41, lang: en, name: Niger}
 - model: proso_flashcards.term
   pk: 67
-  fields: {identifier: ng, item: 42, lang: cs, name: "Nig\xE9rie", type: null}
+  fields: {identifier: ng, item: 42, lang: cs, name: "Nig\xE9rie"}
 - model: proso_flashcards.term
   pk: 68
-  fields: {identifier: ng, item: 42, lang: en, name: Nigeria, type: null}
+  fields: {identifier: ng, item: 42, lang: en, name: Nigeria}
 - model: proso_flashcards.term
   pk: 69
-  fields: {identifier: ci, item: 43, lang: cs, name: "Pob\u0159e\u017E\xED slonoviny",
-    type: null}
+  fields: {identifier: ci, item: 43, lang: cs, name: "Pob\u0159e\u017E\xED slonoviny"}
 - model: proso_flashcards.term
   pk: 70
-  fields: {identifier: ci, item: 43, lang: en, name: "C\xF4te d'Ivoire", type: null}
+  fields: {identifier: ci, item: 43, lang: en, name: "C\xF4te d'Ivoire"}
 - model: proso_flashcards.term
   pk: 71
-  fields: {identifier: gq, item: 44, lang: cs, name: "Rovn\xEDkov\xE1 Guinea", type: null}
+  fields: {identifier: gq, item: 44, lang: cs, name: "Rovn\xEDkov\xE1 Guinea"}
 - model: proso_flashcards.term
   pk: 72
-  fields: {identifier: gq, item: 44, lang: en, name: Eq. Guinea, type: null}
+  fields: {identifier: gq, item: 44, lang: en, name: Eq. Guinea}
 - model: proso_flashcards.term
   pk: 73
-  fields: {identifier: rw, item: 45, lang: cs, name: Rwanda, type: null}
+  fields: {identifier: rw, item: 45, lang: cs, name: Rwanda}
 - model: proso_flashcards.term
   pk: 74
-  fields: {identifier: rw, item: 45, lang: en, name: Rwanda, type: null}
+  fields: {identifier: rw, item: 45, lang: en, name: Rwanda}
 - model: proso_flashcards.term
   pk: 75
-  fields: {identifier: sn, item: 46, lang: cs, name: Senegal, type: null}
+  fields: {identifier: sn, item: 46, lang: cs, name: Senegal}
 - model: proso_flashcards.term
   pk: 76
-  fields: {identifier: sn, item: 46, lang: en, name: Senegal, type: null}
+  fields: {identifier: sn, item: 46, lang: en, name: Senegal}
 - model: proso_flashcards.term
   pk: 77
-  fields: {identifier: sl, item: 47, lang: cs, name: Sierra Leone, type: null}
+  fields: {identifier: sl, item: 47, lang: cs, name: Sierra Leone}
 - model: proso_flashcards.term
   pk: 78
-  fields: {identifier: sl, item: 47, lang: en, name: Sierra Leone, type: null}
+  fields: {identifier: sl, item: 47, lang: en, name: Sierra Leone}
 - model: proso_flashcards.term
   pk: 79
-  fields: {identifier: so, item: 48, lang: cs, name: "Som\xE1lsko", type: null}
+  fields: {identifier: so, item: 48, lang: cs, name: "Som\xE1lsko"}
 - model: proso_flashcards.term
   pk: 80
-  fields: {identifier: so, item: 48, lang: en, name: Somalia, type: null}
+  fields: {identifier: so, item: 48, lang: en, name: Somalia}
 - model: proso_flashcards.term
   pk: 81
-  fields: {identifier: cf, item: 49, lang: cs, name: "St\u0159edoafrick\xE1 republika",
-    type: null}
+  fields: {identifier: cf, item: 49, lang: cs, name: "St\u0159edoafrick\xE1 republika"}
 - model: proso_flashcards.term
   pk: 82
-  fields: {identifier: cf, item: 49, lang: en, name: Central African Rep., type: null}
+  fields: {identifier: cf, item: 49, lang: en, name: Central African Rep.}
 - model: proso_flashcards.term
   pk: 83
-  fields: {identifier: sd, item: 50, lang: cs, name: "S\xFAd\xE1n", type: null}
+  fields: {identifier: sd, item: 50, lang: cs, name: "S\xFAd\xE1n"}
 - model: proso_flashcards.term
   pk: 84
-  fields: {identifier: sd, item: 50, lang: en, name: Sudan, type: null}
+  fields: {identifier: sd, item: 50, lang: en, name: Sudan}
 - model: proso_flashcards.term
   pk: 85
-  fields: {identifier: sz, item: 51, lang: cs, name: Svazijsko, type: null}
+  fields: {identifier: sz, item: 51, lang: cs, name: Svazijsko}
 - model: proso_flashcards.term
   pk: 86
-  fields: {identifier: sz, item: 51, lang: en, name: Swaziland, type: null}
+  fields: {identifier: sz, item: 51, lang: en, name: Swaziland}
 - model: proso_flashcards.term
   pk: 87
-  fields: {identifier: tz, item: 52, lang: cs, name: Tanzanie, type: null}
+  fields: {identifier: tz, item: 52, lang: cs, name: Tanzanie}
 - model: proso_flashcards.term
   pk: 88
-  fields: {identifier: tz, item: 52, lang: en, name: Tanzania, type: null}
+  fields: {identifier: tz, item: 52, lang: en, name: Tanzania}
 - model: proso_flashcards.term
   pk: 89
-  fields: {identifier: tg, item: 53, lang: cs, name: Togo, type: null}
+  fields: {identifier: tg, item: 53, lang: cs, name: Togo}
 - model: proso_flashcards.term
   pk: 90
-  fields: {identifier: tg, item: 53, lang: en, name: Togo, type: null}
+  fields: {identifier: tg, item: 53, lang: en, name: Togo}
 - model: proso_flashcards.term
   pk: 91
-  fields: {identifier: tn, item: 54, lang: cs, name: Tunisko, type: null}
+  fields: {identifier: tn, item: 54, lang: cs, name: Tunisko}
 - model: proso_flashcards.term
   pk: 92
-  fields: {identifier: tn, item: 54, lang: en, name: Tunisia, type: null}
+  fields: {identifier: tn, item: 54, lang: en, name: Tunisia}
 - model: proso_flashcards.term
   pk: 93
-  fields: {identifier: ug, item: 55, lang: cs, name: Uganda, type: null}
+  fields: {identifier: ug, item: 55, lang: cs, name: Uganda}
 - model: proso_flashcards.term
   pk: 94
-  fields: {identifier: ug, item: 55, lang: en, name: Uganda, type: null}
+  fields: {identifier: ug, item: 55, lang: en, name: Uganda}
 - model: proso_flashcards.term
   pk: 95
-  fields: {identifier: zm, item: 56, lang: cs, name: Zambie, type: null}
+  fields: {identifier: zm, item: 56, lang: cs, name: Zambie}
 - model: proso_flashcards.term
   pk: 96
-  fields: {identifier: zm, item: 56, lang: en, name: Zambia, type: null}
+  fields: {identifier: zm, item: 56, lang: en, name: Zambia}
 - model: proso_flashcards.term
   pk: 97
-  fields: {identifier: eh, item: 57, lang: cs, name: "Z\xE1padn\xED Sahara", type: null}
+  fields: {identifier: eh, item: 57, lang: cs, name: "Z\xE1padn\xED Sahara"}
 - model: proso_flashcards.term
   pk: 98
-  fields: {identifier: eh, item: 57, lang: en, name: W. Sahara, type: null}
+  fields: {identifier: eh, item: 57, lang: en, name: W. Sahara}
 - model: proso_flashcards.term
   pk: 99
-  fields: {identifier: zw, item: 58, lang: cs, name: Zimbabwe, type: null}
+  fields: {identifier: zw, item: 58, lang: cs, name: Zimbabwe}
 - model: proso_flashcards.term
   pk: 100
-  fields: {identifier: zw, item: 58, lang: en, name: Zimbabwe, type: null}
+  fields: {identifier: zw, item: 58, lang: en, name: Zimbabwe}
 - model: proso_flashcards.term
   pk: 101
-  fields: {identifier: xs, item: 59, lang: cs, name: Somaliland, type: null}
+  fields: {identifier: xs, item: 59, lang: cs, name: Somaliland}
 - model: proso_flashcards.term
   pk: 102
-  fields: {identifier: xs, item: 59, lang: en, name: Somaliland, type: null}
+  fields: {identifier: xs, item: 59, lang: en, name: Somaliland}
 - model: proso_flashcards.term
   pk: 103
-  fields: {identifier: Jihlava, item: 60, lang: cs, name: Jihlava, type: null}
+  fields: {identifier: Jihlava, item: 60, lang: cs, name: Jihlava}
 - model: proso_flashcards.term
   pk: 104
-  fields: {identifier: Jihlava, item: 60, lang: en, name: Jihlava, type: null}
+  fields: {identifier: Jihlava, item: 60, lang: en, name: Jihlava}
 - model: proso_flashcards.term
   pk: 105
-  fields: {identifier: Plzen, item: 61, lang: cs, name: "Plze\u0148", type: null}
+  fields: {identifier: Plzen, item: 61, lang: cs, name: "Plze\u0148"}
 - model: proso_flashcards.term
   pk: 106
-  fields: {identifier: Plzen, item: 61, lang: en, name: "Plze\u0148", type: null}
+  fields: {identifier: Plzen, item: 61, lang: en, name: "Plze\u0148"}
 - model: proso_flashcards.term
   pk: 107
-  fields: {identifier: Otrokovice, item: 62, lang: cs, name: Otrokovice, type: null}
+  fields: {identifier: Otrokovice, item: 62, lang: cs, name: Otrokovice}
 - model: proso_flashcards.term
   pk: 108
-  fields: {identifier: Otrokovice, item: 62, lang: en, name: Otrokovice, type: null}
+  fields: {identifier: Otrokovice, item: 62, lang: en, name: Otrokovice}
 - model: proso_flashcards.term
   pk: 109
-  fields: {identifier: Trinec, item: 63, lang: cs, name: "T\u0159inec", type: null}
+  fields: {identifier: Trinec, item: 63, lang: cs, name: "T\u0159inec"}
 - model: proso_flashcards.term
   pk: 110
-  fields: {identifier: Trinec, item: 63, lang: en, name: "T\u0159inec", type: null}
+  fields: {identifier: Trinec, item: 63, lang: en, name: "T\u0159inec"}
 - model: proso_flashcards.term
   pk: 111
   fields: {identifier: Klasterec_nad_Ohri, item: 64, lang: cs, name: "Kl\xE1\u0161\
-      terec nad Oh\u0159\xED", type: null}
+      terec nad Oh\u0159\xED"}
 - model: proso_flashcards.term
   pk: 112
   fields: {identifier: Klasterec_nad_Ohri, item: 64, lang: en, name: "Kl\xE1\u0161\
-      terec nad Oh\u0159\xED", type: null}
+      terec nad Oh\u0159\xED"}
 - model: proso_flashcards.term
   pk: 113
-  fields: {identifier: Pelhrimov, item: 65, lang: cs, name: "Pelh\u0159imov", type: null}
+  fields: {identifier: Pelhrimov, item: 65, lang: cs, name: "Pelh\u0159imov"}
 - model: proso_flashcards.term
   pk: 114
-  fields: {identifier: Pelhrimov, item: 65, lang: en, name: "Pelh\u0159imov", type: null}
+  fields: {identifier: Pelhrimov, item: 65, lang: en, name: "Pelh\u0159imov"}
 - model: proso_flashcards.term
   pk: 115
-  fields: {identifier: Chrudim, item: 66, lang: cs, name: Chrudim, type: null}
+  fields: {identifier: Chrudim, item: 66, lang: cs, name: Chrudim}
 - model: proso_flashcards.term
   pk: 116
-  fields: {identifier: Chrudim, item: 66, lang: en, name: Chrudim, type: null}
+  fields: {identifier: Chrudim, item: 66, lang: en, name: Chrudim}
 - model: proso_flashcards.term
   pk: 117
-  fields: {identifier: Pardubice, item: 67, lang: cs, name: Pardubice, type: null}
+  fields: {identifier: Pardubice, item: 67, lang: cs, name: Pardubice}
 - model: proso_flashcards.term
   pk: 118
-  fields: {identifier: Pardubice, item: 67, lang: en, name: Pardubice, type: null}
+  fields: {identifier: Pardubice, item: 67, lang: en, name: Pardubice}
 - model: proso_flashcards.term
   pk: 119
-  fields: {identifier: Hradec_Kralove, item: 68, lang: cs, name: "Hradec Kr\xE1lov\xE9",
-    type: null}
+  fields: {identifier: Hradec_Kralove, item: 68, lang: cs, name: "Hradec Kr\xE1lov\xE9"}
 - model: proso_flashcards.term
   pk: 120
-  fields: {identifier: Hradec_Kralove, item: 68, lang: en, name: "Hradec Kr\xE1lov\xE9",
-    type: null}
+  fields: {identifier: Hradec_Kralove, item: 68, lang: en, name: "Hradec Kr\xE1lov\xE9"}
 - model: proso_flashcards.term
   pk: 121
   fields: {identifier: Havlickuv_Brod, item: 69, lang: cs, name: "Havl\xED\u010Dk\u016F\
-      v Brod", type: null}
+      v Brod"}
 - model: proso_flashcards.term
   pk: 122
   fields: {identifier: Havlickuv_Brod, item: 69, lang: en, name: "Havl\xED\u010Dk\u016F\
-      v Brod", type: null}
+      v Brod"}
 - model: proso_flashcards.term
   pk: 123
   fields: {identifier: Zdar_nad_Sazavou, item: 70, lang: cs, name: "\u017D\u010F\xE1\
-      r nad S\xE1zavou", type: null}
+      r nad S\xE1zavou"}
 - model: proso_flashcards.term
   pk: 124
   fields: {identifier: Zdar_nad_Sazavou, item: 70, lang: en, name: "\u017D\u010F\xE1\
-      r nad S\xE1zavou", type: null}
+      r nad S\xE1zavou"}
 - model: proso_flashcards.term
   pk: 125
   fields: {identifier: Velke_Mezirici, item: 71, lang: cs, name: "Velk\xE9 Mezi\u0159\
-      \xED\u010D\xED", type: null}
+      \xED\u010D\xED"}
 - model: proso_flashcards.term
   pk: 126
   fields: {identifier: Velke_Mezirici, item: 71, lang: en, name: "Velk\xE9 Mezi\u0159\
-      \xED\u010D\xED", type: null}
+      \xED\u010D\xED"}
 - model: proso_flashcards.term
   pk: 127
-  fields: {identifier: Svitavy, item: 72, lang: cs, name: Svitavy, type: null}
+  fields: {identifier: Svitavy, item: 72, lang: cs, name: Svitavy}
 - model: proso_flashcards.term
   pk: 128
-  fields: {identifier: Svitavy, item: 72, lang: en, name: Svitavy, type: null}
+  fields: {identifier: Svitavy, item: 72, lang: en, name: Svitavy}
 - model: proso_flashcards.term
   pk: 129
   fields: {identifier: Moravska_Trebova, item: 73, lang: cs, name: "Moravsk\xE1 T\u0159\
-      ebov\xE1", type: null}
+      ebov\xE1"}
 - model: proso_flashcards.term
   pk: 130
   fields: {identifier: Moravska_Trebova, item: 73, lang: en, name: "Moravsk\xE1 T\u0159\
-      ebov\xE1", type: null}
+      ebov\xE1"}
 - model: proso_flashcards.term
   pk: 131
   fields: {identifier: Ceska_Trebova, item: 74, lang: cs, name: "\u010Cesk\xE1 T\u0159\
-      ebov\xE1", type: null}
+      ebov\xE1"}
 - model: proso_flashcards.term
   pk: 132
   fields: {identifier: Ceska_Trebova, item: 74, lang: en, name: "\u010Cesk\xE1 T\u0159\
-      ebov\xE1", type: null}
+      ebov\xE1"}
 - model: proso_flashcards.term
   pk: 133
   fields: {identifier: Usti_nad_Orlici, item: 75, lang: cs, name: "\xDAst\xED nad\
-      \ Orlic\xED", type: null}
+      \ Orlic\xED"}
 - model: proso_flashcards.term
   pk: 134
   fields: {identifier: Usti_nad_Orlici, item: 75, lang: en, name: "\xDAst\xED nad\
-      \ Orlic\xED", type: null}
+      \ Orlic\xED"}
 - model: proso_flashcards.term
   pk: 135
-  fields: {identifier: Vysoke_Myto, item: 76, lang: cs, name: "Vysok\xE9 M\xFDto",
-    type: null}
+  fields: {identifier: Vysoke_Myto, item: 76, lang: cs, name: "Vysok\xE9 M\xFDto"}
 - model: proso_flashcards.term
   pk: 136
-  fields: {identifier: Vysoke_Myto, item: 76, lang: en, name: "Vysok\xE9 M\xFDto",
-    type: null}
+  fields: {identifier: Vysoke_Myto, item: 76, lang: en, name: "Vysok\xE9 M\xFDto"}
 - model: proso_flashcards.term
   pk: 137
-  fields: {identifier: Trebic, item: 77, lang: cs, name: "T\u0159eb\xED\u010D", type: null}
+  fields: {identifier: Trebic, item: 77, lang: cs, name: "T\u0159eb\xED\u010D"}
 - model: proso_flashcards.term
   pk: 138
-  fields: {identifier: Trebic, item: 77, lang: en, name: "T\u0159eb\xED\u010D", type: null}
+  fields: {identifier: Trebic, item: 77, lang: en, name: "T\u0159eb\xED\u010D"}
 - model: proso_flashcards.term
   pk: 139
-  fields: {identifier: Nachod, item: 78, lang: cs, name: "N\xE1chod", type: null}
+  fields: {identifier: Nachod, item: 78, lang: cs, name: "N\xE1chod"}
 - model: proso_flashcards.term
   pk: 140
-  fields: {identifier: Nachod, item: 78, lang: en, name: "N\xE1chod", type: null}
+  fields: {identifier: Nachod, item: 78, lang: en, name: "N\xE1chod"}
 - model: proso_flashcards.term
   pk: 141
-  fields: {identifier: Jicin, item: 79, lang: cs, name: "Ji\u010D\xEDn", type: null}
+  fields: {identifier: Jicin, item: 79, lang: cs, name: "Ji\u010D\xEDn"}
 - model: proso_flashcards.term
   pk: 142
-  fields: {identifier: Jicin, item: 79, lang: en, name: "Ji\u010D\xEDn", type: null}
+  fields: {identifier: Jicin, item: 79, lang: en, name: "Ji\u010D\xEDn"}
 - model: proso_flashcards.term
   pk: 143
-  fields: {identifier: Vrchlabi, item: 80, lang: cs, name: "Vrchlab\xED", type: null}
+  fields: {identifier: Vrchlabi, item: 80, lang: cs, name: "Vrchlab\xED"}
 - model: proso_flashcards.term
   pk: 144
-  fields: {identifier: Vrchlabi, item: 80, lang: en, name: "Vrchlab\xED", type: null}
+  fields: {identifier: Vrchlabi, item: 80, lang: en, name: "Vrchlab\xED"}
 - model: proso_flashcards.term
   pk: 145
-  fields: {identifier: Trutnov, item: 81, lang: cs, name: Trutnov, type: null}
+  fields: {identifier: Trutnov, item: 81, lang: cs, name: Trutnov}
 - model: proso_flashcards.term
   pk: 146
-  fields: {identifier: Trutnov, item: 81, lang: en, name: Trutnov, type: null}
+  fields: {identifier: Trutnov, item: 81, lang: en, name: Trutnov}
 - model: proso_flashcards.term
   pk: 147
   fields: {identifier: Dvur_Kralove_nad_Labem, item: 82, lang: cs, name: "Dv\u016F\
-      r Kr\xE1lov\xE9 nad Labem", type: null}
+      r Kr\xE1lov\xE9 nad Labem"}
 - model: proso_flashcards.term
   pk: 148
   fields: {identifier: Dvur_Kralove_nad_Labem, item: 82, lang: en, name: "Dv\u016F\
-      r Kr\xE1lov\xE9 nad Labem", type: null}
+      r Kr\xE1lov\xE9 nad Labem"}
 - model: proso_flashcards.term
   pk: 149
   fields: {identifier: Rychnov_nad_Kneznou, item: 83, lang: cs, name: "Rychnov nad\
-      \ Kn\u011B\u017Enou", type: null}
+      \ Kn\u011B\u017Enou"}
 - model: proso_flashcards.term
   pk: 150
   fields: {identifier: Rychnov_nad_Kneznou, item: 83, lang: en, name: "Rychnov nad\
-      \ Kn\u011B\u017Enou", type: null}
+      \ Kn\u011B\u017Enou"}
 - model: proso_flashcards.term
   pk: 151
-  fields: {identifier: Turnov, item: 84, lang: cs, name: Turnov, type: null}
+  fields: {identifier: Turnov, item: 84, lang: cs, name: Turnov}
 - model: proso_flashcards.term
   pk: 152
-  fields: {identifier: Turnov, item: 84, lang: en, name: Turnov, type: null}
+  fields: {identifier: Turnov, item: 84, lang: en, name: Turnov}
 - model: proso_flashcards.term
   pk: 153
-  fields: {identifier: Liberec, item: 85, lang: cs, name: Liberec, type: null}
+  fields: {identifier: Liberec, item: 85, lang: cs, name: Liberec}
 - model: proso_flashcards.term
   pk: 154
-  fields: {identifier: Liberec, item: 85, lang: en, name: Liberec, type: null}
+  fields: {identifier: Liberec, item: 85, lang: en, name: Liberec}
 - model: proso_flashcards.term
   pk: 155
   fields: {identifier: Jablonec_nad_Nisou, item: 86, lang: cs, name: Jablonec nad
-      Nisou, type: null}
+      Nisou}
 - model: proso_flashcards.term
   pk: 156
   fields: {identifier: Jablonec_nad_Nisou, item: 86, lang: en, name: Jablonec nad
-      Nisou, type: null}
+      Nisou}
 - model: proso_flashcards.term
   pk: 157
   fields: {identifier: Ceska_Lipa, item: 87, lang: cs, name: "\u010Cesk\xE1 L\xED\
-      pa", type: null}
+      pa"}
 - model: proso_flashcards.term
   pk: 158
   fields: {identifier: Ceska_Lipa, item: 87, lang: en, name: "\u010Cesk\xE1 L\xED\
-      pa", type: null}
+      pa"}
 - model: proso_flashcards.term
   pk: 159
-  fields: {identifier: Novy_Bor, item: 88, lang: cs, name: "Nov\xFD Bor", type: null}
+  fields: {identifier: Novy_Bor, item: 88, lang: cs, name: "Nov\xFD Bor"}
 - model: proso_flashcards.term
   pk: 160
-  fields: {identifier: Novy_Bor, item: 88, lang: en, name: "Nov\xFD Bor", type: null}
+  fields: {identifier: Novy_Bor, item: 88, lang: en, name: "Nov\xFD Bor"}
 - model: proso_flashcards.term
   pk: 161
-  fields: {identifier: Usti_nad_Labem, item: 89, lang: cs, name: "\xDAst\xED nad Labem",
-    type: null}
+  fields: {identifier: Usti_nad_Labem, item: 89, lang: cs, name: "\xDAst\xED nad Labem"}
 - model: proso_flashcards.term
   pk: 162
-  fields: {identifier: Usti_nad_Labem, item: 89, lang: en, name: "\xDAst\xED nad Labem",
-    type: null}
+  fields: {identifier: Usti_nad_Labem, item: 89, lang: en, name: "\xDAst\xED nad Labem"}
 - model: proso_flashcards.term
   pk: 163
-  fields: {identifier: Teplice, item: 90, lang: cs, name: Teplice, type: null}
+  fields: {identifier: Teplice, item: 90, lang: cs, name: Teplice}
 - model: proso_flashcards.term
   pk: 164
-  fields: {identifier: Teplice, item: 90, lang: en, name: Teplice, type: null}
+  fields: {identifier: Teplice, item: 90, lang: en, name: Teplice}
 - model: proso_flashcards.term
   pk: 165
-  fields: {identifier: Bilina, item: 91, lang: cs, name: "B\xEDlina", type: null}
+  fields: {identifier: Bilina, item: 91, lang: cs, name: "B\xEDlina"}
 - model: proso_flashcards.term
   pk: 166
-  fields: {identifier: Bilina, item: 91, lang: en, name: "B\xEDlina", type: null}
+  fields: {identifier: Bilina, item: 91, lang: en, name: "B\xEDlina"}
 - model: proso_flashcards.term
   pk: 167
-  fields: {identifier: Most, item: 92, lang: cs, name: Most, type: null}
+  fields: {identifier: Most, item: 92, lang: cs, name: Most}
 - model: proso_flashcards.term
   pk: 168
-  fields: {identifier: Most, item: 92, lang: en, name: Most, type: null}
+  fields: {identifier: Most, item: 92, lang: en, name: Most}
 - model: proso_flashcards.term
   pk: 169
-  fields: {identifier: Litvinov, item: 93, lang: cs, name: "Litv\xEDnov", type: null}
+  fields: {identifier: Litvinov, item: 93, lang: cs, name: "Litv\xEDnov"}
 - model: proso_flashcards.term
   pk: 170
-  fields: {identifier: Litvinov, item: 93, lang: en, name: "Litv\xEDnov", type: null}
+  fields: {identifier: Litvinov, item: 93, lang: en, name: "Litv\xEDnov"}
 - model: proso_flashcards.term
   pk: 171
-  fields: {identifier: Zatec, item: 94, lang: cs, name: "\u017Datec", type: null}
+  fields: {identifier: Zatec, item: 94, lang: cs, name: "\u017Datec"}
 - model: proso_flashcards.term
   pk: 172
-  fields: {identifier: Zatec, item: 94, lang: en, name: "\u017Datec", type: null}
+  fields: {identifier: Zatec, item: 94, lang: en, name: "\u017Datec"}
 - model: proso_flashcards.term
   pk: 173
-  fields: {identifier: Louny, item: 95, lang: cs, name: Louny, type: null}
+  fields: {identifier: Louny, item: 95, lang: cs, name: Louny}
 - model: proso_flashcards.term
   pk: 174
-  fields: {identifier: Louny, item: 95, lang: en, name: Louny, type: null}
+  fields: {identifier: Louny, item: 95, lang: en, name: Louny}
 - model: proso_flashcards.term
   pk: 175
-  fields: {identifier: Kadan, item: 96, lang: cs, name: "Kada\u0148", type: null}
+  fields: {identifier: Kadan, item: 96, lang: cs, name: "Kada\u0148"}
 - model: proso_flashcards.term
   pk: 176
-  fields: {identifier: Kadan, item: 96, lang: en, name: "Kada\u0148", type: null}
+  fields: {identifier: Kadan, item: 96, lang: en, name: "Kada\u0148"}
 - model: proso_flashcards.term
   pk: 177
-  fields: {identifier: Jirkov, item: 97, lang: cs, name: Jirkov, type: null}
+  fields: {identifier: Jirkov, item: 97, lang: cs, name: Jirkov}
 - model: proso_flashcards.term
   pk: 178
-  fields: {identifier: Jirkov, item: 97, lang: en, name: Jirkov, type: null}
+  fields: {identifier: Jirkov, item: 97, lang: en, name: Jirkov}
 - model: proso_flashcards.term
   pk: 179
-  fields: {identifier: Chomutov, item: 98, lang: cs, name: Chomutov, type: null}
+  fields: {identifier: Chomutov, item: 98, lang: cs, name: Chomutov}
 - model: proso_flashcards.term
   pk: 180
-  fields: {identifier: Chomutov, item: 98, lang: en, name: Chomutov, type: null}
+  fields: {identifier: Chomutov, item: 98, lang: en, name: Chomutov}
 - model: proso_flashcards.term
   pk: 181
-  fields: {identifier: Varnsdorf, item: 99, lang: cs, name: Varnsdorf, type: null}
+  fields: {identifier: Varnsdorf, item: 99, lang: cs, name: Varnsdorf}
 - model: proso_flashcards.term
   pk: 182
-  fields: {identifier: Varnsdorf, item: 99, lang: en, name: Varnsdorf, type: null}
+  fields: {identifier: Varnsdorf, item: 99, lang: en, name: Varnsdorf}
 - model: proso_flashcards.term
   pk: 183
-  fields: {identifier: Rumburk, item: 100, lang: cs, name: Rumburk, type: null}
+  fields: {identifier: Rumburk, item: 100, lang: cs, name: Rumburk}
 - model: proso_flashcards.term
   pk: 184
-  fields: {identifier: Rumburk, item: 100, lang: en, name: Rumburk, type: null}
+  fields: {identifier: Rumburk, item: 100, lang: en, name: Rumburk}
 - model: proso_flashcards.term
   pk: 185
-  fields: {identifier: Decin, item: 101, lang: cs, name: "D\u011B\u010D\xEDn", type: null}
+  fields: {identifier: Decin, item: 101, lang: cs, name: "D\u011B\u010D\xEDn"}
 - model: proso_flashcards.term
   pk: 186
-  fields: {identifier: Decin, item: 101, lang: en, name: "D\u011B\u010D\xEDn", type: null}
+  fields: {identifier: Decin, item: 101, lang: en, name: "D\u011B\u010D\xEDn"}
 - model: proso_flashcards.term
   pk: 187
   fields: {identifier: Roudnice_nad_Labem, item: 102, lang: cs, name: Roudnice nad
-      Labem, type: null}
+      Labem}
 - model: proso_flashcards.term
   pk: 188
   fields: {identifier: Roudnice_nad_Labem, item: 102, lang: en, name: Roudnice nad
-      Labem, type: null}
+      Labem}
 - model: proso_flashcards.term
   pk: 189
-  fields: {identifier: Litomerice, item: 103, lang: cs, name: "Litom\u011B\u0159ice",
-    type: null}
+  fields: {identifier: Litomerice, item: 103, lang: cs, name: "Litom\u011B\u0159ice"}
 - model: proso_flashcards.term
   pk: 190
-  fields: {identifier: Litomerice, item: 103, lang: en, name: "Litom\u011B\u0159ice",
-    type: null}
+  fields: {identifier: Litomerice, item: 103, lang: en, name: "Litom\u011B\u0159ice"}
 - model: proso_flashcards.term
   pk: 191
-  fields: {identifier: Kromeriz, item: 104, lang: cs, name: "Krom\u011B\u0159\xED\u017E",
-    type: null}
+  fields: {identifier: Kromeriz, item: 104, lang: cs, name: "Krom\u011B\u0159\xED\u017E"}
 - model: proso_flashcards.term
   pk: 192
-  fields: {identifier: Kromeriz, item: 104, lang: en, name: "Krom\u011B\u0159\xED\u017E",
-    type: null}
+  fields: {identifier: Kromeriz, item: 104, lang: en, name: "Krom\u011B\u0159\xED\u017E"}
 - model: proso_flashcards.term
   pk: 193
-  fields: {identifier: Holesov, item: 105, lang: cs, name: "Hole\u0161ov", type: null}
+  fields: {identifier: Holesov, item: 105, lang: cs, name: "Hole\u0161ov"}
 - model: proso_flashcards.term
   pk: 194
-  fields: {identifier: Holesov, item: 105, lang: en, name: "Hole\u0161ov", type: null}
+  fields: {identifier: Holesov, item: 105, lang: en, name: "Hole\u0161ov"}
 - model: proso_flashcards.term
   pk: 195
-  fields: {identifier: Uhersky_Brod, item: 106, lang: cs, name: "Uhersk\xFD Brod",
-    type: null}
+  fields: {identifier: Uhersky_Brod, item: 106, lang: cs, name: "Uhersk\xFD Brod"}
 - model: proso_flashcards.term
   pk: 196
-  fields: {identifier: Uhersky_Brod, item: 106, lang: en, name: "Uhersk\xFD Brod",
-    type: null}
+  fields: {identifier: Uhersky_Brod, item: 106, lang: en, name: "Uhersk\xFD Brod"}
 - model: proso_flashcards.term
   pk: 197
-  fields: {identifier: Vsetin, item: 107, lang: cs, name: "Vset\xEDn", type: null}
+  fields: {identifier: Vsetin, item: 107, lang: cs, name: "Vset\xEDn"}
 - model: proso_flashcards.term
   pk: 198
-  fields: {identifier: Vsetin, item: 107, lang: en, name: "Vset\xEDn", type: null}
+  fields: {identifier: Vsetin, item: 107, lang: en, name: "Vset\xEDn"}
 - model: proso_flashcards.term
   pk: 199
   fields: {identifier: Valasske_Mezirici, item: 108, lang: cs, name: "Vala\u0161sk\xE9\
-      \ Mezi\u0159\xED\u010D\xED", type: null}
+      \ Mezi\u0159\xED\u010D\xED"}
 - model: proso_flashcards.term
   pk: 200
   fields: {identifier: Valasske_Mezirici, item: 108, lang: en, name: "Vala\u0161sk\xE9\
-      \ Mezi\u0159\xED\u010D\xED", type: null}
+      \ Mezi\u0159\xED\u010D\xED"}
 - model: proso_flashcards.term
   pk: 201
   fields: {identifier: Roznov_pod_Radhostem, item: 109, lang: cs, name: "Ro\u017E\
-      nov pod Radho\u0161t\u011Bm", type: null}
+      nov pod Radho\u0161t\u011Bm"}
 - model: proso_flashcards.term
   pk: 202
   fields: {identifier: Roznov_pod_Radhostem, item: 109, lang: en, name: "Ro\u017E\
-      nov pod Radho\u0161t\u011Bm", type: null}
+      nov pod Radho\u0161t\u011Bm"}
 - model: proso_flashcards.term
   pk: 203
-  fields: {identifier: Zlin, item: 110, lang: cs, name: "Zl\xEDn", type: null}
+  fields: {identifier: Zlin, item: 110, lang: cs, name: "Zl\xEDn"}
 - model: proso_flashcards.term
   pk: 204
-  fields: {identifier: Zlin, item: 110, lang: en, name: "Zl\xEDn", type: null}
+  fields: {identifier: Zlin, item: 110, lang: en, name: "Zl\xEDn"}
 - model: proso_flashcards.term
   pk: 205
   fields: {identifier: Marianske_Lazne, item: 111, lang: cs, name: "Mari\xE1nsk\xE9\
-      \ L\xE1zn\u011B", type: null}
+      \ L\xE1zn\u011B"}
 - model: proso_flashcards.term
   pk: 206
   fields: {identifier: Marianske_Lazne, item: 111, lang: en, name: "Mari\xE1nsk\xE9\
-      \ L\xE1zn\u011B", type: null}
+      \ L\xE1zn\u011B"}
 - model: proso_flashcards.term
   pk: 207
-  fields: {identifier: Cheb, item: 112, lang: cs, name: Cheb, type: null}
+  fields: {identifier: Cheb, item: 112, lang: cs, name: Cheb}
 - model: proso_flashcards.term
   pk: 208
-  fields: {identifier: Cheb, item: 112, lang: en, name: Cheb, type: null}
+  fields: {identifier: Cheb, item: 112, lang: en, name: Cheb}
 - model: proso_flashcards.term
   pk: 209
-  fields: {identifier: As, item: 113, lang: cs, name: "A\u0161", type: null}
+  fields: {identifier: As, item: 113, lang: cs, name: "A\u0161"}
 - model: proso_flashcards.term
   pk: 210
-  fields: {identifier: As, item: 113, lang: en, name: "A\u0161", type: null}
+  fields: {identifier: As, item: 113, lang: en, name: "A\u0161"}
 - model: proso_flashcards.term
   pk: 211
-  fields: {identifier: Ostrov, item: 114, lang: cs, name: Ostrov, type: null}
+  fields: {identifier: Ostrov, item: 114, lang: cs, name: Ostrov}
 - model: proso_flashcards.term
   pk: 212
-  fields: {identifier: Ostrov, item: 114, lang: en, name: Ostrov, type: null}
+  fields: {identifier: Ostrov, item: 114, lang: en, name: Ostrov}
 - model: proso_flashcards.term
   pk: 213
-  fields: {identifier: Karlovy_Vary, item: 115, lang: cs, name: Karlovy Vary, type: null}
+  fields: {identifier: Karlovy_Vary, item: 115, lang: cs, name: Karlovy Vary}
 - model: proso_flashcards.term
   pk: 214
-  fields: {identifier: Karlovy_Vary, item: 115, lang: en, name: Karlovy Vary, type: null}
+  fields: {identifier: Karlovy_Vary, item: 115, lang: en, name: Karlovy Vary}
 - model: proso_flashcards.term
   pk: 215
-  fields: {identifier: Sokolov, item: 116, lang: cs, name: Sokolov, type: null}
+  fields: {identifier: Sokolov, item: 116, lang: cs, name: Sokolov}
 - model: proso_flashcards.term
   pk: 216
-  fields: {identifier: Sokolov, item: 116, lang: en, name: Sokolov, type: null}
+  fields: {identifier: Sokolov, item: 116, lang: en, name: Sokolov}
 - model: proso_flashcards.term
   pk: 217
-  fields: {identifier: Chodov, item: 117, lang: cs, name: Chodov, type: null}
+  fields: {identifier: Chodov, item: 117, lang: cs, name: Chodov}
 - model: proso_flashcards.term
   pk: 218
-  fields: {identifier: Chodov, item: 117, lang: en, name: Chodov, type: null}
+  fields: {identifier: Chodov, item: 117, lang: en, name: Chodov}
 - model: proso_flashcards.term
   pk: 219
   fields: {identifier: Ceske_Budejovice, item: 118, lang: cs, name: "\u010Cesk\xE9\
-      \ Bud\u011Bjovice", type: null}
+      \ Bud\u011Bjovice"}
 - model: proso_flashcards.term
   pk: 220
   fields: {identifier: Ceske_Budejovice, item: 118, lang: en, name: "\u010Cesk\xE9\
-      \ Bud\u011Bjovice", type: null}
+      \ Bud\u011Bjovice"}
 - model: proso_flashcards.term
   pk: 221
-  fields: {identifier: Cesky_Krumlov, item: 119, lang: cs, name: "\u010Cesk\xFD Krumlov",
-    type: null}
+  fields: {identifier: Cesky_Krumlov, item: 119, lang: cs, name: "\u010Cesk\xFD Krumlov"}
 - model: proso_flashcards.term
   pk: 222
-  fields: {identifier: Cesky_Krumlov, item: 119, lang: en, name: "\u010Cesk\xFD Krumlov",
-    type: null}
+  fields: {identifier: Cesky_Krumlov, item: 119, lang: en, name: "\u010Cesk\xFD Krumlov"}
 - model: proso_flashcards.term
   pk: 223
   fields: {identifier: Jindrichuv_Hradec, item: 120, lang: cs, name: "Jind\u0159ich\u016F\
-      v Hradec", type: null}
+      v Hradec"}
 - model: proso_flashcards.term
   pk: 224
   fields: {identifier: Jindrichuv_Hradec, item: 120, lang: en, name: "Jind\u0159ich\u016F\
-      v Hradec", type: null}
+      v Hradec"}
 - model: proso_flashcards.term
   pk: 225
-  fields: {identifier: Pisek, item: 121, lang: cs, name: "P\xEDsek", type: null}
+  fields: {identifier: Pisek, item: 121, lang: cs, name: "P\xEDsek"}
 - model: proso_flashcards.term
   pk: 226
-  fields: {identifier: Pisek, item: 121, lang: en, name: "P\xEDsek", type: null}
+  fields: {identifier: Pisek, item: 121, lang: en, name: "P\xEDsek"}
 - model: proso_flashcards.term
   pk: 227
-  fields: {identifier: Prachatice, item: 122, lang: cs, name: Prachatice, type: null}
+  fields: {identifier: Prachatice, item: 122, lang: cs, name: Prachatice}
 - model: proso_flashcards.term
   pk: 228
-  fields: {identifier: Prachatice, item: 122, lang: en, name: Prachatice, type: null}
+  fields: {identifier: Prachatice, item: 122, lang: en, name: Prachatice}
 - model: proso_flashcards.term
   pk: 229
-  fields: {identifier: Strakonice, item: 123, lang: cs, name: Strakonice, type: null}
+  fields: {identifier: Strakonice, item: 123, lang: cs, name: Strakonice}
 - model: proso_flashcards.term
   pk: 230
-  fields: {identifier: Strakonice, item: 123, lang: en, name: Strakonice, type: null}
+  fields: {identifier: Strakonice, item: 123, lang: en, name: Strakonice}
 - model: proso_flashcards.term
   pk: 231
-  fields: {identifier: Tabor, item: 124, lang: cs, name: "T\xE1bor", type: null}
+  fields: {identifier: Tabor, item: 124, lang: cs, name: "T\xE1bor"}
 - model: proso_flashcards.term
   pk: 232
-  fields: {identifier: Tabor, item: 124, lang: en, name: "T\xE1bor", type: null}
+  fields: {identifier: Tabor, item: 124, lang: en, name: "T\xE1bor"}
 - model: proso_flashcards.term
   pk: 233
-  fields: {identifier: Jesenik, item: 125, lang: cs, name: "Jesen\xEDk", type: null}
+  fields: {identifier: Jesenik, item: 125, lang: cs, name: "Jesen\xEDk"}
 - model: proso_flashcards.term
   pk: 234
-  fields: {identifier: Jesenik, item: 125, lang: en, name: "Jesen\xEDk", type: null}
+  fields: {identifier: Jesenik, item: 125, lang: en, name: "Jesen\xEDk"}
 - model: proso_flashcards.term
   pk: 235
-  fields: {identifier: Sternberk, item: 126, lang: cs, name: "\u0160ternberk", type: null}
+  fields: {identifier: Sternberk, item: 126, lang: cs, name: "\u0160ternberk"}
 - model: proso_flashcards.term
   pk: 236
-  fields: {identifier: Sternberk, item: 126, lang: en, name: "\u0160ternberk", type: null}
+  fields: {identifier: Sternberk, item: 126, lang: en, name: "\u0160ternberk"}
 - model: proso_flashcards.term
   pk: 237
-  fields: {identifier: Unicov, item: 127, lang: cs, name: "Uni\u010Dov", type: null}
+  fields: {identifier: Unicov, item: 127, lang: cs, name: "Uni\u010Dov"}
 - model: proso_flashcards.term
   pk: 238
-  fields: {identifier: Unicov, item: 127, lang: en, name: "Uni\u010Dov", type: null}
+  fields: {identifier: Unicov, item: 127, lang: en, name: "Uni\u010Dov"}
 - model: proso_flashcards.term
   pk: 239
-  fields: {identifier: Olomouc, item: 128, lang: cs, name: Olomouc, type: null}
+  fields: {identifier: Olomouc, item: 128, lang: cs, name: Olomouc}
 - model: proso_flashcards.term
   pk: 240
-  fields: {identifier: Olomouc, item: 128, lang: en, name: Olomouc, type: null}
+  fields: {identifier: Olomouc, item: 128, lang: en, name: Olomouc}
 - model: proso_flashcards.term
   pk: 241
-  fields: {identifier: Prostejov, item: 129, lang: cs, name: "Prost\u011Bjov", type: null}
+  fields: {identifier: Prostejov, item: 129, lang: cs, name: "Prost\u011Bjov"}
 - model: proso_flashcards.term
   pk: 242
-  fields: {identifier: Prostejov, item: 129, lang: en, name: "Prost\u011Bjov", type: null}
+  fields: {identifier: Prostejov, item: 129, lang: en, name: "Prost\u011Bjov"}
 - model: proso_flashcards.term
   pk: 243
-  fields: {identifier: Prerov, item: 130, lang: cs, name: "P\u0159erov", type: null}
+  fields: {identifier: Prerov, item: 130, lang: cs, name: "P\u0159erov"}
 - model: proso_flashcards.term
   pk: 244
-  fields: {identifier: Prerov, item: 130, lang: en, name: "P\u0159erov", type: null}
+  fields: {identifier: Prerov, item: 130, lang: en, name: "P\u0159erov"}
 - model: proso_flashcards.term
   pk: 245
-  fields: {identifier: Hranice, item: 131, lang: cs, name: Hranice, type: null}
+  fields: {identifier: Hranice, item: 131, lang: cs, name: Hranice}
 - model: proso_flashcards.term
   pk: 246
-  fields: {identifier: Hranice, item: 131, lang: en, name: Hranice, type: null}
+  fields: {identifier: Hranice, item: 131, lang: en, name: Hranice}
 - model: proso_flashcards.term
   pk: 247
-  fields: {identifier: Sumperk, item: 132, lang: cs, name: "\u0160umperk", type: null}
+  fields: {identifier: Sumperk, item: 132, lang: cs, name: "\u0160umperk"}
 - model: proso_flashcards.term
   pk: 248
-  fields: {identifier: Sumperk, item: 132, lang: en, name: "\u0160umperk", type: null}
+  fields: {identifier: Sumperk, item: 132, lang: en, name: "\u0160umperk"}
 - model: proso_flashcards.term
   pk: 249
-  fields: {identifier: Zabreh, item: 133, lang: cs, name: "Z\xE1b\u0159eh", type: null}
+  fields: {identifier: Zabreh, item: 133, lang: cs, name: "Z\xE1b\u0159eh"}
 - model: proso_flashcards.term
   pk: 250
-  fields: {identifier: Zabreh, item: 133, lang: en, name: "Z\xE1b\u0159eh", type: null}
+  fields: {identifier: Zabreh, item: 133, lang: en, name: "Z\xE1b\u0159eh"}
 - model: proso_flashcards.term
   pk: 251
-  fields: {identifier: Domazlice, item: 134, lang: cs, name: "Doma\u017Elice", type: null}
+  fields: {identifier: Domazlice, item: 134, lang: cs, name: "Doma\u017Elice"}
 - model: proso_flashcards.term
   pk: 252
-  fields: {identifier: Domazlice, item: 134, lang: en, name: "Doma\u017Elice", type: null}
+  fields: {identifier: Domazlice, item: 134, lang: en, name: "Doma\u017Elice"}
 - model: proso_flashcards.term
   pk: 253
-  fields: {identifier: Susice, item: 135, lang: cs, name: "Su\u0161ice", type: null}
+  fields: {identifier: Susice, item: 135, lang: cs, name: "Su\u0161ice"}
 - model: proso_flashcards.term
   pk: 254
-  fields: {identifier: Susice, item: 135, lang: en, name: "Su\u0161ice", type: null}
+  fields: {identifier: Susice, item: 135, lang: en, name: "Su\u0161ice"}
 - model: proso_flashcards.term
   pk: 255
-  fields: {identifier: Klatovy, item: 136, lang: cs, name: Klatovy, type: null}
+  fields: {identifier: Klatovy, item: 136, lang: cs, name: Klatovy}
 - model: proso_flashcards.term
   pk: 256
-  fields: {identifier: Klatovy, item: 136, lang: en, name: Klatovy, type: null}
+  fields: {identifier: Klatovy, item: 136, lang: en, name: Klatovy}
 - model: proso_flashcards.term
   pk: 257
-  fields: {identifier: Rokycany, item: 137, lang: cs, name: Rokycany, type: null}
+  fields: {identifier: Rokycany, item: 137, lang: cs, name: Rokycany}
 - model: proso_flashcards.term
   pk: 258
-  fields: {identifier: Rokycany, item: 137, lang: en, name: Rokycany, type: null}
+  fields: {identifier: Rokycany, item: 137, lang: en, name: Rokycany}
 - model: proso_flashcards.term
   pk: 259
-  fields: {identifier: Tachov, item: 138, lang: cs, name: Tachov, type: null}
+  fields: {identifier: Tachov, item: 138, lang: cs, name: Tachov}
 - model: proso_flashcards.term
   pk: 260
-  fields: {identifier: Tachov, item: 138, lang: en, name: Tachov, type: null}
+  fields: {identifier: Tachov, item: 138, lang: en, name: Tachov}
 - model: proso_flashcards.term
   pk: 261
-  fields: {identifier: Vlasim, item: 139, lang: cs, name: "Vla\u0161im", type: null}
+  fields: {identifier: Vlasim, item: 139, lang: cs, name: "Vla\u0161im"}
 - model: proso_flashcards.term
   pk: 262
-  fields: {identifier: Vlasim, item: 139, lang: en, name: "Vla\u0161im", type: null}
+  fields: {identifier: Vlasim, item: 139, lang: en, name: "Vla\u0161im"}
 - model: proso_flashcards.term
   pk: 263
-  fields: {identifier: Benesov, item: 140, lang: cs, name: "Bene\u0161ov", type: null}
+  fields: {identifier: Benesov, item: 140, lang: cs, name: "Bene\u0161ov"}
 - model: proso_flashcards.term
   pk: 264
-  fields: {identifier: Benesov, item: 140, lang: en, name: "Bene\u0161ov", type: null}
+  fields: {identifier: Benesov, item: 140, lang: en, name: "Bene\u0161ov"}
 - model: proso_flashcards.term
   pk: 265
-  fields: {identifier: Beroun, item: 141, lang: cs, name: Beroun, type: null}
+  fields: {identifier: Beroun, item: 141, lang: cs, name: Beroun}
 - model: proso_flashcards.term
   pk: 266
-  fields: {identifier: Beroun, item: 141, lang: en, name: Beroun, type: null}
+  fields: {identifier: Beroun, item: 141, lang: en, name: Beroun}
 - model: proso_flashcards.term
   pk: 267
-  fields: {identifier: Slany, item: 142, lang: cs, name: "Slan\xFD", type: null}
+  fields: {identifier: Slany, item: 142, lang: cs, name: "Slan\xFD"}
 - model: proso_flashcards.term
   pk: 268
-  fields: {identifier: Slany, item: 142, lang: en, name: "Slan\xFD", type: null}
+  fields: {identifier: Slany, item: 142, lang: en, name: "Slan\xFD"}
 - model: proso_flashcards.term
   pk: 269
-  fields: {identifier: Kladno, item: 143, lang: cs, name: Kladno, type: null}
+  fields: {identifier: Kladno, item: 143, lang: cs, name: Kladno}
 - model: proso_flashcards.term
   pk: 270
-  fields: {identifier: Kladno, item: 143, lang: en, name: Kladno, type: null}
+  fields: {identifier: Kladno, item: 143, lang: en, name: Kladno}
 - model: proso_flashcards.term
   pk: 271
-  fields: {identifier: Kolin, item: 144, lang: cs, name: "Kol\xEDn", type: null}
+  fields: {identifier: Kolin, item: 144, lang: cs, name: "Kol\xEDn"}
 - model: proso_flashcards.term
   pk: 272
-  fields: {identifier: Kolin, item: 144, lang: en, name: "Kol\xEDn", type: null}
+  fields: {identifier: Kolin, item: 144, lang: en, name: "Kol\xEDn"}
 - model: proso_flashcards.term
   pk: 273
-  fields: {identifier: Kutna_Hora, item: 145, lang: cs, name: "Kutn\xE1 Hora", type: null}
+  fields: {identifier: Kutna_Hora, item: 145, lang: cs, name: "Kutn\xE1 Hora"}
 - model: proso_flashcards.term
   pk: 274
-  fields: {identifier: Kutna_Hora, item: 145, lang: en, name: "Kutn\xE1 Hora", type: null}
+  fields: {identifier: Kutna_Hora, item: 145, lang: en, name: "Kutn\xE1 Hora"}
 - model: proso_flashcards.term
   pk: 275
-  fields: {identifier: Neratovice, item: 146, lang: cs, name: Neratovice, type: null}
+  fields: {identifier: Neratovice, item: 146, lang: cs, name: Neratovice}
 - model: proso_flashcards.term
   pk: 276
-  fields: {identifier: Neratovice, item: 146, lang: en, name: Neratovice, type: null}
+  fields: {identifier: Neratovice, item: 146, lang: en, name: Neratovice}
 - model: proso_flashcards.term
   pk: 277
-  fields: {identifier: Melnik, item: 147, lang: cs, name: "M\u011Bln\xEDk", type: null}
+  fields: {identifier: Melnik, item: 147, lang: cs, name: "M\u011Bln\xEDk"}
 - model: proso_flashcards.term
   pk: 278
-  fields: {identifier: Melnik, item: 147, lang: en, name: "M\u011Bln\xEDk", type: null}
+  fields: {identifier: Melnik, item: 147, lang: en, name: "M\u011Bln\xEDk"}
 - model: proso_flashcards.term
   pk: 279
   fields: {identifier: Kralupy_nad_Vltavou, item: 148, lang: cs, name: Kralupy nad
-      Vltavou, type: null}
+      Vltavou}
 - model: proso_flashcards.term
   pk: 280
   fields: {identifier: Kralupy_nad_Vltavou, item: 148, lang: en, name: Kralupy nad
-      Vltavou, type: null}
+      Vltavou}
 - model: proso_flashcards.term
   pk: 281
-  fields: {identifier: Mlada_Boleslav, item: 149, lang: cs, name: "Mlad\xE1 Boleslav",
-    type: null}
+  fields: {identifier: Mlada_Boleslav, item: 149, lang: cs, name: "Mlad\xE1 Boleslav"}
 - model: proso_flashcards.term
   pk: 282
-  fields: {identifier: Mlada_Boleslav, item: 149, lang: en, name: "Mlad\xE1 Boleslav",
-    type: null}
+  fields: {identifier: Mlada_Boleslav, item: 149, lang: en, name: "Mlad\xE1 Boleslav"}
 - model: proso_flashcards.term
   pk: 283
-  fields: {identifier: Podebrady, item: 150, lang: cs, name: "Pod\u011Bbrady", type: null}
+  fields: {identifier: Podebrady, item: 150, lang: cs, name: "Pod\u011Bbrady"}
 - model: proso_flashcards.term
   pk: 284
-  fields: {identifier: Podebrady, item: 150, lang: en, name: "Pod\u011Bbrady", type: null}
+  fields: {identifier: Podebrady, item: 150, lang: en, name: "Pod\u011Bbrady"}
 - model: proso_flashcards.term
   pk: 285
-  fields: {identifier: Nymburk, item: 151, lang: cs, name: Nymburk, type: null}
+  fields: {identifier: Nymburk, item: 151, lang: cs, name: Nymburk}
 - model: proso_flashcards.term
   pk: 286
-  fields: {identifier: Nymburk, item: 151, lang: en, name: Nymburk, type: null}
+  fields: {identifier: Nymburk, item: 151, lang: en, name: Nymburk}
 - model: proso_flashcards.term
   pk: 287
   fields: {identifier: Brandys_nad_Labem-Stara_Boleslav, item: 152, lang: cs, name: "Brand\xFD\
-      s nad Labem-Star\xE1 Boleslav", type: null}
+      s nad Labem-Star\xE1 Boleslav"}
 - model: proso_flashcards.term
   pk: 288
   fields: {identifier: Brandys_nad_Labem-Stara_Boleslav, item: 152, lang: en, name: "Brand\xFD\
-      s nad Labem-Star\xE1 Boleslav", type: null}
+      s nad Labem-Star\xE1 Boleslav"}
 - model: proso_flashcards.term
   pk: 289
-  fields: {identifier: Pribram, item: 153, lang: cs, name: "P\u0159\xEDbram", type: null}
+  fields: {identifier: Pribram, item: 153, lang: cs, name: "P\u0159\xEDbram"}
 - model: proso_flashcards.term
   pk: 290
-  fields: {identifier: Pribram, item: 153, lang: en, name: "P\u0159\xEDbram", type: null}
+  fields: {identifier: Pribram, item: 153, lang: en, name: "P\u0159\xEDbram"}
 - model: proso_flashcards.term
   pk: 291
-  fields: {identifier: Rakovnik, item: 154, lang: cs, name: "Rakovn\xEDk", type: null}
+  fields: {identifier: Rakovnik, item: 154, lang: cs, name: "Rakovn\xEDk"}
 - model: proso_flashcards.term
   pk: 292
-  fields: {identifier: Rakovnik, item: 154, lang: en, name: "Rakovn\xEDk", type: null}
+  fields: {identifier: Rakovnik, item: 154, lang: en, name: "Rakovn\xEDk"}
 - model: proso_flashcards.term
   pk: 293
-  fields: {identifier: Krnov, item: 155, lang: cs, name: Krnov, type: null}
+  fields: {identifier: Krnov, item: 155, lang: cs, name: Krnov}
 - model: proso_flashcards.term
   pk: 294
-  fields: {identifier: Krnov, item: 155, lang: en, name: Krnov, type: null}
+  fields: {identifier: Krnov, item: 155, lang: en, name: Krnov}
 - model: proso_flashcards.term
   pk: 295
-  fields: {identifier: Bruntal, item: 156, lang: cs, name: "Brunt\xE1l", type: null}
+  fields: {identifier: Bruntal, item: 156, lang: cs, name: "Brunt\xE1l"}
 - model: proso_flashcards.term
   pk: 296
-  fields: {identifier: Bruntal, item: 156, lang: en, name: "Brunt\xE1l", type: null}
+  fields: {identifier: Bruntal, item: 156, lang: en, name: "Brunt\xE1l"}
 - model: proso_flashcards.term
   pk: 297
   fields: {identifier: Frydek-Mistek, item: 157, lang: cs, name: "Fr\xFDdek-M\xED\
-      stek", type: null}
+      stek"}
 - model: proso_flashcards.term
   pk: 298
   fields: {identifier: Frydek-Mistek, item: 157, lang: en, name: "Fr\xFDdek-M\xED\
-      stek", type: null}
+      stek"}
 - model: proso_flashcards.term
   pk: 299
   fields: {identifier: Cesky_Tesin, item: 158, lang: cs, name: "\u010Cesk\xFD T\u011B\
-      \u0161\xEDn", type: null}
+      \u0161\xEDn"}
 - model: proso_flashcards.term
   pk: 300
   fields: {identifier: Cesky_Tesin, item: 158, lang: en, name: "\u010Cesk\xFD T\u011B\
-      \u0161\xEDn", type: null}
+      \u0161\xEDn"}
 - model: proso_flashcards.term
   pk: 301
-  fields: {identifier: Orlova, item: 159, lang: cs, name: "Orlov\xE1", type: null}
+  fields: {identifier: Orlova, item: 159, lang: cs, name: "Orlov\xE1"}
 - model: proso_flashcards.term
   pk: 302
-  fields: {identifier: Orlova, item: 159, lang: en, name: "Orlov\xE1", type: null}
+  fields: {identifier: Orlova, item: 159, lang: en, name: "Orlov\xE1"}
 - model: proso_flashcards.term
   pk: 303
-  fields: {identifier: Karvina, item: 160, lang: cs, name: "Karvin\xE1", type: null}
+  fields: {identifier: Karvina, item: 160, lang: cs, name: "Karvin\xE1"}
 - model: proso_flashcards.term
   pk: 304
-  fields: {identifier: Karvina, item: 160, lang: en, name: "Karvin\xE1", type: null}
+  fields: {identifier: Karvina, item: 160, lang: en, name: "Karvin\xE1"}
 - model: proso_flashcards.term
   pk: 305
-  fields: {identifier: Havirov, item: 161, lang: cs, name: "Hav\xED\u0159ov", type: null}
+  fields: {identifier: Havirov, item: 161, lang: cs, name: "Hav\xED\u0159ov"}
 - model: proso_flashcards.term
   pk: 306
-  fields: {identifier: Havirov, item: 161, lang: en, name: "Hav\xED\u0159ov", type: null}
+  fields: {identifier: Havirov, item: 161, lang: en, name: "Hav\xED\u0159ov"}
 - model: proso_flashcards.term
   pk: 307
-  fields: {identifier: Bohumin, item: 162, lang: cs, name: "Bohum\xEDn", type: null}
+  fields: {identifier: Bohumin, item: 162, lang: cs, name: "Bohum\xEDn"}
 - model: proso_flashcards.term
   pk: 308
-  fields: {identifier: Bohumin, item: 162, lang: en, name: "Bohum\xEDn", type: null}
+  fields: {identifier: Bohumin, item: 162, lang: en, name: "Bohum\xEDn"}
 - model: proso_flashcards.term
   pk: 309
   fields: {identifier: Novy_Jicin, item: 163, lang: cs, name: "Nov\xFD Ji\u010D\xED\
-      n", type: null}
+      n"}
 - model: proso_flashcards.term
   pk: 310
   fields: {identifier: Novy_Jicin, item: 163, lang: en, name: "Nov\xFD Ji\u010D\xED\
-      n", type: null}
+      n"}
 - model: proso_flashcards.term
   pk: 311
-  fields: {identifier: Koprivnice, item: 164, lang: cs, name: "Kop\u0159ivnice", type: null}
+  fields: {identifier: Koprivnice, item: 164, lang: cs, name: "Kop\u0159ivnice"}
 - model: proso_flashcards.term
   pk: 312
-  fields: {identifier: Koprivnice, item: 164, lang: en, name: "Kop\u0159ivnice", type: null}
+  fields: {identifier: Koprivnice, item: 164, lang: en, name: "Kop\u0159ivnice"}
 - model: proso_flashcards.term
   pk: 313
   fields: {identifier: Frenstat_pod_Radhostem, item: 165, lang: cs, name: "Fren\u0161\
-      t\xE1t pod Radho\u0161t\u011Bm", type: null}
+      t\xE1t pod Radho\u0161t\u011Bm"}
 - model: proso_flashcards.term
   pk: 314
   fields: {identifier: Frenstat_pod_Radhostem, item: 165, lang: en, name: "Fren\u0161\
-      t\xE1t pod Radho\u0161t\u011Bm", type: null}
+      t\xE1t pod Radho\u0161t\u011Bm"}
 - model: proso_flashcards.term
   pk: 315
-  fields: {identifier: Opava, item: 166, lang: cs, name: Opava, type: null}
+  fields: {identifier: Opava, item: 166, lang: cs, name: Opava}
 - model: proso_flashcards.term
   pk: 316
-  fields: {identifier: Opava, item: 166, lang: en, name: Opava, type: null}
+  fields: {identifier: Opava, item: 166, lang: en, name: Opava}
 - model: proso_flashcards.term
   pk: 317
-  fields: {identifier: Hlucin, item: 167, lang: cs, name: "Hlu\u010D\xEDn", type: null}
+  fields: {identifier: Hlucin, item: 167, lang: cs, name: "Hlu\u010D\xEDn"}
 - model: proso_flashcards.term
   pk: 318
-  fields: {identifier: Hlucin, item: 167, lang: en, name: "Hlu\u010D\xEDn", type: null}
+  fields: {identifier: Hlucin, item: 167, lang: en, name: "Hlu\u010D\xEDn"}
 - model: proso_flashcards.term
   pk: 319
-  fields: {identifier: Ostrava, item: 168, lang: cs, name: Ostrava, type: null}
+  fields: {identifier: Ostrava, item: 168, lang: cs, name: Ostrava}
 - model: proso_flashcards.term
   pk: 320
-  fields: {identifier: Ostrava, item: 168, lang: en, name: Ostrava, type: null}
+  fields: {identifier: Ostrava, item: 168, lang: en, name: Ostrava}
 - model: proso_flashcards.term
   pk: 321
-  fields: {identifier: Boskovice, item: 169, lang: cs, name: Boskovice, type: null}
+  fields: {identifier: Boskovice, item: 169, lang: cs, name: Boskovice}
 - model: proso_flashcards.term
   pk: 322
-  fields: {identifier: Boskovice, item: 169, lang: en, name: Boskovice, type: null}
+  fields: {identifier: Boskovice, item: 169, lang: en, name: Boskovice}
 - model: proso_flashcards.term
   pk: 323
-  fields: {identifier: Blansko, item: 170, lang: cs, name: Blansko, type: null}
+  fields: {identifier: Blansko, item: 170, lang: cs, name: Blansko}
 - model: proso_flashcards.term
   pk: 324
-  fields: {identifier: Blansko, item: 170, lang: en, name: Blansko, type: null}
+  fields: {identifier: Blansko, item: 170, lang: en, name: Blansko}
 - model: proso_flashcards.term
   pk: 325
-  fields: {identifier: Brno, item: 171, lang: cs, name: Brno, type: null}
+  fields: {identifier: Brno, item: 171, lang: cs, name: Brno}
 - model: proso_flashcards.term
   pk: 326
-  fields: {identifier: Brno, item: 171, lang: en, name: Brno, type: null}
+  fields: {identifier: Brno, item: 171, lang: en, name: Brno}
 - model: proso_flashcards.term
   pk: 327
-  fields: {identifier: Breclav, item: 172, lang: cs, name: "B\u0159eclav", type: null}
+  fields: {identifier: Breclav, item: 172, lang: cs, name: "B\u0159eclav"}
 - model: proso_flashcards.term
   pk: 328
-  fields: {identifier: Breclav, item: 172, lang: en, name: "B\u0159eclav", type: null}
+  fields: {identifier: Breclav, item: 172, lang: en, name: "B\u0159eclav"}
 - model: proso_flashcards.term
   pk: 329
   fields: {identifier: Veseli_nad_Moravou, item: 173, lang: cs, name: "Vesel\xED nad\
-      \ Moravou", type: null}
+      \ Moravou"}
 - model: proso_flashcards.term
   pk: 330
   fields: {identifier: Veseli_nad_Moravou, item: 173, lang: en, name: "Vesel\xED nad\
-      \ Moravou", type: null}
+      \ Moravou"}
 - model: proso_flashcards.term
   pk: 331
-  fields: {identifier: Hodonin, item: 174, lang: cs, name: "Hodon\xEDn", type: null}
+  fields: {identifier: Hodonin, item: 174, lang: cs, name: "Hodon\xEDn"}
 - model: proso_flashcards.term
   pk: 332
-  fields: {identifier: Hodonin, item: 174, lang: en, name: "Hodon\xEDn", type: null}
+  fields: {identifier: Hodonin, item: 174, lang: en, name: "Hodon\xEDn"}
 - model: proso_flashcards.term
   pk: 333
-  fields: {identifier: Kyjov, item: 175, lang: cs, name: Kyjov, type: null}
+  fields: {identifier: Kyjov, item: 175, lang: cs, name: Kyjov}
 - model: proso_flashcards.term
   pk: 334
-  fields: {identifier: Kyjov, item: 175, lang: en, name: Kyjov, type: null}
+  fields: {identifier: Kyjov, item: 175, lang: en, name: Kyjov}
 - model: proso_flashcards.term
   pk: 335
-  fields: {identifier: Vyskov, item: 176, lang: cs, name: "Vy\u0161kov", type: null}
+  fields: {identifier: Vyskov, item: 176, lang: cs, name: "Vy\u0161kov"}
 - model: proso_flashcards.term
   pk: 336
-  fields: {identifier: Vyskov, item: 176, lang: en, name: "Vy\u0161kov", type: null}
+  fields: {identifier: Vyskov, item: 176, lang: en, name: "Vy\u0161kov"}
 - model: proso_flashcards.term
   pk: 337
-  fields: {identifier: Znojmo, item: 177, lang: cs, name: Znojmo, type: null}
+  fields: {identifier: Znojmo, item: 177, lang: cs, name: Znojmo}
 - model: proso_flashcards.term
   pk: 338
-  fields: {identifier: Znojmo, item: 177, lang: en, name: Znojmo, type: null}
+  fields: {identifier: Znojmo, item: 177, lang: en, name: Znojmo}
 - model: proso_flashcards.term
   pk: 339
-  fields: {identifier: Praha, item: 178, lang: cs, name: Praha, type: null}
+  fields: {identifier: Praha, item: 178, lang: cs, name: Praha}
 - model: proso_flashcards.term
   pk: 340
-  fields: {identifier: Praha, item: 178, lang: en, name: Praha, type: null}
+  fields: {identifier: Praha, item: 178, lang: en, name: Praha}
 - model: proso_flashcards.term
   pk: 341
   fields: {identifier: Uherske_Hradiste, item: 179, lang: cs, name: "Uhersk\xE9 Hradi\u0161\
-      t\u011B", type: null}
+      t\u011B"}
 - model: proso_flashcards.term
   pk: 342
   fields: {identifier: Uherske_Hradiste, item: 179, lang: en, name: "Uhersk\xE9 Hradi\u0161\
-      t\u011B", type: null}
+      t\u011B"}
 - model: proso_flashcards.term
   pk: 343
-  fields: {identifier: Trnava, item: 180, lang: cs, name: Trnava, type: null}
+  fields: {identifier: Trnava, item: 180, lang: cs, name: Trnava}
 - model: proso_flashcards.term
   pk: 344
-  fields: {identifier: Trnava, item: 180, lang: en, name: Trnava, type: null}
+  fields: {identifier: Trnava, item: 180, lang: en, name: Trnava}
 - model: proso_flashcards.context
   pk: 1
   fields: {identifier: africa, item: 6, lang: cs, name: Afrika, content: africa.svg}
@@ -2904,31 +2884,31 @@
     active: true}
 - model: proso_flashcards.category
   pk: 1
-  fields: {identifier: cz, item: 1, lang: cs, name: "\u010Cesk\xE1 republika", type: null}
+  fields: {identifier: cz, item: 1, lang: cs, name: "\u010Cesk\xE1 republika"}
 - model: proso_flashcards.category
   pk: 2
-  fields: {identifier: cz, item: 1, lang: en, name: Czech Rep., type: null}
+  fields: {identifier: cz, item: 1, lang: en, name: Czech Rep.}
 - model: proso_flashcards.category
   pk: 3
-  fields: {identifier: world, item: 2, lang: cs, name: "Sv\u011Bt", type: null}
+  fields: {identifier: world, item: 2, lang: cs, name: "Sv\u011Bt"}
 - model: proso_flashcards.category
   pk: 4
-  fields: {identifier: world, item: 2, lang: en, name: World, type: null}
+  fields: {identifier: world, item: 2, lang: en, name: World}
 - model: proso_flashcards.category
   pk: 5
-  fields: {identifier: africa, item: 3, lang: cs, name: Afrika, type: null}
+  fields: {identifier: africa, item: 3, lang: cs, name: Afrika}
 - model: proso_flashcards.category
   pk: 6
-  fields: {identifier: africa, item: 3, lang: en, name: Africa, type: null}
+  fields: {identifier: africa, item: 3, lang: en, name: Africa}
 - model: proso_flashcards.category
   pk: 7
-  fields: {identifier: state, item: 4, lang: cs, name: "St\xE1ty", type: null}
+  fields: {identifier: state, item: 4, lang: cs, name: "St\xE1ty"}
 - model: proso_flashcards.category
   pk: 8
-  fields: {identifier: state, item: 4, lang: en, name: States, type: null}
+  fields: {identifier: state, item: 4, lang: en, name: States}
 - model: proso_flashcards.category
   pk: 9
-  fields: {identifier: city, item: 5, lang: cs, name: "M\u011Bsta", type: null}
+  fields: {identifier: city, item: 5, lang: cs, name: "M\u011Bsta"}
 - model: proso_flashcards.category
   pk: 10
-  fields: {identifier: city, item: 5, lang: en, name: Cities, type: null}
+  fields: {identifier: city, item: 5, lang: en, name: Cities}

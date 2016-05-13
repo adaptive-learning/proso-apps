@@ -24,7 +24,6 @@ class Term(models.Model, ModelDiffMixin):
 
     lang = models.CharField(max_length=2)
     name = models.TextField()
-    type = models.CharField(max_length=50, null=True, blank=True)
 
     objects = TermManager()
 
@@ -36,7 +35,6 @@ class Term(models.Model, ModelDiffMixin):
             "object_type": "fc_term",
             "lang": self.lang,
             "name": self.name,
-            "type": self.type,
         }
 
     def __str__(self):
@@ -159,7 +157,6 @@ class Category(models.Model, ModelDiffMixin):
     item = models.ForeignKey(Item, null=True, default=None, related_name="flashcard_categories")
     lang = models.CharField(max_length=2)
     name = models.TextField()
-    type = models.CharField(max_length=50, null=True, blank=True)
 
     def to_json(self, nested=False):
         return {
@@ -169,7 +166,6 @@ class Category(models.Model, ModelDiffMixin):
             "object_type": "fc_category",
             "lang": self.lang,
             "name": self.name,
-            "type": self.type,
         }
 
     def __str__(self):
@@ -256,7 +252,6 @@ PROSO_CUSTOM_EXPORT = {
         SELECT
             proso_flashcards_context.id,
             proso_flashcards_flashcard.item_id AS item_id,
-            proso_flashcards_term.type AS term_type,
             proso_flashcards_term.name AS term_name,
             proso_flashcards_context.name AS context_name,
             proso_flashcards_flashcard.lang AS language
