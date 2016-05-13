@@ -16,3 +16,4 @@ tags
 testproject/data
 testproject/media
 testproject/testapp/static
+.eggs
