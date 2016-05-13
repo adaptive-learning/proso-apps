@@ -48,6 +48,7 @@ class AnswerAdmin(admin.ModelAdmin):
         'context',
         'is_correct',
         'options_count',
+        'type',
         'time',
         'asked_ago')
     raw_id_fields = ("options",)
