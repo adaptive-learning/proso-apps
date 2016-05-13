@@ -6,21 +6,25 @@ from proso_models.admin import pretty_date
 class TermAdmin(admin.ModelAdmin):
     list_display = ('id', 'identifier', 'lang', 'name')
     search_fields = ('identifier', 'name')
+    list_filter = ('lang',)
 
 
 class ContextAdmin(admin.ModelAdmin):
     list_display = ('id', 'identifier', 'lang', 'name')
     search_fields = ('name', )
+    list_filter = ('lang',)
 
 
 class FlashcardAdmin(admin.ModelAdmin):
     list_display = ('id', 'identifier', 'lang', 'term', 'context')
     search_fields = ('identifier', 'term__name', 'context__name')
+    list_filter = ('lang',)
 
 
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'identifier', 'lang', 'name')
     search_fields = ('name',)
+    list_filter = ('lang',)
 
 
 class AnswerAdmin(admin.ModelAdmin):
@@ -44,6 +48,7 @@ class AnswerAdmin(admin.ModelAdmin):
         'context',
         'is_correct',
         'options_count',
+        'time',
         'asked_ago')
     raw_id_fields = ("options",)
     search_fields = ('user__username',)

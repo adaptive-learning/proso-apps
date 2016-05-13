@@ -788,6 +788,9 @@ class Item(models.Model, ModelDiffMixin):
             result['item_type'] = self.item_type.to_json(nested=True)
         return result
 
+    def __str__(self):
+        return "Item {0.id}".format(self)
+
     class Meta:
         app_label = 'proso_models'
 
