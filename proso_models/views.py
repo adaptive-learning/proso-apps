@@ -74,7 +74,7 @@ def to_practice_counts(request):
     """
     data = None
     if request.method == "POST":
-        data = json.loads(request.body.decode("utf-8"))
+        data = json.loads(request.body.decode("utf-8"))["filters"]
     if "filters" in request.GET:
         data = load_query_json(request.GET, "filters")
     if data is None:
@@ -191,7 +191,7 @@ def user_stats(request):
     response = {}
     data = None
     if request.method == "POST":
-        data = json.loads(request.body.decode("utf-8"))
+        data = json.loads(request.body.decode("utf-8"))["filters"]
     if "filters" in request.GET:
         data = load_query_json(request.GET, "filters")
     if data is None:
