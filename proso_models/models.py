@@ -1081,7 +1081,7 @@ def handle_response_time_bug(sender, instance, **kwargs):
     if not issubclass(sender, Answer):
         return
     if instance.response_time is None or instance.response_time > 1000 * 60 * 60 * 24 or instance.response_time < 0:
-        LOGGER.error('There is a wrong value {} for response time, user {}, time {}, item asked {}'.format(
+        LOGGER.warn('There is a wrong value {} for response time, user {}, time {}, item asked {}'.format(
             instance.response_time, instance.user_id, instance.time, instance.item_asked_id))
         instance.response_time = -1
 
