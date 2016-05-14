@@ -265,6 +265,9 @@ def _collect_json_objects(json, by='object_type'):
                     nested_memory[json_inner_by] = True
             [_collect(x, True) for x in json_inner.values()]
     _collect(json, False)
+    # HACK: The problem is we want to ignore some objects (like object_type
+    # question in proso_models).
+    nested_memory = {key: False for key, _ in nested_memory.items()}
     return collected, {key: nested_memory.get(key, False) for key in collected.keys()}
 
 

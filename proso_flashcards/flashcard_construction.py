@@ -36,7 +36,7 @@ class EmptyOptionSet(OptionSet):
 
 class ContextOptionSet(OptionSet):
     def get_option_for_flashcards(self, flashcards):
-        context_ids = {flashcard['context_id'] for flashcard in flashcards}
+        context_ids = {flashcard['context']['id'] for flashcard in flashcards}
         types_all_item_ids = set([c.item_id for c in Category.objects.filter(type='flashcard_type')])
         flashcard_item_ids = set([flashcard['item_id'] for flashcard in flashcards])
         reachable_parents = Item.objects.get_reachable_parents(flashcard_item_ids)
@@ -47,7 +47,7 @@ class ContextOptionSet(OptionSet):
         return {
             flashcard['item_id']: list(reduce(
                 lambda xs, ys: set(xs) & set(ys),
-                Item.objects.get_leaves({context_item_ids[flashcard['context_id']]} | flashcard_types[flashcard['item_id']]).values()
+                Item.objects.get_leaves({context_item_ids[flashcard['context']['id']]} | flashcard_types[flashcard['item_id']]).values()
             ))
             for flashcard in flashcards
         }
