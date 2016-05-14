@@ -1,6 +1,7 @@
 from django.core.cache.backends.locmem import LocMemCache
 from django.views.decorators.cache import cache_page
 from functools import wraps
+from proso.django.config import get_config
 from threading import currentThread
 import logging
 
@@ -46,7 +47,7 @@ def get_request_cache():
 class RequestCache(LocMemCache):
     def __init__(self):
         name = 'locmemcache@%i' % hash(currentThread())
-        params = dict()
+        params = {'max_entries': get_config('proso_common', 'request_cache.max_entries', 100000)}
         super(RequestCache, self).__init__(name, params)
 
 
