@@ -10,7 +10,7 @@ from proso.django.util import disable_for_loaddata
 class Comment(models.Model):
 
     username = models.CharField(null=True, blank=True, max_length=100)
-    email = models.EmailField(null=True, blank=True, max_length=75)
+    email = models.EmailField(null=True, blank=True, max_length=200)
     text = models.TextField(null=False, blank=False)
     inserted = models.DateTimeField(auto_now_add=True)
     session = models.ForeignKey(Session)
