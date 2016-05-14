@@ -2,7 +2,6 @@ from django.core.cache.backends.locmem import LocMemCache
 from django.views.decorators.cache import cache_page
 from functools import wraps
 from threading import currentThread
-from django.conf import settings
 import logging
 
 
@@ -10,6 +9,7 @@ LOGGER = logging.getLogger('django.request')
 
 
 _request_cache = {}
+_request_permanent_cache = {}
 _installed_middleware = False
 
 
@@ -24,6 +24,14 @@ def cache_page_conditional(condition, timeout=3600):
             return f(request, *args, **kwargs)
         return __cache_page_conditional
     return _cache_page_conditional
+
+
+def get_from_request_permenent_cache(key):
+    return _request_permanent_cache[currentThread()].get(key)
+
+
+def set_to_request_permanent_cache(key, value):
+    _request_permanent_cache[currentThread()][key] = value
 
 
 def is_cache_prepared():
@@ -45,8 +53,6 @@ class RequestCache(LocMemCache):
 class RequestCacheMiddleware(object):
 
         def __init__(self):
-            if hasattr(settings, 'TESTING') and settings.TESTING:
-                return
             global _installed_middleware
             _installed_middleware = True
 
@@ -54,4 +60,5 @@ class RequestCacheMiddleware(object):
             if _installed_middleware:
                 cache = _request_cache.get(currentThread()) or RequestCache()
                 _request_cache[currentThread()] = cache
+                _request_permanent_cache[currentThread()] = {}
                 cache.clear()

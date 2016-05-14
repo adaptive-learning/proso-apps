@@ -9,7 +9,8 @@ from django.db import transaction
 from django.db.models import Count, F
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from proso.django.cache import get_request_cache, is_cache_prepared
+from proso.django.cache import get_request_cache, is_cache_prepared, get_from_request_permenent_cache, set_to_request_permanent_cache
+from functools import reduce
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
 from proso.django.models import ModelDiffMixin
 from proso.django.request import load_query_json
@@ -32,6 +33,7 @@ import re
 
 ENVIRONMENT_INFO_CACHE_EXPIRATION = 30 * 60
 ENVIRONMENT_INFO_CACHE_KEY = 'proso_models_env_info'
+ITEM_SELECTOR_CACHE_KEY = 'proso_models_item_selector'
 LOGGER = logging.getLogger('django.request')
 
 
@@ -73,15 +75,19 @@ def get_predictive_model():
 
 
 def get_item_selector():
-    item_selector = instantiate_from_config(
-        'proso_models', 'item_selector',
-        default_class='proso.models.item_selection.ScoreItemSelection',
-        pass_parameters=[get_predictive_model()]
-    )
-    nth = get_config('proso_models', 'random_test.nth')
-    if nth is not None and nth > 0:
-        item_selector = TestWrapperItemSelection(item_selector, nth)
-    return item_selector
+    cached = get_from_request_permenent_cache(ITEM_SELECTOR_CACHE_KEY)
+    if cached is None:
+        item_selector = instantiate_from_config(
+            'proso_models', 'item_selector',
+            default_class='proso.models.item_selection.ScoreItemSelection',
+            pass_parameters=[get_predictive_model()]
+        )
+        nth = get_config('proso_models', 'random_test.nth')
+        if nth is not None and nth > 0:
+            item_selector = TestWrapperItemSelection(item_selector, nth)
+        cached = item_selector
+        set_to_request_permanent_cache(ITEM_SELECTOR_CACHE_KEY, cached)
+    return cached
 
 
 def get_options_number():
@@ -480,6 +486,9 @@ class ItemManager(models.Manager):
             return {item.id: sorted([_item.id for _item in item.children.all() if _item.active]) for item in items}
         return self._reachable_graph(item_ids, _children)
 
+    def get_reachable_children(self, item_ids):
+        return self._reachable_items(self.get_children_graph(item_ids))
+
     @cache_pure
     def get_parents_graph(self, item_ids):
         """
@@ -498,6 +507,9 @@ class ItemManager(models.Manager):
             items = Item.objects.filter(id__in=item_ids).prefetch_related('parents')
             return {item.id: sorted([_item.id for _item in item.parents.all()]) for item in items}
         return self._reachable_graph(item_ids, _parents)
+
+    def get_reachable_parents(self, item_ids):
+        return self._reachable_items(self.get_parents_graph(item_ids))
 
     def translate_identifiers(self, identifiers, language):
         """
@@ -581,11 +593,13 @@ class ItemManager(models.Manager):
             dict: item id -> JSON object
         """
         if is_nested is None:
-            def is_nested(x):
+            def is_nested_fun(x):
                 return True
-        if isinstance(is_nested, bool):
-            def is_nested(x):
+        elif isinstance(is_nested, bool):
+            def is_nested_fun(x):
                 return is_nested
+        else:
+            is_nested_fun = is_nested
         groupped = proso.list.group_by(item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
         result = {}
         for item_type_id, items in groupped.items():
@@ -594,13 +608,13 @@ class ItemManager(models.Manager):
             kwargs = {'{}__in'.format(item_type['foreign_key']): items}
             if 'language' in item_type:
                 kwargs[item_type['language']] = language
-            if any([not is_nested(item_id) for item_id in items]) and hasattr(model.objects, 'prepare_related'):
+            if any([not is_nested_fun(item_id) for item_id in items]) and hasattr(model.objects, 'prepare_related'):
                 objs = model.objects.prepare_related()
             else:
                 objs = model.objects
             for obj in objs.filter(**kwargs):
                 item_id = getattr(obj, item_type['foreign_key'])
-                result[item_id] = obj.to_json(nested=is_nested(item_id))
+                result[item_id] = obj.to_json(nested=is_nested_fun(item_id))
         return result
 
     def get_leaves(self, item_ids):
@@ -761,6 +775,15 @@ class ItemManager(models.Manager):
             plus=lambda xs, ys: dict(list(xs.items()) + list(ys.items())),
             f=neighbors,
             x={None: item_ids}).items() if len(deps) > 0}
+
+    def _reachable_items(self, graph):
+        return {i: sorted(list(fixed_point(
+            is_zero=lambda xs: len(xs) == 0,
+            minus=lambda xs, ys: xs - ys,
+            plus=lambda xs, ys: xs | ys,
+            f=lambda xs: reduce(lambda a, b: a | b, [set(graph.get(x, [])) for x in xs], set()),
+            x={i}
+        ) - {i})) for i in graph[None]}
 
 
 class Item(models.Model, ModelDiffMixin):

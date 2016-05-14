@@ -1,6 +1,7 @@
-import inspect
+from django.conf import settings
 from functools import wraps
 from proso.django.cache import get_request_cache, is_cache_prepared
+import inspect
 
 
 class cache_environment_for_item:
@@ -44,7 +45,7 @@ class cache_environment_for_item:
 
 
 def _should_skip():
-    return not is_cache_prepared()
+    return not is_cache_prepared() or (hasattr(settings, 'TESTING') and settings.TESTING)
 
 
 def _cache_has_key(key):
