@@ -475,10 +475,11 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def confusing_factor_more_items(self, item, items, user=None):
         cached_all = {}
+        confusing_factor_cache = cache.get('database_environment__confusing_factor', {})
         for item_secondary in items:
             _items = self._sorted([item, item_secondary])
-            cache_key = 'confusing_factor_per_item_{}_{}_{}'.format(_items[0], _items[1], user)
-            cached_item = cache.get(cache_key)
+            cache_key = '{}_{}_{}'.format(_items[0], _items[1], user)
+            cached_item = confusing_factor_cache.get(cache_key)
             if cached_item:
                 cached_all[item_secondary] = int(cached_item)
         to_find = [i for i in items if i not in list(cached_all.keys())]
@@ -513,13 +514,10 @@ class DatabaseEnvironment(CommonEnvironment):
                 cache_expiration = get_config('proso_models', 'confusing_factor.cache_expiration', default=24 * 60 * 60)
                 for item_secondary, count in found.items():
                     _items = self._sorted([item, item_secondary])
-                    cache_key = 'confusing_factor_per_item_{}_{}_{}'.format(_items[0], _items[1], user)
-                    cache.set(
-                        cache_key,
-                        count,
-                        cache_expiration
-                    )
+                    cache_key = '{}_{}_{}'.format(_items[0], _items[1], user)
+                    confusing_factor_cache[cache_key] = count
                     cached_all[item_secondary] = count
+                cache.set('database_environment__confusing_factor', confusing_factor_cache, cache_expiration)
         return [cached_all[i] for i in items]
 
     def export_values():
