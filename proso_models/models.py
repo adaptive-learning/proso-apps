@@ -593,11 +593,13 @@ class ItemManager(models.Manager):
             dict: item id -> JSON object
         """
         if is_nested is None:
-            def is_nested(x):
+            def is_nested_fun(x):
                 return True
-        if isinstance(is_nested, bool):
-            def is_nested(x):
+        elif isinstance(is_nested, bool):
+            def is_nested_fun(x):
                 return is_nested
+        else:
+            is_nested_fun = is_nested
         groupped = proso.list.group_by(item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
         result = {}
         for item_type_id, items in groupped.items():
@@ -606,13 +608,13 @@ class ItemManager(models.Manager):
             kwargs = {'{}__in'.format(item_type['foreign_key']): items}
             if 'language' in item_type:
                 kwargs[item_type['language']] = language
-            if any([not is_nested(item_id) for item_id in items]) and hasattr(model.objects, 'prepare_related'):
+            if any([not is_nested_fun(item_id) for item_id in items]) and hasattr(model.objects, 'prepare_related'):
                 objs = model.objects.prepare_related()
             else:
                 objs = model.objects
             for obj in objs.filter(**kwargs):
                 item_id = getattr(obj, item_type['foreign_key'])
-                result[item_id] = obj.to_json(nested=is_nested(item_id))
+                result[item_id] = obj.to_json(nested=is_nested_fun(item_id))
         return result
 
     def get_leaves(self, item_ids):
