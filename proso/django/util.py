@@ -1,6 +1,9 @@
+from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from functools import wraps
+
+
 from proso.django.cache import get_request_cache, is_cache_prepared
 import hashlib
 import logging
@@ -25,6 +28,8 @@ def cache_pure(f, expiration=60 * 60 * 24 * 30):
 
     @wraps(f)
     def wrapper(*args, **kwargs):
+        if hasattr(settings, 'TESTING') and settings.TESTING:
+            return f(*args, **kwargs)
         if len(args) > 0 and re.match(r"<.+ object at \w+>", repr(args[0])) is not None:
             key_args = [args[0].__class__] + list(args[1:])
         else:

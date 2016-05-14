@@ -17,19 +17,11 @@ This module provides enrichment for JSON objects.
                 json['globally_enriched'] = 1
 
 
-        def global_enricher_not_nested(request, json_list, nested):
-            if nested:
-                return
-            for json in json_list:
-                json['globally_enriched_not_nested'] = 1
-
-
         def local_enricher(request, json_list, nested):
             for json in json_list:
                 json['locally_enriched'] = json.get('globally_enriched', 0) + 1
 
         register_object_type_enricher(['parent', 'dog', 'child'], global_enricher)
-        register_object_type_enricher(['parent', 'dog', 'child'], global_enricher_not_nested)
         register_object_type_enricher(['parent'], local_enricher, [global_enricher])
 
         # Imagine we have the following data. We can enrich them.
