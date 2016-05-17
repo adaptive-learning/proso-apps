@@ -68,7 +68,7 @@ class ConceptManager(models.Manager):
 
         Args:
             concepts (list of Concept): Defaults to None meaning all concepts
-            lang (str): language of concepts used if concepts is None
+            lang (str): language of concepts, if None use language of concepts
 
         Returns:
             dict: concept (int) -> list of item ids (int)
@@ -77,11 +77,14 @@ class ConceptManager(models.Manager):
             concepts = self.filter(active=True)
             if lang is not None:
                 concepts = concepts.filter(lang=lang)
-        item_lists = {}
-        for concept in concepts:
-            practice_filter = json.loads(concept.query)
-            item_lists[concept.pk] = Item.objects.filter_all_reachable_leaves(practice_filter, concept.lang)
-        return item_lists
+        if lang is None:
+            languages = set([concept.lang for concept in concepts])
+            if len(languages) > 1:
+                raise Exception('Concepts has multiple languages')
+            lang = list(languages)[0]
+        item_lists = Item.objects.filter_all_reachable_leaves_many([json.loads(concept.query)
+                                                                    for concept in concepts], lang)
+        return dict(zip(concepts, item_lists))
 
     @cache_pure
     def get_item_concept_mapping(self, lang):
@@ -95,7 +98,7 @@ class ConceptManager(models.Manager):
 
         """
         concepts = self.filter(active=True, lang=lang)
-        return group_keys_by_value_lists(Concept.objects.get_concept_item_mapping(concepts))
+        return group_keys_by_value_lists(Concept.objects.get_concept_item_mapping(concepts, lang))
 
     def get_concepts_to_recalculate(self, users, lang, concepts=None):
         """
@@ -236,7 +239,7 @@ class UserStatManager(models.Manager):
         Recalculated given concepts for given users
 
         Args:
-            concepts (dict): user (User or int -> set of concepts to recalculate)
+            concepts (dict): user id (int -> set of concepts to recalculate)
             lang(Optional[str]): language used to get items in all concepts (cached).
                 Defaults to None, in that case are get items only in used concepts
         """
@@ -280,7 +283,7 @@ class UserStatManager(models.Manager):
                 }
                 stats_to_delete_condition |= Q(user=user, concept=concept)
                 for stat_name, value in stats.items():
-                    new_user_stats.append(UserStat(user_id=user, concept_id=concept, stat=stat_name, value=value))
+                    new_user_stats.append(UserStat(user_id=user, concept=concept, stat=stat_name, value=value))
             self.filter(stats_to_delete_condition).delete()
             self.bulk_create(new_user_stats)
 
