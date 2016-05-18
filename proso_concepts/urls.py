@@ -10,6 +10,7 @@ urlpatterns = patterns('proso_concepts.views',
     url(r'^(|home)$', ensure_csrf_cookie(TemplateView.as_view(template_name="concepts_home.html")), name='home'),
     url(r'^user_stats$', "user_stats", name="user_stats"),
     url(r'^user_stats_bulk$', "user_stats_bulk", name="user_stats_bulk"),
+    url(r'^(?P<provider>\w+)_user_stats', "user_stats_api", name="user_stats_api"),
     url(r'^tag_values$', "tag_values", name="tag_values"),
 )
 

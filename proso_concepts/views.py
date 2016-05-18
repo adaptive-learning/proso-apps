@@ -2,8 +2,11 @@ import logging
 
 import datetime
 from collections import defaultdict
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import HttpResponse
 from lazysignup.decorators import allow_lazy_user
+from social.apps.django_app.default.models import UserSocialAuth
 
 import proso_common.views
 from proso.django.cache import cache_page_conditional
@@ -100,6 +103,35 @@ def user_stats_bulk(request):
     for user, s in stats.items():
         data["users"].append({
             "user_id": user,
+            "concepts": s,
+        })
+    return render_json(request, data, template='concepts_json.html', help_text=user_stats_bulk.__doc__)
+
+
+def user_stats_api(request, provider):
+    """
+    Get statistics for selected Edookit users
+
+    key:
+      api key
+    since:
+      time as timestamp - get stats changed since
+    """
+
+    if 'key' not in request.GET or provider not in settings.USER_STATS_API_KEY \
+            or request.GET['key'] != settings.USER_STATS_API_KEY[provider]:
+        return HttpResponse('Unauthorized', status=401)
+    since = None
+    if 'since' in request.GET:
+        since = datetime.datetime.fromtimestamp(int(request.GET['since']))
+
+    social_users = list(UserSocialAuth.objects.filter(provider=provider).select_related('user'))
+    user_map = {u.user.id: u for u in social_users}
+    stats = UserStat.objects.get_user_stats([u.user for u in social_users], lang=None, since=since, recalculate=False)
+    data = {"users": []}
+    for user, s in stats.items():
+        data["users"].append({
+            "user_id": user_map[user].uid,
             "concepts": s,
         })
     return render_json(request, data, template='concepts_json.html', help_text=user_stats_bulk.__doc__)

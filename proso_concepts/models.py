@@ -84,7 +84,7 @@ class ConceptManager(models.Manager):
             lang = list(languages)[0]
         item_lists = Item.objects.filter_all_reachable_leaves_many([json.loads(concept.query)
                                                                     for concept in concepts], lang)
-        return dict(zip(concepts, item_lists))
+        return dict(zip([c.pk for c in concepts], item_lists))
 
     @cache_pure
     def get_item_concept_mapping(self, lang):
@@ -128,7 +128,7 @@ class ConceptManager(models.Manager):
             current_user_stats[user_stat.user_id][user_stat.concept_id] = user_stat
 
         concepts_to_recalculate = defaultdict(lambda: set())
-        for user, item, time in Answer.objects.filter(Q(lang=lang) | Q(lang__isnull=True), user__in=users)\
+        for user, item, time in Answer.objects.filter(user__in=users)\
                 .values_list("user_id", "item").annotate(Max("time")):
             if item not in mapping:
                 # in reality this should by corner case, so it is efficient to not filter Answers
@@ -283,11 +283,11 @@ class UserStatManager(models.Manager):
                 }
                 stats_to_delete_condition |= Q(user=user, concept=concept)
                 for stat_name, value in stats.items():
-                    new_user_stats.append(UserStat(user_id=user, concept=concept, stat=stat_name, value=value))
+                    new_user_stats.append(UserStat(user_id=user, concept_id=concept, stat=stat_name, value=value))
             self.filter(stats_to_delete_condition).delete()
             self.bulk_create(new_user_stats)
 
-    def get_user_stats(self, users, lang, concepts=None, since=None):
+    def get_user_stats(self, users, lang=None, concepts=None, since=None, recalculate=True):
         """
         Finds all UserStats of given concepts and users.
         Recompute UserStats if necessary
@@ -295,7 +295,7 @@ class UserStatManager(models.Manager):
         Args:
             users (Optional[list of users] or [user]): list of primary keys of user or users
                 Defaults to None meaning all users.
-            lang (string): use only concepts witch the lang
+            lang (string): use only concepts witch the lang. Defaults to None meaning all languages.
             concepts (Optional[list of concepts]): list of primary keys of concepts or concepts
                 Defaults to None meaning all concepts.
 
@@ -308,12 +308,15 @@ class UserStatManager(models.Manager):
             users = [users]
             only_one_user = True
 
-        time_start = time_lib()
-        concepts_to_recalculate = Concept.objects.get_concepts_to_recalculate(users, lang, concepts)
-        LOGGER.debug("user_stats - getting identifying concepts to recalculate: %ss", (time_lib() - time_start))
-        time_start = time_lib()
-        self.recalculate_concepts(concepts_to_recalculate, lang)
-        LOGGER.debug("user_stats - recalculating concepts: %ss", (time_lib() - time_start))
+        if recalculate:
+            if lang is None:
+                raise ValueError('Recalculation without lang is not supported.')
+            time_start = time_lib()
+            concepts_to_recalculate = Concept.objects.get_concepts_to_recalculate(users, lang, concepts)
+            LOGGER.debug("user_stats - getting identifying concepts to recalculate: %ss", (time_lib() - time_start))
+            time_start = time_lib()
+            self.recalculate_concepts(concepts_to_recalculate, lang)
+            LOGGER.debug("user_stats - recalculating concepts: %ss", (time_lib() - time_start))
 
         qs = self.prepare_related().filter(user__in=users)
         if concepts is not None:
