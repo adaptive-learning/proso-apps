@@ -195,7 +195,7 @@ class FlashcardAnswerManager(models.Manager):
             json_object['guess'] = 1.0 / (len(option_ids) + 1)
         else:
             json_object['guess'] = 0
-        flashcards = dict([(fc.id, fc) for fc in Flashcard.objects.filter(pk__in=flashcard_ids)])
+        flashcards = {fc.id: fc for fc in Flashcard.objects.filter(pk__in=flashcard_ids)}
         if len(flashcard_ids) != len(flashcards):
             raise Exception("Invalid flashcard id (asked, answered or as option)")
         json_object['item_id'] = flashcards[json_object['flashcard_id']].item_id
