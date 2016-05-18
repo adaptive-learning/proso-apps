@@ -205,7 +205,7 @@ class FlashcardAnswerManager(models.Manager):
         answer = Answer.objects.from_json(json_object, practice_context, user_id, object_class=object_class)
         if 'option_ids' in json_object:
             for option_id in set(json_object['option_ids']):
-                answer.options.add(flashcard_ids[option_id])
+                answer.options.add(flashcards[option_id])
         answer.save()
         return answer
 
