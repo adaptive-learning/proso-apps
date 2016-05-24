@@ -125,7 +125,7 @@ class Command(BaseCommand):
                     user,
                     item,
                     asked == answered,
-                    time.replace(tzinfo=None),
+                    time,
                     item_answered=answered,
                     item_asked=asked,
                     guess=guess,
@@ -168,7 +168,7 @@ class Command(BaseCommand):
     def load_environment(self, info):
         return instantiate_from_config(
             'proso_models', 'recompute_environment',
-            default_class='proso_models.models.InMemoryDatabaseFlushEnvironment',
+            default_class='proso_models.environment.InMemoryDatabaseFlushEnvironment',
             pass_parameters=[info])
 
     def load_user_and_item_ids(self, info, batch_size):
