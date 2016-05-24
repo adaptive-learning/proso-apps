@@ -688,11 +688,11 @@ class ItemManager(models.Manager):
     def override_parent_subgraph(self, parent_subgraph, invisible_edges=None):
         """
         Get all items with outcoming edges from the given subgraph, drop all
-        their child relations, and then add children according to the given
+        their parent relations, and then add parents according to the given
         subgraph.
 
         Args:
-            children_subgraph (dict): item id -> list of chidlren (item ids)
+            parent_subgraph (dict): item id -> list of parents(item ids)
             invisible_edges (list|set): set of (from, to) tuples specifying
                 invisible edges
         """
