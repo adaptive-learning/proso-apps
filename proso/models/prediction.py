@@ -196,7 +196,7 @@ class PriorCurrentPredictiveModel(PredictiveModel):
         if data['current_skill'] is None:
             skill = data['prior_skill'] - data['difficulty']
         else:
-            seconds_ago = (time - data['last_time']).total_seconds() if data['last_time'] and time else 315460000
+            seconds_ago = _total_seconds_diff(time, data['last_time']) if data['last_time'] and time else 315460000
             skill = data['current_skill'] + self._time_shift / max(seconds_ago, 0.001)
         return predict_simple(
             skill,
@@ -420,3 +420,10 @@ def _to_binary_reverse_list(number, length):
         binary.append(number % 2)
         number = number / 2
     return binary
+
+
+def _total_seconds_diff(a, b):
+    if a.tzinfo != b.tzinfo:
+        a = a if a.tzinfo is None else a.replace(tzinfo=None)
+        b = b if b.tzinfo is None else b.replace(tzinfo=None)
+    return (a - b).total_seconds()
