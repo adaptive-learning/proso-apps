@@ -777,6 +777,8 @@ class ItemManager(models.Manager):
             x={None: item_ids}).items() if len(deps) > 0}
 
     def _reachable_items(self, graph):
+        if None not in graph:
+            return {}
         return {i: sorted(list(fixed_point(
             is_zero=lambda xs: len(xs) == 0,
             minus=lambda xs, ys: xs - ys,
