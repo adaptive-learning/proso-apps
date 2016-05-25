@@ -107,7 +107,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
         with open(filename_variable, 'w') as file_variable:
             for (key, u, i_p, i_s, p, t, a, v) in self.export_values():
                 file_variable.write(
-                    '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t, p, self._info_id))
+                    '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t, a, p, self._info_id))
         with transaction.atomic():
             with closing(connection.cursor()) as cursor:
                 cursor.execute('SET CONSTRAINTS ALL DEFERRED')
