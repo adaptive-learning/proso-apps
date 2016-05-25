@@ -1,0 +1,127 @@
+{
+  "description": "Schema for data file containing flashcards",
+  "definitions": {
+    "task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contents": {
+          "type": "object",
+          "patternProperties": {
+            "^\\w\\w$": {
+            }
+          }
+        }
+      },
+      "required": ["id", "contents"]
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "names": {
+        "type": "object",
+        "patternProperties": {
+          "^\\w\\w$": {
+            "type": "string"
+          }
+        }
+      },
+      "contents": {
+        "type": "object",
+        "patternProperties": {
+          "^\\w\\w$": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["id", "names", "contents"]
+    },
+    "instance": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "task": {
+          "type": "string"
+        },
+        "context": {
+          "type": "string"
+        },
+        "descriptions": {
+          "type": "object",
+          "patternProperties": {
+            "^\\w\\w$": {
+            }
+          }
+        },
+        "active": {
+          "type": "boolean"
+        }
+      },
+      "required": ["id", "task", "context", "descriptions"]
+    },
+    "skill": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "names": {
+        "type": "object",
+        "patternProperties": {
+          "^\\w\\w$": {
+            "type": "string"
+          }
+        }
+      },
+      "parents": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "names"]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "task": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/task"
+      }
+    },
+    "contexts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/context"
+      }
+    },
+    "instances": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/instance"
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/skill"
+      }
+    }
+  }
+}

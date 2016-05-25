@@ -50,6 +50,7 @@ INSTALLED_APPS = (
     'proso_user',
     'proso_feedback',
     'proso_flashcards',
+    'proso_tasks',
     'proso_concepts',
     'social.apps.django_app.default',
     'testproject.testapp',
