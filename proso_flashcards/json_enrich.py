@@ -28,7 +28,8 @@ def options(request, json_list, nested):
     ])
     metas = [question.get('meta', {}) for question in json_list]
     test_position = _test_index(metas)
-    selected_items = [question['payload']['item_id'] for question in json_list]
+    selected_items = [question['payload']['item_id'] for question in json_list
+                      if question['payload']['object_type'] == 'fc_flashcard']
     allow_zero_option = {}
     for question in json_list:
         if question['payload']['object_type'] != 'fc_flashcard':
@@ -38,17 +39,14 @@ def options(request, json_list, nested):
             question['question_type'] = FlashcardAnswer.FROM_TERM
         allow_zero_option[question['payload']['item_id']] = question['question_type'] == FlashcardAnswer.FROM_TERM
 
-    is_flashcard_question = [question['payload']['object_type'] == 'fc_flashcard' for question in json_list]
-    if not all(is_flashcard_question):
-        # TODO: We should support mixed questions in the future
-        raise Exception('All questions must be for flashcards!')
-
     all_options = option_selector.select_options_more_items(
         environment, user_id, selected_items, time, option_sets,
         allow_zero_options=allow_zero_option
     )
     options_json_list = []
     for i, (question, options) in enumerate(zip(json_list, all_options)):
+        if question['payload']['object_type'] != 'fc_flashcard':
+            continue
         if test_position is not None and test_position == i:
             question['question_type'] = FlashcardAnswer.FROM_TERM
             question['payload']['options'] = []
