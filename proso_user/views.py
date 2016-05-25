@@ -1,4 +1,3 @@
-from . import json_enrich
 from .models import Session, UserProfile, TimeZone, UserQuestion, UserQuestionAnswer, UserQuestionPossibleAnswer, migrate_google_openid_user
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -11,7 +10,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
 from proso.django.config import get_config
-from proso.django.enrichment import enrich_json_objects_by_object_type, register_object_type_enricher
+from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import get_user_id, json_body, is_user_id_overridden, get_language
 from proso.django.response import render, render_json
 import django.contrib.auth as auth
@@ -429,10 +428,3 @@ def user_service(request):
     else:
         user = json.dumps(request.user.userprofile.to_json())
     return render(request, "user_service.html", {"user": user})
-
-
-################################################################################
-# Enrichers
-################################################################################
-
-register_object_type_enricher(['user_question'], json_enrich.user_answers)

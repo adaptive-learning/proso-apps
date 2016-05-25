@@ -1,4 +1,3 @@
-from . import json_enrich
 from .models import get_environment, get_predictive_model, get_item_selector, get_active_environment_info, \
     Answer, Item, recommend_users as models_recommend_users, PracticeContext, \
     learning_curve as models_learning_curve, get_filter, get_mastery_trashold
@@ -9,7 +8,6 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
-from proso.django.enrichment import register_object_type_enricher
 from proso.django.request import is_time_overridden, get_time, get_user_id, get_language, load_query_json
 from proso.django.response import render, render_json, BadRequestException
 from django.views.decorators.cache import cache_page
@@ -467,9 +465,3 @@ def _save_answers(request, practice_context):
         answers.append(answer_class.objects.from_json(json_object, practice_context, request.user.id))
     LOGGER.debug("saving of %s answers took %s seconds", len(answers), timer('_save_answers'))
     return answers
-
-################################################################################
-# Enrichers
-################################################################################
-
-register_object_type_enricher(['item'], json_enrich.item2object, priority=-1000000000, pure=False)

@@ -1,6 +1,5 @@
-from . import json_enrich as json_enrich
 from .models import Experiment
-from proso.django.enrichment import register_object_type_enricher, enrich_json_objects_by_object_type
+from proso.django.enrichment import enrich_json_objects_by_object_type
 import logging
 import proso_common.views
 
@@ -39,10 +38,3 @@ def show_more(request, object_class, should_cache=True):
     return proso_common.views.show_more(
         request, enrich_json_objects_by_object_type, _load_objects, object_class,
         should_cache=should_cache, template='configab_json.html', to_json_kwargs={})
-
-
-################################################################################
-# Enrichers
-################################################################################
-
-register_object_type_enricher(['configab_experiment_setup'], json_enrich.experiment_setup_stats)

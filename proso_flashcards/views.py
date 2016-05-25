@@ -1,14 +1,12 @@
 from django.conf import settings
 from proso.django.cache import cache_page_conditional
-from proso.django.enrichment import enrich_json_objects_by_object_type, register_object_type_enricher
+from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import get_language
 from proso_flashcards.models import Term, FlashcardAnswer, Flashcard, Context, Category
 from proso_models.models import get_filter, Item
 from proso_user.models import get_user_id
 import logging
 import proso_common.views
-import proso_flashcards.json_enrich as flashcards_json_enrich
-import proso_models.json_enrich as models_json_enrich
 
 
 LOGGER = logging.getLogger('django.request')
@@ -58,16 +56,3 @@ def show_more(request, object_class, should_cache=True):
     return proso_common.views.show_more(
         request, enrich_json_objects_by_object_type, _load_objects, object_class,
         should_cache=should_cache, template='flashcards_json.html', to_json_kwargs=to_json_kwargs)
-
-
-################################################################################
-# Enrichers
-################################################################################
-
-register_object_type_enricher(['fc_answer'], flashcards_json_enrich.answer_flashcards)
-register_object_type_enricher(['fc_flashcard'], models_json_enrich.prediction)
-register_object_type_enricher(['fc_flashcard', 'fc_category', 'fc_term', 'fc_context'], models_json_enrich.number_of_answers)
-register_object_type_enricher(['fc_category', 'fc_term', 'fc_context'], models_json_enrich.avg_prediction)
-register_object_type_enricher(['question'], flashcards_json_enrich.answer_type)
-register_object_type_enricher(['question'], flashcards_json_enrich.question_type, priority=-1000)
-register_object_type_enricher(['question'], flashcards_json_enrich.options, dependencies=[flashcards_json_enrich.question_type], priority=-1000)
