@@ -905,7 +905,7 @@ class AnswerManager(models.Manager):
             if key in json_object:
                 kwargs[key] = json_object[key]
         if 'time_gap' in json_object:
-            kwargs.time = datetime.now() - timedelta(seconds=json_object["time_gap"])
+            kwargs['time'] = datetime.now() - timedelta(seconds=json_object["time_gap"])
         if 'question_type' in json_object:
             kwargs['type'] = json_object['question_type']
         kwargs['metainfo'] = None if 'meta' not in json_object else AnswerMeta.objects.from_content(json_object['meta'])
