@@ -214,18 +214,18 @@ def user_stats(request):
         if len(items) == 0:
             response[identifier] = {
                 "filter": data[identifier],
-                "number_of_flashcards": 0,
+                "number_of_items": 0,
             }
         else:
             response[identifier] = {
                 "filter": data[identifier],
-                "number_of_flashcards": len(items),
-                "number_of_practiced_flashcards": sum(answers[i] > 0 for i in items),
+                "number_of_items": len(items),
+                "number_of_practiced_items": sum(answers[i] > 0 for i in items),
                 "number_of_answers": sum(answers[i] for i in items),
                 "number_of_correct_answers": sum(correct_answers[i] for i in items),
             }
             if request.GET.get("mastered"):
-                response[identifier]["number_of_mastered_flashcards"]= sum(mastered[i] for i in items)
+                response[identifier]["number_of_mastered_items"]= sum(mastered[i] for i in items)
     return render_json(request, response, template='models_user_stats.html', help_text=user_stats.__doc__)
 
 
