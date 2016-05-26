@@ -44,7 +44,7 @@ class Command(BaseCommand):
         self.stdout.write('- objects')
         db_skills = {(skill.identifier, skill.lang): skill for skill in Skill.objects.all().select_related('item')}
         items = {}
-        for skill in progress.bar(skills, every=max(1, len(skills) / 100)):
+        for skill in progress.bar(skills, every=max(1, len(skills) // 100)):
             new_skills = {}
             for lang, name in skill['names'].items():
                 new_skills[(skill['id'], lang)] = {"name": name, 'active': True if 'active' not in skill else skill['active']}
@@ -65,7 +65,7 @@ class Command(BaseCommand):
         self.stdout.write('- objects')
         db_tasks = {(task.identifier, task.lang): task for task in Task.objects.all().select_related('item')}
         items = {}
-        for task in progress.bar(tasks, every=max(1, len(tasks) / 100)):
+        for task in progress.bar(tasks, every=max(1, len(tasks) // 100)):
             new_tasks = {}
             for lang, content in task['contents'].items():
                 new_tasks[(task['id'], lang)] = {"content": content, 'active': True if 'active' not in task else task['active']}
@@ -88,7 +88,7 @@ class Command(BaseCommand):
         db_tasks = {(context.identifier, context.lang): context
                     for context in Context.objects.all().select_related('item')}
         items = {}
-        for context in progress.bar(contexts, every=max(1, len(contexts) / 100)):
+        for context in progress.bar(contexts, every=max(1, len(contexts) // 100)):
             new_contexts = {}
             for lang, name in context['names'].items():
                 new_contexts[(context['id'], lang)] = {"name": name, "content": context["contents"][lang], 'active': True if 'active' not in context else context['active']}
@@ -109,7 +109,7 @@ class Command(BaseCommand):
         db_instances = {(task.identifier, task.lang): task for task in
                         TaskInstance.objects.all().select_related('item')}
         parent_subgraph = {}
-        for instance in progress.bar(instances, every=max(1, len(instances) / 100)):
+        for instance in progress.bar(instances, every=max(1, len(instances) // 100)):
             new_instances = {}
             for lang, description in instance['descriptions'].items():
                 new_instances[(instance['id'], lang)] = {
