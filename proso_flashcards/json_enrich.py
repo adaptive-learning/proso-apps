@@ -39,18 +39,19 @@ def options(request, json_list, nested):
             question['question_type'] = FlashcardAnswer.FROM_TERM
         allow_zero_option[question['payload']['item_id']] = question['question_type'] == FlashcardAnswer.FROM_TERM
 
-    all_options = option_selector.select_options_more_items(
+    all_options = {i: options for i, options in zip(selected_items, option_selector.select_options_more_items(
         environment, user_id, selected_items, time, option_sets,
         allow_zero_options=allow_zero_option
-    )
+    ))}
     options_json_list = []
-    for i, (question, options) in enumerate(zip(json_list, all_options)):
+    for i, question in enumerate(json_list):
         if question['payload']['object_type'] != 'fc_flashcard':
             continue
         if test_position is not None and test_position == i:
             question['question_type'] = FlashcardAnswer.FROM_TERM
             question['payload']['options'] = []
             continue
+        options = all_options[question['payload']['item_id']]
         question['payload']['options'] = [Item.objects.item_id_to_json(o) for o in options]
         options_json_list += question['payload']['options']
     item2object(request, options_json_list, nested=False)
