@@ -54,6 +54,8 @@ def options(request, json_list, nested):
         question['payload']['options'] = [Item.objects.item_id_to_json(o) for o in options]
         options_json_list += question['payload']['options']
     item2object(request, options_json_list, nested=False)
+    for question in json_list:
+        question['payload']['options'] = sorted(question['payload']['options'], key=lambda o: o['term']['name'])
 
 
 def question_type(request, json_list, nested):
