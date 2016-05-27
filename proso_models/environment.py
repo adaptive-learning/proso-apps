@@ -319,9 +319,10 @@ class DatabaseEnvironment(CommonEnvironment):
             if len(variables) == 1:
                 variable = variables[0]
             else:
-                LOGGER.error('There is a duplicate variable with the following data: {}. Start cleaning.'.format(data))
+                LOGGER.error('There is a duplicate variables ({}) with the following data: {}. Start cleaning.'.format(len(variables), data))
                 variable = max(variables, key=lambda variable: variable.id)
                 for var in [var for var in variables if var.id != variable.id]:
+                    LOGGER.error('Deleting duplicate variable {}'.format(var))
                     var.delete()
             if variable.permanent != permanent:
                 raise Exception("Variable %s changed permanency." % key)
