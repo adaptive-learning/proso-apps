@@ -617,6 +617,7 @@ class ItemManager(models.Manager):
                 result[item_id] = obj.to_json(nested=is_nested_fun(item_id))
         return result
 
+    @cache_pure
     def get_leaves(self, item_ids):
         """
         Get mapping of items to their reachable leaves. Leaves having
