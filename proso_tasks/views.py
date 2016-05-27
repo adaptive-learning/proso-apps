@@ -1,8 +1,7 @@
 from proso.django.cache import cache_page_conditional
-from proso.django.enrichment import enrich_json_objects_by_object_type, register_object_type_enricher
+from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import get_language
 from proso_tasks.models import TaskAnswer
-import proso_tasks.json_enrich as task_json_enrich
 import logging
 import proso_common.views
 
@@ -41,10 +40,3 @@ def show_more(request, object_class, should_cache=True):
     return proso_common.views.show_more(
         request, enrich_json_objects_by_object_type, _load_objects, object_class,
         should_cache=should_cache, template='tasks_json.html', to_json_kwargs=to_json_kwargs)
-
-
-################################################################################
-# Enrichers
-################################################################################
-
-register_object_type_enricher(['question'], task_json_enrich.answer_type)
