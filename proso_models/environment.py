@@ -238,7 +238,7 @@ class DatabaseEnvironment(CommonEnvironment):
                         (key, item_primary_id, item_secondary_id, user_id)
                         item_primary_id, item_secondary_id, value FROM proso_models_audit WHERE
                     ''' + where +
-                    ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time',
+                    ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time DESC',
                     where_params)
                 result = cursor.fetchall()
             if item is None:
