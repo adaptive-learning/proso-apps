@@ -169,9 +169,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 + where +
                 ' ORDER BY time DESC LIMIT %s',
                 where_params + [limit])
-            result = cursor.fetchall()
-            list(map(lambda d_v: (self._ensure_is_datetime(d_v[0]), d_v[1]), result))
-            return result
+            return [(self._ensure_is_datetime(t), v) for t, v in cursor.fetchall()]
 
     def get_items_with_values(self, key, item, user=None):
         with closing(connection.cursor()) as cursor:
