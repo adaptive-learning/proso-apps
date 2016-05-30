@@ -60,6 +60,7 @@ setup(
         'django-ipware==1.1.3',
         'django-lazysignup==1.0.2',
         'flake8==2.5.1',
+        'ipython==4.0.3',
         'jsonschema==2.5.1',
         'mock==1.3.0',
         'pandas==0.17.1',
