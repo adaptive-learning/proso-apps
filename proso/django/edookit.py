@@ -1,8 +1,10 @@
 import json
 from urllib.request import urlopen, Request
 import time
+from django.contrib.auth.models import User
 from social.apps.django_app.default.models import UserSocialAuth
 from social.backends.oauth import BaseOAuth2
+from proso.django.auth import get_unused_username
 
 
 class EdookitOAuth2(BaseOAuth2):
@@ -32,8 +34,9 @@ class EdookitOAuth2(BaseOAuth2):
 
     def get_user_details(self, response):
         """Return user details from Edookit account"""
+        tmp_user = User(first_name=response['firstname'], last_name=response['lastname'])
         return {
-            'username': None,
+            'username': get_unused_username(tmp_user),
             'email': None,
             'fullname': None,
             'first_name': response['firstname'],
