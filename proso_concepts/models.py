@@ -27,7 +27,7 @@ class Tag(models.Model):
     Arbitrary tag for concepts.
     """
     type = models.CharField(max_length=50)
-    value = models.CharField(max_length=50)
+    value = models.CharField(max_length=200)
     lang = models.CharField(max_length=2)
     type_name = models.CharField(max_length=100)
     value_name = models.CharField(max_length=100)
@@ -151,7 +151,7 @@ class Concept(models.Model):
     """
     identifier = models.CharField(max_length=20, blank=True)
     query = models.TextField()
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=200)
     lang = models.CharField(max_length=2)
     tags = models.ManyToManyField(Tag, related_name="concepts", blank=True)
     active = models.BooleanField(default=True)
@@ -207,7 +207,7 @@ class Action(models.Model):
     """
     concept = models.ForeignKey(Concept, related_name="actions")
     identifier = models.CharField(max_length=50)
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=200)
     url = models.CharField(max_length=200)
 
     objects = ActionManager()
