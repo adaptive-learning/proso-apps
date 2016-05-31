@@ -165,6 +165,7 @@ class TaskAnswerManager(models.Manager):
         task_instance = TaskInstance.objects.get(pk=json_object['task_instance_id'])
         json_object['item_id'] = task_instance.item_id
         json_object['item_asked_id'] = task_instance.item_id
+        json_object['item_answered_id'] = task_instance.item_id if json_object['correct'] else None
         json_object['lang'] = task_instance.lang
         answer = Answer.objects.from_json(json_object, practice_context, user_id, object_class=TaskAnswer)
         if 'question' in json_object:
