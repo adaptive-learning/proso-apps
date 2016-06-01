@@ -39,7 +39,7 @@ class ContextOptionSet(OptionSet):
         context_ids = {flashcard['context']['id'] for flashcard in flashcards}
         types_all_item_ids = set([c.item_id for c in Category.objects.filter(type='flashcard_type')])
         flashcard_item_ids = set([flashcard['item_id'] for flashcard in flashcards])
-        reachable_parents = Item.objects.get_reachable_parents(flashcard_item_ids)
+        reachable_parents = Item.objects.get_reachable_parents(flashcard_item_ids, language=flashcards[0]['lang'])
         flashcard_types = {item_id: set(reachable_parents.get(item_id, [])) & types_all_item_ids for item_id in flashcard_item_ids}
 
         context_item_ids = dict(Context.objects.filter(pk__in=context_ids).values_list('id', 'item_id'))
