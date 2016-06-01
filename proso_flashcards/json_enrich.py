@@ -56,6 +56,8 @@ def options(request, json_list, nested):
         options_json_list += question['payload']['options']
     item2object(request, options_json_list, nested=False)
     for question in json_list:
+        if question['payload']['object_type'] != 'fc_flashcard':
+            continue
         question['payload']['options'] = sorted(question['payload']['options'], key=lambda o: o['term']['name'])
 
 
