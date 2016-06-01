@@ -88,7 +88,7 @@ def to_practice_counts(request):
         }
         for group_id, items in zip(filter_names, reachable_leaves)
     }
-    LOGGER.debug("flashcard_counts - getting flashcards in groups took %s seconds", (timer('to_practice_counts')))
+    LOGGER.debug("to_practice_counts - getting items in groups took %s seconds", (timer('to_practice_counts')))
     return render_json(request, response, template='models_json.html', help_text=to_practice_counts.__doc__)
 
 
@@ -209,7 +209,7 @@ def user_stats(request):
         mastery_threshold = get_mastery_trashold()
         predictions = get_predictive_model().predict_more_items(environment, user_id, all_leaves, get_time(request))
         mastered = dict(list(zip(all_leaves, [p >= mastery_threshold for p in predictions])))
-        LOGGER.debug("user_stats - getting predictions for flashcards took %s seconds", (timer('user_stats_mastered')))
+        LOGGER.debug("user_stats - getting predictions for items took %s seconds", (timer('user_stats_mastered')))
     for identifier, items in zip(filter_names, reachable_leaves):
         if len(items) == 0:
             response[identifier] = {
@@ -242,7 +242,7 @@ def practice(request):
             list of lists of identifiers (may be prefixed by minus sign to
             mark complement)
         language:
-            language (str) of flashcards
+            language (str) of items
         avoid:
             list of item ids to avoid
         limit:
