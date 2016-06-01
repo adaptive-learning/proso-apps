@@ -411,7 +411,7 @@ class ItemManager(models.Manager):
             for identifier in set(flatten(identifier_filter))
         ]
         translated = self.translate_identifiers(item_identifiers, language)
-        leaves = self.get_leaves(list(translated.values()))
+        leaves = self.get_leaves(list(translated.values()), language=language)
         result = []
         for identifier_filter in identifier_filters:
             filter_result = set()
@@ -467,13 +467,15 @@ class ItemManager(models.Manager):
         return self.filter_all_reachable_leaves_many([identifier_filter], language)[0]
 
     @cache_pure
-    def get_children_graph(self, item_ids):
+    def get_children_graph(self, item_ids, language=None):
         """
         Get a subgraph of items reachable from the given set of items throughr
         the 'child' relation.
 
         Args:
             item_ids (list): items which are taken as roots for the reachability
+            language (str): if specified, filter out items which are not
+                available in the given language
 
         Returns:
             dict: item id -> list of items (child items), root items are
@@ -484,19 +486,21 @@ class ItemManager(models.Manager):
             item_ids = [ii for iis in item_ids.values() for ii in iis]
             items = Item.objects.filter(id__in=item_ids, active=True).prefetch_related('children')
             return {item.id: sorted([_item.id for _item in item.children.all() if _item.active]) for item in items}
-        return self._reachable_graph(item_ids, _children)
+        return self._reachable_graph(item_ids, _children, language=language)
 
-    def get_reachable_children(self, item_ids):
-        return self._reachable_items(self.get_children_graph(item_ids))
+    def get_reachable_children(self, item_ids, language=None):
+        return self._reachable_items(self.get_children_graph(item_ids, language=language))
 
     @cache_pure
-    def get_parents_graph(self, item_ids):
+    def get_parents_graph(self, item_ids, language=None):
         """
         Get a subgraph of items reachable from the given set of items through
         the 'parent' relation.
 
         Args:
             item_ids (list): items which are taken as roots for the reachability
+            language (str): if specified, filter out items which are not
+                available in the given language
 
         Returns:
             dict: item id -> list of items (parent items), root items are
@@ -506,10 +510,10 @@ class ItemManager(models.Manager):
             item_ids = [ii for iis in item_ids.values() for ii in iis]
             items = Item.objects.filter(id__in=item_ids).prefetch_related('parents')
             return {item.id: sorted([_item.id for _item in item.parents.all()]) for item in items}
-        return self._reachable_graph(item_ids, _parents)
+        return self._reachable_graph(item_ids, _parents, language=language)
 
-    def get_reachable_parents(self, item_ids):
-        return self._reachable_items(self.get_parents_graph(item_ids))
+    def get_reachable_parents(self, item_ids, language=None):
+        return self._reachable_items(self.get_parents_graph(item_ids, language=language))
 
     def translate_identifiers(self, identifiers, language):
         """
@@ -618,18 +622,20 @@ class ItemManager(models.Manager):
         return result
 
     @cache_pure
-    def get_leaves(self, item_ids):
+    def get_leaves(self, item_ids, language=None):
         """
         Get mapping of items to their reachable leaves. Leaves having
         inactive relations to other items are omitted.
 
         Args:
             item_ids (list): items which are taken as roots for the reachability
+            language (str): if specified, filter out items which are not
+                available in the given language
 
         Returns:
             dict: item id -> list of items (reachable leaves)
         """
-        children = self.get_children_graph(item_ids)
+        children = self.get_children_graph(item_ids, language=language)
 
         def _get_leaves(item_id):
             leaves = set()
@@ -653,18 +659,20 @@ class ItemManager(models.Manager):
 
         return {item_id: _get_leaves(item_id) for item_id in item_ids}
 
-    def get_all_leaves(self, item_ids):
+    def get_all_leaves(self, item_ids, language=None):
         """
         Get all leaves reachable from the given set of items. Leaves having
         inactive relations to other items are omitted.
 
         Args:
             item_ids (list): items which are taken as roots for the reachability
+            language (str): if specified, filter out items which are not
+                available in the given language
 
         Returns:
             set: leaf items which are reachable from the given set of items
         """
-        children = self.get_children_graph(item_ids)
+        children = self.get_children_graph(item_ids, language=language)
         froms = set(children.keys())
         tos = set([ii for iis in children.values() for ii in iis])
         counts = self.get_children_counts(active=None)
@@ -769,13 +777,36 @@ class ItemManager(models.Manager):
             query = query.filter(children__active=active)
         return dict(query.annotate(c=Count('children')).values_list('pk', 'c'))
 
-    def _reachable_graph(self, item_ids, neighbors):
-        return {i: deps for i, deps in fixed_point(
+    def _reachable_graph(self, item_ids, neighbors, language=None):
+        graph = {i: deps for i, deps in fixed_point(
             is_zero=lambda xs: len(xs) == 0,
             minus=lambda xs, ys: {x: vs for (x, vs) in xs.items() if x not in ys},
             plus=lambda xs, ys: dict(list(xs.items()) + list(ys.items())),
             f=neighbors,
             x={None: item_ids}).items() if len(deps) > 0}
+
+        if language is not None:
+            # Now we have to filter items which are not available in the given
+            # language.
+            found_item_ids = set(flatten(graph.values())) | {k for k in graph.keys() if k is not None}
+            groupped = proso.list.group_by(found_item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
+            available_in_lang = set()
+            for item_type_id, items in groupped.items():
+                item_type = ItemType.objects.get_all_types()[item_type_id]
+                if 'language' not in item_type:
+                    continue
+                kwargs = {
+                    '{}__in'.format(item_type['foreign_key']): items,
+                    item_type['language']: language,
+                }
+                model = ItemType.objects.get_model(item_type_id)
+                available_in_lang |= set(model.objects.filter(**kwargs).values_list(item_type['foreign_key'], flat=True))
+            graph = {
+                item_from: [i for i in items_to if i in available_in_lang]
+                for item_from, items_to in graph.items()
+                if item_from is None or item_from in available_in_lang
+            }
+        return graph
 
     def _reachable_items(self, graph):
         if None not in graph:
