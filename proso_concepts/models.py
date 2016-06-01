@@ -318,7 +318,7 @@ class UserStatManager(models.Manager):
             self.recalculate_concepts(concepts_to_recalculate, lang)
             LOGGER.debug("user_stats - recalculating concepts: %ss", (time_lib() - time_start))
 
-        qs = self.prepare_related().filter(user__in=users)
+        qs = self.prepare_related().filter(user__in=users, concept__active=True)
         if concepts is not None:
             qs = qs.filter(concept__in=concepts)
         if lang is not None:
