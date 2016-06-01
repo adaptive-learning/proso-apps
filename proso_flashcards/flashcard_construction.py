@@ -47,7 +47,7 @@ class ContextOptionSet(OptionSet):
         return {
             flashcard['item_id']: list(reduce(
                 lambda xs, ys: set(xs) & set(ys),
-                Item.objects.get_leaves({context_item_ids[flashcard['context']['id']]} | flashcard_types[flashcard['item_id']]).values()
+                Item.objects.get_leaves({context_item_ids[flashcard['context']['id']]} | flashcard_types[flashcard['item_id']], language=flashcard['lang']).values()
             ))
             for flashcard in flashcards
         }

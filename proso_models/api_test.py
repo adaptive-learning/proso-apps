@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.management import call_command
 from proso.django.test import TestCase
 from proso_models.models import Item
 from proso_flashcards.models import Term, Flashcard, Category, Context
@@ -19,6 +20,8 @@ class PracticeAPITest(TestCase):
         self._contexts = dict([((c.identifier, c.lang), c) for c in Context.objects.all()])
         self._terms = dict([((t.identifier, t.lang), t) for t in Term.objects.all()])
         self._flashcards = dict([((f.identifier, f.lang), f) for f in Flashcard.objects.select_related('term', 'context').all()])
+        call_command('find_item_types')
+        call_command('fill_item_types')
 
     def test_language(self):
         for lang in [None, 'cs', 'en']:

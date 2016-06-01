@@ -40,7 +40,7 @@ def avg_prediction(request, json_list, nested):
     if 'stats' not in request.GET:
         return
     object_item_ids = [x['item_id'] for x in json_list]
-    leaves = models.Item.objects.get_leaves(object_item_ids)
+    leaves = models.Item.objects.get_leaves(object_item_ids, language=get_language(request))
     all_leaves = list(set(flatten(leaves.values())))
     user = get_user_id(request)
     time = get_time(request)
@@ -62,7 +62,7 @@ def number_of_answers(request, json_list, nested):
         return
     object_item_ids = [x['item_id'] for x in json_list]
     user = get_user_id(request)
-    leaves = models.Item.objects.get_leaves(object_item_ids)
+    leaves = models.Item.objects.get_leaves(object_item_ids, language=get_language(request))
     all_leaves = list(set(flatten(leaves.values())))
     number_of_answers = dict(zip(all_leaves, _environment(request).number_of_answers_more_items(
         user=user, items=all_leaves)))
@@ -78,7 +78,7 @@ def number_of_correct_answers(request, json_list, nested):
         return
     object_item_ids = [x['item_id'] for x in json_list]
     user = get_user_id(request)
-    leaves = models.Item.objects.get_leaves(object_item_ids)
+    leaves = models.Item.objects.get_leaves(object_item_ids, language=get_language(request))
     all_leaves = set(flatten(leaves.values()))
     number_of_correct_answers = dict(zip(all_leaves, _environment(request).number_of_correct_answers_more_items(
         user=user, items=all_leaves)))
