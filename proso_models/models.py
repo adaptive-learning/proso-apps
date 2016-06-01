@@ -9,8 +9,8 @@ from django.db import transaction
 from django.db.models import Count, F
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from proso.django.cache import get_request_cache, is_cache_prepared, get_from_request_permenent_cache, set_to_request_permanent_cache
 from functools import reduce
+from proso.django.cache import get_request_cache, is_cache_prepared, get_from_request_permenent_cache, set_to_request_permanent_cache
 from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
 from proso.django.models import ModelDiffMixin
 from proso.django.request import load_query_json
@@ -19,6 +19,7 @@ from proso.func import fixed_point
 from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
+from proso.util import timeit
 from proso_common.models import Config
 from proso_common.models import IntegrityCheck
 from proso_user.models import Session
@@ -310,12 +311,6 @@ class EnvironmentInfo(models.Model):
 
 class ItemTypeManager(models.Manager):
 
-    def get_item_type(self, item_id):
-        return self.get_all_types()[self.get_item_type_id(item_id)]
-
-    def get_item_type_id(self, item_id):
-        return self.get_all_item_type_ids().get(item_id)
-
     @cache_pure
     def get_all_item_type_ids(self):
         return dict(Item.objects.exclude(item_type_id__isnull=True).values_list('id', 'item_type_id'))
@@ -390,6 +385,7 @@ class ItemManager(models.Manager):
         """
         return sorted(Item.objects.filter(children=None).values_list('id', flat=True))
 
+    @timeit(name='filter_all_reachable_leaves_many')
     def filter_all_reachable_leaves_many(self, identifier_filters, language):
         """
         Provides the same functionality as .. py:method:: ItemManager.filter_all_reachable_leaves(),
@@ -606,7 +602,8 @@ class ItemManager(models.Manager):
                 return is_nested
         else:
             is_nested_fun = is_nested
-        groupped = proso.list.group_by(item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
+        all_item_type_ids = ItemType.objects.get_all_item_type_ids()
+        groupped = proso.list.group_by(item_ids, by=lambda item_id: all_item_type_ids[item_id])
         result = {}
         for item_type_id, items in groupped.items():
             item_type = ItemType.objects.get_all_types()[item_type_id]
@@ -638,6 +635,7 @@ class ItemManager(models.Manager):
             dict: item id -> list of items (reachable leaves)
         """
         children = self.get_children_graph(item_ids, language=language)
+        counts = self.get_children_counts(active=None)
 
         def _get_leaves(item_id):
             leaves = set()
@@ -655,7 +653,6 @@ class ItemManager(models.Manager):
                 f=__search,
                 x={item_id}
             )
-            counts = self.get_children_counts(active=None)
             leaves = {leaf for leaf in leaves if counts[leaf] == 0}
             return leaves if len(leaves) > 0 else {item_id}
 
@@ -791,7 +788,8 @@ class ItemManager(models.Manager):
             # Now we have to filter items which are not available in the given
             # language.
             found_item_ids = set(flatten(graph.values())) | {k for k in graph.keys() if k is not None}
-            groupped = proso.list.group_by(found_item_ids, by=lambda item_id: ItemType.objects.get_item_type_id(item_id))
+            all_item_type_ids = ItemType.objects.get_all_item_type_ids()
+            groupped = proso.list.group_by(found_item_ids, by=lambda item_id: all_item_type_ids[item_id])
             available_in_lang = set()
             for item_type_id, items in groupped.items():
                 item_type = ItemType.objects.get_all_types()[item_type_id]
