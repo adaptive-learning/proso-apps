@@ -313,9 +313,12 @@ class ItemTypeManager(models.Manager):
     def get_item_type(self, item_id):
         return self.get_all_types()[self.get_item_type_id(item_id)]
 
-    @cache_pure
     def get_item_type_id(self, item_id):
-        return Item.objects.get(id=item_id).item_type_id
+        return self.get_all_item_type_ids().get(item_id)
+
+    @cache_pure
+    def get_all_item_type_ids(self):
+        return dict(Item.objects.exclude(item_type_id__isnull=True).values_list('id', 'item_type_id'))
 
     @cache_pure
     def get_all_types(self):
@@ -411,7 +414,7 @@ class ItemManager(models.Manager):
             for identifier in set(flatten(identifier_filter))
         ]
         translated = self.translate_identifiers(item_identifiers, language)
-        leaves = self.get_leaves(list(translated.values()), language=language)
+        leaves = self.get_leaves(set(translated.values()), language=language)
         result = []
         for identifier_filter in identifier_filters:
             filter_result = set()
@@ -553,7 +556,6 @@ class ItemManager(models.Manager):
             raise Exception("Can't translate the following identifiers: {}".format(set(identifiers) - set(result.keys())))
         return result
 
-    @cache_pure
     def get_item_type_id_from_identifier(self, identifier, item_types=None):
         """
         Get an ID of item type for the given identifier. Identifier is a string of
