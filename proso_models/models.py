@@ -269,6 +269,177 @@ class LonelyItems(IntegrityCheck):
                 }
 
 
+class ExclusiveEnvironmentUpdates(IntegrityCheck):
+
+    def __init__(self, size=1000000):
+        self._size = size
+
+    def check(self):
+        with closing(connection.cursor()) as cursor:
+            cursor.execute('SELECT COUNT(*) FROM proso_models_answer')
+            rows = cursor.fetchone()[0]
+            cursor.execute(
+                '''
+                SELECT setseed(%s);
+                SELECT answer_id, key, info_id
+                FROM proso_models_audit as audit
+                INNER JOIN (SELECT id FROM proso_models_answer OFFSET floor(random() * %s) LIMIT %s) AS selected
+                    ON audit.answer_id = selected.id
+                GROUP BY 1, 2, 3
+                HAVING COUNT(*) > 1;
+                ''', [1.0 / self.get_seed(), max(0, rows - self._size), min(self._size, rows)])
+            found = [{
+                'answer_id': answer_id,
+                'key': key,
+                'info_id': info_id
+            } for answer_id, key, info_id in cursor.fetchall()]
+            if len(found) == 0:
+                return None
+            else:
+                return {
+                    'message': 'There are multiple updates of the same variable for one answer.',
+                    'incidents': found,
+                }
+
+
+class EnvironmentItemUpdateDirection(IntegrityCheck):
+
+    def __init__(self, key, correct_increases=True, size=100):
+        self._key = key
+        self._correct_increases = correct_increases
+        self._size = size
+
+    def check(self):
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(
+                '''
+                SELECT setseed(%s);
+                SELECT
+                    audit.id,
+                    audit.item_primary_id,
+                    audit.value,
+                    answer.item_asked_id = answer.item_answered_id AS correct
+                FROM proso_models_audit AS audit
+                INNER JOIN (SELECT * FROM (SELECT DISTINCT(item_id) FROM proso_models_answer) AS d_items ORDER BY random() LIMIT %s) AS selected
+                    ON audit.item_primary_id = selected.item_id
+                INNER JOIN proso_models_answer AS answer
+                    ON audit.answer_id = answer.id
+                INNER JOIN proso_models_environmentinfo AS info
+                    ON info_id = info.id
+                WHERE info.status = 3 AND key = %s
+                ORDER BY item_primary_id, id
+                ''', [1.0 / self.get_seed(), self._size, self._key])
+            incidents = []
+            previous_value = None
+            previous_id = None
+            previous_item = None
+            for audit_id, item_id, value, correct in cursor:
+                if item_id != previous_item:
+                    previous_value = None
+                    previous_id = None
+                if previous_value is not None:
+                    if self._correct_increases:
+                        if correct and previous_value > value:
+                            incidents.append(previous_id, audit_id, previous_value, value)
+                        elif not correct and previous_value < value:
+                            incidents.append(previous_id, audit_id, previous_value, value)
+                    else:
+                        if correct and previous_value < value:
+                            incidents.append(previous_id, audit_id, previous_value, value)
+                        elif not correct and previous_value > value:
+                            incidents.append(previous_id, audit_id, previous_value, value)
+                previous_id = audit_id
+                previous_item = item_id
+                previous_value = value
+            if len(incidents) == 0:
+                return None
+            else:
+                return {
+                    'message': 'There are wrong item updates for key {}'.format(self._key),
+                    'incidents': [{
+                        'audit_id_previous': p_id,
+                        'audit_id_current': c_id,
+                        'audit_value_previous': p_value,
+                        'audit_value_current': c_value,
+                    } for p_id, c_id, p_value, c_value in incidents],
+                }
+
+
+class EnvironmentUserUpdateDirection(IntegrityCheck):
+
+    def __init__(self, key, correct_increases=True, size=1000):
+        self._key = key
+        self._correct_increases = correct_increases
+        self._size = size
+
+    def check(self):
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(
+                '''
+                SELECT setseed(%s);
+                SELECT
+                    audit.id,
+                    audit.item_primary_id,
+                    audit.value,
+                    answer.item_asked_id = answer.item_answered_id AS correct
+                FROM proso_models_audit AS audit
+                INNER JOIN (SELECT id FROM auth_user ORDER BY random() LIMIT %s) AS selected
+                    ON audit.user_id = selected.id
+                INNER JOIN proso_models_answer AS answer
+                    ON audit.answer_id = answer.id
+                INNER JOIN proso_models_environmentinfo AS info
+                    ON info_id = info.id
+                WHERE info.status = 3 AND key = %s
+                ORDER BY user_id, id
+                ''', [1.0 / self.get_seed(), self._size, self._key])
+            incidents = []
+            previous_value = None
+            previous_id = None
+            previous_user = None
+            for audit_id, user_id, value, correct in cursor:
+                if user_id != previous_user:
+                    previous_value = None
+                    previous_id = None
+                if previous_value is not None:
+                    if self._correct_increases:
+                        if correct and previous_value > value:
+                            incidents.append(previous_id, audit_id, previous_value, value)
+                        elif not correct and previous_value < value:
+                            incidents.append(previous_id, audit_id, previous_value, value)
+                    else:
+                        if correct and previous_value < value:
+                            incidents.append(previous_id, audit_id, previous_value, value)
+                        elif not correct and previous_value > value:
+                            incidents.append(previous_id, audit_id, previous_value, value)
+                previous_id = audit_id
+                previous_user = user_id
+                previous_value = value
+            if len(incidents) == 0:
+                return None
+            else:
+                return {
+                    'message': 'There are wrong user updates for key {}'.format(self._key),
+                    'incidents': [{
+                        'audit_id_previous': p_id,
+                        'audit_id_current': c_id,
+                        'audit_value_previous': p_value,
+                        'audit_value_current': c_value,
+                    } for p_id, c_id, p_value, c_value in incidents],
+                }
+
+
+class DifficultyUpdates(EnvironmentItemUpdateDirection):
+
+    def __init__(self):
+        EnvironmentItemUpdateDirection.__init__(self, key='difficulty', correct_increases=False)
+
+
+class PriorSkillUpdates(EnvironmentItemUpdateDirection):
+
+    def __init__(self):
+        EnvironmentItemUpdateDirection.__init__(self, key='prior_skill')
+
+
 ################################################################################
 # Models
 ################################################################################
@@ -1220,4 +1391,4 @@ def drop_environment_relation(sender, instance, **kwargs):
 
 
 PROSO_MODELS_TO_EXPORT = [Answer]
-PROSO_INTEGRITY_CHECKS = [LonelyItems]
+PROSO_INTEGRITY_CHECKS = [LonelyItems, ExclusiveEnvironmentUpdates]
