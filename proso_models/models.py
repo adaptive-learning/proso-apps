@@ -249,7 +249,7 @@ class LonelyItems(IntegrityCheck):
 
     def check(self):
         referenced = set()
-        for django_field in Item.objects.get_reference_fields(exclude_models=[Audit, Variable]):
+        for _, django_field in Item.objects.get_reference_fields(exclude_models=[Audit, Variable]):
             db_column = django_field.get_attname_column()[1]
             db_table = django_field.model._meta.db_table
             with closing(connection.cursor()) as cursor:
