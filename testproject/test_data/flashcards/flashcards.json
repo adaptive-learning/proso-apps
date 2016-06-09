@@ -24,6 +24,14 @@
       "context": "0002",
       "categories": ["0006"],
       "active": true
+    },
+    {
+      "id": "0005",
+      "term": "0003",
+      "term-secondary": "0001",
+      "context": "0002",
+      "categories": ["0006"],
+      "active": true
     }
   ]
 }

@@ -183,10 +183,20 @@ class Command(BaseCommand):
         db_flascards_before_load = copy.copy(db_flashcards)
 
         for flashcard in progress.bar(data, every=max(1, len(data) // 100)):
-            terms = Term.objects.filter(identifier=flashcard["term"])
+            if 'term-secondary' not in flashcard:
+                terms = Term.objects.filter(identifier=flashcard["term"])
+                terms_secondary = [None] * len(terms)
+            else:
+                terms_all = Term.objects.filter(identifier__in=[flashcard['term'], flashcard['term-secondary']])
+                terms = sorted([t for t in terms_all if t.identifier == flashcard['term']], key=lambda t: t.lang)
+                terms_secondary = sorted([t for t in terms_all if t.identifier == flashcard['term-secondary']], key=lambda t: t.lang)
+                if len(terms_secondary) == 0:
+                    raise CommandError("Secondary term {} for flashcard {} doesn't exist".format(flashcard["term-secondary"], flashcard["id"]))
             if len(terms) == 0:
                 raise CommandError("Term {} for flashcard {} doesn't exist".format(flashcard["term"], flashcard["id"]))
-            for term in terms:
+            for term, term_secondary in zip(terms, terms_secondary):
+                if term_secondary is not None and term.lang != term_secondary.lang:
+                    raise CommandError('Term {} and secondary term {} are localized to different languages.'.format(term.identifier, term_secondary.identifier))
                 db_flashcard = Flashcard.objects.filter(identifier=flashcard["id"], lang=term.lang).first()
                 context_id = Context.objects.filter(identifier=flashcard["context"], lang=term.lang).values_list("id", flat=True).first()
                 if context_id is None:
@@ -199,10 +209,10 @@ class Command(BaseCommand):
                         identifier=flashcard["id"],
                         lang=term.lang,
                     )
-                else:
-                    if db_flashcard.term != term or db_flashcard.context_id != context_id:
-                        modified = True
+                elif db_flashcard.term != term or db_flashcard.context_id != context_id or db_flashcard.term_secondary != term_secondary:
+                    modified = True
                 db_flashcard.term = term
+                db_flashcard.term_secondary = term_secondary
                 db_flashcard.context_id = context_id
                 if "description" in flashcard and db_flashcard.description != flashcard["description"]:
                     db_flashcard.description = flashcard["description"]

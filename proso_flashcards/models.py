@@ -86,6 +86,7 @@ class Flashcard(models.Model, ModelDiffMixin):
 
     lang = models.CharField(max_length=2)
     term = models.ForeignKey(Term, related_name="flashcards")
+    term_secondary = models.ForeignKey(Term, related_name="flashcards_as_secondary", null=True, blank=True, default=None)
     context = models.ForeignKey(Context, related_name="flashcards")
     description = models.TextField(null=True, blank=True)
     active = models.BooleanField(default=True)
@@ -111,6 +112,8 @@ class Flashcard(models.Model, ModelDiffMixin):
             data["context"] = self.get_context().to_json(nested=True)
         else:
             data["context_id"] = self.context_id
+        if self.term_secondary is not None:
+            data["term_secondary"] = self.get_term_secondary().to_json(nested=True)
         return data
 
     def get_term(self):
@@ -119,6 +122,13 @@ class Flashcard(models.Model, ModelDiffMixin):
             return self.term
         else:
             return getattr(self.term, extension.__name__.lower())
+
+    def get_term_secondary(self):
+        extension = settings.PROSO_FLASHCARDS.get("term_extension", None)
+        if extension is None:
+            return self.term_secondary
+        else:
+            return None if self.term_secondary is None else getattr(self.term_secondary, extension.__name__.lower())
 
     def get_context(self):
         extension = settings.PROSO_FLASHCARDS.get("context_extension", None)
@@ -134,6 +144,14 @@ class Flashcard(models.Model, ModelDiffMixin):
             return "term"
         else:
             return "term__{}".format(extension.__name__.lower())
+
+    @staticmethod
+    def related_term_secondary():
+        extension = settings.PROSO_FLASHCARDS.get("term_extension", None)
+        if extension is None:
+            return "term_secondary"
+        else:
+            return "term_secondary__{}".format(extension.__name__.lower())
 
     @staticmethod
     def related_context():
@@ -305,7 +323,9 @@ def add_parent(sender, instance, **kwargs):
     """
     if not kwargs['created']:
         return
-    for att in ['term', 'context']:
+    for att in ['term', 'term_secondary', 'context']:
+        if getattr(instance, att) is None:
+            continue
         parent = getattr(instance, att).item_id
         child = instance.item_id
         ItemRelation.objects.get_or_create(
@@ -331,6 +351,15 @@ def change_parent(sender, instance, **kwargs):
         child_id = instance.item_id
         ItemRelation.objects.filter(parent_id=parent_id, child_id=child_id).delete()
         ItemRelation.objects.create(parent_id=instance.term.item_id, child_id=child_id, visible=True)
+    if len({'term_secondary', 'term_secondary_id'} & set(instance.changed_fields)) != 0:
+        diff = instance.diff
+        child_id = instance.item_id
+        parent = diff['term_secondary'][0] if 'term_secondary' in diff else diff['term_secondary_id'][0]
+        if parent is not None:
+            parent_id = parent.item_id if isinstance(parent, Term) else Term.objects.get(pk=parent).item_id
+            ItemRelation.objects.filter(parent_id=parent_id, child_id=child_id).delete()
+        if instance.term_secondary is not None or instance.term_secondary_id is not None:
+            ItemRelation.objects.create(parent_id=instance.term_secondary.item_id, child_id=child_id, visible=True)
     if len({'context', 'context_id'} & set(instance.changed_fields)) != 0:
         diff = instance.diff
         parent = diff['context'][0] if 'context' in diff else diff['context_id'][0]

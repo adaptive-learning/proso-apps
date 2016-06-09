@@ -121,6 +121,8 @@ class Command(BaseCommand):
             }
             if flashcard.description is not None:
                 fc["description"] = flashcard.description
+            if flashcard.term_secondary is not None:
+                fc['term-secondary'] = flashcard.term_secondary.identifier
             categories = flashcard.categories.all().values_list("identifier", flat=True)
             if len(categories) > 0:
                 fc["categories"] = list(categories)
