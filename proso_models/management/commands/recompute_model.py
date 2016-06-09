@@ -1,15 +1,16 @@
-from django.core.management.base import BaseCommand, CommandError
+from clint.textui import progress
 from contextlib import closing
+from django.core.cache import cache
+from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
+from django.db import transaction
 from optparse import make_option
+from proso.django.config import instantiate_from_config, set_default_config_name, get_config
+from proso.django.util import is_on_postgresql
+from proso.util import timer
 from proso_common.models import Config
 from proso_models.models import EnvironmentInfo, ENVIRONMENT_INFO_CACHE_KEY
-from proso.django.config import instantiate_from_config, set_default_config_name, get_config
-from django.db import transaction
-from proso.util import timer
 from proso_models.models import get_predictive_model
-from clint.textui import progress
-from django.core.cache import cache
 
 
 class Command(BaseCommand):
@@ -70,6 +71,11 @@ class Command(BaseCommand):
             audits = cursor.rowcount
             cursor.execute('DELETE FROM proso_models_environmentinfo WHERE id IN (%s)' % to_gc_str)
             infos = cursor.rowcount
+            if is_on_postgresql():
+                timer('recompute_vacuum')
+                cursor.execute('VACUUM FULL ANALYZE VERBOSE proso_models_variable')
+                cursor.execute('VACUUM FULL ANALYZE VERBOSE proso_models_audit')
+                print(' -- vacuum phase, time:', timer('recompute_vacuum'), 'seconds')
         print(' -- collecting garbage, time:', timer('recompute_gc'), 'seconds, deleted', variables, 'variables,', audits, 'audit records,', infos, 'environment info records')
 
     def handle_cancel(self, options):
