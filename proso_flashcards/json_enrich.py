@@ -1,10 +1,11 @@
 from .flashcard_construction import get_direction, get_option_set
-from proso_models.models import Item, get_item_selector, get_option_selector, get_environment
 from collections import defaultdict
+from proso.django.config import get_config
+from proso.django.request import get_time, is_time_overridden
 from proso_flashcards.models import Flashcard, FlashcardAnswer
 from proso_models.json_enrich import item2object
+from proso_models.models import Item, get_item_selector, get_option_selector, get_environment
 from proso_user.models import get_user_id
-from proso.django.request import get_time, is_time_overridden
 
 
 def answer_type(request, json_list, nested):
@@ -34,7 +35,7 @@ def options(request, json_list, nested):
     for question in json_list:
         if question['payload']['object_type'] != 'fc_flashcard':
             continue
-        if len(option_sets[question['payload']['item_id']]) == 0:
+        if len(option_sets[question['payload']['item_id']]) == 0 and 'term_secondary' not in question['payload']:
             # If we do not have enough options, we have to force direction
             question['question_type'] = FlashcardAnswer.FROM_TERM
         allow_zero_option[question['payload']['item_id']] = question['question_type'] == FlashcardAnswer.FROM_TERM
@@ -44,11 +45,16 @@ def options(request, json_list, nested):
         allow_zero_options=allow_zero_option
     ))}
     options_json_list = []
+    # HACK: Here, we have to take into account reference questions with zero
+    # options. In case of zero options we have to force a question type if the
+    # restriction for zero options is enabled.
+    config_zero_options_restriction = get_config('proso_models', 'options_number.parameters.allow_zero_options_restriction', default=False)
     for i, question in enumerate(json_list):
         if question['payload']['object_type'] != 'fc_flashcard':
             continue
         if test_position is not None and test_position == i:
-            question['question_type'] = FlashcardAnswer.FROM_TERM
+            if 'term_secondary' not in question['payload'] and config_zero_options_restriction:
+                question['question_type'] = FlashcardAnswer.FROM_TERM
             question['payload']['options'] = []
             continue
         options = all_options[question['payload']['item_id']]
