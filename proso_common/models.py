@@ -75,6 +75,12 @@ def get_integrity_checks():
 
 class IntegrityCheck:
 
+    def get_seed(self):
+        return self._seed
+
+    def set_seed(self, seed):
+        self._seed = seed
+
     @abc.abstractmethod
     def check(self):
         """

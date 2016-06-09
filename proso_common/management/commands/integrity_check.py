@@ -24,11 +24,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options['seed'] is None:
             seed = random.randint(1, 10 ** 10)
-            random.seed(seed)
         else:
             seed = options['seed']
         failed = {}
         for integrity_check in get_integrity_checks():
+            random.seed(seed)
+            integrity_check.set_seed(seed)
             result = integrity_check.check()
             if result is not None:
                 failed[str(integrity_check.__class__)] = result
