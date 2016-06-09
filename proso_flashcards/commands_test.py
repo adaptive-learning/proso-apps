@@ -21,11 +21,11 @@ class TestFlashcardsLoading(TestCase):
     }
 
     FLASHCARD_CHILDREN = {
-        "0006": ['0003', '0004'],
+        "0006": ['0003', '0004', '0005'],
     }
 
     FLASHCARD_CHILDREN_CHANGED = {
-        "0006": ['0002', '0004'],
+        "0006": ['0002', '0004', '0005'],
     }
 
     @classmethod
@@ -103,4 +103,4 @@ class TestFlashcardsLoading(TestCase):
             parents = set(parent_graph[flashcard.item_id]) & (set(terms.keys()) | set(contexts.keys()))
             self.assertTrue(flashcard.term.item_id in parents)
             self.assertTrue(flashcard.context.item_id in parents)
-            self.assertEqual(len(parents), 2)
+            self.assertEqual(len(parents), 2 + (flashcard.term_secondary is not None))

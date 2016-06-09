@@ -511,6 +511,8 @@ class DatabaseEnvironment(CommonEnvironment):
                 for i in to_find:
                     found[i] = found.get(i, 0)
                 cache_expiration = get_config('proso_models', 'confusing_factor.cache_expiration', default=24 * 60 * 60)
+                # trying to decrease probability of race condition
+                confusing_factor_cache = cache.get('database_environment__confusing_factor', {})
                 for item_secondary, count in found.items():
                     _items = self._sorted([item, item_secondary])
                     cache_key = '{}_{}_{}'.format(_items[0], _items[1], user)
