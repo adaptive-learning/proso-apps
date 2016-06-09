@@ -32,10 +32,10 @@ class Command(BaseCommand):
             integrity_check.set_seed(seed)
             result = integrity_check.check()
             if result is not None:
-                failed[str(integrity_check.__class__)] = result
-                print('FAILED:', integrity_check.__class__)
+                failed[_check_name(integrity_check)] = result
+                print('FAILED:', _check_name(integrity_check))
             else:
-                print('PASSED:', integrity_check.__class__)
+                print('PASSED:', _check_name(integrity_check))
         if len(failed) > 0:
             dest_file = '{}/integrity_check_{}.txt'.format(settings.DATA_DIR, seed)
             print('REPORT:', dest_file)
@@ -44,3 +44,7 @@ class Command(BaseCommand):
             message = 'The integrity check failed, seed: {}'.format(seed)
             LOGGER.error(message)
             sys.exit(message)
+
+
+def _check_name(integrity_check):
+    return '{}.{}'.format(integrity_check.__class__.__module__, integrity_check.__class__.__name__)
