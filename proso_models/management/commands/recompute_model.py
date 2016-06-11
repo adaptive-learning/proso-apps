@@ -186,6 +186,8 @@ class Command(BaseCommand):
 
     def load_environment_info(self, initial, config_name):
         set_default_config_name(config_name)
+        if hasattr(self, '_environment_info'):
+            return self._environment_info
         config = Config.objects.from_content(get_config('proso_models', 'predictive_model', default={}))
         if initial:
             if EnvironmentInfo.objects.filter(status=EnvironmentInfo.STATUS_LOADING).count() > 0:
@@ -195,9 +197,10 @@ class Command(BaseCommand):
                 new_revision = last_revisions[0].id + 1
             else:
                 new_revision = 0
-            return EnvironmentInfo.objects.create(config=config, revision=new_revision)
+            self._environment_info = EnvironmentInfo.objects.create(config=config, revision=new_revision)
         else:
-            return EnvironmentInfo.objects.get(config=config, status=EnvironmentInfo.STATUS_LOADING)
+            self._environment_info = EnvironmentInfo.objects.get(config=config, status=EnvironmentInfo.STATUS_LOADING)
+        return self._environment_info
 
     def load_environment(self, info):
         return instantiate_from_config(
