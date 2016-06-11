@@ -317,7 +317,7 @@ class DatabaseEnvironment(CommonEnvironment):
             if len(variables) == 1:
                 variable = variables[0]
             else:
-                LOGGER.error('There is a duplicate variables ({}) with the following data: {}. Start cleaning.'.format(len(variables), data))
+                LOGGER.error('There are duplicate variables ({}) with the following data: {}. Start cleaning.'.format(len(variables), data))
                 variable = max(variables, key=lambda variable: variable.id)
                 for var in [var for var in variables if var.id != variable.id]:
                     LOGGER.error('Deleting duplicate variable {}'.format(var))
