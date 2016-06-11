@@ -11,6 +11,7 @@ from proso.util import timer
 from proso_common.models import Config
 from proso_models.models import EnvironmentInfo, ENVIRONMENT_INFO_CACHE_KEY
 from proso_models.models import get_predictive_model
+import sys
 
 
 class Command(BaseCommand):
@@ -46,6 +47,11 @@ class Command(BaseCommand):
             dest='finish',
             action='store_true',
             default=False),
+        make_option(
+            '--validate',
+            dest='validate',
+            action='store_true',
+            default=False),
     )
 
     def handle(self, *args, **options):
@@ -55,6 +61,28 @@ class Command(BaseCommand):
             self.handle_gc(options)
         else:
             self.handle_recompute(options)
+        if options['validate']:
+            self.handle_validate(options)
+
+    def handle_validate(self, options):
+        timer('recompute_validation')
+        info = self.load_environment_info(options['initial'], options['config_name'])
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(
+                '''
+                SELECT key, user_id, item_primary_id, item_secondary_id
+                FROM proso_models_variable
+                WHERE info_id = %s
+                GROUP BY 1, 2, 3, 4 HAVING COUNT(*) > 1
+                ''', [info.id])
+            fetched = cursor.fetchall()
+            if len(fetched) > 0:
+                print(' -- there are {} violations of variable uniqueness:')
+                for key, user, primary, secondary in fetched:
+                    print('     - ', key, user, primary, secondary)
+                sys.exit('canceling due to previous error')
+            else:
+                print(' -- validation passed:', timer('recompute_validation'), 'seconds')
 
     def handle_gc(self, options):
         timer('recompute_gc')
@@ -95,7 +123,7 @@ class Command(BaseCommand):
                 self.recompute(info, options)
         else:
             self.recompute(info, options)
-        print(' -- total time:', timer('recompute_all'), 'seconds')
+        print(' -- total time of recomputation:', timer('recompute_all'), 'seconds')
 
     def recompute(self, info, options):
         print(' -- preparing phase')
