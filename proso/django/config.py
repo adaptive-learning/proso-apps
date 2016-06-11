@@ -100,6 +100,14 @@ def instantiate_from_config(app_name, key, default_class=None, default_parameter
     )
 
 
+def instantiate_from_config_list(app_name, key, pass_parameters=None, config_name=None):
+    configs = get_config(app_name, key, config_name=config_name, default=[])
+    return [
+        instantiate_from_json(config, pass_parameters=pass_parameters)
+        for config in configs
+    ]
+
+
 def get_config(app_name, key, config_name=None, required=False, default=None):
     config = get_global_config(config_name).get(app_name)
     keys = key.split('.')

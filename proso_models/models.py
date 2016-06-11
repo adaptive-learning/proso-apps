@@ -11,7 +11,7 @@ from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from functools import reduce
 from proso.django.cache import get_request_cache, is_cache_prepared, get_from_request_permenent_cache, set_to_request_permanent_cache
-from proso.django.config import instantiate_from_config, instantiate_from_json, get_global_config, get_config
+from proso.django.config import instantiate_from_config, instantiate_from_config_list, instantiate_from_json, get_global_config, get_config
 from proso.django.models import ModelDiffMixin
 from proso.django.request import load_query_json
 from proso.django.util import disable_for_loaddata, cache_pure
@@ -63,11 +63,18 @@ def get_active_environment_info():
 
 
 def get_environment():
-    return instantiate_from_config(
+    environment = instantiate_from_config(
         'proso_models', 'environment',
         default_class='proso_models.environment.DatabaseEnvironment',
         pass_parameters=[get_active_environment_info()['id']]
     )
+    for hook in get_environment_write_hooks():
+        environment.add_write_hook(hook)
+    return environment
+
+
+def get_environment_write_hooks():
+    return instantiate_from_config_list('proso_models', 'environment_write_hooks')
 
 
 def get_predictive_model():

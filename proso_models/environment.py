@@ -145,6 +145,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
 class DatabaseEnvironment(CommonEnvironment):
 
     def __init__(self, info_id=None):
+        CommonEnvironment.__init__(self)
         self._time = None
         self._before_answer = None
         self._avoid_audit = False
@@ -326,6 +327,7 @@ class DatabaseEnvironment(CommonEnvironment):
             raise Exception("Variable %s changed permanency." % key)
         if variable.value == value:
             return
+        previous_value = variable.value
         variable.value = value
         variable.audit = audit
         variable.permanent = permanent
@@ -334,6 +336,7 @@ class DatabaseEnvironment(CommonEnvironment):
             variable.info_id = self._info_id
         variable.updated = datetime.now() if time is None else time
         variable.save()
+        self.call_write_hooks(key, value, user, item, item_secondary, time, previous_value, answer)
 
     def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         if key is None:

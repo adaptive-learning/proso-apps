@@ -97,8 +97,21 @@ class Environment(metaclass=abc.ABCMeta):
         """
         pass
 
+    def add_write_hook(self, write_hook):
+        pass
+
+
+class EnvironmentWriteHook(metaclass=abc.ABCMeta):
+
+    @abc.abstractmethod
+    def event(self, key, value, user, item, item_secondary, time, previous_value, answer):
+        pass
+
 
 class CommonEnvironment(Environment):
+
+    def __init__(self):
+        self._write_hooks = []
 
     @abc.abstractmethod
     def number_of_answers(self, user=None, item=None, context=None):
@@ -144,6 +157,13 @@ class CommonEnvironment(Environment):
     def rolling_success(self, user, window_size=10):
         pass
 
+    def add_write_hook(self, write_hook):
+        self._write_hooks.append(write_hook)
+
+    def call_write_hooks(self, key, value, user, item, item_secondary, time, previous_value, answer):
+        for hook in self._write_hooks:
+            hook.event(key, value, user, item, item_secondary, time, previous_value, answer)
+
 
 ################################################################################
 # Implementation
@@ -158,6 +178,7 @@ class InMemoryEnvironment(CommonEnvironment):
     CONFUSING_FACTOR = 'confusing_factor'
 
     def __init__(self):
+        CommonEnvironment.__init__(self)
         # key -> user -> item_primary -> item_secondary -> [(permanent, time, value)]
         self._data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
 
@@ -224,10 +245,12 @@ class InMemoryEnvironment(CommonEnvironment):
             raise Exception("The variable %s for items %s, %s and user %s changed permamency from %s to %s" % (
                 key, item, item_secondary, user, found[-1][0], permanent
             ))
+        previous_value = found[-1][3] if len(found) > 0 else None
         if audit or not found:
             found.append((permanent, time, answer, value))
         else:
             found[-1] = (permanent, time, answer, value)
+        self.call_write_hooks(key, value, user, item, item_secondary, time, previous_value, answer)
 
     def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         items = [item_secondary, item]
@@ -352,6 +375,54 @@ class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def generate_answer_id(self):
         pass
+
+    def test_write_hook(self):
+
+        class TestHook(EnvironmentWriteHook):
+
+            def __init__(self):
+                self._events = []
+
+            def event(self, key, value, user, item, item_secondary, time, previous_value, answer):
+                self._events.append({
+                    'key': key,
+                    'user': user,
+                    'item': item,
+                    'item_secondary': item_secondary,
+                    'previous_value': previous_value,
+                    'value': value,
+                    'answer': answer,
+                })
+
+            @property
+            def events(self):
+                return self._events
+
+        env = self.generate_environment()
+        test_hook = TestHook()
+        env.add_write_hook(test_hook)
+        env.write('key', 1)
+        env.write('key', 2)
+        self.assertEqual([
+            {
+                'key': 'key',
+                'user': None,
+                'item': None,
+                'item_secondary': None,
+                'previous_value': None,
+                'value': 1,
+                'answer': None,
+            },
+            {
+                'key': 'key',
+                'user': None,
+                'item': None,
+                'item_secondary': None,
+                'previous_value': 1,
+                'value': 2,
+                'answer': None,
+            },
+        ], test_hook.events)
 
     def test_permanent(self):
         items = [self.generate_item() for i in range(3)]
