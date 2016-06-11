@@ -323,8 +323,8 @@ class DatabaseEnvironment(CommonEnvironment):
                 for var in [var for var in variables if var.id != variable.id]:
                     LOGGER.error('Deleting duplicate variable {}'.format(var))
                     var.delete()
-        if variable.permanent != permanent:
-            raise Exception("Variable %s changed permanency." % key)
+            if variable.permanent != permanent:
+                raise Exception("Variable %s changed permanency." % key)
         if variable.value == value:
             return
         previous_value = variable.value
