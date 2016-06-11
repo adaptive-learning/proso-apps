@@ -58,6 +58,10 @@ class Environment(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
+    def read_more_keys(self, keys, user=None, item=None, item_secondary=None, default=None, symmetric=True):
+        pass
+
+    @abc.abstractmethod
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=True, answer=None):
         pass
 
@@ -230,6 +234,12 @@ class InMemoryEnvironment(CommonEnvironment):
 
     def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
         return [self.read(key, user, i, item, default, symmetric) for i in items]
+
+    def read_more_keys(self, keys, user=None, item=None, item_secondary=None, default=None, symmetric=True):
+        return [
+            self.read(key, user=user, item=item, item_secondary=item_secondary, default=default, symmetric=symmetric)
+            for key in keys
+        ]
 
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         value = float(value)
@@ -471,6 +481,20 @@ class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
         self.assertEqual(list(range(10)), env.read_more_items('key', items))
         self.assertEqual(list(range(10, 20)), env.read_more_items('key', items, user=user))
         self.assertEqual(list(range(20, 30)), env.read_more_items('key', items=items, user=user, item=item))
+
+    def test_read_more_keys(self):
+        env = self.generate_environment()
+        item = self.generate_item()
+        user = self.generate_user()
+        keys = ['k1', 'k2', 'k3']
+        for key, v in zip(keys, range(len(keys))):
+            env.write(key, - v, item=item)
+            env.write(key, v, item=item)
+        for key, v in zip(keys, range(len(keys))):
+            env.write(key, - v - len(keys), user=user, item=item)
+            env.write(key, v + len(keys), user=user, item=item)
+        self.assertEqual(list(range(len(keys))), env.read_more_keys(keys, item=item))
+        self.assertEqual([x + len(keys) for x in range(len(keys))], env.read_more_keys(keys, user=user, item=item))
 
     def test_audit(self):
         env = self.generate_environment()

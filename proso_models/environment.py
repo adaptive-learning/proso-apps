@@ -249,6 +249,25 @@ class DatabaseEnvironment(CommonEnvironment):
             result = dict(result)
             return [result.get(k, default) for k in items]
 
+    def read_more_keys(self, keys, user=None, item=None, item_secondary=None, default=None, symmetric=True):
+        with closing(connection.cursor()) as cursor:
+            where, where_params = self._where_single(keys, user, item, item_secondary, symmetric=symmetric)
+            if (self._time is None and self._before_answer is None) or self._avoid_audit:
+                cursor.execute(
+                    'SELECT key, value FROM proso_models_variable WHERE '
+                    + where,
+                    where_params)
+            else:
+                cursor.execute(
+                    '''SELECT DISTINCT ON
+                        (key, item_primary_id, item_secondary_id, user_id)
+                        key, value FROM proso_models_audit WHERE
+                    ''' + where +
+                    ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time DESC',
+                    where_params)
+            result = dict(cursor.fetchall())
+            return [result.get(k, default) for k in keys]
+
     def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_single(key, user, item, item_secondary, symmetric=symmetric)
