@@ -306,7 +306,7 @@ class DatabaseEnvironment(CommonEnvironment):
             'key': key,
         }
         if not permanent:
-            data['info_id'] = self._info_id,
+            data['info_id'] = self._info_id
         # HACK: There is a race condition creating more variables, so it is
         #       not possible to get exactly one. I hope this scenario does
         #       not happen very often.
