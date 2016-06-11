@@ -113,8 +113,6 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                 cursor.execute('SET CONSTRAINTS ALL DEFERRED')
                 if self._to_delete:
                     cursor.execute('DELETE FROM proso_models_variable WHERE id IN (' + ','.join(map(str, self._to_delete)) + ')')
-                if clean:
-                    cursor.execute('DELETE FROM proso_models_variable WHERE key IN (' + ','.join(['%s' for k in self.DROP_KEYS]) + ') AND info_id = %s', self.DROP_KEYS + [self._info_id])
                 with open(filename_audit, 'r') as file_audit:
                     cursor.copy_from(
                         file_audit,
@@ -131,6 +129,8 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                         null='None',
                         columns=['key', 'user_id', 'item_primary_id', 'item_secondary_id', 'value', 'audit', 'updated', 'answer_id', 'permanent', 'info_id']
                     )
+                if clean:
+                    cursor.execute('DELETE FROM proso_models_variable WHERE key IN (' + ','.join(['%s' for k in self.DROP_KEYS]) + ') AND info_id = %s', self.DROP_KEYS + [self._info_id])
 
     def _get_prefetched(self, key, user, item, item_secondary, symmetric):
         return self._prefetched.get(self._prefetched_key(key, user, item, item_secondary, symmetric))
