@@ -109,6 +109,7 @@ class Command(BaseCommand):
         db_instances = {(task.identifier, task.lang): task for task in
                         TaskInstance.objects.all().select_related('item')}
         parent_subgraph = {}
+        invisible_edges = []
         for instance in progress.bar(instances, every=max(1, len(instances) // 100)):
             new_instances = {}
             for lang, description in instance['descriptions'].items():
@@ -121,9 +122,10 @@ class Command(BaseCommand):
             item = self._update_or_create_objects(TaskInstance, db_instances, new_instances,
                                                   ["description", "task", "context", 'active'])
             parent_subgraph[item.pk] = [task_items[instance['task']], context_items[instance['context']]]
+            invisible_edges.append((item.pk, context_items[instance['context']]))
 
         self.stdout.write('- item relations')
-        Item.objects.override_parent_subgraph(parent_subgraph)
+        Item.objects.override_parent_subgraph(parent_subgraph, invisible_edges=invisible_edges)
 
         self.stdout.write(self.style.SUCCESS('Instances loaded \n'))
 

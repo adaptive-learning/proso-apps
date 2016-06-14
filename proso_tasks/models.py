@@ -256,7 +256,7 @@ def change_parent(sender, instance, **kwargs):
         parent_id = parent.item_id if isinstance(parent, Context) else Context.objects.get(pk=parent).item_id
         child_id = instance.item_id
         ItemRelation.objects.filter(parent_id=parent_id, child_id=child_id).delete()
-        ItemRelation.objects.create(parent_id=instance.context.item_id, child_id=child_id, visible=True)
+        ItemRelation.objects.create(parent_id=instance.context.item_id, child_id=child_id, visible=False)
 
 
 @receiver(pre_delete, sender=TaskInstance)
