@@ -903,7 +903,7 @@ class ItemManager(models.Manager):
                             child_id=child_id,
                             visible=(child_id, parent_id) not in invisible_edges
                         )
-                    elif old_relations[parent_id].visible != (child_id, parent_id) not in invisible_edges:
+                    elif old_relations[parent_id].visible != ((child_id, parent_id) not in invisible_edges):
                         old_relations[parent_id].visible = (child_id, parent_id) not in invisible_edges
                         old_relations[parent_id].save()
                 to_delete |= {old_relations[parent_id].pk for parent_id in set(old_relations.keys()) - set(parents)}
@@ -941,7 +941,7 @@ class ItemManager(models.Manager):
                             child_id=child_id,
                             visible=(parent_id, child_id) not in invisible_edges
                         )
-                    elif old_relations[child_id].visible != (parent_id, child_id) not in invisible_edges:
+                    elif old_relations[child_id].visible != ((parent_id, child_id) not in invisible_edges):
                         old_relations[child_id].visible = (parent_id, child_id) not in invisible_edges
                         old_relations[child_id].save()
                 to_delete |= {old_relations[child_id].pk for child_id in set(old_relations.keys()) - set(children)}
