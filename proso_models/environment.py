@@ -48,16 +48,19 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                 SELECT key, user_id, item_primary_id, item_secondary_id, updated, value, id
                 FROM proso_models_variable
                 WHERE
-                    (info_id = %s OR permanent)
-                AND
-                    (user_id IN (''' + ','.join(users) + ''') OR user_id is NULL)
-                AND
+                    permanent OR
                     (
-                        item_primary_id IS NULL
-                        OR
-                        item_primary_id IN (''' + ','.join(items) + ''')
-                        OR
-                        item_secondary_id IN (''' + ','.join(items) + ''')
+                        (info_id = %s)
+                        AND
+                        (user_id IN (''' + ','.join(users) + ''') OR user_id is NULL)
+                        AND
+                        (
+                            item_primary_id IS NULL
+                            OR
+                            item_primary_id IN (''' + ','.join(items) + ''')
+                            OR
+                            item_secondary_id IN (''' + ','.join(items) + ''')
+                        )
                     )
                 ''', [self._info_id])
             for row in cursor:
