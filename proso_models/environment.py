@@ -73,6 +73,13 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                 default=default, symmetric=symmetric
             )
 
+    def read_all_with_key(self, key):
+        found = []
+        for k, v in self._prefetched.items():
+            if k[0] == key:
+                found.append((k[1], k[2], k[3], v[1]))
+        return found + InMemoryEnvironment.read_all_with_key(self, key)
+
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         prefetched_key = self._prefetched_key(key, user, item, item_secondary, symmetric)
         prefetched = self._prefetched.get(prefetched_key)
