@@ -62,6 +62,10 @@ class Environment(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
+    def read_all_with_key(self, key):
+        pass
+
+    @abc.abstractmethod
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=True, answer=None):
         pass
 
@@ -240,6 +244,14 @@ class InMemoryEnvironment(CommonEnvironment):
             self.read(key, user=user, item=item, item_secondary=item_secondary, default=default, symmetric=symmetric)
             for key in keys
         ]
+
+    def read_all_with_key(self, key):
+        found = []
+        for user, d in self._data[key].items():
+            for item, dd in d.items():
+                for item_secondary, f in dd.items():
+                    found.append((user, item, item_secondary, f[-1][3]))
+        return found
 
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         value = float(value)
@@ -495,6 +507,23 @@ class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
             env.write(key, v + len(keys), user=user, item=item)
         self.assertEqual(list(range(len(keys))), env.read_more_keys(keys, item=item))
         self.assertEqual([x + len(keys) for x in range(len(keys))], env.read_more_keys(keys, user=user, item=item))
+
+    def test_read_all_with_key(self):
+        env = self.generate_environment()
+        item = self.generate_item()
+        items = [self.generate_item() for _ in range(1, 10)]
+        user = self.generate_user()
+
+        for key in ['k1', 'k2']:
+            env.write(key, 0)
+            env.write(key, 1, user=user)
+            for i, v in zip(items, list(range(1, 10))):
+                env.write(key, v * 10, item=i)
+                env.write(key, v * 100, user=user, item=i)
+                env.write(key, v * 1000, user=user, item=i, item_secondary=item)
+
+        self.assertEqual(9 * 3 + 2, len(env.read_all_with_key('k1')))
+        self.assertEqual(9 * 3 + 2, len(env.read_all_with_key('k2')))
 
     def test_audit(self):
         env = self.generate_environment()
