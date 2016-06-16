@@ -38,7 +38,7 @@ class ItemSelection(metaclass=abc.ABCMeta):
                 raise Exception('Can not compute predictions without items.')
             if time is None:
                 raise Exception('Can not compute predictions without time.')
-            self._predictions_cache = dict(list(zip(items, self._predictive_model.predict_more_items(environment, user, items, time))))
+            self._predictions_cache = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
         return self._predictions_cache
 
     def history_adjustment(self):
@@ -172,7 +172,7 @@ class ScoreItemSelection(ItemSelection):
             score += self._weight_parent_number_of_answers * parent_answers_num_score
             return (score, r), i
 
-        scored = list(zip(list(map(_score, items)), items))
+        scored = [(_score(item), item) for item in items]
         if self._recompute_parent_score:
             candidates = []
             while len(candidates) < n and len(scored) > 0:
