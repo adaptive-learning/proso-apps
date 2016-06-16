@@ -1,6 +1,5 @@
 from .decorator import cache_environment_for_item
 from .models import Answer, Variable
-from collections import defaultdict
 from contextlib import closing
 from datetime import datetime
 from django.conf import settings
@@ -212,10 +211,10 @@ class DatabaseEnvironment(CommonEnvironment):
                     proso_models_variable
                 WHERE
                 ''' + where, where_params)
-            result = defaultdict(list)
+            result = {i: [] for i in items}
             for p_id, s_id, val in cursor:
                 result[p_id].append((s_id, val))
-            return [result[i] for i in items]
+            return result
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
@@ -242,7 +241,6 @@ class DatabaseEnvironment(CommonEnvironment):
                     'SELECT item_primary_id, item_secondary_id, value FROM proso_models_variable WHERE '
                     + where,
                     where_params)
-                result = cursor.fetchall()
             else:
                 cursor.execute(
                     '''SELECT DISTINCT ON
@@ -251,13 +249,12 @@ class DatabaseEnvironment(CommonEnvironment):
                     ''' + where +
                     ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time DESC',
                     where_params)
-                result = cursor.fetchall()
+            result = {i: default for i in items}
             if item is None:
-                result = [(x_y_z[0], x_y_z[2]) for x_y_z in result]
+                result.update({x_y_z[0]: x_y_z[2] for x_y_z in cursor})
             else:
-                result = [(x_y_z1[0], x_y_z1[2]) if x_y_z1[1] == item else (x_y_z1[1], x_y_z1[2]) for x_y_z1 in result]
-            result = dict(result)
-            return [result.get(k, default) for k in items]
+                result.update({x_y_z1[0]: x_y_z1[2] if x_y_z1[1] == item else (x_y_z1[1], x_y_z1[2]) for x_y_z1 in cursor})
+            return result
 
     def read_more_keys(self, keys, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
@@ -275,8 +272,10 @@ class DatabaseEnvironment(CommonEnvironment):
                     ''' + where +
                     ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time DESC',
                     where_params)
-            result = dict(cursor.fetchall())
-            return [result.get(k, default) for k in keys]
+            result = {i: default for i in keys}
+            for k, v in cursor:
+                result[k] = v
+            return result
 
     def read_all_with_key(self, key):
         with closing(connection.cursor()) as cursor:
@@ -320,7 +319,6 @@ class DatabaseEnvironment(CommonEnvironment):
                     'SELECT item_primary_id, item_secondary_id, updated FROM proso_models_variable WHERE '
                     + where,
                     where_params)
-                result = cursor.fetchall()
             else:
                 cursor.execute(
                     '''SELECT DISTINCT ON
@@ -329,13 +327,12 @@ class DatabaseEnvironment(CommonEnvironment):
                     ''' + where +
                     ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time',
                     where_params)
-                result = cursor.fetchall()
+            result = {i: None for i in items}
             if item is None:
-                result = [(x_y_z2[0], x_y_z2[2]) for x_y_z2 in result]
+                result.update({x_y_z2[0]: x_y_z2[2] for x_y_z2 in cursor})
             else:
-                result = [(x_y_z3[0], x_y_z3[2]) if x_y_z3[1] == item else (x_y_z3[1], x_y_z3[2]) for x_y_z3 in result]
-            result = dict(result)
-            return [result.get(k) for k in items]
+                result.update({x_y_z3[0]: x_y_z3[2] if x_y_z3[1] == item else (x_y_z3[1], x_y_z3[2]) for x_y_z3 in cursor})
+            return result
 
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         if permanent:
@@ -453,8 +450,10 @@ class DatabaseEnvironment(CommonEnvironment):
                 'SELECT item_id, COUNT(id) FROM proso_models_answer WHERE '
                 + where + ' GROUP BY item_id' + ('' if user is None else ', user_id'),
                 where_params)
-            fetched = dict(cursor.fetchall())
-            return [fetched.get(i, 0) for i in items]
+            result = {i: 0 for i in items}
+            for i, v in cursor:
+                result[i] = v
+            return result
 
     @cache_environment_for_item(default=0)
     def number_of_correct_answers_more_items(self, items, user=None):
@@ -464,8 +463,10 @@ class DatabaseEnvironment(CommonEnvironment):
                 'SELECT item_id, COUNT(id) FROM proso_models_answer WHERE item_asked_id = item_answered_id AND '
                 + where + ' GROUP BY item_id' + ('' if user is None else ', user_id'),
                 where_params)
-            fetched = dict(cursor.fetchall())
-            return [fetched.get(i, 0) for i in items]
+            result = {i: 0 for i in items}
+            for i, v in cursor:
+                result[i] = v
+            return result
 
     @cache_environment_for_item(default=0)
     def number_of_first_answers_more_items(self, items, user=None):
@@ -475,9 +476,10 @@ class DatabaseEnvironment(CommonEnvironment):
                 'SELECT item_id, COUNT(1) FROM (SELECT user_id, item_id FROM proso_models_answer WHERE '
                 + where + ' GROUP BY user_id, item_id) AS t GROUP BY item_id' + ('' if user is None else ', user_id'),
                 where_params)
-            fetched = dict(cursor.fetchall())
-            return [fetched.get(i, 0) for i in items]
-        return 0
+            result = {i: 0 for i in items}
+            for i, v in cursor:
+                result[i] = v
+            return result
 
     @cache_environment_for_item()
     def last_answer_time_more_items(self, items, user=None):
@@ -487,9 +489,10 @@ class DatabaseEnvironment(CommonEnvironment):
                 'SELECT item_id, MAX(time) FROM proso_models_answer WHERE '
                 + where + ' GROUP BY item_id' + ('' if user is None else ', user_id'),
                 where_params)
-            fetched = dict([(x_d[0], self._ensure_is_datetime(x_d[1])) for x_d in cursor.fetchall()])
-
-            return [fetched.get(i, None) for i in items]
+            result = {i: None for i in items}
+            for i, d in cursor:
+                result[i] = self._ensure_is_datetime(d)
+            return result
 
     def shift_time(self, new_time):
         self._time = new_time
@@ -513,7 +516,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 ORDER BY id DESC
                 LIMIT %s
                 ''', where_params + [window_size])
-            fetched = [True if x[0] else False for x in cursor.fetchall()]
+            fetched = [True if x[0] else False for x in cursor]
             if len(fetched) < window_size:
                 return None
             else:

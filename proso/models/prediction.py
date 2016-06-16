@@ -156,7 +156,8 @@ class AveragePredictiveModel(PredictiveModel):
         return float(data[0]) / max(data[1], 1)
 
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
-        return [float(tot_num[0]) / max(tot_num[1], 1) for tot_num in zip(data[0], data[1])]
+        total_sums, number_of_answers = data
+        return [total_sums[i] / max(number_of_answers[i], 1) for i in items]
 
     def update_phase(self, environment, data, prediction, user, item, correct, time, answer_id, **kwargs):
         environment.update('total_sum', 0, lambda x: x + correct, item=item, answer=answer_id)
@@ -205,15 +206,12 @@ class PriorCurrentPredictiveModel(PredictiveModel):
 
     def predict_phase_more_items(self, data, user, items, time, **kwargs):
         preds = []
-        to_iter = list(zip(
-            items, data['difficulties'],
-            data['current_skills'], data['last_times']))
-        for i, d, c, t in to_iter:
+        for i in items:
             preds.append(self.predict_phase({
                 'prior_skill': data['prior_skill'],
-                'difficulty': d,
-                'current_skill': c,
-                'last_time': t
+                'difficulty': data['difficulties'][i],
+                'current_skill': data['current_skills'][i],
+                'last_time': data['last_times'][i],
             }, user, i, time, **kwargs))
         return preds
 
@@ -255,15 +253,11 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
         parents = self._load_parents(environment, items, user)
         all_items = list(set(items + [i for ps in list(parents.values()) for (i, v) in ps]))
         return {
-            'skills': dict(list(zip(
-                all_items, environment.read_more_items('skill', items=all_items, user=user, default=0)))),
-            'first_answers': dict(list(zip(
-                items, environment.number_of_first_answers_more_items(items=items)))),
-            'difficulties': dict(list(zip(
-                items, environment.read_more_items('difficulty', items=items, default=0)))),
-            'last_times': dict(list(zip(
-                items, environment.last_answer_time_more_items(items=items, user=user)))),
-            'parents': parents
+            'skills': environment.read_more_items('skill', items=all_items, user=user, default=0),
+            'first_answers': environment.number_of_first_answers_more_items(items=items),
+            'difficulties': environment.read_more_items('difficulty', items=items, default=0),
+            'last_times': environment.last_answer_time_more_items(items=items, user=user),
+            'parents': parents,
         }
 
     def predict_phase(self, data, user, item, time, **kwargs):
@@ -304,7 +298,7 @@ class AlwaysLearningPredictiveModel(PredictiveModel):
         while len(items) > 0:
             found = environment.get_items_with_values_more_items('parent', items)
             new_items = set()
-            for i, ps in zip(items, found):
+            for i, ps in found.items():
                 new_items = new_items.union([x[0] for x in ps])
                 if len(ps) == 0:
                     ps.append((None, 1))

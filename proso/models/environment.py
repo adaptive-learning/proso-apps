@@ -230,7 +230,7 @@ class InMemoryEnvironment(CommonEnvironment):
         return [(i_l[0], i_l[1][-1][3]) for i_l in list(self._data[key][user][item].items())]
 
     def get_items_with_values_more_items(self, key, items, user=None):
-        return [self.get_items_with_values(key, i, user) for i in items]
+        return {i: self.get_items_with_values(key, i, user) for i in items}
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         found = self._get(key, user=user, item=item, item_secondary=item_secondary, symmetric=symmetric)
@@ -240,13 +240,13 @@ class InMemoryEnvironment(CommonEnvironment):
             return default
 
     def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
-        return [self.read(key, user, i, item, default, symmetric) for i in items]
+        return {i: self.read(key, user, i, item, default, symmetric) for i in items}
 
     def read_more_keys(self, keys, user=None, item=None, item_secondary=None, default=None, symmetric=True):
-        return [
-            self.read(key, user=user, item=item, item_secondary=item_secondary, default=default, symmetric=symmetric)
+        return {
+            key: self.read(key, user=user, item=item, item_secondary=item_secondary, default=default, symmetric=symmetric)
             for key in keys
-        ]
+        }
 
     def read_all_with_key(self, key):
         found = []
@@ -300,7 +300,7 @@ class InMemoryEnvironment(CommonEnvironment):
             return None
 
     def time_more_items(self, key, items, user=None, item=None, symmetric=True):
-        return [self.time(key, user, i, item, symmetric) for i in items]
+        return {i: self.time(key, user, i, item, symmetric) for i in items}
 
     def number_of_answers(self, user=None, item=None, context=None):
         if context is not None:
@@ -493,9 +493,9 @@ class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
             env.write('key', v, user=user, item=i)
         for i, v in zip(items, list(range(20, 30))):
             env.write('key', v, user=user, item=item, item_secondary=i)
-        self.assertEqual(list(range(10)), env.read_more_items('key', items))
-        self.assertEqual(list(range(10, 20)), env.read_more_items('key', items, user=user))
-        self.assertEqual(list(range(20, 30)), env.read_more_items('key', items=items, user=user, item=item))
+        self.assertDictEqual({i: v for v, i in enumerate(items)}, env.read_more_items('key', items))
+        self.assertDictEqual({i: v + 10 for v, i in enumerate(items)}, env.read_more_items('key', items, user=user))
+        self.assertDictEqual({i: v + 20 for v, i in enumerate(items)}, env.read_more_items('key', items=items, user=user, item=item))
 
     def test_read_more_keys(self):
         env = self.generate_environment()
@@ -508,8 +508,8 @@ class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
         for key, v in zip(keys, range(len(keys))):
             env.write(key, - v - len(keys), user=user, item=item)
             env.write(key, v + len(keys), user=user, item=item)
-        self.assertEqual(list(range(len(keys))), env.read_more_keys(keys, item=item))
-        self.assertEqual([x + len(keys) for x in range(len(keys))], env.read_more_keys(keys, user=user, item=item))
+        self.assertEqual({k: v for v, k in enumerate(keys)}, env.read_more_keys(keys, item=item))
+        self.assertEqual({k: v + len(keys) for v, k in enumerate(keys)}, env.read_more_keys(keys, user=user, item=item))
 
     def test_read_all_with_key(self):
         env = self.generate_environment()
@@ -567,7 +567,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.time('key', item=items[0], item_secondary=items[1]), times[5])
         for i, t in zip(items[1:], times):
             env.write('key', 2, item=items[0], item_secondary=i, time=t)
-        self.assertEqual(env.time_more_items('key', item=items[0], items=items[1:]), times[:9])
+        self.assertEqual(env.time_more_items('key', item=items[0], items=items[1:]), {i: t for i, t in zip(items[1:], times[:9])})
 
     def test_number_of_answers(self):
         env = self.generate_environment()
@@ -578,7 +578,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.number_of_answers(user=user_1), 0)
         self.assertEqual(env.number_of_answers(user=user_1, item=items[0]), 0)
         self.assertEqual(env.number_of_answers(item=items[0]), 0)
-        self.assertEqual([0 for i in items], env.number_of_answers_more_items(items))
+        self.assertEqual({i: 0 for i in items}, env.number_of_answers_more_items(items))
         for u in [user_1, user_2]:
             for i in items:
                 env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
@@ -586,7 +586,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.number_of_answers(user=user_1), 10)
         self.assertEqual(env.number_of_answers(user=user_1, item=items[0]), 1)
         self.assertEqual(env.number_of_answers(item=items[0]), 2)
-        self.assertEqual(env.number_of_answers_more_items(items), [2 for i in items])
+        self.assertEqual(env.number_of_answers_more_items(items), {i: 2 for i in items})
 
     def test_number_of_correct_answers(self):
         env = self.generate_environment()
@@ -597,7 +597,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.number_of_correct_answers(user=user_1), 0)
         self.assertEqual(env.number_of_correct_answers(user=user_1, item=items[0]), 0)
         self.assertEqual(env.number_of_correct_answers(item=items[0]), 0)
-        self.assertEqual(env.number_of_first_answers_more_items(items), [0 for i in items])
+        self.assertEqual(env.number_of_first_answers_more_items(items), {i: 0 for i in items})
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
@@ -606,7 +606,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.number_of_correct_answers(user=user_1), 50)
         self.assertEqual(env.number_of_correct_answers(user=user_1, item=items[0]), 5)
         self.assertEqual(env.number_of_correct_answers(item=items[0]), 10)
-        self.assertEqual(env.number_of_correct_answers_more_items(items), [10 for i in items])
+        self.assertEqual(env.number_of_correct_answers_more_items(items), {i: 10 for i in items})
 
     def test_number_of_first_answers(self):
         env = self.generate_environment()
@@ -617,7 +617,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.number_of_first_answers(user=user_1), 0)
         self.assertEqual(env.number_of_first_answers(user=user_1, item=items[0]), 0)
         self.assertEqual(env.number_of_first_answers(item=items[0]), 0)
-        self.assertEqual(env.number_of_first_answers_more_items(items), [0 for i in items])
+        self.assertEqual(env.number_of_first_answers_more_items(items), {i: 0 for i in items})
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
@@ -626,7 +626,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.number_of_first_answers(user=user_1), 10)
         self.assertEqual(env.number_of_first_answers(user=user_1, item=items[0]), 1)
         self.assertEqual(env.number_of_first_answers(item=items[0]), 2)
-        self.assertEqual(env.number_of_first_answers_more_items(items), [2 for i in items])
+        self.assertEqual(env.number_of_first_answers_more_items(items), {i: 2 for i in items})
 
     def test_symmetry(self):
         env = self.generate_environment()
@@ -649,7 +649,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertIsNone(env.last_answer_time(user=user_1))
         self.assertIsNone(env.last_answer_time(user=user_1, item=items[0]))
         self.assertIsNone(env.last_answer_time(item=items[0]))
-        self.assertEqual(env.last_answer_time_more_items(items), [None for i in items])
+        self.assertEqual(env.last_answer_time_more_items(items), {i: None for i in items})
         for u in [user_1, user_2]:
             for i in items:
                 for j in range(10):
@@ -658,7 +658,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertIsNotNone(env.number_of_first_answers(user=user_1))
         self.assertIsNotNone(env.number_of_first_answers(user=user_1, item=items[0]))
         self.assertIsNotNone(env.number_of_first_answers(item=items[0]))
-        self.assertNotEqual(env.number_of_first_answers_more_items(items), [None for i in items])
+        self.assertNotEqual(env.number_of_first_answers_more_items(items), {i: None for i in items})
 
     def test_rolling_success(self):
         env = self.generate_environment()
@@ -714,7 +714,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         env.write('parent', 20, item=items[1], item_secondary=items[0], symmetric=False)
         self.assertEqual(
             env.get_items_with_values_more_items('parent', user=users[0], items=items),
-            [[(items[1], 10)], []])
+            {items[0]: [(items[1], 10)], items[1]: []})
         self.assertEqual(
             env.get_items_with_values_more_items('parent', items=items),
-            [[], [(items[0], 20)]])
+            {items[0]: [], items[1]: [(items[0], 20)]})

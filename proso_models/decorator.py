@@ -25,7 +25,7 @@ class cache_environment_for_item:
                 raise Exception('items have to be specified')
             cached_items = {}
             other_items = []
-            cache_keys = dict(list(zip(items, [_cache_key(func, x, args, kwargs) for x in items])))
+            cache_keys = {item: _cache_key(func, item, args, kwargs) for item in items}
             for item in items:
                 cache_key = cache_keys[item]
                 if not _cache_has_key(cache_key):
@@ -34,13 +34,13 @@ class cache_environment_for_item:
                     cached_items[item] = _cache_get(cache_key, default)
             if len(other_items) > 0:
                 args_dict['items'] = other_items
-                inner_result = dict(list(zip(other_items, func(self, **args_dict))))
+                inner_result = func(self, **args_dict)
                 for item, value in list(inner_result.items()):
                     cache_key = cache_keys[item]
                     _cache_set(cache_key, value)
             else:
                 inner_result = {}
-            return [cached_items.get(item, inner_result.get(item)) for item in items]
+            return {item: cached_items.get(item, inner_result.get(item)) for item in items}
         return _wrapper
 
 

@@ -255,9 +255,8 @@ class UserStatManager(models.Manager):
         mastery_threshold = get_mastery_trashold()
         for user, concepts in concepts.items():
             all_items = list(set(flatten([items[c] for c in concepts])))
-            answer_counts = dict(list(zip(all_items, environment.number_of_answers_more_items(all_items, user))))
-            correct_answer_counts = dict(list(zip(all_items,
-                                                  environment.number_of_correct_answers_more_items(all_items, user))))
+            answer_counts = environment.number_of_answers_more_items(all_items, user)
+            correct_answer_counts = environment.number_of_correct_answers_more_items(all_items, user)
             predictions = dict(list(zip(all_items, get_predictive_model().
                                         predict_more_items(environment, user, all_items, time=None))))
             new_user_stats = []

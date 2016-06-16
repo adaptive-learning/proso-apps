@@ -202,8 +202,8 @@ def user_stats(request):
     filter_names, filter_filters = list(zip(*sorted(data.items())))
     reachable_leaves = Item.objects.filter_all_reachable_leaves_many(filter_filters, language)
     all_leaves = flatten(reachable_leaves)
-    answers = dict(list(zip(all_leaves, environment.number_of_answers_more_items(all_leaves, user_id))))
-    correct_answers = dict(list(zip(all_leaves, environment.number_of_correct_answers_more_items(all_leaves, user_id))))
+    answers = environment.number_of_answers_more_items(all_leaves, user_id)
+    correct_answers = environment.number_of_correct_answers_more_items(all_leaves, user_id)
     if request.GET.get("mastered"):
         timer('user_stats_mastered')
         mastery_threshold = get_mastery_trashold()

@@ -124,20 +124,20 @@ class ScoreItemSelection(ItemSelection):
         self._time_ago_max = time_ago_max
 
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
-        parents = dict(list(zip(items, environment.get_items_with_values_more_items('parent', items=items))))
+        parents = environment.get_items_with_values_more_items('parent', items=items)
         if self._estimate_parent_factors:
             related_items = items
         else:
             parent_ids = set(sum([[p for p, v in ps] for ps in list(parents.values())], []))
-            children = dict(list(zip(parent_ids, environment.get_items_with_values_more_items('child', items=parent_ids))))
+            children = environment.get_items_with_values_more_items('child', items=parent_ids)
             related_items = sum([[i for i, v in c] for c in list(children.values())], [])
             parents = defaultdict(lambda: [])
             for parent, childs in list(children.items()):
                 for child, v in childs:
                     parents[child].append((parent, v))
 
-        answers_num = dict(list(zip(related_items, environment.number_of_answers_more_items(user=user, items=related_items))))
-        last_answer_time = dict(list(zip(related_items, environment.last_answer_time_more_items(user=user, items=related_items))))
+        answers_num = environment.number_of_answers_more_items(user=user, items=related_items)
+        last_answer_time = environment.last_answer_time_more_items(user=user, items=related_items)
         probability = self.get_predictions(environment, user, items, time)
         last_answer_time_parents = self._last_answer_time_for_parents(environment, parents, last_answer_time)
         answers_num_parents = self._answers_num_for_parents(environment, parents, answers_num)
