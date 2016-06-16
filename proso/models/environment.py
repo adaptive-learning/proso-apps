@@ -108,6 +108,9 @@ class Environment(metaclass=abc.ABCMeta):
     def add_write_hook(self, write_hook):
         pass
 
+    def __repr__(self):
+        return str(self.__class__)
+
 
 class EnvironmentWriteHook(metaclass=abc.ABCMeta):
 
