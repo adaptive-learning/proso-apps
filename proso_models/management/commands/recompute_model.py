@@ -151,7 +151,7 @@ class Command(BaseCommand):
                 ORDER BY id
                 OFFSET %s LIMIT %s
                 ''', [info.load_progress, options['batch_size']])
-            progress_bar = progress.bar(cursor, every=max(1, cursor.rowcount / 100), expected_size=cursor.rowcount)
+            progress_bar = progress.bar(cursor, every=max(1, cursor.rowcount // 100), expected_size=cursor.rowcount)
             info.load_progress += cursor.rowcount
             for (answer_id, user, item, asked, answered, time, response_time, guess) in progress_bar:
                 predictive_model.predict_and_update(

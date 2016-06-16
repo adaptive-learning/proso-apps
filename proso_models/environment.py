@@ -48,16 +48,19 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                 SELECT key, user_id, item_primary_id, item_secondary_id, updated, value, id
                 FROM proso_models_variable
                 WHERE
-                    (info_id = %s OR permanent)
-                AND
-                    (user_id IN (''' + ','.join(users) + ''') OR user_id is NULL)
-                AND
+                    permanent OR
                     (
-                        item_primary_id IS NULL
-                        OR
-                        item_primary_id IN (''' + ','.join(items) + ''')
-                        OR
-                        item_secondary_id IN (''' + ','.join(items) + ''')
+                        (info_id = %s)
+                        AND
+                        (user_id IN (''' + ','.join(users) + ''') OR user_id is NULL)
+                        AND
+                        (
+                            item_primary_id IS NULL
+                            OR
+                            item_primary_id IN (''' + ','.join(items) + ''')
+                            OR
+                            item_secondary_id IN (''' + ','.join(items) + ''')
+                        )
                     )
                 ''', [self._info_id])
             for row in cursor:
@@ -72,6 +75,13 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                 self, key, user=user, item=item, item_secondary=item_secondary,
                 default=default, symmetric=symmetric
             )
+
+    def read_all_with_key(self, key):
+        found = []
+        for k, v in self._prefetched.items():
+            if k[0] == key:
+                found.append((k[1], k[2], k[3], v[1]))
+        return found + InMemoryEnvironment.read_all_with_key(self, key)
 
     def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
         prefetched_key = self._prefetched_key(key, user, item, item_secondary, symmetric)
@@ -267,6 +277,24 @@ class DatabaseEnvironment(CommonEnvironment):
                     where_params)
             result = dict(cursor.fetchall())
             return [result.get(k, default) for k in keys]
+
+    def read_all_with_key(self, key):
+        with closing(connection.cursor()) as cursor:
+            where, where_params = self._where({'key': key})
+            if (self._time is None and self._before_answer is None) or self._avoid_audit:
+                cursor.execute(
+                    'SELECT user_id, item_primary_id, item_secondary_id, value FROM proso_models_variable WHERE '
+                    + where,
+                    where_params)
+            else:
+                cursor.execute(
+                    '''SELECT DISTINCT ON
+                        (key, item_primary_id, item_secondary_id, user_id)
+                        user_id, item_primary_id, item_secondary_id, value FROM proso_models_audit WHERE
+                    ''' + where +
+                    ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time DESC',
+                    where_params)
+            return cursor.fetchall()
 
     def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
