@@ -188,10 +188,11 @@ class InMemoryEnvironment(CommonEnvironment):
     LAST_CORRECTNESS = 'last_correctness'
     CONFUSING_FACTOR = 'confusing_factor'
 
-    def __init__(self):
+    def __init__(self, audit_enabled=True):
         CommonEnvironment.__init__(self)
         # key -> user -> item_primary -> item_secondary -> [(permanent, time, value)]
         self._data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
+        self._audit_enabled = audit_enabled
 
     def process_answer(self, user, item, asked, answered, time, answer, response_time, guess, **kwargs):
         if time is None:
@@ -214,6 +215,8 @@ class InMemoryEnvironment(CommonEnvironment):
             self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered, user=user, answer=answer)
 
     def audit(self, key, user=None, item=None, item_secondary=None, limit=None, symmetric=True):
+        if not self._audit_enabled:
+            raise Exception('Audit can not be retrieved, because it is not enabled.')
         items = [item_secondary, item]
         if symmetric and item is not None and item_secondary is not None:
             items.sort()
@@ -271,7 +274,7 @@ class InMemoryEnvironment(CommonEnvironment):
                 key, item, item_secondary, user, found[-1][0], permanent
             ))
         previous_value = found[-1][3] if len(found) > 0 else None
-        if audit or not found:
+        if (audit and self._audit_enabled) or not found:
             found.append((permanent, time, answer, value))
         else:
             found[-1] = (permanent, time, answer, value)
@@ -337,6 +340,8 @@ class InMemoryEnvironment(CommonEnvironment):
     def rolling_success(self, user, window_size=10, context=None):
         if context is not None:
             raise Exception('Using context is not supported.')
+        if not self._audit_enabled:
+            raise Exception('Rolling success can not be retrieved, because audit is not enabled.')
         audit = self.audit(self.LAST_CORRECTNESS, user=user, limit=window_size)
         audit = [x_y[1] for x_y in audit]
         if len(audit) < window_size:
@@ -360,6 +365,8 @@ class InMemoryEnvironment(CommonEnvironment):
                             yield (key, user, item_primary, item_secondary, permanent, time, answer, value)
 
     def export_audit(self):
+        if not self._audit_enabled:
+            raise Exception('Audit can not be exported, because it is not enabled.')
         for key, users in self._data.items():
             for user, primaries in users.items():
                 for item_primary, secondaries in primaries.items():
