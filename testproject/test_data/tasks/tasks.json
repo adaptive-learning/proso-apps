@@ -1,0 +1,87 @@
+{
+  "skills": [
+    {
+      "id": "math",
+      "names": {
+        "en": "Math",
+        "cs": "Matematika"
+      }
+    },
+    {
+      "id": "multiplication",
+      "names": {
+        "en": "Multiplication",
+        "cs": "Násobení"
+      },
+      "parents": ["math"]
+    },
+    {
+      "id": "geography",
+      "names": {
+        "en": "Geography",
+        "cs": "Zeměpis"
+      },
+      "active": false
+    },
+    {
+      "id": "economy",
+      "names": {
+        "en": "Economy",
+        "cs": "Ekonomie"
+      },
+      "parents": ["math", "geography"],
+      "active": false
+    }
+  ],
+  "tasks": [
+    {
+      "id": "1x2",
+      "contents": {
+        "en": {"operation": "x", "operands": [1, 2]},
+        "cs": {"operation": "x", "operands": [1, 2]}
+      },
+      "skills": ["multiplication"]
+    },
+    {
+      "id": "7x6",
+      "contents": {
+        "en": {"operation": "x", "operands": [7, 6]},
+        "cs": {"operation": "x", "operands": [7, 6]}
+      },
+      "skills": ["multiplication"]
+    }
+  ],
+  "contexts": [
+    {
+      "id": "open",
+      "names": {
+        "en": "Open question",
+        "cs": "Otevřená otázka"
+      },
+      "contents": {
+        "en": null,
+        "cs": "nic"
+      }
+    }
+  ],
+  "instances": [
+    {
+      "id": "open-1x2",
+      "task": "1x2",
+      "context": "open",
+      "descriptions": {
+        "en": null,
+        "cs": 11
+      }
+    },
+    {
+      "id": "open-7x6",
+      "task": "7x6",
+      "context": "open",
+      "descriptions": {
+        "en": null,
+        "cs": 11
+      }
+    }
+  ]
+}

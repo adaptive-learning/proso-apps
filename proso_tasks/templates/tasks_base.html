@@ -1,0 +1,10 @@
+{% extends 'common_base.html' %}
+{% block menu_heading_block %}Tasks{% endblock %}
+{% block menu_list_block %}
+    <ul>
+        <li><a href="{% url 'tasks:show_skills' %}?html=True&stats=True&environment=True">Skills</a></li>
+        <li><a href="{% url 'tasks:show_tasks' %}?html=True&stats=True&environment=True">Tasks</a></li>
+        <li><a href="{% url 'tasks:show_contexts' %}?html=True&stats=True&environment=True">Contexts</a></li>
+        <li><a href="{% url 'tasks:show_taskinstances' %}?html=True&stats=True&environment=True">Instances</a></li>
+    </ul>
+{% endblock %}
