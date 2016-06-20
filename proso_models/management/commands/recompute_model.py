@@ -97,8 +97,9 @@ class Command(BaseCommand):
                 print(' -- validation passed:', timer('recompute_validation'), 'seconds')
 
     def handle_dry(self, options):
+        info = self.load_environment_info(options['initial'], options['config_name'], True)
         environment = InMemoryEnvironment(audit_enabled=False)
-        predictive_model = get_predictive_model()
+        predictive_model = get_predictive_model(info.to_json())
         with closing(connection.cursor()) as cursor:
             cursor.execute('SELECT COUNT(*) FROM proso_models_answer')
             answers_total = cursor.fetchone()[0]
@@ -173,7 +174,7 @@ class Command(BaseCommand):
 
     def handle_recompute(self, options):
         timer('recompute_all')
-        info = self.load_environment_info(options['initial'], options['config_name'])
+        info = self.load_environment_info(options['initial'], options['config_name'], False)
         if options['finish']:
             with transaction.atomic():
                 to_process = self.number_of_answers_to_process(info)
@@ -190,7 +191,7 @@ class Command(BaseCommand):
         environment = self.load_environment(info)
         users, items = self.load_user_and_item_ids(info, options['batch_size'])
         environment.prefetch(users, items)
-        predictive_model = get_predictive_model()
+        predictive_model = get_predictive_model(info.to_json())
         print(' -- preparing phase, time:', timer('recompute_prepare'), 'seconds')
         timer('recompute_model')
         print(' -- model phase')
@@ -243,11 +244,14 @@ class Command(BaseCommand):
             print(' -- finishing phase, time:', timer('recompute_finish'), 'seconds')
         info.save()
 
-    def load_environment_info(self, initial, config_name):
+    def load_environment_info(self, initial, config_name, dry):
         set_default_config_name(config_name)
         if hasattr(self, '_environment_info'):
             return self._environment_info
         config = Config.objects.from_content(get_config('proso_models', 'predictive_model', default={}))
+        if dry:
+            self._environment_info = EnvironmentInfo(config=config)
+            return self._environment_info
         if initial:
             if EnvironmentInfo.objects.filter(status=EnvironmentInfo.STATUS_LOADING).count() > 0:
                 raise CommandError("There is already one currently loading environment.")
