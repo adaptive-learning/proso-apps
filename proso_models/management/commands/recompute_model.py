@@ -15,8 +15,13 @@ from proso_models.models import EnvironmentInfo, ENVIRONMENT_INFO_CACHE_KEY
 from proso_models.models import get_predictive_model
 import json
 import math
+import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy
 import sys
+
+
+sns.set(style='white')
 
 
 class Command(BaseCommand):
@@ -61,7 +66,12 @@ class Command(BaseCommand):
             '--dry',
             dest='dry',
             action='store_true',
-            default=False)
+            default=False),
+        make_option(
+            '--limit',
+            dest='limit',
+            type=int,
+            default=None)
     )
 
     def handle(self, *args, **options):
@@ -103,6 +113,8 @@ class Command(BaseCommand):
         with closing(connection.cursor()) as cursor:
             cursor.execute('SELECT COUNT(*) FROM proso_models_answer')
             answers_total = cursor.fetchone()[0]
+            if options['limit'] is not None:
+                answers_total = min(answers_total, options['limit'])
             print('total:', answers_total)
             processed = 0
             prediction = numpy.empty(answers_total)
@@ -137,12 +149,15 @@ class Command(BaseCommand):
                         answer_id=answer_id)
                     environment.process_answer(user, item, asked, answered, time, answer_id, response_time, guess)
                     processed += 1
+                    if processed >= answers_total:
+                        break
                 print('processed:', processed)
-        filename = settings.DATA_DIR + '/recompute_model_report.txt'
+        filename = settings.DATA_DIR + '/recompute_model_report_{}.json'.format(predictive_model.__class__.__name__)
         model_report = report(prediction, correct)
         with open(filename, 'w') as outfile:
             json.dump(model_report, outfile)
         print('Saving report to:', filename)
+        brier_graphs(model_report['brier'], predictive_model)
 
     def handle_gc(self, options):
         timer('recompute_gc')
@@ -342,3 +357,21 @@ def brier(predictions, real, bins=20):
             "bin_correct_means": list(correct_means),
         }
     }
+
+
+def brier_graphs(brier, model):
+    plt.figure()
+    plt.plot(brier['detail']['bin_prediction_means'], brier['detail']['bin_correct_means'])
+    plt.plot((0, 1), (0, 1))
+
+    bin_count = brier['detail']['bin_count']
+    counts = numpy.array(brier['detail']['bin_counts'])
+    bins = (numpy.arange(bin_count) + 0.5) / bin_count
+    plt.bar(bins, counts / max(counts), width=(0.5 / bin_count), alpha=0.5)
+    plt.title(model.__class__.__name__)
+    plt.xlabel('Predicted')
+    plt.ylabel('Observed')
+
+    filename = settings.DATA_DIR + '/recompute_model_report_{}.svg'.format(model.__class__.__name__)
+    plt.savefig(filename)
+    print('Plotting to:', filename)
