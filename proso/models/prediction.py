@@ -1,8 +1,9 @@
+from functools import reduce
+from math import exp
+from proso.util import timeit
 import abc
 import operator
-from math import exp
-from functools import reduce
-from proso.util import timeit
+import numpy
 
 
 class PredictiveModel(metaclass=abc.ABCMeta):
@@ -350,6 +351,150 @@ class ShiftedPredictiveModel(PredictiveModel):
 
     def predict_more_items(self, environment, user, items, time, **kwargs):
         return [min(1.0, max(0.0, p + self._prediction_shift)) for p in super(ShiftedPredictiveModel, self).predict_more_items(environment, user, items, time, **kwargs)]
+
+
+class PFAEStaircase(PredictiveModel):
+
+    def __init__(self, pfae_good=1.8, pfae_bad=0.8, elo_alpha=0.8, elo_dynamic_alpha=0.05, staircase_size=20, staircase_base=60):
+        self._pfae_good = pfae_good
+        self._pfae_bad = pfae_bad
+        self._elo_alpha = elo_alpha
+        self._elo_dynamic_alpha = elo_dynamic_alpha
+        self._staircase = [0] + [staircase_base * 2 ** i for i in range(staircase_size)]
+        MAX = 10 * 365 * 24 * 60 * 60  # 10 years
+        if MAX > self._staircase[-1]:
+            self._staircase.append(MAX)
+
+    def prepare_phase(self, environment, user, item, time, **kwargs):
+        result = {}
+        result['prior_skill'] = environment.read('prior_skill', user=user, default=0)
+        result['difficulty'] = environment.read('difficulty', item=item, default=0)
+        result['current_skill'] = environment.read('current_skill', user=user, item=item)
+        result['use_prior'] = result['current_skill'] is None
+        if result['use_prior']:
+            result['user_first_answers'] = environment.number_of_first_answers(user=user)
+            result['item_first_answers'] = environment.number_of_first_answers(item=item)
+        else:
+            result['last_time'] = environment.last_answer_time(user=user, item=item)
+            staircase_keys = ['staircase_val_{}'.format(i) for i in self._staircase] + ['staircase_count_{}'.format(i) for i in self._staircase]
+            staircase_loaded = environment.read_more_keys(staircase_keys, default=0)
+            result['staircase'] = {
+                s: (staircase_loaded['staircase_val_{}'.format(s)], staircase_loaded['staircase_count_{}'.format(s)])
+                for s in self._staircase
+            }
+        return result
+
+    def prepare_phase_more_items(self, environment, user, items, time, **kwargs):
+        result = {}
+        result['prior_skill'] = environment.read('prior_skill', user=user, default=0)
+        result['difficulties'] = environment.read_more_items('difficulty', items=items, default=0)
+        result['current_skills'] = environment.read_more_items('current_skill', user=user, items=items)
+        result['last_times'] = environment.last_answer_time_more_items(user=user, items=items)
+        staircase_keys = ['staircase_val_{}'.format(i) for i in self._staircase] + ['staircase_count_{}'.format(i) for i in self._staircase]
+        staircase_loaded = environment.read_more_keys(staircase_keys, default=0)
+        result['staircase'] = {
+            s: (staircase_loaded['staircase_val_{}'.format(s)], staircase_loaded['staircase_count_{}'.format(s)])
+            for s in self._staircase
+        }
+        return result
+
+    def predict_phase(self, data, user, item, time, **kwargs):
+        if data['current_skill'] is None:
+            skill = data['prior_skill'] - data['difficulty']
+        else:
+            seconds_ago = _total_seconds_diff(time, data['last_time']) if data['last_time'] and time else self._staircase[-1]
+            skill = data['current_skill'] + self._get_shift(seconds_ago, data['staircase'])
+        return predict_simple(
+            skill,
+            number_of_options=len(kwargs['options']) if 'options' in kwargs else 0,
+            guess=kwargs.get('guess'))[0]
+
+    def predict_phase_more_items(self, data, user, items, time, **kwargs):
+        preds = []
+        for i in items:
+            preds.append(self.predict_phase({
+                'prior_skill': data['prior_skill'],
+                'difficulty': data['difficulties'][i],
+                'current_skill': data['current_skills'][i],
+                'last_time': data['last_times'][i],
+                'staircase': data['staircase'],
+            }, user, i, time, **kwargs))
+        return preds
+
+    def update_phase(self, environment, data, prediction, user, item, correct, time, answer_id, **kwargs):
+        result = correct
+        diff = result - prediction
+        if data['current_skill'] is None:
+            current_skill = data['prior_skill'] - data['difficulty']
+        else:
+            current_skill = data['current_skill']
+        if result:
+            current_skill = current_skill + self._pfae_good * diff
+        else:
+            current_skill = current_skill + self._pfae_bad * diff
+        environment.write('current_skill', current_skill, user=user, item=item, time=time, answer=answer_id)
+        if data['use_prior']:
+            alpha_fun = lambda n: self._elo_alpha / (1 + self._elo_dynamic_alpha * n)
+            prior_skill_alpha = alpha_fun(data['user_first_answers'])
+            difficulty_alpha = alpha_fun(data['item_first_answers'])
+            environment.write(
+                'prior_skill', data['prior_skill'] + prior_skill_alpha * diff,
+                user=user, time=time, answer=answer_id)
+            environment.write(
+                'difficulty', data['difficulty'] - difficulty_alpha * diff,
+                item=item, time=time, answer=answer_id)
+        else:
+            seconds_ago = _total_seconds_diff(time, data['last_time']) if data['last_time'] and time else self._staircase[-1]
+            self._update_shift(environment, seconds_ago, data['staircase'], diff)
+
+    def _update_shift(self, environment, seconds_ago, staircase, diff):
+        lower, upper, distance = self._get_staircase_bucket(seconds_ago)
+        stored_lower = staircase[lower]
+        stored_upper = staircase[upper]
+        if stored_lower is None:
+            stored_lower = (0, 0)
+        if stored_upper is None:
+            stored_upper = (0, 0)
+        environment.write(
+            'staircase_val_{}'.format(lower),
+            stored_lower[0] + diff * (1 - distance)
+        )
+        environment.write(
+            'staircase_count_{}'.format(lower),
+            stored_lower[1] + 1 - distance
+        )
+        environment.write(
+            'staircase_val_{}'.format(upper),
+            stored_upper[0] + diff * distance
+        )
+        environment.write(
+            'staircase_count_{}'.format(upper),
+            stored_upper[1] + distance
+        )
+
+    def _get_shift(self, seconds_ago, staircase):
+        lower, upper, distance = self._get_staircase_bucket(seconds_ago)
+        stored_lower = staircase[lower]
+        stored_upper = staircase[upper]
+        if stored_lower is None:
+            stored_lower = (0, 0)
+        if stored_upper is None:
+            stored_upper = (0, 0)
+        return numpy.round(
+            (1 - distance) * (0 if stored_lower[1] == 0 else stored_lower[0] / stored_lower[1])
+            +
+            distance * (0 if stored_upper[1] == 0 else stored_upper[0] / stored_upper[1]),
+            4)
+
+    def _get_staircase_bucket(self, seconds_ago):
+        seconds_ago = max(0.01, min(self._staircase[-1] - 1, seconds_ago))
+        lower = max([mod for mod in self._staircase if mod <= seconds_ago])
+        upper = min([mod for mod in self._staircase if mod > seconds_ago])
+        seconds_ago_log = numpy.log(seconds_ago)
+        lower_log = numpy.log(lower) if lower > 1 else 0
+        upper_log = numpy.log(upper)
+        distance = (seconds_ago_log - lower_log) / (upper_log - lower_log)
+        return lower, upper, distance
 
 
 def predict_simple(skill_asked, number_of_options=None, guess=None):

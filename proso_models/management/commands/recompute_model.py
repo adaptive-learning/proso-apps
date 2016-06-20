@@ -1,5 +1,6 @@
 from clint.textui import progress
 from contextlib import closing
+from django.conf import settings
 from django.core.cache import cache
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
@@ -7,11 +8,20 @@ from django.db import transaction
 from optparse import make_option
 from proso.django.config import instantiate_from_config, set_default_config_name, get_config
 from proso.django.util import is_on_postgresql
+from proso.models.environment import InMemoryEnvironment
 from proso.util import timer
 from proso_common.models import Config
 from proso_models.models import EnvironmentInfo, ENVIRONMENT_INFO_CACHE_KEY
 from proso_models.models import get_predictive_model
+import json
+import math
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy
 import sys
+
+
+sns.set(style='white')
 
 
 class Command(BaseCommand):
@@ -52,6 +62,16 @@ class Command(BaseCommand):
             dest='validate',
             action='store_true',
             default=False),
+        make_option(
+            '--dry',
+            dest='dry',
+            action='store_true',
+            default=False),
+        make_option(
+            '--limit',
+            dest='limit',
+            type=int,
+            default=None)
     )
 
     def handle(self, *args, **options):
@@ -59,6 +79,8 @@ class Command(BaseCommand):
             self.handle_cancel(options)
         elif options['garbage_collector']:
             self.handle_gc(options)
+        elif options['dry']:
+            self.handle_dry(options)
         else:
             self.handle_recompute(options)
         if options['validate']:
@@ -83,6 +105,59 @@ class Command(BaseCommand):
                 sys.exit('canceling due to previous error')
             else:
                 print(' -- validation passed:', timer('recompute_validation'), 'seconds')
+
+    def handle_dry(self, options):
+        info = self.load_environment_info(options['initial'], options['config_name'], True)
+        environment = InMemoryEnvironment(audit_enabled=False)
+        predictive_model = get_predictive_model(info.to_json())
+        with closing(connection.cursor()) as cursor:
+            cursor.execute('SELECT COUNT(*) FROM proso_models_answer')
+            answers_total = cursor.fetchone()[0]
+            if options['limit'] is not None:
+                answers_total = min(answers_total, options['limit'])
+            print('total:', answers_total)
+            processed = 0
+            prediction = numpy.empty(answers_total)
+            correct = numpy.empty(answers_total)
+            while processed < answers_total:
+                cursor.execute(
+                    '''
+                    SELECT
+                        id,
+                        user_id,
+                        item_id,
+                        item_asked_id,
+                        item_answered_id,
+                        time,
+                        response_time,
+                        guess
+                    FROM proso_models_answer
+                    ORDER BY id
+                    OFFSET %s LIMIT %s
+                    ''', [processed, options['batch_size']])
+                for (answer_id, user, item, asked, answered, time, response_time, guess) in cursor:
+                    correct[processed] = asked == answered
+                    prediction[processed] = predictive_model.predict_and_update(
+                        environment,
+                        user,
+                        item,
+                        asked == answered,
+                        time,
+                        item_answered=answered,
+                        item_asked=asked,
+                        guess=guess,
+                        answer_id=answer_id)
+                    environment.process_answer(user, item, asked, answered, time, answer_id, response_time, guess)
+                    processed += 1
+                    if processed >= answers_total:
+                        break
+                print('processed:', processed)
+        filename = settings.DATA_DIR + '/recompute_model_report_{}.json'.format(predictive_model.__class__.__name__)
+        model_report = report(prediction, correct)
+        with open(filename, 'w') as outfile:
+            json.dump(model_report, outfile)
+        print('Saving report to:', filename)
+        brier_graphs(model_report['brier'], predictive_model)
 
     def handle_gc(self, options):
         timer('recompute_gc')
@@ -114,7 +189,7 @@ class Command(BaseCommand):
 
     def handle_recompute(self, options):
         timer('recompute_all')
-        info = self.load_environment_info(options['initial'], options['config_name'])
+        info = self.load_environment_info(options['initial'], options['config_name'], False)
         if options['finish']:
             with transaction.atomic():
                 to_process = self.number_of_answers_to_process(info)
@@ -131,7 +206,7 @@ class Command(BaseCommand):
         environment = self.load_environment(info)
         users, items = self.load_user_and_item_ids(info, options['batch_size'])
         environment.prefetch(users, items)
-        predictive_model = get_predictive_model()
+        predictive_model = get_predictive_model(info.to_json())
         print(' -- preparing phase, time:', timer('recompute_prepare'), 'seconds')
         timer('recompute_model')
         print(' -- model phase')
@@ -184,11 +259,14 @@ class Command(BaseCommand):
             print(' -- finishing phase, time:', timer('recompute_finish'), 'seconds')
         info.save()
 
-    def load_environment_info(self, initial, config_name):
+    def load_environment_info(self, initial, config_name, dry):
         set_default_config_name(config_name)
         if hasattr(self, '_environment_info'):
             return self._environment_info
         config = Config.objects.from_content(get_config('proso_models', 'predictive_model', default={}))
+        if dry:
+            self._environment_info = EnvironmentInfo(config=config)
+            return self._environment_info
         if initial:
             if EnvironmentInfo.objects.filter(status=EnvironmentInfo.STATUS_LOADING).count() > 0:
                 raise CommandError("There is already one currently loading environment.")
@@ -240,3 +318,60 @@ class Command(BaseCommand):
                 return 0
             else:
                 return fetched[0]
+
+
+def report(predictions, real):
+    return {
+        'rmse': rmse(predictions, real),
+        'brier': brier(predictions, real),
+    }
+
+
+def rmse(predictions, real):
+    return math.sqrt(numpy.mean((predictions - real) ** 2))
+
+
+def brier(predictions, real, bins=20):
+    counts = numpy.zeros(bins)
+    correct = numpy.zeros(bins)
+    prediction = numpy.zeros(bins)
+    for p, r in zip(predictions, real):
+        bin = min(int(p * bins), bins - 1)
+        counts[bin] += 1
+        correct[bin] += r
+        prediction[bin] += p
+    prediction_means = prediction / counts
+    prediction_means[numpy.isnan(prediction_means)] = ((numpy.arange(bins) + 0.5) / bins)[numpy.isnan(prediction_means)]
+    correct_means = correct / counts
+    correct_means[numpy.isnan(correct_means)] = 0
+    size = len(predictions)
+    answer_mean = sum(correct) / size
+    return {
+        "reliability": sum(counts * (correct_means - prediction_means) ** 2) / size,
+        "resolution": sum(counts * (correct_means - answer_mean) ** 2) / size,
+        "uncertainty": answer_mean * (1 - answer_mean),
+        "detail": {
+            "bin_count": bins,
+            "bin_counts": list(counts),
+            "bin_prediction_means": list(prediction_means),
+            "bin_correct_means": list(correct_means),
+        }
+    }
+
+
+def brier_graphs(brier, model):
+    plt.figure()
+    plt.plot(brier['detail']['bin_prediction_means'], brier['detail']['bin_correct_means'])
+    plt.plot((0, 1), (0, 1))
+
+    bin_count = brier['detail']['bin_count']
+    counts = numpy.array(brier['detail']['bin_counts'])
+    bins = (numpy.arange(bin_count) + 0.5) / bin_count
+    plt.bar(bins, counts / max(counts), width=(0.5 / bin_count), alpha=0.5)
+    plt.title(model.__class__.__name__)
+    plt.xlabel('Predicted')
+    plt.ylabel('Observed')
+
+    filename = settings.DATA_DIR + '/recompute_model_report_{}.svg'.format(model.__class__.__name__)
+    plt.savefig(filename)
+    print('Plotting to:', filename)

@@ -77,9 +77,11 @@ def get_environment_write_hooks():
     return instantiate_from_config_list('proso_models', 'environment_write_hooks')
 
 
-def get_predictive_model():
+def get_predictive_model(environment_info=None):
+    if environment_info is None:
+        environment_info = get_active_environment_info()
     # predictive model is configured by active environment info
-    return instantiate_from_json(get_active_environment_info()['config'])
+    return instantiate_from_json(environment_info['config'])
 
 
 def get_item_selector():
@@ -481,8 +483,8 @@ class EnvironmentInfo(models.Model):
             'object_type': 'environment_info',
             'status': dict(list(EnvironmentInfo.STATUS))[self.status],
             'revision': self.revision,
-            'updated': self.updated.strftime('%Y-%m-%d %H:%M:%S'),
-            'created': self.created.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated': None if self.updated is None else self.updated.strftime('%Y-%m-%d %H:%M:%S'),
+            'created': None if self.updated is None else self.created.strftime('%Y-%m-%d %H:%M:%S'),
             'config': json.loads(self.config.content),
         }
 
