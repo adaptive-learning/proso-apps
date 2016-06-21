@@ -71,7 +71,12 @@ class Command(BaseCommand):
             '--limit',
             dest='limit',
             type=int,
-            default=None)
+            default=None),
+        make_option(
+            '--force',
+            dest='force',
+            action='store_true',
+            default=False)
     )
 
     def handle(self, *args, **options):
@@ -193,7 +198,7 @@ class Command(BaseCommand):
         if options['finish']:
             with transaction.atomic():
                 to_process = self.number_of_answers_to_process(info)
-                if self.number_of_answers_to_process(info) >= options['batch_size']:
+                if self.number_of_answers_to_process(info) >= options['batch_size'] and not options['force']:
                     raise CommandError("There is more then allowed number of answers (%s) to process." % to_process)
                 self.recompute(info, options)
         else:
