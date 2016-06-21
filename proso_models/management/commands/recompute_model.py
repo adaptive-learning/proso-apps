@@ -151,7 +151,9 @@ class Command(BaseCommand):
                         item_answered=answered,
                         item_asked=asked,
                         guess=guess,
-                        answer_id=answer_id)
+                        answer_id=answer_id,
+                        response_time=response_time,
+                    )
                     environment.process_answer(user, item, asked, answered, time, answer_id, response_time, guess)
                     processed += 1
                     if processed >= answers_total:
@@ -243,7 +245,9 @@ class Command(BaseCommand):
                     item_answered=answered,
                     item_asked=asked,
                     guess=guess,
-                    answer_id=answer_id)
+                    answer_id=answer_id,
+                    response_time=response_time,
+                )
                 environment.process_answer(user, item, asked, answered, time, answer_id, response_time, guess)
         print(' -- model phase, time:', timer('recompute_model'), 'seconds')
         timer('recompute_flush')

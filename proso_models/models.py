@@ -1343,7 +1343,9 @@ def update_predictive_model(sender, instance, **kwargs):
         instance.time,
         instance.pk,
         item_answered=instance.item_answered_id,
-        item_asked=instance.item_asked_id)
+        item_asked=instance.item_asked_id,
+        response_time=instance.response_time,
+    )
 
 
 @receiver(post_save, sender=Variable)
