@@ -32,7 +32,9 @@ class UserAPITest(TestCase):
             "properties": {},
             "object_type": "user_profile",
             "id": 1,
-            "public": False
+            "public": False,
+            "owner_of": [],
+            "member_of": [],
         }
         response = json.loads(response.content.decode("utf-8"))["data"]
         expected_profile["user"]["id"] = response["user"]["id"]

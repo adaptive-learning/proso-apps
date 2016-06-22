@@ -17,6 +17,7 @@ from proso.django.response import HttpError
 from django.utils.translation import ugettext as _
 import logging
 
+from proso.util import random_string
 
 LOGGER = logging.getLogger('django.request')
 
@@ -83,6 +84,9 @@ class UserProfile(models.Model):
                 } for g in self.user.groups.all()]
             }
         }
+        if not nested:
+            data['member_of'] = [c.to_json(nested=True) for c in self.classes.all()]
+            data['owner_of'] = [c.to_json(nested=True) for c in self.owned_classes.all()]
         if stats:
             from proso_models.models import Answer
             data["number_of_answers"] = Answer.objects.count(self.user)
@@ -456,6 +460,39 @@ def migrate_google_openid_user(user):
             return None
 
 
+class ClassManager(models.Manager):
+
+    def prepare_related(self):
+        return self.select_related('owner').prefetch_related('members')
+
+
+class Class(models.Model):
+    code = models.CharField(max_length=50, blank=True, unique=True)
+    name = models.CharField(max_length=255)
+    owner = models.ForeignKey(UserProfile, related_name='owned_classes')
+    members = models.ManyToManyField(UserProfile, related_name='classes', blank=True)
+
+    objects = ClassManager()
+
+    class Meta:
+        verbose_name_plural = 'classes'
+
+    def to_json(self, nested=False):
+        data = {
+            'code': self.code,
+            'name': self.name,
+        }
+
+        if not nested:
+            data['owner'] = self.owner.to_json(nested=True)
+            data['members'] = [m.to_json(nested=True) for m in self.members.all()]
+
+        return data
+
+    def __str__(self):
+        return self.name
+
+
 ################################################################################
 # Signals
 ################################################################################
@@ -515,6 +552,16 @@ def init_user_profile(sender, instance, created=False, **kwargs):
 def init_username(sender, user, **kwargs):
     if is_user_social(user):
         name_lazy_user(user, save=False)
+
+
+@receiver(pre_save, sender=Class)
+def create_class_code(sender, instance, created=False, **kwargs):
+    if not instance.code:
+        condition = True
+        while condition:
+            code = random_string(5)
+            condition = Class.objects.filter(code=code).exists()
+        instance.code = code
 
 
 PROSO_MODELS_TO_EXPORT = [
