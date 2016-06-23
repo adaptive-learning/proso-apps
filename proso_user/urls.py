@@ -22,4 +22,9 @@ urlpatterns = patterns(
     url(r'^question/(?P<id>\d+)', 'show_one', {'object_class': UserQuestion}, name='show_user_question'),
     url(r'^possible_answers/', 'show_more', {'object_class': UserQuestionPossibleAnswer}, name='show_user_question_possible_answers'),
     url(r'^possible_answer/(?P<id>\d+)', 'show_one', {'object_class': UserQuestionPossibleAnswer}, name='show_user_question_possible_answer'),
+) + patterns(
+    'proso_user.views_classes',
+    url(r'^classes/$', 'classes', name='classes'),
+    url(r'^create_class/$', 'create_class', name='create_class'),
+    url(r'^join_class/$', 'join_class', name='join_class'),
 )

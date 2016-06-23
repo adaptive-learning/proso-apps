@@ -1,0 +1,25 @@
+{% extends 'user_base.html' %}
+
+{% load jsonify %}
+
+{% block header_block %}{% endblock %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+
+    <h2>Emulate POST request</h2>
+    <form class="pure-form" action="" method="post" enctype='application/json'>
+        <fieldset>
+            <legend>Create class</legend>
+            <input type="text" name="name" required placeholder="Class Name">
+            <input type="text" name="code" placeholder="Code">
+            <button type="submit" class="pure-button pure-button-primary">Create</button>
+        </fieldset>
+        {% csrf_token %}
+    </form>
+
+    {{ json|obj2richjson }}
+{% endblock %}
