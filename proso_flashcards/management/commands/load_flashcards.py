@@ -63,7 +63,7 @@ class Command(BaseCommand):
         db_categories = {}
         item_mapping = {}
         for db_category in Category.objects.all():
-            db_categories[db_category.identifier + db_category.lang] = db_category
+            db_categories[db_category.identifier, db_category.lang] = db_category
             item_mapping[db_category.identifier] = db_category.item_id
         if data is None:
             return
@@ -98,7 +98,7 @@ class Command(BaseCommand):
         db_contexts = {}
         item_mapping = {}
         for db_context in model.objects.all():
-            db_contexts[db_context.identifier + db_context.lang] = db_context
+            db_contexts[db_context.identifier, db_context.lang] = db_context
             item_mapping[db_context.identifier] = db_context.item_id
         if data is None:
             return
@@ -141,7 +141,7 @@ class Command(BaseCommand):
         db_terms = {}
         item_mapping = {}
         for db_term in model.objects.all():
-            db_terms[db_term.identifier + db_term.lang] = db_term
+            db_terms[db_term.identifier, db_term.lang] = db_term
             item_mapping[db_term.identifier] = db_term.item_id
         if data is None:
             return
@@ -178,7 +178,7 @@ class Command(BaseCommand):
         db_flashcards_loaded = {}
         item_mapping = {}
         for db_flashcard in Flashcard.objects.all():
-            db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
+            db_flashcards[db_flashcard.identifier, db_flashcard.lang] = db_flashcard
             item_mapping[db_flashcard.identifier] = db_flashcard.item_id
         db_flascards_before_load = copy.copy(db_flashcards)
 
@@ -228,15 +228,15 @@ class Command(BaseCommand):
                     if modified:
                         db_flashcard.save()
                     item_mapping[db_flashcard.identifier] = db_flashcard.item_id
-                db_flashcards_loaded[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
-                db_flashcards[db_flashcard.identifier + db_flashcard.lang] = db_flashcard
+                db_flashcards_loaded[db_flashcard.identifier, db_flashcard.lang] = db_flashcard
+                db_flashcards[db_flashcard.identifier, db_flashcard.lang] = db_flashcard
 
         print("\nChecking flashcards for loaded contexts")
         context_id_loaded = set([f.context_id for f in list(db_flashcards_loaded.values())])
         db_flashcards_ignored = {
             key: db_flashcards[key]
             for key in (
-                set({key: db_flashcard for (key, db_flashcard) in list(db_flascards_before_load.items()) if db_flashcard.context_id in context_id_loaded}.keys())
+                {key for (key, db_flashcard) in list(db_flascards_before_load.items()) if db_flashcard.context_id in context_id_loaded}
                 -
                 set(db_flashcards_loaded.keys())
             )
@@ -245,7 +245,7 @@ class Command(BaseCommand):
             deleted_flashcard_items = set()
             print(("\nThe following flashcards has been ignored during loading, action:", 'IGNORE' if ignored_flashcards_strategy is None else ignored_flashcards_strategy.upper()))
             for db_flashcard in list(db_flashcards_ignored.values()):
-                print((' --', db_flashcard.lang, ':', db_flashcard.identifier, ':', db_flashcard.context.identifier))
+                print(' --', db_flashcard.lang, ':', db_flashcard.identifier, ':', db_flashcard.context.identifier)
                 if ignored_flashcards_strategy == 'delete':
                     if db_flashcard.item_id not in deleted_flashcard_items:
                         deleted_flashcard_items.add(db_flashcard.item_id)
@@ -254,24 +254,33 @@ class Command(BaseCommand):
                     db_flashcard.active = False
                     db_flashcard.save()
 
+        self._load_item_relations(data, db_flashcards, 'categories')
         print(("New total number of flashcards in DB: {}".format(len(db_flashcards))))
         return db_flashcards
 
     def _load_item_relations(self, data, db_objects, categories_json_key):
+        db_objects_processed = {}
+        for (identifier, lang), db_object in db_objects.items():
+            _, found_langs = db_objects_processed.get(identifier, (None, []))
+            db_objects_processed[identifier] = db_object, found_langs + [lang]
         print("\nFilling item types")
         call_command('fill_item_types')
         print("\nBuilding dependencies")
         parent_subgraph = {}
         lang_intersect = None
         for json_object in progress.bar(data, every=max(1, len(data) / 100)):
+            db_object, langs = db_objects_processed[json_object["id"]]
             # The language is not important here.
-            langs = [k[-2:] for k in json_object.keys() if re.match(r'^name-\w\w$', k)]
             lang_intersect = set(langs) if lang_intersect is None else lang_intersect & set(langs)
-            lang = langs[0]
-            db_object = db_objects[json_object["id"], lang]
             parent_items = parent_subgraph.get(db_object.item_id, set())
             for parent in json_object.get(categories_json_key, []):
                 parent_items.add('proso_flashcards_category/{}'.format(parent))
+            if 'context' in json_object:
+                parent_items.add('proso_flashcards_context/{}'.format(json_object['context']))
+            if 'term' in json_object:
+                parent_items.add('proso_flashcards_term/{}'.format(json_object['term']))
+            if 'term-secondary' in json_object:
+                parent_items.add('proso_flashcards_term/{}'.format(json_object['term-secondary']))
             parent_subgraph[db_object.item_id] = parent_items
         lang = lang_intersect.pop()
         translated = Item.objects.translate_identifiers(

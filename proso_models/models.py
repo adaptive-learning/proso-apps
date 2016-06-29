@@ -593,21 +593,28 @@ class ItemManager(models.Manager):
         leaves = self.get_leaves(set(translated.values()), language=language)
         result = []
         for identifier_filter in identifier_filters:
-            filter_result = set()
+            filter_result = None
+            filter_neg_result = set()
             for inner_filter in identifier_filter:
-                inner_result = None
-                inner_neg_result = set()
+                inner_result = set()
+                inner_neg_result = None
                 if len(inner_filter) == 0:
                     raise Exception('Empty nested filters are not allowed.')
                 for identifier in inner_filter:
+                    if inner_neg_result is not None:
+                        raise Exception('Nested filters can not contain multiple statements.')
                     if identifier.startswith('-'):
-                        inner_neg_result |= set(leaves[translated[identifier[1:]]])
-                    elif inner_result is None:
-                        inner_result = set(leaves[translated[identifier]])
+                        inner_neg_result = set(leaves[translated[identifier[1:]]])
                     else:
-                        inner_result &= set(leaves[translated[identifier]])
-                filter_result |= inner_result - inner_neg_result
-            result.append(sorted(list(filter_result)))
+                        inner_result |= set(leaves[translated[identifier]])
+                if len(inner_result) > 0:
+                    if filter_result is None:
+                        filter_result = inner_result
+                    else:
+                        filter_result &= inner_result
+                if inner_neg_result is not None:
+                    filter_neg_result != inner_neg_result
+            result.append(sorted(list(filter_result - filter_neg_result)))
         return result
 
     def filter_all_reachable_leaves(self, identifier_filter, language):
