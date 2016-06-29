@@ -75,9 +75,9 @@ class Direction(metaclass=abc.ABCMeta):
 class RandomDirection(Direction):
     def get_direction(self, flashcard):
         if 'term_secondary' in flashcard:
-            return random.choice([FlashcardAnswer.FROM_DESCRIPTION, FlashcardAnswer.FROM_TERM])
-        else:
             return random.choice([FlashcardAnswer.FROM_TERM_TO_TERM_SECONDARY, FlashcardAnswer.FROM_TERM_SECONDARY_TO_TERM])
+        else:
+            return random.choice([FlashcardAnswer.FROM_DESCRIPTION, FlashcardAnswer.FROM_TERM])
 
 
 class OnlyFromTermDirection(Direction):
