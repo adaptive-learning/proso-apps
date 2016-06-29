@@ -102,7 +102,6 @@ class Flashcard(models.Model, ModelDiffMixin):
             "active": self.active,
             "lang": self.lang,
             "term": self.get_term().to_json(nested=True),
-            "description": self.description
         }
         if hasattr(self, "options"):
             data["options"] = [o.to_json(nested=True) for o in sorted(self.options, key=lambda f: f.term.name)]
@@ -114,6 +113,8 @@ class Flashcard(models.Model, ModelDiffMixin):
             data["context_id"] = self.context_id
         if self.term_secondary is not None:
             data["term_secondary"] = self.get_term_secondary().to_json(nested=True)
+        if self.description is not None:
+            data['description'] = self.description
         return data
 
     def get_term(self):
