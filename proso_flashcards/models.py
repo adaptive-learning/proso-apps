@@ -101,8 +101,11 @@ class Flashcard(models.Model, ModelDiffMixin):
             "object_type": "fc_flashcard",
             "active": self.active,
             "lang": self.lang,
-            "term": self.get_term().to_json(nested=True),
         }
+        if not nested:
+            data["term"] = self.get_term().to_json(nested=True)
+        else:
+            data['term_id'] = self.term_id
         if hasattr(self, "options"):
             data["options"] = [o.to_json(nested=True) for o in sorted(self.options, key=lambda f: f.term.name)]
         if hasattr(self, 'practice_meta'):
