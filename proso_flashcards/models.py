@@ -232,8 +232,8 @@ class FlashcardAnswerManager(models.Manager):
 class FlashcardAnswer(Answer):
     FROM_TERM = "t2d"
     FROM_DESCRIPTION = "d2t"
-    FROM_TERM_TO_TERM_SECONDARY = 't2t2'
-    FROM_TERM_SECONDARY_TO_TERM = 't22t'
+    FROM_TERM_TO_TERM_SECONDARY = 't2ts'
+    FROM_TERM_SECONDARY_TO_TERM = 'ts2t'
 
     options = models.ManyToManyField(Flashcard, related_name="answers_with_this_as_option")
 
