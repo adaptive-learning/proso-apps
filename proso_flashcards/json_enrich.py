@@ -2,6 +2,7 @@ from .flashcard_construction import get_direction, get_option_set
 from collections import defaultdict
 from proso.django.config import get_config
 from proso.django.request import get_time, is_time_overridden
+from proso.list import flatten
 from proso_flashcards.models import Flashcard, FlashcardAnswer
 from proso_models.json_enrich import item2object
 from proso_models.models import Item, get_item_selector, get_option_selector, get_environment
@@ -12,6 +13,15 @@ def answer_type(request, json_list, nested):
     for question in json_list:
         if question['payload']['object_type'] == 'fc_flashcard':
             question['answer_class'] = 'flashcard_answer'
+
+
+def context_flashcards(request, json_list, nested):
+    if nested or 'contexts_with_flashcards' not in request.GET:
+        return
+    leave_items = Item.objects.get_leaves([c['item_id'] for c in json_list])
+    translated = Item.objects.translate_item_ids(flatten(leave_items.values()), json_list[0]['lang'])
+    for context in json_list:
+        context['flashcards'] = [translated[i] for i in leave_items[context['item_id']]]
 
 
 def options(request, json_list, nested):
