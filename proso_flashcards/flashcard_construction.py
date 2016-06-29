@@ -53,7 +53,7 @@ class ContextOptionSet(OptionSet):
                 flashcard['item_id']: [i for i in reduce(
                     lambda xs, ys: set(xs) & set(ys),
                     Item.objects.get_leaves({context_item_ids[flashcard['context']['id']]} | flashcard_types[flashcard['item_id']], language=flashcard['lang']).values()
-                ) if secondary_terms.get(i) is not None == 'term_secondary' in flashcard]
+                ) if (secondary_terms.get(i) is not None) == ('term_secondary' in flashcard)]
                 for flashcard in to_find
             }
             # trying to decrease probability of race condition
