@@ -17,7 +17,7 @@
   pk: 1
   fields:
     identifier: e6a50615744c5caa5f4e
-    query: "[[\"context/world\", \"category/state\"]]"
+    query: "[[\"context/world\"], [\"category/state\"]]"
     name: "St\xE1ty sv\u011Bta"
     lang: cs
     active: true
@@ -26,7 +26,7 @@
   pk: 2
   fields:
     identifier: e6a50615744c5caa5f4e
-    query: "[[\"context/world\", \"category/state\"]]"
+    query: "[[\"context/world\"], [\"category/state\"]]"
     name: World states
     lang: en
     active: true
@@ -35,7 +35,7 @@
   pk: 3
   fields:
     identifier: cdc9f5634998d568e838
-    query: "[[\"context/africa\", \"category/state\"]]"
+    query: "[[\"context/africa\"], [\"category/state\"]]"
     name: "Africk\xE1 st\xE1ty"
     lang: cs
     active: true
@@ -44,7 +44,7 @@
   pk: 4
   fields:
     identifier: cdc9f5634998d568e838
-    query: "[[\"context/africa\", \"category/state\"]]"
+    query: "[[\"context/africa\"], [\"category/state\"]]"
     name: African states
     lang: en
     active: true
@@ -53,7 +53,7 @@
   pk: 5
   fields:
     identifier: c8922dbde0d513211439
-    query: "[[\"context/cz\", \"category/city\"]]"
+    query: "[[\"context/cz\"], [\"category/city\"]]"
     name: "Ceska mesta"
     lang: cs
     active: true
@@ -62,7 +62,7 @@
   pk: 6
   fields:
     identifier: c8922dbde0d513211439
-    query: "[[\"context/cz\", \"category/city\"]]"
+    query: "[[\"context/cz\"], [\"category/city\"]]"
     name: Czech cities
     lang: en
     active: true

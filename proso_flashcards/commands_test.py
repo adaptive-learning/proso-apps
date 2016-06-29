@@ -94,8 +94,8 @@ class TestFlashcardsLoading(TestCase):
                 continue
             children = set(children) & set(flashcards.keys())
             self.assertEqual(
-                [flashcards[child].identifier for child in children],
-                flashcards_children.get(categories[item], [])
+                {flashcards[child].identifier for child in children},
+                set(flashcards_children.get(categories[item], []))
             )
 
         parent_graph = Item.objects.get_parents_graph(list(flashcards.keys()))

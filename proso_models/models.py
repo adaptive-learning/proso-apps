@@ -582,8 +582,6 @@ class ItemManager(models.Manager):
         for i, identifier_filter in enumerate(identifier_filters):
             if len(identifier_filter) == 1 and not isinstance(identifier_filter[0], list):
                 identifier_filters[i] = [identifier_filter]
-            if any([len(xs) == 1 and xs[0].startswith('-') for xs in identifier_filter]):
-                raise Exception('Filter containing only one identifier with "-" prefix is not allowed.')
         item_identifiers = [
             identifier[1:] if identifier.startswith('-') else identifier
             for identifier_filter in identifier_filters
@@ -624,8 +622,8 @@ class ItemManager(models.Manager):
         * the filter is a list of lists;
         * each of the inner list carries identifiers;
         * for each identifier, we find an item and all its reachable leaf items;
-        * within the inner list we intersect the reachable items;
-        * with the outer list we union the reachable items;
+        * within the inner list we union the reachable items;
+        * with the outer list we intersect the reachable items;
         * when an identifier starts with the prfix '-', we find its reachable
           leaf items and then complement them
 
@@ -637,9 +635,11 @@ class ItemManager(models.Manager):
              / \ / \\
             D   E   F
 
-            [[A, C]] ----> [E, F]
-            [[B, C]] ----> [E]
-            [[B, -C]] ---> [D]
+            [[A], [C]] ----> [D, F]
+            [[B], [C]] ----> [E]
+            [[B], [-C]] ---> [D]
+            [[A], [-D], [-F]] ---> [E]
+            [[-C]] ---> []
 
         Args::
             identifier_filter (list): list of lists of identifiers (some of them
