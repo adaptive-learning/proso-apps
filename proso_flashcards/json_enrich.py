@@ -16,7 +16,7 @@ def answer_type(request, json_list, nested):
 
 
 def context_flashcards(request, json_list, nested):
-    if nested or 'contexts_with_flashcards' not in request.GET:
+    if nested or len(json_list) > 1:
         return
     leave_items = Item.objects.get_leaves([c['item_id'] for c in json_list])
     translated = Item.objects.translate_item_ids(flatten(leave_items.values()), json_list[0]['lang'])
