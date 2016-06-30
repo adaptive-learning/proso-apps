@@ -37,7 +37,7 @@ def remove_flashcard_context(request, json_list, nested):
         return
     for fc in json_list:
         if 'context' in fc:
-            fc['config_id'] = fc['context']['id']
+            fc['context_id'] = fc['context']['id']
             del fc['context']
 
 
