@@ -800,6 +800,8 @@ class ItemManager(models.Manager):
                 kwargs[item_type['language']] = language
             if any([not is_nested_fun(item_id) for item_id in items]) and hasattr(model.objects, 'prepare_related'):
                 objs = model.objects.prepare_related()
+            elif hasattr(model.objects, 'prepare'):
+                objs = model.objects.prepare()
             else:
                 objs = model.objects
             for obj in objs.filter(**kwargs):
