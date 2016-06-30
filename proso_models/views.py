@@ -40,10 +40,7 @@ def status(request):
 @cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
 def to_practice(request):
     practice_filter = get_filter(request)
-    if len(practice_filter) > 0:
-        item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
-    else:
-        item_ids = Item.objects.get_all_available_leaves()
+    item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
     if len(item_ids) == 0:
         return render_json(request, {
             'error': _('There is no item for the given filter to practice.'),
@@ -281,10 +278,7 @@ def practice(request):
     if request.method == 'POST':
         _save_answers(request, practice_context)
 
-    if len(practice_filter) > 0:
-        item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
-    else:
-        item_ids = Item.objects.get_all_available_leaves()
+    item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
     item_ids = list(set(item_ids) - set(avoid))
     if len(item_ids) == 0:
         return render_json(request, {

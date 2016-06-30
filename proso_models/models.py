@@ -591,6 +591,9 @@ class ItemManager(models.Manager):
         leaves = self.get_leaves(set(translated.values()), language=language)
         result = []
         for identifier_filter in identifier_filters:
+            if len(identifier_filter) == 0:
+                result.append(self.get_all_available_leaves())
+                continue
             filter_result = None
             filter_neg_result = set()
             for inner_filter in identifier_filter:
