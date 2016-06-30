@@ -57,7 +57,7 @@ class Context(models.Model, ModelDiffMixin):
 
     objects = ContextManager()
 
-    def to_json(self, nested=False, with_content=True):
+    def to_json(self, nested=False):
         json = {
             "id": self.pk,
             "identifier": self.identifier,
@@ -65,9 +65,8 @@ class Context(models.Model, ModelDiffMixin):
             "object_type": "fc_context",
             "lang": self.lang,
             "name": self.name,
+            "content": self.content,
         }
-        if with_content:
-            json['content'] = self.content
         return json
 
     def __str__(self):

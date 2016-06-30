@@ -24,6 +24,22 @@ def context_flashcards(request, json_list, nested):
         context['flashcards'] = [translated[i] for i in leave_items[context['item_id']]]
 
 
+def remove_context_content(request, json_list, nested):
+    if 'without_content' not in request.GET:
+        return
+    for context in json_list:
+        if 'content' in context:
+            del context['content']
+
+
+def remove_flashcard_context(request, json_list, nested):
+    if 'without_contexts' not in request.GET:
+        return
+    for fc in json_list:
+        if 'context' in fc:
+            del fc['context']
+
+
 def options(request, json_list, nested):
     environment = get_environment()
     user_id = get_user_id(request)
