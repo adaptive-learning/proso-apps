@@ -481,6 +481,7 @@ class Class(models.Model):
         data = {
             'code': self.code,
             'name': self.name,
+            'id': self.pk,
         }
 
         if not nested:

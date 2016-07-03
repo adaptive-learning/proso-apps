@@ -46,7 +46,7 @@ def is_user_named(user):
 
 
 def is_user_real(user):
-    return bool(user.email) or (bool(user.first_name) and bool(user.last_name))
+    return bool(user.email) or (bool(user.first_name) or bool(user.last_name))
 
 
 def is_user_social(user):

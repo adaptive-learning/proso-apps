@@ -27,4 +27,6 @@ urlpatterns = patterns(
     url(r'^classes/$', 'classes', name='classes'),
     url(r'^create_class/$', 'create_class', name='create_class'),
     url(r'^join_class/$', 'join_class', name='join_class'),
+    url(r'^create_student/$', 'create_student', name='create_student'),
+    url(r'^login_student/$', 'login_student', name='login_student'),
 )

@@ -1,5 +1,9 @@
+from django.contrib.auth.models import User
+
 from proso.django.test import TestCase
 import json
+
+from proso_user.models import init_user_profile
 
 
 class UserAPITest(TestCase):
@@ -110,3 +114,48 @@ class UserAPITest(TestCase):
                 self.assertEqual(content[k]['content'], v, msg)
             else:
                 self.assertEqual(content[k], v, msg)
+
+    def test_class(self):
+        user = User.objects.create(username='testuser', email='test@test.com', is_staff=True)
+        user.set_password('12345')
+        user.save()
+        init_user_profile(User, user)
+        self.client.login(username='testuser', password='12345')
+
+        response = self.client.post('/user/create_class/', json.dumps({
+            'name': 'Test',
+        }), content_type='application/json')
+        self.assertEqual(response.status_code, 201, 'Class can be created.')
+
+        cls = json.loads(self.client.get('/user/classes/',
+                                         content_type='application/json').content.decode("utf-8"))['data'][0]
+        self.assertEqual(cls['name'], 'Test', 'Class has correct name.')
+        self.assertIsNotNone(cls['code'], 'Class has code.')
+        self.assertEqual(cls['owner']['user']['id'], user.pk, 'Class has correct owner.')
+        self.assertEqual(cls['members'], [], 'Class has no members.')
+
+        result = self.client.post('/user/create_student/', json.dumps({
+            'first_name': 'Testik',
+            'class': cls['id'],
+        }), content_type='application/json')
+        self.assertEqual(result.status_code, 403, 'Can not create student if not allowed in config.')
+
+        self.client.post('/user/create_student/?config.proso_user.allow_create_students=true', json.dumps({
+            'first_name': 'Testie',
+            'class': cls['id'],
+        }), content_type='application/json')
+
+        self.assertEqual(response.status_code, 201, 'Student can be created.')
+        cls = json.loads(self.client.get('/user/classes/',
+                                         content_type='application/json').content.decode("utf-8"))['data'][0]
+        self.assertEqual(len(cls['members']), 1, 'Class has new student as member.')
+
+        result = self.client.post('/user/login_student/', json.dumps({
+            'student': cls['members'][0]['id'],
+        }), content_type='application/json')
+        self.assertEqual(result.status_code, 403, 'Can not log in as student if not allowed in config.')
+
+        result = json.loads(self.client.post('/user/login_student/?config.proso_user.allow_login_students=true',
+                                             json.dumps({'student': cls['members'][0]['id']}),
+                                             content_type='application/json').content.decode("utf-8"))['data']
+        self.assertEqual(result['user']['first_name'], 'Testie', 'Can log as student and have correct name')
