@@ -86,7 +86,7 @@ class UserProfile(models.Model):
         }
         if not nested:
             data['member_of'] = [c.to_json(nested=True) for c in self.classes.all()]
-            data['owner_of'] = [c.to_json(nested=True) for c in self.owned_classes.all()]
+            data['owner_of'] = [c.to_json(nested=True, members=True) for c in self.owned_classes.all()]
         if stats:
             from proso_models.models import Answer
             data["number_of_answers"] = Answer.objects.count(self.user)
@@ -477,15 +477,15 @@ class Class(models.Model):
     class Meta:
         verbose_name_plural = 'classes'
 
-    def to_json(self, nested=False):
+    def to_json(self, nested=False, members=False):
         data = {
             'code': self.code,
             'name': self.name,
             'id': self.pk,
         }
 
-        if not nested:
-            data['owner'] = self.owner.to_json(nested=True)
+        data['owner'] = self.owner.to_json(nested=True)
+        if not nested or members:
             data['members'] = [m.to_json(nested=True) for m in self.members.all()]
 
         return data

@@ -1,6 +1,6 @@
 from django.contrib.auth import login
 from django.contrib.auth.models import User
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
 
 from proso.django.auth import get_unused_username
 from proso.django.config import get_config
@@ -60,7 +60,7 @@ def create_class(request):
         if 'code' in data:
             cls.code = data['code']
         cls.save()
-        return HttpResponse('ok', status=201)
+        return render_json(request, cls.to_json(), template='classes_create.html', status=201)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 
@@ -98,7 +98,7 @@ def join_class(request):
             }, template='classes_join.html', status=404)
 
         cls.members.add(request.user.userprofile)
-        return HttpResponse('ok', status=200)
+        return render_json(request, cls.to_json(), template='classes_join.html', status=200)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 
@@ -117,15 +117,15 @@ def create_student(request):
             first_name of student
         last_name (optional):
             last_name of student
-         (optional):
-            e-mail of student
+        email (optional):
+           e-mail of student
     """
 
     if not get_config('proso_user', 'allow_create_students', default=False):
         return render_json(request, {
             'error': _('Creation of new users is not allowed.'),
             'error_type': 'student_creation_not_allowed'
-        }, template='class_create_student.html', status=403)
+        }, template='class_create_student.html', help_text=create_student.__doc__, status=403)
 
     if request.method == 'GET':
         return render(request, 'class_create_student.html', {}, help_text=create_student.__doc__)
@@ -175,7 +175,7 @@ def create_student(request):
         user.save()
         cls.members.add(user.userprofile)
 
-        return HttpResponse('ok', status=201)
+        return render_json(request, user.userprofile.to_json(nested=True), template='class_create_student.html', status=201)
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
 
@@ -186,13 +186,13 @@ def login_student(request):
 
     POST parameters (JSON):
         student:
-            id of student
+            profile id of the student
     """
     if not get_config('proso_user', 'allow_login_students', default=False):
         return render_json(request, {
             'error': _('Log in as student is not allowed.'),
             'error_type': 'login_student_not_allowed'
-        }, template='class_create_student.html', status=403)
+        }, template='class_create_student.html', help_text=login_student.__doc__, status=403)
 
     if request.method == 'GET':
         return render(request, 'class_login_student.html', {}, help_text=login_student.__doc__)
