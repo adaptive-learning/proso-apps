@@ -92,9 +92,8 @@ def user_stats_bulk(request):
     language = get_language(request)
     users = load_query_json(request.GET, "users")
     if request.user.is_staff:
-        if not hasattr(request.user, 'userprofile') or \
-                        User.objects.filter(pk__in=users,
-                                            userprofile__classes__owner=request.user.userprofile).count() < len(users):
+        if not hasattr(request.user, 'userprofile') or User.objects.filter(pk__in=users,
+                       userprofile__classes__owner=request.user.userprofile).count() < len(users):
             return render_json(request, {
                 'error': _('Some requested users are not in owned classes'),
                 'error_type': 'permission_denied'
