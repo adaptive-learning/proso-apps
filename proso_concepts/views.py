@@ -3,7 +3,7 @@ import logging
 import datetime
 from collections import defaultdict
 from django.conf import settings
-from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.models import User
 from django.http import HttpResponse
 from lazysignup.decorators import allow_lazy_user
 from social.apps.django_app.default.models import UserSocialAuth
@@ -14,6 +14,7 @@ from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import get_user_id, load_query_json, get_language
 from proso.django.response import render_json
 from proso_concepts.models import Concept, UserStat, Tag
+from django.utils.translation import ugettext as _
 
 LOGGER = logging.getLogger('django.request')
 
@@ -74,7 +75,6 @@ def user_stats(request):
     return render_json(request, data, template='concepts_json.html', help_text=user_stats.__doc__)
 
 
-@staff_member_required
 def user_stats_bulk(request):
     """
     Get statistics for selected users and concepts
@@ -91,6 +91,14 @@ def user_stats_bulk(request):
 
     language = get_language(request)
     users = load_query_json(request.GET, "users")
+    if request.user.is_staff:
+        if not hasattr(request.user, 'userprofile') or \
+                        User.objects.filter(pk__in=users,
+                                            userprofile__classes__owner=request.user.userprofile).count() < len(users):
+            return render_json(request, {
+                'error': _('Some requested users are not in owned classes'),
+                'error_type': 'permission_denied'
+            }, template='concepts_json.html', status=401)
     since = None
     if 'since' in request.GET:
         since = datetime.datetime.fromtimestamp(int(request.GET['since']))
