@@ -76,6 +76,11 @@ class UserProfile(models.Model):
                 'username': self.user.username,
                 'email': self.user.email,
                 'staff': self.user.is_staff,
+                'groups': [{
+                    'id': g.id,
+                    'object_type': 'auth_group',
+                    'name': g.name,
+                } for g in self.user.groups.all()]
             }
         }
         if stats:
