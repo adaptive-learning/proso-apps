@@ -70,7 +70,7 @@ class UserProfile(models.Model):
                 UserProfileProperty.objects.filter(user_profile=self.id)]),
             'user': {
                 'id': self.user.id,
-                'object_type': 'user',
+                'object_type': 'auth_user',
                 'first_name': self.user.first_name,
                 'last_name': self.user.last_name,
                 'username': self.user.username,
