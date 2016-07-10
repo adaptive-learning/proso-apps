@@ -1,9 +1,7 @@
 from proso_models.models import get_mastery_trashold
 from . import models
-from django.core.urlresolvers import reverse
 from proso.django.request import is_time_overridden, get_time, get_user_id, get_language
-from proso.django.response import pass_get_parameters
-from proso.list import flatten
+from proso.list import flatten, group_by
 import numpy
 
 
@@ -89,35 +87,11 @@ def number_of_correct_answers(request, json_list, nested):
     return json_list
 
 
-def group_item_keys(request, json, nested, key, aggr_fun=numpy.mean):
-    if 'items' not in json:
-        return json
-    collected = [item[key] for item in json['items']]
-    aggregated = aggr_fun(collected)
-    if isinstance(aggregated, int):
-        show = aggregated
-    else:
-        show = float("{0:.2f}".format(aggr_fun(collected)))
-    json['group_' + key] = show
-    return json
-
-
-def audit_url(request, json, nested):
-    if 'object_type' not in json or json['object_type'] != 'value':
-        return json
-    url = reverse('audit', kwargs={'key': json['key']})
-    url_suffix = ''
-    if json['user_id']:
-        url_suffix += '&user=%s' % json['user_id']
-    if json['item_primary_id']:
-        url_suffix += '&item=%s' % json['item_primary_id']
-    if json['item_secondary_id']:
-        url_suffix += '&item_secondary=%s' % json['item_secondary_id']
-    if url_suffix:
-        url += '?' + url_suffix[1:]
-    json['audit_url'] = pass_get_parameters(request, url, ignore=['item', 'item_secondary', 'user'])
-    return json
-
+def answers_in_practice_set(request, json_list, nested):
+    set_ids = [s['id'] for s in json_list]
+    answers = group_by(models.Answer.objects.answers(models.Answer.objects.filter(practice_set__in=set_ids).values_list('id', flat=True)), by=lambda a: a.practice_set.id)
+    for practice_set in json_list:
+        practice_set['answers'] = sorted([a.to_json() for a in answers.get(practice_set['id'], [])], key=lambda a: a['id'])
 
 def _environment(request):
     environment = models.get_environment()

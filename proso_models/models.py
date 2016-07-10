@@ -1113,15 +1113,30 @@ class PracticeContext(models.Model):
         return "{0.content}".format(self)
 
 
+class PracticeSet(models.Model):
+
+    finished = models.BooleanField(default=False)
+
+    def to_json(self, nested=False):
+        return {
+            'finished': self.finished,
+            'object_type': 'models_practice_set',
+            'id': self.id,
+        }
+
+
 class AnswerManager(models.Manager):
 
     def count(self, user):
         return self.filter(user=user).count()
 
+    def prepare_related(self):
+        return self.select_related('context', 'meta')
+
     def correct_count(self, user):
         return self.filter(user=user, item_asked=F("item_answered")).count()
 
-    def from_json(self, json_object, practice_context, user_id, object_class=None):
+    def from_json(self, json_object, practice_context, practice_set, user_id, object_class=None):
         if object_class is None:
             object_class = Answer
         kwargs = {}
@@ -1134,7 +1149,14 @@ class AnswerManager(models.Manager):
             kwargs['type'] = json_object['question_type']
         kwargs['metainfo'] = None if 'meta' not in json_object else AnswerMeta.objects.from_content(json_object['meta'])
         return object_class.objects.create(
-            context=practice_context, user_id=user_id, **kwargs)
+            context=practice_context, practice_set=practice_set,
+            user_id=user_id, **kwargs)
+
+    def answers(self, answer_ids):
+        result = []
+        for subclass in Answer.__subclasses__():
+            result += subclass.objects.filter(id__in=answer_ids)
+        return result
 
     def answer_class(self, name):
         camel_case = ''.join([x.capitalize() for x in name.split('_')])
@@ -1169,8 +1191,11 @@ class Answer(models.Model):
     metainfo = models.ForeignKey(AnswerMeta, null=True, blank=True, default=None)
     type = models.CharField(max_length=10)
     # This field should not be NULL, but historically there is a huge number of
-    # answer in running systems without specified language.
+    # answers in running systems without specified language.
     lang = models.CharField(max_length=2, null=True, blank=True, default=None)
+    # This fields should not be NULL, but historically there is a huge number of
+    # answers in running systems without specified practice set.
+    practice_set = models.ForeignKey(PracticeSet, null=True, blank=None, default=None)
 
     objects = AnswerManager()
 
@@ -1180,7 +1205,7 @@ class Answer(models.Model):
             ['user', 'context'],
         ]
 
-    def to_json(self):
+    def to_json(self, nested=False):
         result = {
             'id': self.pk,
             'object_type': 'answer',
@@ -1193,9 +1218,9 @@ class Answer(models.Model):
         }
         if self.lang is not None:
             result['lang'] = self.lang
-        if self.context is not None:
+        if not nested and self.context is not None:
             result['context'] = self.context.to_json(nested=True)
-        if self.metainfo is not None:
+        if not nested and self.metainfo is not None:
             result['meta'] = self.metainfo.to_json(nested=True)
         return result
 

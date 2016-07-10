@@ -158,16 +158,16 @@ class Skill(models.Model, ModelDiffMixin):
 class TaskAnswerManager(models.Manager):
 
     def prepare_related(self):
-        return self
+        return self.select_related('context', 'meta')
 
-    def from_json(self, json_object, practice_context, user_id):
+    def from_json(self, json_object, practice_context, practice_set, user_id):
         json_object = dict(json_object)
         task_instance = TaskInstance.objects.get(pk=json_object['task_instance_id'])
         json_object['item_id'] = task_instance.item_id
         json_object['item_asked_id'] = task_instance.item_id
         json_object['item_answered_id'] = task_instance.item_id if json_object['correct'] else None
         json_object['lang'] = task_instance.lang
-        answer = Answer.objects.from_json(json_object, practice_context, user_id, object_class=TaskAnswer)
+        answer = Answer.objects.from_json(json_object, practice_context, practice_set, user_id, object_class=TaskAnswer)
         if 'question' in json_object:
             answer.question = json_object['question']
         if 'answer' in json_object:
@@ -183,7 +183,7 @@ class TaskAnswer(Answer):
     objects = TaskAnswerManager()
 
     def to_json(self, nested=False):
-        json = Answer.to_json(self)
+        json = Answer.to_json(self, nested=nested)
         json['object_type'] = "task_answer"
         return json
 

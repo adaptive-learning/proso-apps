@@ -198,7 +198,7 @@ class FlashcardAnswerManager(models.Manager):
     def prepare_related(self):
         return self.prefetch_related('options__{}'.format(Flashcard.related_term()))
 
-    def from_json(self, json_object, practice_context, user_id, object_class=None):
+    def from_json(self, json_object, practice_context, practice_set, user_id, object_class=None):
         if object_class is None:
             object_class = FlashcardAnswer
         json_object = dict(json_object)
@@ -223,7 +223,7 @@ class FlashcardAnswerManager(models.Manager):
         json_object['item_asked_id'] = flashcards[json_object['flashcard_id']].item_id
         json_object['item_answered_id'] = flashcards[json_object.get('flashcard_answered_id')].item_id if json_object.get('flashcard_answered_id') is not None else None
         json_object['lang'] = flashcards[json_object['flashcard_id']].lang
-        answer = Answer.objects.from_json(json_object, practice_context, user_id, object_class=object_class)
+        answer = Answer.objects.from_json(json_object, practice_context, practice_set, user_id, object_class=object_class)
         if 'option_ids' in json_object:
             for option_id in set(json_object['option_ids']):
                 answer.options.add(flashcards[option_id])
@@ -242,7 +242,7 @@ class FlashcardAnswer(Answer):
     objects = FlashcardAnswerManager()
 
     def to_json(self, nested=False):
-        json = Answer.to_json(self)
+        json = Answer.to_json(self, nested=nested)
         json['object_type'] = "fc_answer"
         if not nested:
             json["options"] = [flashcard.to_json(nested=True) for flashcard in self.options.all()]

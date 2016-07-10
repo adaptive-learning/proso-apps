@@ -1,25 +1,62 @@
 from .models import get_environment, get_predictive_model, get_item_selector, get_active_environment_info, \
-    Answer, Item, recommend_users as models_recommend_users, PracticeContext, \
+    Answer, Item, recommend_users as models_recommend_users, PracticeContext, PracticeSet,\
     learning_curve as models_learning_curve, get_filter, get_mastery_trashold
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.cache import cache_page
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
-from proso.django.request import is_time_overridden, get_time, get_user_id, get_language, load_query_json
+from proso.django.enrichment import enrich_json_objects_by_object_type
+from proso.django.request import is_time_overridden, get_time, get_language, load_query_json
 from proso.django.response import render, render_json, BadRequestException
-from django.views.decorators.cache import cache_page
 from proso.list import flatten
 from proso.util import timer
+from proso_user.models import get_user_id
 import datetime
 import json
 import logging
+import proso_common.views
 import proso.svg
 
 
 LOGGER = logging.getLogger('django.request')
+
+
+@cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
+def show_one(request, object_class, id):
+    return proso_common.views.show_one(
+        request, enrich_json_objects_by_object_type, object_class, id, template='models_json.html')
+
+
+@cache_page_conditional(
+    condition=lambda request, args, kwargs: 'stats' not in request.GET and kwargs['object_class'] not in [PracticeSet])
+def show_more(request, object_class, should_cache=True):
+
+    to_json_kwargs = {}
+
+    def _load_objects(request, object_class):
+        objs = object_class.objects
+        if hasattr(objs, 'prepare_related'):
+            objs = objs.prepare_related()
+        if 'filter_column' in request.GET and 'filter_value' in request.GET:
+            column = request.GET['filter_column']
+            value = request.GET['filter_value']
+            if value.isdigit():
+                value = int(value)
+            objs = objs.filter(**{column: value})
+        else:
+            objs = objs.all()
+        if object_class == PracticeSet:
+            user_id = get_user_id(request, allow_override=True)
+            objs = objs.filter(answer__user_id=user_id).order_by('-id')
+        return objs
+
+    return proso_common.views.show_more(
+        request, enrich_json_objects_by_object_type, _load_objects, object_class,
+        should_cache=should_cache, template='models_json.html', to_json_kwargs=to_json_kwargs)
 
 
 @allow_lazy_user
@@ -150,7 +187,7 @@ def answer(request):
     elif request.method == 'POST':
         practice_filter = get_filter(request)
         practice_context = PracticeContext.objects.from_content(practice_filter)
-        saved_answers = _save_answers(request, practice_context)
+        saved_answers = _save_answers(request, practice_context, True)
         return render_json(request, saved_answers, status=200, template='models_answer.html')
     else:
         return HttpResponseBadRequest("method %s is not allowed".format(request.method))
@@ -276,7 +313,9 @@ def practice(request):
 
     # save answers
     if request.method == 'POST':
-        _save_answers(request, practice_context)
+        _save_answers(request, practice_context, False)
+    elif request.method == 'GET':
+        PracticeSet.objects.filter(answer__user_id=request.user.id).update(finished=True)
 
     item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
     item_ids = list(set(item_ids) - set(avoid))
@@ -448,14 +487,26 @@ def _get_answers(request):
     return answers
 
 
-def _save_answers(request, practice_context):
+def _save_answers(request, practice_context, finish_practice_set):
     timer('_save_answers')
     json_objects = _get_answers(request)
     answers = []
+    last_answers = Answer.objects.prefetch_related('practice_set').filter(user_id=request.user.id).order_by('-id')[:1]
+    if len(last_answers) == 0 or last_answers[0].context_id != practice_context.id or last_answers[0].practice_set.finished:
+        if finish_practice_set:
+            raise Exception('There is no practice set to finish.')
+        if len(last_answers) > 0 and last_answers[0].context_id != practice_context.id:
+            PracticeSet.objects.filter(answer__user_id=request.user.id).update(finished=True)
+        practice_set = PracticeSet.objects.create()
+    else:
+        practice_set = last_answers[0].practice_set
+        if finish_practice_set:
+            practice_set.finished = True
+            practice_set.save()
     for json_object in json_objects:
         if 'answer_class' not in json_object:
             raise BadRequestException('The answer does not contain key "answer_class".')
         answer_class = Answer.objects.answer_class(json_object['answer_class'])
-        answers.append(answer_class.objects.from_json(json_object, practice_context, request.user.id))
+        answers.append(answer_class.objects.from_json(json_object, practice_context, practice_set, request.user.id))
     LOGGER.debug("saving of %s answers took %s seconds", len(answers), timer('_save_answers'))
     return answers
