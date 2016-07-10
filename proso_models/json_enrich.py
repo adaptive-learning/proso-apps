@@ -93,6 +93,7 @@ def answers_in_practice_set(request, json_list, nested):
     for practice_set in json_list:
         practice_set['answers'] = sorted([a.to_json() for a in answers.get(practice_set['id'], [])], key=lambda a: a['id'])
 
+
 def _environment(request):
     environment = models.get_environment()
     if is_time_overridden(request):

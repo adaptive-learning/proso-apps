@@ -64,10 +64,10 @@ class ConceptsAPITest(TestCase):
             self.assertEquals(stats["practiced_items_count"], len(set(ids)), "Stats has correct 'practiced_items_count'")
             self.assertEquals(stats["answer_count"], len(ids), "Stats has correct 'answer_count'")
             self.assertEquals(stats["correct_answer_count"], corrects, "Stats has correct 'correct_answer_count'")
-            self.assertAlmostEqual(stats["time_spent"], time, 3, "Stats has correct 'time_spent'")
+            self.assertAlmostEqual(stats["time_spent"], time, msg="Stats has correct 'time_spent'", delta=0.1)
             self.assertEquals(stats["session_count"], 1, "Stats has correct 'session_count'")
-            self.assertAlmostEqual(stats["time_first"], time_first, 0, "Stats has correct 'time_first'")
-            self.assertAlmostEqual(stats["time_last"], time_last, 0, "Stats has correct 'time_last'")
+            self.assertAlmostEqual(stats["time_first"], time_first, msg="Stats has correct 'time_first'", delta=0.1)
+            self.assertAlmostEqual(stats["time_last"], time_last, msg="Stats has correct 'time_last'", delta=0.1)
 
     def _get_concepts(self, lang=None):
         url = '/concepts/concepts?all=True'
@@ -80,7 +80,7 @@ class ConceptsAPITest(TestCase):
         return json.loads(self.client.get(url).content.decode("utf-8"))["data"]
 
     def _answer_flashcard(self, flashcard_id, correct, response_time, direction="t2d"):
-        url = '/models/answer/'
+        url = '/models/practice/?limit=0'
         data = {"answer": {
             "answer_class": "flashcard_answer",
             "flashcard_id": flashcard_id,
