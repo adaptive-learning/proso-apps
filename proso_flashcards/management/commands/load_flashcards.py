@@ -35,6 +35,7 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        call_command('find_item_types')
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "schema.json"), "r", encoding='utf8') as schema_file:
             schema = json.load(schema_file)
         if len(args) < 1:
