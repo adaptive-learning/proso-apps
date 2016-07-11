@@ -317,23 +317,26 @@ def practice(request):
     elif request.method == 'GET':
         PracticeSet.objects.filter(answer__user_id=request.user.id).update(finished=True)
 
-    item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
-    item_ids = list(set(item_ids) - set(avoid))
-    if len(item_ids) == 0:
-        return render_json(request, {
-            'error': _('There is no item for the given filter to practice.'),
-            'error_type': 'empty_practice'
-        }, status=404, template='models_json.html')
-    selected_items, meta = item_selector.select(environment, user, item_ids, time, practice_context.id, limit, items_in_queue=len(avoid))
-    result = []
-    for item, item_meta in zip(selected_items, meta):
-        question = {
-            'object_type': 'question',
-            'payload': Item.objects.item_id_to_json(item),
-        }
-        if item_meta is not None:
-            question['meta'] = item_meta
-        result.append(question)
+    if limit > 0:
+        item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
+        item_ids = list(set(item_ids) - set(avoid))
+        if len(item_ids) == 0:
+            return render_json(request, {
+                'error': _('There is no item for the given filter to practice.'),
+                'error_type': 'empty_practice'
+            }, status=404, template='models_json.html')
+        selected_items, meta = item_selector.select(environment, user, item_ids, time, practice_context.id, limit, items_in_queue=len(avoid))
+        result = []
+        for item, item_meta in zip(selected_items, meta):
+            question = {
+                'object_type': 'question',
+                'payload': Item.objects.item_id_to_json(item),
+            }
+            if item_meta is not None:
+                question['meta'] = item_meta
+            result.append(question)
+    else:
+        result = []
 
     return render_json(request, result, template='models_json.html', help_text=practice.__doc__)
 
