@@ -7,6 +7,11 @@ from proso_models.models import ItemType
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
+        with closing(connection.cursor()) as cursor:
+            cursor.execute('''
+                UPDATE proso_models_item
+                SET item_type_id = NULL
+                ''')
         for item_type in ItemType.objects.filter(valid=True):
             with closing(connection.cursor()) as cursor:
                 cursor.execute('''
