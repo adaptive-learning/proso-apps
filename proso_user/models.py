@@ -2,6 +2,7 @@ from django.db import models
 import hashlib
 from ipware.ip import get_ip
 import user_agents
+from proso.django.config import get_config
 from social.apps.django_app.default.models import UserSocialAuth
 from proso.django.request import get_current_request
 from django.db.models.signals import pre_save, post_save
@@ -560,7 +561,7 @@ def create_class_code(sender, instance, created=False, **kwargs):
     if not instance.code:
         condition = True
         while condition:
-            code = random_string(5)
+            code = random_string(get_config('proso_user', 'generated_code_length', default=5))
             condition = Class.objects.filter(code=code).exists()
         instance.code = code
 
