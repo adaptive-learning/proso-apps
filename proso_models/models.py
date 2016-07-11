@@ -13,7 +13,7 @@ from functools import reduce
 from proso.django.cache import get_request_cache, is_cache_prepared, get_from_request_permenent_cache, set_to_request_permanent_cache
 from proso.django.config import instantiate_from_config, instantiate_from_config_list, instantiate_from_json, get_global_config, get_config
 from proso.django.models import ModelDiffMixin
-from proso.django.request import load_query_json
+from proso.django.request import load_query_json, get_time
 from proso.django.util import disable_for_loaddata, cache_pure
 from proso.func import fixed_point
 from proso.list import flatten
@@ -113,6 +113,14 @@ def get_mastery_trashold():
 
 def get_filter(request):
     return load_query_json(request.GET, "filter", "[]")
+
+
+def get_time_for_knowledge_overview(request=None):
+    if request is None:
+        now = datetime.now()
+    else:
+        now = get_time(request)
+    return now + timedelta(hours=get_config('proso_models', 'knowledge_overview.time_shift_hours', default=4))
 
 
 def get_option_selector(item_selector, options_number=None):

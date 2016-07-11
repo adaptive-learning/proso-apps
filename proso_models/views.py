@@ -1,6 +1,6 @@
 from .models import get_environment, get_predictive_model, get_item_selector, get_active_environment_info, \
     Answer, Item, recommend_users as models_recommend_users, PracticeContext, PracticeSet,\
-    learning_curve as models_learning_curve, get_filter, get_mastery_trashold
+    learning_curve as models_learning_curve, get_filter, get_mastery_trashold, get_time_for_knowledge_overview
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -133,7 +133,7 @@ def practice_image(request):
     answers = Answer.objects.filter(user_id=user_id).filter(item_asked_id__in=item_ids).order_by('-id')[:limit]
     predictive_model = get_predictive_model()
     environment = get_environment()
-    predictions = predictive_model.predict_more_items(environment, user=-1, items=item_ids, time=datetime.datetime.now())
+    predictions = predictive_model.predict_more_items(environment, user=-1, items=item_ids, time=get_time_for_knowledge_overview(request))
     items_in_order = list(zip(*sorted(zip(predictions, item_ids), reverse=True)))[1] if len(item_ids) > 1 else []
     item_prediction = dict(list(zip(item_ids, predictions)))
     item_position = dict(list(zip(items_in_order, list(range(len(item_ids))))))
@@ -241,7 +241,7 @@ def user_stats(request):
     if request.GET.get("mastered"):
         timer('user_stats_mastered')
         mastery_threshold = get_mastery_trashold()
-        predictions = get_predictive_model().predict_more_items(environment, user_id, all_leaves, get_time(request))
+        predictions = get_predictive_model().predict_more_items(environment, user_id, all_leaves, time=get_time_for_knowledge_overview(request))
         mastered = dict(list(zip(all_leaves, [p >= mastery_threshold for p in predictions])))
         LOGGER.debug("user_stats - getting predictions for items took %s seconds", (timer('user_stats_mastered')))
     for identifier, items in zip(filter_names, reachable_leaves):

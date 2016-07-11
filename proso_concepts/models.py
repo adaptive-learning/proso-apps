@@ -12,7 +12,7 @@ from django.dispatch import receiver
 from proso.dict import group_keys_by_value_lists
 from proso.django.util import cache_pure
 from proso.list import flatten
-from proso_models.models import Answer, Item, get_environment, get_mastery_trashold, get_predictive_model
+from proso_models.models import Answer, Item, get_environment, get_mastery_trashold, get_predictive_model, get_time_for_knowledge_overview
 
 LOGGER = logging.getLogger('django.request')
 
@@ -258,7 +258,7 @@ class UserStatManager(models.Manager):
             answer_counts = environment.number_of_answers_more_items(all_items, user)
             correct_answer_counts = environment.number_of_correct_answers_more_items(all_items, user)
             predictions = dict(list(zip(all_items, get_predictive_model().
-                                        predict_more_items(environment, user, all_items, time=None))))
+                                        predict_more_items(environment, user, all_items, time=get_time_for_knowledge_overview()))))
             new_user_stats = []
             stats_to_delete_condition = Q()
             for concept in concepts:

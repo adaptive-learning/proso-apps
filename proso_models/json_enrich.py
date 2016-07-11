@@ -20,7 +20,7 @@ def prediction(request, json_list, nested):
         return
     object_item_ids = [x['item_id'] for x in json_list]
     user = get_user_id(request)
-    time = get_time(request)
+    time = models.get_time_for_knowledge_overview(request)
     predictions = _predictive_model().predict_more_items(_environment(request), user, object_item_ids, time)
     mastery_threshold = get_mastery_trashold()
     for object_json, prediction in zip(json_list, predictions):
@@ -41,7 +41,7 @@ def avg_prediction(request, json_list, nested):
     leaves = models.Item.objects.get_leaves(object_item_ids, language=get_language(request))
     all_leaves = list(set(flatten(leaves.values())))
     user = get_user_id(request)
-    time = get_time(request)
+    time = models.get_time_for_knowledge_overview(request)
     predictions = dict(list(zip(all_leaves, _predictive_model().predict_more_items(
         _environment(request),
         user,
