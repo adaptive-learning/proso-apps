@@ -1,6 +1,7 @@
 from django.core.cache import cache
 from functools import reduce
 from proso.django.config import instantiate_from_config
+from proso.list import flatten
 from proso_flashcards.models import FlashcardAnswer, Category, Context, Flashcard
 from proso_models.models import Item
 import abc
@@ -26,19 +27,20 @@ class OptionSet(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_option_for_flashcards(self, flashcards):
+    def get_option_for_flashcards(self, flashcards_with_question_types):
         pass
 
 
 class EmptyOptionSet(OptionSet):
-    def get_option_for_flashcards(self, flashcards):
-        return dict([(fc['item_id'], []) for fc in flashcards])
+    def get_option_for_flashcards(self, flashcards_with_question_types):
+        return dict([(fc['item_id'], []) for fc, _ in flashcards_with_question_types])
 
 
 class ContextOptionSet(OptionSet):
-    def get_option_for_flashcards(self, flashcards):
+    def get_option_for_flashcards(self, flashcards_with_question_types):
+        question_types = {fc['id']: question_type for fc, question_type in flashcards_with_question_types}
         opt_set_cache = cache.get('flashcard_construction__context_option_set', {})
-        to_find = [fc for fc in flashcards if fc['item_id'] not in opt_set_cache]
+        to_find = [fc for (fc, question_type) in flashcards_with_question_types if (fc['item_id'], question_type) not in opt_set_cache]
         if len(to_find) > 0:
             context_ids = {flashcard['context']['id'] for flashcard in to_find}
             types_all_item_ids = set([c.item_id for c in Category.objects.filter(type='flashcard_type')])
@@ -56,11 +58,35 @@ class ContextOptionSet(OptionSet):
                 ) if (secondary_terms.get(i) is not None) == ('term_secondary' in flashcard)]
                 for flashcard in to_find
             }
+            if any(['term_secondary' in flashcard for flashcard in to_find]):
+                # we want to exclude options with duplicate term/term_secondary
+                translated = Item.objects.translate_item_ids(set(flatten(found.values())), language=to_find[0]['lang'])
+                fc_dict = {flashcard['item_id']: flashcard for flashcard in to_find}
+                found_translated = {
+                    item_id: [translated[opt_id] for opt_id in options]
+                    for item_id, options in found.items()
+                }
+                found = {}
+                for fc_item_id, options in found_translated.items():
+                    fc = fc_dict[fc_item_id]
+                    if question_types[fc['id']] == FlashcardAnswer.FROM_TERM_TO_TERM_SECONDARY:
+                        key = 'term_secondary'
+                    elif question_types[fc['id']] == FlashcardAnswer.FROM_TERM_SECONDARY_TO_TERM:
+                        key = 'term'
+                    else:
+                        found[fc['item_id']] = [opt['item_id'] for opt in options]
+                    options_by_keys = {}
+                    for opt in sorted(options, key=lambda o: o['identifier']):
+                        options_by_keys[opt[key]['item_id']] = opt
+                        if fc[key]['item_id'] in options_by_keys:
+                            del options_by_keys[fc[key]['item_id']]
+                    found[fc['item_id']] = [opt['item_id'] for opt in options]
+
             # trying to decrease probability of race condition
             opt_set_cache = cache.get('flashcard_construction__context_option_set', {})
             opt_set_cache.update(found)
             cache.set('flashcard_construction__context_option_set', opt_set_cache)
-        return {fc['item_id']: opt_set_cache[fc['item_id']] for fc in flashcards}
+        return {fc['item_id']: opt_set_cache[fc['item_id']] for fc, _ in flashcards_with_question_types}
 
 
 class Direction(metaclass=abc.ABCMeta):

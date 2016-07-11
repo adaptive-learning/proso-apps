@@ -50,7 +50,7 @@ def options(request, json_list, nested):
     item_selector = get_item_selector()
     option_selector = get_option_selector(item_selector)
     option_sets = get_option_set().get_option_for_flashcards([
-        question['payload']
+        (question['payload'], question['question_type'])
         for question in json_list
         if question['payload']['object_type'] == 'fc_flashcard'
     ])
