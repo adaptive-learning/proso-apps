@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Q, Count, Sum, Max, Min
@@ -6,6 +7,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from hashlib import sha1
 from proso.dict import group_keys_by_value_lists
+from proso.django.config import get_config
 from proso.django.util import cache_pure
 from proso.list import flatten
 from proso_models.models import Answer, Item, get_environment, get_mastery_trashold, get_predictive_model, get_time_for_knowledge_overview
@@ -135,13 +137,23 @@ class ConceptManager(models.Manager):
             for concept in mapping[item]:
                 if user in current_user_stats and concept in current_user_stats[user] \
                         and current_user_stats[user][concept].time > time:
-                    continue    # user stat is actual
+                    if not self.has_time_expired(current_user_stats[user][concept].time, time):
+                        continue  # cache is up to date
+
                 if concepts is None or concept in ([c.pk for c in concepts] if type(concepts[0]) == Concept else Concept):
                     concepts_to_recalculate[user].add(concept)
 
         if only_one_user:
             return concepts_to_recalculate[users[0]]
         return concepts_to_recalculate
+
+    def has_time_expired(self, cache_time, last_answer_time):
+        cache_timedelta = cache_time - last_answer_time
+        if cache_timedelta > timedelta(days=365):
+            return False
+        if cache_timedelta < timedelta(hours=get_config('proso_models', 'knowledge_overview.time_shift_hours', default=4)):
+            return False
+        return cache_timedelta > get_config('proso_config', 'time_expiration_factor', default=0.5) * (datetime.now() - cache_time)
 
 
 class Concept(models.Model):
