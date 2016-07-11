@@ -1,18 +1,17 @@
-import json
-import logging
 from collections import defaultdict
-from hashlib import sha1
-from time import time as time_lib
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Q, Count, Sum, Max, Min
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-
+from hashlib import sha1
 from proso.dict import group_keys_by_value_lists
 from proso.django.util import cache_pure
 from proso.list import flatten
 from proso_models.models import Answer, Item, get_environment, get_mastery_trashold, get_predictive_model, get_time_for_knowledge_overview
+from time import time as time_lib
+import json
+import logging
 
 LOGGER = logging.getLogger('django.request')
 
