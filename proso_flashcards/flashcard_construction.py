@@ -1,6 +1,7 @@
 from django.core.cache import cache
 from functools import reduce
 from proso.django.config import instantiate_from_config
+from proso.list import flatten
 from proso_flashcards.models import FlashcardAnswer, Category, Context, Flashcard
 from proso_models.models import Item
 import abc
@@ -56,6 +57,13 @@ class ContextOptionSet(OptionSet):
                 ) if (secondary_terms.get(i) is not None) == ('term_secondary' in flashcard)]
                 for flashcard in to_find
             }
+            if any(['term_secondary' in flashcard for flashcard in to_find]):
+                translated = Item.objects.translate_item_ids(set(flatten(found.values())))
+                fc_dict = {flashcard['item_id']: flashcard for flashcard in to_find}
+                found = {
+                    item_id: [option for option in options if translated[option]['term'] != fc_dict[item_id]['term'] and translated[option]['term_secondary'] != fc_dict[item_id]['term']]
+                    for item_id, options in found.items()
+                }
             # trying to decrease probability of race condition
             opt_set_cache = cache.get('flashcard_construction__context_option_set', {})
             opt_set_cache.update(found)
