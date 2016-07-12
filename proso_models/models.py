@@ -573,6 +573,7 @@ class ItemManager(models.Manager):
         """
         return sorted(Item.objects.filter(children=None).values_list('id', flat=True))
 
+    @cache_pure
     @timeit(name='filter_all_reachable_leaves_many')
     def filter_all_reachable_leaves_many(self, identifier_filters, language):
         """

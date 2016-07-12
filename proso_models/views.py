@@ -9,6 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_page
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
+from proso.django.config import get_config
 from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import is_time_overridden, get_time, get_language, load_query_json
 from proso.django.response import render, render_json, BadRequestException
@@ -20,6 +21,7 @@ import json
 import logging
 import proso_common.views
 import proso.svg
+from random import sample
 
 
 LOGGER = logging.getLogger('django.request')
@@ -320,6 +322,9 @@ def practice(request):
     if limit > 0:
         item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
         item_ids = list(set(item_ids) - set(avoid))
+        limit_size = get_config('proso_models', 'practice.limit_item_set_size_to_select_from', default=None)
+        if limit_size is not None and limit_size < len(item_ids):
+            item_ids = sample(item_ids, limit_size)
         if len(item_ids) == 0:
             return render_json(request, {
                 'error': _('There is no item for the given filter to practice.'),
