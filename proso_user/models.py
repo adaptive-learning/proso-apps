@@ -483,6 +483,7 @@ class Class(models.Model):
             'code': self.code,
             'name': self.name,
             'id': self.pk,
+            'object_type': 'user_class',
         }
 
         data['owner'] = self.owner.to_json(nested=True)
