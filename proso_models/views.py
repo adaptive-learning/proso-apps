@@ -500,7 +500,7 @@ def _save_answers(request, practice_context, finish_practice_set):
     json_objects = _get_answers(request)
     answers = []
     last_answers = Answer.objects.prefetch_related('practice_set').filter(user_id=request.user.id).order_by('-id')[:1]
-    if len(last_answers) == 0 or last_answers[0].context_id != practice_context.id or last_answers[0].practice_set.finished:
+    if len(last_answers) == 0 or last_answers[0].context_id != practice_context.id or last_answers[0].practice_set is None or last_answers[0].practice_set.finished:
         if finish_practice_set:
             raise Exception('There is no practice set to finish.')
         if len(last_answers) > 0 and last_answers[0].context_id != practice_context.id:
