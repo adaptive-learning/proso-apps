@@ -147,13 +147,15 @@ class ConceptManager(models.Manager):
             return concepts_to_recalculate[users[0]]
         return concepts_to_recalculate
 
-    def has_time_expired(self, cache_time, last_answer_time):
+    def has_time_expired(self, cache_time, last_answer_time,
+                         lower_bound=get_config('proso_models', 'knowledge_overview.time_shift_hours', default=4),
+                         expiration_factor=get_config('proso_config', 'time_expiration_factor', default=2)):
         cache_timedelta = cache_time - last_answer_time
         if cache_timedelta > timedelta(days=365):
             return False
-        if cache_timedelta < timedelta(hours=get_config('proso_models', 'knowledge_overview.time_shift_hours', default=4)):
+        if cache_timedelta < timedelta(hours=lower_bound):
             return False
-        return cache_timedelta > get_config('proso_config', 'time_expiration_factor', default=0.5) * (datetime.now() - cache_time)
+        return cache_timedelta < expiration_factor * (datetime.now() - cache_time)
 
 
 class Concept(models.Model):
