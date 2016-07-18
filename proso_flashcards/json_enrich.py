@@ -75,7 +75,7 @@ def options(request, json_list, nested):
     # HACK: Here, we have to take into account reference questions with zero
     # options. In case of zero options we have to force a question type if the
     # restriction for zero options is enabled.
-    config_zero_options_restriction = get_config('proso_models', 'options_number.parameters.allow_zero_options_restriction', default=False)
+    config_zero_options_restriction = get_config('proso_models', 'options_count.parameters.allow_zero_options_restriction', default=False)
     for i, question in enumerate(json_list):
         if question['payload']['object_type'] != 'fc_flashcard':
             continue
