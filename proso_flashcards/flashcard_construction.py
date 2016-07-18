@@ -79,9 +79,9 @@ class ContextOptionSet(OptionSet):
                     options_by_keys = {}
                     for opt in sorted(options, key=lambda o: o['identifier']):
                         options_by_keys[opt[key]['item_id']] = opt
-                        if fc[key]['item_id'] in options_by_keys:
-                            del options_by_keys[fc[key]['item_id']]
-                    found[fc['item_id']] = [opt['item_id'] for opt in options]
+                    if fc[key]['item_id'] in options_by_keys:
+                        del options_by_keys[fc[key]['item_id']]
+                    found[fc['item_id']] = [opt['item_id'] for opt in options_by_keys.values()]
 
             # trying to decrease probability of race condition
             opt_set_cache = cache.get('flashcard_construction__context_option_set', {})
