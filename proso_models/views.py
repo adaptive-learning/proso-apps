@@ -27,7 +27,8 @@ from random import sample
 LOGGER = logging.getLogger('django.request')
 
 
-@cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
+@cache_page_conditional(
+    condition=lambda request, args, kwargs: 'stats' not in request.GET and kwargs['object_class'] not in [PracticeSet])
 def show_one(request, object_class, id):
     return proso_common.views.show_one(
         request, enrich_json_objects_by_object_type, object_class, id, template='models_json.html')
