@@ -75,6 +75,7 @@ class ContextOptionSet(OptionSet):
                         key = 'term'
                     else:
                         found[fc['item_id']] = [opt['item_id'] for opt in options]
+                        continue
                     options_by_keys = {}
                     for opt in sorted(options, key=lambda o: o['identifier']):
                         options_by_keys[opt[key]['item_id']] = opt
