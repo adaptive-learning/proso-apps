@@ -1164,7 +1164,10 @@ class AnswerManager(models.Manager):
     def answers(self, answer_ids):
         result = []
         for subclass in Answer.__subclasses__():
-            result += subclass.objects.filter(id__in=answer_ids)
+            objs = subclass.objects
+            if hasattr(objs, 'prepare_related'):
+                objs = objs.prepare_related()
+            result += objs.filter(id__in=answer_ids)
         return result
 
     def answer_class(self, name):
