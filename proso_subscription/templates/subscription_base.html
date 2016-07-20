@@ -1,0 +1,7 @@
+{% extends 'common_base.html' %}
+{% block menu_heading_block %}Subscription{% endblock %}
+{% block menu_list_block %}
+	<ul>
+		<li><a href="{% url 'subscription_plans' %}?html=True">Subscription Plans</a></li>
+		<li><a href="{% url 'subscription_my_subscriptions' %}?html=True">My Subscriptions</a></li>
+{% endblock %}

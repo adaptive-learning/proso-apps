@@ -1,0 +1,56 @@
+{
+  "description": "Schema for data file containing subscription plans",
+  "definitions": {
+    "description": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "price": {
+          "type": "integer"
+        }
+      },
+      "required": ["name", "description", "currency", "price"]
+    },
+    "plan": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "months-validity": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "patternProperties":{
+            "^description-(\\w\\w)$": {
+                "$ref": "#/definitions/description"
+            }
+        }
+      },
+      "required": ["id", "months-validity", "type"]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "plans": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/plan"
+      }
+    }
+  },
+  "required": ["plans"]
+}

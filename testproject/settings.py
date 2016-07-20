@@ -42,6 +42,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.staticfiles',
     'flatblocks',
+    'gopay_django_api',
     'lazysignup',
     'proso_ab',
     'proso_common',
@@ -52,6 +53,7 @@ INSTALLED_APPS = (
     'proso_flashcards',
     'proso_tasks',
     'proso_concepts',
+    'proso_subscription',
     'social.apps.django_app.default',
     'testproject.testapp',
 )

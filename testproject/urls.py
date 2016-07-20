@@ -22,5 +22,7 @@ urlpatterns = patterns(
     url(r'^flashcards/', include('proso_flashcards.urls')),
     url(r'^tasks/', include('proso_tasks.urls', namespace='tasks')),
     url(r'^concepts/', include('proso_concepts.urls', namespace='concepts')),
+    url(r'^subscription/', include('proso_subscription.urls')),
+    url(r'^gopay/', include('gopay_django_api.urls')),
     url('', include('social.apps.django_app.urls', namespace='social'))
 )

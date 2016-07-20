@@ -48,6 +48,9 @@ setup(
         'proso_concepts.management',
         'proso_concepts.management.commands',
         'proso_concepts.migrations',
+        'proso_subscription',
+        'proso_subscription.management',
+        'proso_subscription.management.commands',
     ],
     setup_requires=[
         'Sphinx>=1.3',
@@ -74,6 +77,7 @@ setup(
         'seaborn==0.7.0',
         'ua-parser==0.6.1',
         'user-agents==1.0.1',
+        'gopay-django-api',
     ],
     license='MIT',
 )
