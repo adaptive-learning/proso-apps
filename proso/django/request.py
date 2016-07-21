@@ -71,11 +71,15 @@ def is_user_id_overridden(request):
     return 'user' in request.GET and request.user.is_staff
 
 
-def get_user_id(request):
+def get_user_id(request=None):
+    if request is None:
+        request = get_current_request(force=False)
+        if request is None:
+            return None
     if is_user_id_overridden(request):
         return int(request.GET['user'])
     else:
-        return request.user.id
+        return None if request.user is None else request.user.id
 
 
 def is_time_overridden(request):
@@ -105,9 +109,13 @@ _current_request = {}
 
 class RequestMiddleware:
     def process_request(self, request):
-        global _request_initialized
-        _request_initialized = True
-        _current_request[currentThread()] = request
+        set_current_request(request)
+
+
+def set_current_request(request):
+    global _request_initialized
+    _request_initialized = True
+    _current_request[currentThread()] = request
 
 
 def get_current_request(force=True):

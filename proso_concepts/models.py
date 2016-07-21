@@ -7,9 +7,9 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from hashlib import sha1
 from proso.dict import group_keys_by_value_lists
-from proso.django.config import get_config
 from proso.django.util import cache_pure
 from proso.list import flatten
+from proso_common.models import get_config
 from proso_models.models import Answer, Item, get_environment, get_mastery_trashold, get_predictive_model, get_time_for_knowledge_overview
 from time import time as time_lib
 import json
@@ -134,10 +134,12 @@ class ConceptManager(models.Manager):
             if item not in mapping:
                 # in reality this should by corner case, so it is efficient to not filter Answers
                 continue    # item is not in concept
+            time_expiration_lower_bound = get_config('proso_models', 'knowledge_overview.time_shift_hours', default=4)
+            time_expiration_factor = get_config('proso_config', 'time_expiration_factor', default=2)
             for concept in mapping[item]:
                 if user in current_user_stats and concept in current_user_stats[user] \
                         and current_user_stats[user][concept].time > time:
-                    if not self.has_time_expired(current_user_stats[user][concept].time, time):
+                    if not self.has_time_expired(current_user_stats[user][concept].time, time, time_expiration_lower_bound, time_expiration_factor):
                         continue  # cache is up to date
 
                 if concepts is None or concept in ([c.pk for c in concepts] if type(concepts[0]) == Concept else Concept):
@@ -147,9 +149,7 @@ class ConceptManager(models.Manager):
             return concepts_to_recalculate[users[0]]
         return concepts_to_recalculate
 
-    def has_time_expired(self, cache_time, last_answer_time,
-                         lower_bound=get_config('proso_models', 'knowledge_overview.time_shift_hours', default=4),
-                         expiration_factor=get_config('proso_config', 'time_expiration_factor', default=2)):
+    def has_time_expired(self, cache_time, last_answer_time, lower_bound, expiration_factor):
         cache_timedelta = cache_time - last_answer_time
         if cache_timedelta > timedelta(days=365):
             return False

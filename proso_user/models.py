@@ -1,22 +1,22 @@
-from django.db import models
-import hashlib
-from ipware.ip import get_ip
-import user_agents
-from proso.django.config import get_config
-from social.apps.django_app.default.models import UserSocialAuth
-from proso.django.request import get_current_request
-from django.db.models.signals import pre_save, post_save
-from lazysignup.signals import converted
-from django.dispatch import receiver
-from django.contrib.auth.models import User
-import datetime
-from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social, name_lazy_user
-from proso.django.util import disable_for_loaddata
-from django.db import transaction
 from collections import defaultdict
-from proso.django.response import HttpError
+from django.contrib.auth.models import User
+from django.db import models
+from django.db import transaction
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext as _
+from ipware.ip import get_ip
+from lazysignup.signals import converted
+from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social, name_lazy_user
+from proso.django.request import get_current_request
+from proso.django.response import HttpError
+from proso.django.util import disable_for_loaddata
+from proso_common.models import get_config
+from social.apps.django_app.default.models import UserSocialAuth
+import datetime
+import hashlib
 import logging
+import user_agents
 
 from proso.util import random_string
 

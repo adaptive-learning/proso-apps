@@ -89,25 +89,6 @@ def instantiate_from_json(json, default_class=None, default_parameters=None, pas
     )
 
 
-def instantiate_from_config(app_name, key, default_class=None, default_parameters=None, pass_parameters=None,
-                            config_name=None):
-    config = get_config(app_name, key, config_name=config_name, required=(default_class is None), default={})
-    return instantiate_from_json(
-        config,
-        default_class=default_class,
-        default_parameters=default_parameters,
-        pass_parameters=pass_parameters
-    )
-
-
-def instantiate_from_config_list(app_name, key, pass_parameters=None, config_name=None):
-    configs = get_config(app_name, key, config_name=config_name, default=[])
-    return [
-        instantiate_from_json(config, pass_parameters=pass_parameters)
-        for config in configs
-    ]
-
-
 def get_config(app_name, key, config_name=None, required=False, default=None):
     config = get_global_config(config_name).get(app_name)
     keys = key.split('.')
@@ -144,21 +125,7 @@ def _load_config():
     return _config[currentThread()]
 
 
-def _override_value_all(app_name, key, value):
-    if not is_any_overridden():
-        return value
-    if app_name is None and key is None:
-        app_name_key = None
-    else:
-        app_name_key = '{}.{}'.format(app_name, key)
-    if isinstance(value, dict):
-        value = copy.deepcopy(value)
-    for override_key, override_value in _overridden[currentThread()].items():
-        value = _override_value(app_name_key, value, override_key, override_value)
-    return value
-
-
-def _override_value(app_name_key, value, override_key, override_value):
+def override_value(app_name_key, value, override_key, override_value):
     if app_name_key is not None and not override_key.startswith(app_name_key):
         return value
     if not isinstance(value, dict):
@@ -177,4 +144,18 @@ def _override_value(app_name_key, value, override_key, override_value):
             to_override[k] = {}
         to_override = to_override[k]
     to_override[override_keys[-1]] = override_value
+    return value
+
+
+def _override_value_all(app_name, key, value):
+    if isinstance(value, dict):
+        value = copy.deepcopy(value)
+    if not is_any_overridden():
+        return value
+    if app_name is None and key is None:
+        app_name_key = None
+    else:
+        app_name_key = '{}.{}'.format(app_name, key)
+    for to_override_key, to_override_value in _overridden[currentThread()].items():
+        value = override_value(app_name_key, value, to_override_key, to_override_value)
     return value

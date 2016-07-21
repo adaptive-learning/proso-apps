@@ -6,7 +6,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
 from django.db import transaction
 from optparse import make_option
-from proso.django.config import instantiate_from_config, set_default_config_name, get_config
+from proso_models.models import instantiate_from_config, get_config
+from proso.django.config import set_default_config_name
 from proso.django.util import is_on_postgresql
 from proso.models.environment import InMemoryEnvironment
 from proso.util import timer

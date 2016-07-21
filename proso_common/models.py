@@ -1,17 +1,35 @@
+from collections import defaultdict
+from contextlib import closing
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import connection
 from django.db import models
-from threading import currentThread
-from proso.django.request import is_user_id_overridden, is_time_overridden
-from django.dispatch import receiver
 from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from proso.django.config import get_config as get_config_original, get_global_config as get_global_config_original, override_value, instantiate_from_json
+from proso.django.request import is_user_id_overridden, is_time_overridden, get_user_id
 from proso.django.response import BadRequestException
+from threading import currentThread
+import abc
 import hashlib
 import importlib
 import json
-import abc
 
 _is_user_overriden_from_url = {}
 _is_time_overriden_from_url = {}
+
+_custom_configs = {}
+_custom_config_filters = {}
+
+
+def reset_custom_configs():
+    global _custom_configs
+    _custom_configs[currentThread()] = None
+
+
+def reset_custom_config_filters():
+    global _custom_config_filters
+    _custom_config_filters[currentThread()] = []
 
 
 def reset_url_overridden():
@@ -21,6 +39,77 @@ def reset_url_overridden():
     _is_time_overriden_from_url[currentThread()] = False
 
 
+def add_custom_config_filter(config_filter):
+    global _custom_config_filters
+    _custom_config_filters[currentThread()].append(config_filter)
+
+
+def current_custom_configs():
+    result = []
+    global _custom_configs
+    global _custom_config_filters
+    if _custom_configs[currentThread()] is None:
+        _custom_configs[currentThread()] = CustomConfig.objects.current_custom_configs(get_user_id())
+
+    def _filter_config(config):
+        c_key, c_value = next(iter(config['condition'].items()))
+        if c_key is None:
+            return True
+        all_nones = True
+        for config_filter in _custom_config_filters[currentThread()]:
+            filter_result = config_filter(c_key, c_value)
+            if filter_result is not None:
+                all_nones = False
+                if not filter_result:
+                    return False
+        return not all_nones
+
+    for key, configs in _custom_configs[currentThread()].items():
+        valid_configs = [c for c in configs if _filter_config(c)]
+        if len(valid_configs):
+            result.append((key, valid_configs[0]['content']))
+    return result
+
+
+def get_global_config(config_name=None):
+    original_config = get_global_config_original(config_name)
+    for key, value in current_custom_configs():
+        original_config = override_value(None, original_config, key, value)
+    return original_config
+
+
+def get_config(app_name, key, config_name=None, required=False, default=None):
+    config = get_global_config(config_name).get(app_name)
+    keys = key.split('.')
+    for k in keys:
+        if config is None:
+            break
+        config = config.get(k)
+    if config is None:
+        if required:
+            raise Exception("There is no key [%s] in configuration [%s] and app [%s]" % (key, config_name, app_name))
+        return default
+    return config
+
+
+def instantiate_from_config(app_name, key, default_class=None, default_parameters=None, pass_parameters=None, config_name=None):
+    config = get_config(app_name, key, config_name=config_name, required=(default_class is None), default={})
+    return instantiate_from_json(
+        config,
+        default_class=default_class,
+        default_parameters=default_parameters,
+        pass_parameters=pass_parameters
+    )
+
+
+def instantiate_from_config_list(app_name, key, pass_parameters=None, config_name=None):
+    configs = get_config(app_name, key, config_name=config_name, default=[])
+    return [
+        instantiate_from_json(config, pass_parameters=pass_parameters)
+        for config in configs
+    ]
+
+
 class CommonMiddleware(object):
     def process_request(self, request):
         reset_url_overridden()
@@ -28,6 +117,8 @@ class CommonMiddleware(object):
         global _is_time_overriden_from_url
         _is_user_overriden_from_url[currentThread()] = is_user_id_overridden(request)
         _is_time_overriden_from_url[currentThread()] = is_time_overridden(request)
+        reset_custom_configs()
+        reset_custom_config_filters()
 
 
 def get_content_hash(content):
@@ -101,6 +192,8 @@ class ConfigManager(models.Manager):
             return self.get(content_hash=content_hash, app_name=app_name, key=key)
         except Config.DoesNotExist:
             config = Config(
+                app_name=app_name,
+                key=key,
                 content=content,
                 content_hash=content_hash)
             config.save()
@@ -124,6 +217,80 @@ class Config(models.Model):
             'key': self.key,
             'app_name': self.app_name,
         }
+
+
+class CustomConfigManager(models.Manager):
+
+    def try_create(self, app_name, key, value, user_id, condition_key=None, condition_value=None):
+        if not get_config_original('proso_common', 'config.is_custom_config_allowed', default=False):
+            raise BadRequestException('Custom configuration is not allowed.')
+        if value is None:
+            raise Exception("The value can not be None.")
+        if isinstance(value, dict) or isinstance(value, list):
+            raise Exception("The value has to be scalar.")
+        if isinstance(value, str):
+            if value.isdigit():
+                value = int(value)
+            elif value.lower() == 'true':
+                value = True
+            elif value.lower() == 'false':
+                value = False
+            elif value.replace('.', '').isdigit():
+                value = float(value)
+        config = Config.objects.from_content(value, key=key, app_name=app_name)
+        created = self.create(
+            user_id=user_id,
+            condition_key=condition_key,
+            condition_value=condition_value,
+            config=config
+        )
+        reset_custom_configs()
+        return created
+
+    def current_custom_configs(self, user_id):
+        if user_id is None:
+            return {}
+        if not get_config_original('proso_common', 'config.is_custom_config_allowed', default=False):
+            return {}
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(
+                '''
+                SELECT
+                    custom_config.id,
+                    config.app_name,
+                    config.key,
+                    config.content,
+                    condition_key,
+                    condition_value
+                FROM proso_common_customconfig AS custom_config
+                INNER JOIN proso_common_config AS config ON config.id = custom_config.config_id
+                WHERE custom_config.id IN (
+                    SELECT MAX(custom_config.id)
+                    FROM proso_common_customconfig as custom_config
+                    INNER JOIN proso_common_config AS config ON config.id = custom_config.config_id
+                    WHERE user_id = %s
+                    GROUP BY config.app_name, config.key, condition_key, condition_value
+                )
+                ORDER BY custom_config.id DESC
+                ''', [user_id])
+            result = defaultdict(list)
+            for pk, app_name, key, content, condition_key, condition_value in cursor:
+                result['{}.{}'.format(app_name, key)].append({
+                    'pk': pk,
+                    'content': json.loads(content),
+                    'condition': {condition_key: condition_value}
+                })
+            return result
+
+
+class CustomConfig(models.Model):
+
+    config = models.ForeignKey(Config)
+    user = models.ForeignKey(User)
+    condition_key = models.CharField(max_length=255, null=True, blank=True, default=None)
+    condition_value = models.TextField(null=True, blank=True, default=None)
+
+    objects = CustomConfigManager()
 
 
 @receiver(pre_save)

@@ -11,7 +11,7 @@ from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from functools import reduce
 from proso.django.cache import get_request_cache, is_cache_prepared, get_from_request_permenent_cache, set_to_request_permanent_cache
-from proso.django.config import instantiate_from_config, instantiate_from_config_list, instantiate_from_json, get_global_config, get_config
+from proso.django.config import instantiate_from_json
 from proso.django.models import ModelDiffMixin
 from proso.django.request import load_query_json, get_time
 from proso.django.util import disable_for_loaddata, cache_pure
@@ -20,7 +20,7 @@ from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
 from proso.util import timeit
-from proso_common.models import Config
+from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config
 from proso_common.models import IntegrityCheck
 from proso_user.models import Session
 import django.apps

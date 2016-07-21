@@ -6,9 +6,9 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.db import transaction
-from proso.django.config import get_config
 from proso.django.util import is_on_postgresql
 from proso.models.environment import CommonEnvironment, InMemoryEnvironment
+from proso_common.models import get_config
 import logging
 import os.path
 import re

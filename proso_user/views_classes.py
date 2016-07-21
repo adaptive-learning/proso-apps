@@ -1,14 +1,12 @@
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.http import HttpResponseBadRequest
-
+from django.utils.translation import ugettext as _
 from proso.django.auth import get_unused_username
-from proso.django.config import get_config
 from proso.django.request import json_body
 from proso.django.response import render_json, render
+from proso_common.models import get_config
 from proso_user.models import Class
-from django.utils.translation import ugettext as _
-
 from proso_user.views import profile
 
 

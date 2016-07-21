@@ -1,5 +1,7 @@
-#  -*- coding: utf-8 -*-
-from proso.django.config import get_config, get_default_config_name, instantiate_from_config, set_default_config_name
+from .models import instantiate_from_config, get_config, reset_custom_configs, reset_custom_config_filters, CustomConfig, add_custom_config_filter
+from proso.django.config import get_default_config_name, set_default_config_name
+from proso.django.request import set_current_request
+from django.contrib.auth.models import User
 import django.test
 
 
@@ -7,6 +9,23 @@ class ConfigTest(django.test.TestCase):
 
     def setUp(self):
         set_default_config_name('default')
+        reset_custom_configs()
+        reset_custom_config_filters()
+        self.user = User.objects.create_user(
+            username='test', email='test@test.com', password='top_secret'
+        )
+        request = django.test.RequestFactory().get('/common/config')
+        request.user = self.user
+        set_current_request(request)
+        CustomConfig.objects.all().delete()
+
+    def test_custom_configs(self):
+        CustomConfig.objects.try_create('proso_tests', 'a.b.c', 'blah_overriden', self.user.id)
+        self.assertEqual(get_config('proso_tests', 'a.b.c'), 'blah_overriden')
+        CustomConfig.objects.try_create('proso_tests', 'a.b.c', 'blah_overriden_second', self.user.id, 'test_condition', 'value')
+        self.assertEqual(get_config('proso_tests', 'a.b.c'), 'blah_overriden')
+        add_custom_config_filter(lambda key, value: key == 'test_condition')
+        self.assertEqual(get_config('proso_tests', 'a.b.c'), 'blah_overriden_second')
 
     def test_get_config(self):
         self.assertEqual(get_config('proso_tests', 'a.b.c'), 'blah')

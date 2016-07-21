@@ -1,7 +1,7 @@
-from django.core.cache import cache
 from contextlib import closing
+from django.core.cache import cache
 from django.db import connection
-from proso.django.config import get_config
+from proso_common.models import get_config
 from proso_models.environment import DatabaseEnvironment as ODatabaseEnvironment
 import logging
 

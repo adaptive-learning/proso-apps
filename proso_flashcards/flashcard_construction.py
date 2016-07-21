@@ -1,6 +1,6 @@
 from django.core.cache import cache
 from functools import reduce
-from proso.django.config import instantiate_from_config
+from proso_common.models import instantiate_from_config
 from proso.list import flatten
 from proso_flashcards.models import FlashcardAnswer, Category, Context, Flashcard
 from proso_models.models import Item

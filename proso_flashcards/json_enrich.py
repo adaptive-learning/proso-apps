@@ -1,8 +1,8 @@
 from .flashcard_construction import get_direction, get_option_set
 from collections import defaultdict
-from proso.django.config import get_config
 from proso.django.request import get_time, is_time_overridden
 from proso.list import flatten
+from proso_common.models import get_config
 from proso_flashcards.models import Flashcard, FlashcardAnswer
 from proso_models.json_enrich import item2object
 from proso_models.models import Item, get_item_selector, get_option_selector, get_environment

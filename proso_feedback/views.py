@@ -8,7 +8,7 @@ from logging import getLogger
 from .models import Rating, Comment
 from proso_user.models import Session
 from lazysignup.decorators import allow_lazy_user
-from proso.django.config import get_config
+from proso_common.models import get_config
 from django.utils.translation import ugettext as _
 
 

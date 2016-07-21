@@ -5,23 +5,23 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.translation import ugettext as _
-from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_page
+from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
 from proso.django.cache import cache_page_conditional
-from proso.django.config import get_config
 from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import is_time_overridden, get_time, get_language, load_query_json
 from proso.django.response import render, render_json, BadRequestException
 from proso.list import flatten
 from proso.util import timer
+from proso_common.models import get_config
 from proso_user.models import get_user_id
+from random import sample
 import datetime
 import json
 import logging
-import proso_common.views
 import proso.svg
-from random import sample
+import proso_common.views
 
 
 LOGGER = logging.getLogger('django.request')
