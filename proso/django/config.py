@@ -34,7 +34,7 @@ def override(app_name_key, value):
         raise Exception("The value can not be None.")
     if isinstance(value, dict) or isinstance(value, list):
         raise Exception("The value has to be scalar.")
-    if isinstance(value, str) or isinstance(value, str):
+    if isinstance(value, str):
         if value.isdigit():
             value = int(value)
         elif value.lower() == 'true':
