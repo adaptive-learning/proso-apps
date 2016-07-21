@@ -20,7 +20,7 @@ from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
 from proso.util import timeit
-from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config
+from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config, add_custom_config_filter
 from proso_common.models import IntegrityCheck
 from proso_user.models import Session
 import django.apps
@@ -112,7 +112,9 @@ def get_mastery_trashold():
 
 
 def get_filter(request):
-    return load_query_json(request.GET, "filter", "[]")
+    identifier_filter = load_query_json(request.GET, "filter", "[]")
+    add_custom_config_filter(custom_filter_for_filters(identifier_filter))
+    return identifier_filter
 
 
 def get_time_for_knowledge_overview(request=None):
@@ -1321,6 +1323,24 @@ def _model_class_name(django_model):
     # HACK: I haven't found other way to obtain the class, because
     # "type" function returns ModelBase from Django.
     return str(django_model).replace("<class '", "").replace("'>", "")
+
+
+def identifier_filter_eq(a, b):
+    return json.dumps(identifier_filter_canonical(a)) == json.dumps(identifier_filter_canonical(b))
+
+
+def identifier_filter_canonical(identifier_filter):
+    if len(identifier_filter) == 1 and not isinstance(identifier_filter[0], list):
+        identifier_filter = [identifier_filter]
+    return sorted([sorted(f) for f in identifier_filter])
+
+
+def custom_filter_for_filters(identifier_filter):
+    def _custom_filter_for_filters(key, value):
+        if key != 'practice_filter':
+            return None
+        return identifier_filter_eq(json.loads(value), identifier_filter)
+    return _custom_filter_for_filters
 
 
 ################################################################################
