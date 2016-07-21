@@ -1,23 +1,25 @@
-from proso.django.response import render_json, render
-from proso_common.management.commands import analyse
-from proso_common.models import get_tables_allowed_to_export, get_custom_exports
+from .models import CustomConfig
+from collections import defaultdict
 from django.conf import settings
-from wsgiref.util import FileWrapper
-from django.http import HttpResponse, HttpResponseBadRequest
-import os
-import os.path
-from django.core.urlresolvers import reverse
-from django.shortcuts import get_object_or_404
-from time import time as time_lib
-import hashlib
+from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-import json as json_lib
-import logging
-from proso.django.config import get_global_config
+from django.core.urlresolvers import reverse
 from django.db.models.sql.datastructures import EmptyResultSet
+from django.http import HttpResponse, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from proso.django.request import json_body
-from collections import defaultdict
+from proso.django.response import render_json, render
+from proso_common.management.commands import analyse
+from proso_common.models import get_tables_allowed_to_export, get_custom_exports, get_global_config
+from time import time as time_lib
+from wsgiref.util import FileWrapper
+import hashlib
+import json as json_lib
+import logging
+import os
+import os.path
+import urllib.parse
 
 
 LOGGER = logging.getLogger('django.request')
@@ -150,6 +152,34 @@ def log(request):
         return HttpResponse('ok', status=201)
     else:
         return render_json(request, {}, template='common_log_service.html', help_text=log.__doc__)
+
+
+@login_required
+def custom_config(request):
+    """
+    Save user-specific configuration property.
+
+    POST parameters (JSON keys):
+        app_name: application name for which the configuration property is
+            valid (e.g., proso_common)
+        key: name of the property
+        value: value of the property (number, string, boolean, ...)
+        condition_key (optional): name of the condition which is used to filter the property
+        condition_value (optional): value for the condition filtering the property
+    """
+    if request.method == 'POST':
+        config_dict = json_body(request.body.decode('utf-8'))
+        CustomConfig.objects.try_create(
+            config_dict['app_name'],
+            config_dict['key'],
+            config_dict['value'],
+            request.user.id,
+            config_dict.get('condition_key') if config_dict.get('condition_key') else None,
+            urllib.parse.unquote(config_dict.get('condition_value')) if config_dict.get('condition_value') else None
+        )
+        return config(request)
+    else:
+        return render_json(request, {}, template='common_custom_config.html', help_text=custom_config.__doc__)
 
 
 def config(request):

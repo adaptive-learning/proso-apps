@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% load jsonify %}
+
+{% block header_block %}{% endblock %}
+
+{% block content_block %}
+    {% if help_text %}
+        <h2>Documentation</h2>
+        {{ help_text|safe }}
+    {% endif %}
+
+    <h2>Emulate POST request</h2>
+    <form class="pure-form" action="" method="post" enctype='application/json'>
+        <fieldset>
+            <legend>User-specific configuration</legend>
+            <input type="text" name="app_name" required placeholder="App Name">
+            <input type="text" name="key" required placeholder="Key">
+            <input type="text" name="value" required placeholder="Value">
+            <input type="text" name="condition_key" required placeholder="Condition Key">
+            <input type="text" name="condition_value" required placeholder="Condition Value">
+            <p><input type="submit" class="pure-button pure-button-primary" value="Save"/></p>
+        </fieldset>
+        {% csrf_token %}
+    </form>
+
+    {{ json|obj2richjson }}
+{% endblock %}
