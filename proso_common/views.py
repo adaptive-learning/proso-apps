@@ -9,8 +9,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from proso.django.request import json_body
-from proso.django.response import render_json, render
-from proso_common.management.commands import analyse
+from proso.django.response import render_json
 from proso_common.models import get_tables_allowed_to_export, get_custom_exports, get_global_config
 from time import time as time_lib
 from wsgiref.util import FileWrapper
@@ -235,13 +234,3 @@ def _csv_table(request, filename):
     response['Content-Length'] = os.path.getsize(download_file)
     response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
     return response
-
-
-def analysis(request, app_name=None):
-    data = {}
-    if app_name is None:
-        data["apps"] = list(os.listdir(analyse.OUTPUT_DIR))
-    else:
-        data["imgs"] = ["analysis/{}/{}".format(app_name, i) for i in os.listdir(os.path.join(analyse.OUTPUT_DIR, app_name))]
-        data["app_name"] = app_name
-    return render(request, 'common_analysis.html', data)

@@ -20,14 +20,6 @@ proso_user.admin module
     :undoc-members:
     :show-inheritance:
 
-proso_user.analysis module
---------------------------
-
-.. automodule:: proso_user.analysis
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 proso_user.json_enrich module
 -----------------------------
 

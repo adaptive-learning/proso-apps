@@ -8,7 +8,7 @@ admin.autodiscover()
 urlpatterns = patterns(
     '',
     url(
-        r'^media/(?P<path>(image|analysis)/.*)$',
+        r'^media/(?P<path>image/.*)$',
         'django.views.static.serve',
         {'document_root': settings.MEDIA_ROOT}
     ),
