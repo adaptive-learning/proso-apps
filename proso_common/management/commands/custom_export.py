@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
 from django.db import transaction
 from proso_common.models import get_custom_exports
-from proso.django.util import is_on_postgresql
+from proso.django.db import is_on_postgresql
 import proso.django.db
 import uuid
 

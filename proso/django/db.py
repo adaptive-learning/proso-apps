@@ -27,3 +27,7 @@ def dump_cursor(cursor, dest_file, append=False):
         for row in cursor:
             row = [str(val) for val in row]
             writer.writerow(row)
+
+
+def is_on_postgresql():
+    return connection.settings_dict['ENGINE'] == 'django.db.backends.postgresql_psycopg2'

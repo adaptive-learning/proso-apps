@@ -8,7 +8,7 @@ from django.db import transaction
 from optparse import make_option
 from proso_models.models import instantiate_from_config, get_config
 from proso.django.config import set_default_config_name
-from proso.django.util import is_on_postgresql
+from proso.django.db import is_on_postgresql
 from proso.models.environment import InMemoryEnvironment
 from proso.util import timer
 from proso_common.models import Config
