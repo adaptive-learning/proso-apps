@@ -1,6 +1,5 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 import proso.release
-import os
 
 VERSION = proso.release.VERSION
 
@@ -10,8 +9,7 @@ setup(
     description='General library for applications in PROSO projects',
     author='Adaptive Learning Group',
     author_email='al@fi.muni.cz',
-    namespace_packages = ['proso', 'proso.django'],
-    include_package_data = True,
+    namespace_packages=['proso', 'proso.django'],
     packages=[
         'proso',
         'proso.django',
