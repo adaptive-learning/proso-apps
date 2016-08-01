@@ -683,8 +683,11 @@ class ItemManager(models.Manager):
         """
 
         def _children(item_ids):
-            item_ids = [ii for iis in item_ids.values() for ii in iis]
-            items = Item.objects.filter(id__in=item_ids, active=True).prefetch_related('children')
+            if item_ids is None:
+                items = Item.objects.filter(active=True).prefetch_related('children')
+            else:
+                item_ids = [ii for iis in item_ids.values() for ii in iis]
+                items = Item.objects.filter(id__in=item_ids, active=True).prefetch_related('children')
             return {item.id: sorted([_item.id for _item in item.children.all() if _item.active]) for item in items}
 
         if item_ids is None:
@@ -713,14 +716,16 @@ class ItemManager(models.Manager):
             referenced by None key
         """
         def _parents(item_ids):
-            item_ids = [ii for iis in item_ids.values() for ii in iis]
-            items = Item.objects.filter(id__in=item_ids).prefetch_related('parents')
+            if item_ids is None:
+                items = Item.objects.filter(active=True).prefetch_related('parents')
+            else:
+                item_ids = [ii for iis in item_ids.values() for ii in iis]
+                items = Item.objects.filter(id__in=item_ids, active=True).prefetch_related('parents')
             return {item.id: sorted([_item.id for _item in item.parents.all()]) for item in items}
         return self._reachable_graph(item_ids, _parents, language=language)
 
         if item_ids is None:
-            item_ids = Item.objects.filter(active=True).values_list('pk', flat=True)
-            return self._reachable_graph(item_ids, _parents, language=language)
+            return self._reachable_graph(None, _parents, language=language)
         else:
             graph = self.get_parents_graph_graph(None, language)
             return self._subset_graph(graph, item_ids)
@@ -998,7 +1003,7 @@ class ItemManager(models.Manager):
             minus=lambda xs, ys: {x: vs for (x, vs) in xs.items() if x not in ys},
             plus=lambda xs, ys: dict(list(xs.items()) + list(ys.items())),
             f=neighbors,
-            x={None: item_ids}).items() if len(deps) > 0}
+            x=None if item_ids is None else {None: item_ids}).items() if len(deps) > 0}
 
         if language is not None:
             # Now we have to filter items which are not available in the given
