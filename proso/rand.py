@@ -1,4 +1,9 @@
+from string import ascii_lowercase, digits
 import random
+
+
+def random_string(n):
+    return ''.join(random.choice(ascii_lowercase + digits) for _ in range(n))
 
 
 def roulette(weights, n):

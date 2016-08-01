@@ -11,14 +11,13 @@ from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_
 from proso.django.request import get_current_request
 from proso.django.response import HttpError
 from proso.django.util import disable_for_loaddata
+from proso.rand import random_string
 from proso_common.models import get_config
 from social.apps.django_app.default.models import UserSocialAuth
 import datetime
 import hashlib
 import logging
 import user_agents
-
-from proso.util import random_string
 
 LOGGER = logging.getLogger('django.request')
 

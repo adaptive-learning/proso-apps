@@ -3,8 +3,6 @@ import logging
 import re
 import time
 from functools import wraps
-from string import ascii_lowercase, digits
-from random import choice
 
 
 LOGGER = logging.getLogger('django.request')
@@ -49,7 +47,3 @@ def instantiate(classname, *args, **kwargs):
         raise Exception('can instantiate only class with packages: %s' % classname)
     module = importlib.import_module(matched.groups()[0])
     return getattr(module, matched.groups()[1])(*args, **kwargs)
-
-
-def random_string(n):
-    return ''.join(choice(ascii_lowercase + digits) for _ in range(n))
