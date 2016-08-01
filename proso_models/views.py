@@ -13,7 +13,7 @@ from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import is_time_overridden, get_time, get_language, load_query_json
 from proso.django.response import render, render_json, BadRequestException
 from proso.list import flatten
-from proso.util import timer
+from proso.time import timer
 from proso_common.models import get_config
 from proso_user.models import get_user_id
 from random import sample

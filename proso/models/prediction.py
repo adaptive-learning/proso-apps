@@ -1,9 +1,9 @@
 from functools import reduce
 from math import exp
-from proso.util import timeit
+from proso.time import timeit
 import abc
-import operator
 import numpy
+import operator
 
 
 class PredictiveModel(metaclass=abc.ABCMeta):

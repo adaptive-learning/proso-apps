@@ -76,10 +76,10 @@ proso.svg module
     :undoc-members:
     :show-inheritance:
 
-proso.util module
+proso.time module
 -----------------
 
-.. automodule:: proso.util
+.. automodule:: proso.time
     :members:
     :undoc-members:
     :show-inheritance:

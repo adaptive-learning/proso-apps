@@ -10,7 +10,7 @@ from proso_models.models import instantiate_from_config, get_config
 from proso.django.config import set_default_config_name
 from proso.django.db import is_on_postgresql
 from proso.models.environment import InMemoryEnvironment
-from proso.util import timer
+from proso.time import timer
 from proso_common.models import Config
 from proso_models.models import EnvironmentInfo, ENVIRONMENT_INFO_CACHE_KEY
 from proso_models.models import get_predictive_model
