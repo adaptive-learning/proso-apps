@@ -128,7 +128,7 @@ snapshot:
 	MAJOR=$(MAJOR_VERSION); \
 	MINOR=$(MINOR_VERSION); \
 	MICRO=$(MICRO_VERSION); \
-	sed -i "s/VERSION = '.*'/VERSION = '$${MAJOR}.$${MINOR}.$${MICRO}-SNAPSHOT'/g" proso/release.py; \
+	sed -i "s/VERSION = '.*'/VERSION = '$${MAJOR}.$${MINOR}.$${MICRO}.dev'/g" proso/release.py; \
 
 publish-version:
 	git reset
