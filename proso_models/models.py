@@ -667,9 +667,9 @@ class ItemManager(models.Manager):
         return self.filter_all_reachable_leaves_many([identifier_filter], language)[0]
 
     @cache_pure
-    def get_children_graph(self, item_ids, language=None):
+    def get_children_graph(self, item_ids=None, language=None):
         """
-        Get a subgraph of items reachable from the given set of items throughr
+        Get a subgraph of items reachable from the given set of items through
         the 'child' relation.
 
         Args:
@@ -686,7 +686,13 @@ class ItemManager(models.Manager):
             item_ids = [ii for iis in item_ids.values() for ii in iis]
             items = Item.objects.filter(id__in=item_ids, active=True).prefetch_related('children')
             return {item.id: sorted([_item.id for _item in item.children.all() if _item.active]) for item in items}
-        return self._reachable_graph(item_ids, _children, language=language)
+
+        if item_ids is None:
+            item_ids = Item.objects.filter(active=True).values_list('pk', flat=True)
+            return self._reachable_graph(item_ids, _children, language=language)
+        else:
+            graph = self.get_children_graph(None, language)
+            return self._subset_graph(graph, item_ids)
 
     def get_reachable_children(self, item_ids, language=None):
         return self._reachable_items(self.get_children_graph(item_ids, language=language))
@@ -711,6 +717,13 @@ class ItemManager(models.Manager):
             items = Item.objects.filter(id__in=item_ids).prefetch_related('parents')
             return {item.id: sorted([_item.id for _item in item.parents.all()]) for item in items}
         return self._reachable_graph(item_ids, _parents, language=language)
+
+        if item_ids is None:
+            item_ids = Item.objects.filter(active=True).values_list('pk', flat=True)
+            return self._reachable_graph(item_ids, _parents, language=language)
+        else:
+            graph = self.get_parents_graph_graph(None, language)
+            return self._subset_graph(graph, item_ids)
 
     def get_reachable_parents(self, item_ids, language=None):
         return self._reachable_items(self.get_parents_graph(item_ids, language=language))
@@ -1021,6 +1034,20 @@ class ItemManager(models.Manager):
             f=lambda xs: reduce(lambda a, b: a | b, [set(graph.get(x, [])) for x in xs], set()),
             x={i}
         ) - {i})) for i in graph[None]}
+
+    def _subset_graph(self, graph, item_ids):
+        result = {None: sorted(item_ids)}
+        to_append = set(item_ids)
+        appended = set()
+        while len(to_append) > 0:
+            item_id = to_append.pop()
+            found = graph.get(item_id)
+            appended |= {item_id}
+            if found is None:
+                continue
+            result[item_id] = found
+            to_append |= set(found) - appended
+        return result
 
 
 class Item(models.Model, ModelDiffMixin):
