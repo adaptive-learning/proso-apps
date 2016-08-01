@@ -15,8 +15,6 @@ setup(
         'proso',
         'proso.django',
         'proso.models',
-        'proso_ab',
-        'proso_ab.migrations',
         'proso_common',
         'proso_common.management',
         'proso_common.management.commands',
