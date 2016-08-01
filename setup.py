@@ -9,6 +9,7 @@ setup(
     description='General library for applications in PROSO projects',
     author='Adaptive Learning Group',
     author_email='al@fi.muni.cz',
+    url='https://github.com/adaptive-learning/proso-apps',
     namespace_packages=['proso', 'proso.django'],
     packages=[
         'proso',
