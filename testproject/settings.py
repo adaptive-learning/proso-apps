@@ -212,7 +212,7 @@ LOGGING = {
 }
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
     'disk': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
