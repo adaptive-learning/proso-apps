@@ -1,11 +1,11 @@
 from collections import defaultdict
 from django.conf import settings
 from threading import currentThread
-import json
-import yaml
-import proso.util
-import os
 import copy
+import json
+import os
+import proso.reflection
+import yaml
 
 
 DEFAULT_DEFAULT = 'default'
@@ -82,7 +82,7 @@ def get_config_path():
 def instantiate_from_json(json, default_class=None, default_parameters=None, pass_parameters=None):
     if pass_parameters is None:
         pass_parameters = []
-    return proso.util.instantiate(
+    return proso.reflection.instantiate(
         json.get('class', default_class),
         *pass_parameters,
         **json.get('parameters', default_parameters if default_parameters else {})

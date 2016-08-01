@@ -34,16 +34,7 @@ class timeit:
             ts = time.time()
             result = function(*args, **kw)
             te = time.time()
-
             LOGGER.debug('%s: %r (%r, %r) took %2.2f seconds' % (self._name, function.__name__, args, kw, te - ts))
             return result
 
         return timed
-
-
-def instantiate(classname, *args, **kwargs):
-    matched = re.match('(.*)\.(\w+)', classname)
-    if matched is None:
-        raise Exception('can instantiate only class with packages: %s' % classname)
-    module = importlib.import_module(matched.groups()[0])
-    return getattr(module, matched.groups()[1])(*args, **kwargs)
