@@ -1,22 +1,18 @@
-import importlib
-import logging
-import re
-import time
 from functools import wraps
+import logging
+import time
 
 
 LOGGER = logging.getLogger('django.request')
-
-
-_timers = {}
+TIMERS = {}
 
 
 def timer(name):
     now = time.time()
     diff = None
-    if name in _timers:
-        diff = now - _timers[name]
-    _timers[name] = now
+    if name in TIMERS:
+        diff = now - TIMERS[name]
+    TIMERS[name] = now
     return diff
 
 
