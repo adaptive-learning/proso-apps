@@ -15,7 +15,6 @@
 
 import sys
 import os
-import mock
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'testproject.settings'
 
@@ -25,10 +24,6 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'testproject.settings'
 sys.path.append(os.path.abspath('..'))
 
 import proso.release
-
-MOCK_MODULES = ['numpy', 'scipy', 'matplotlib', 'matplotlib.pyplot', 'matplotlib.pylab', 'matplotlib.colors', 'seaborn', 'pandas']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
 
 import django
 django.setup()

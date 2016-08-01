@@ -71,7 +71,7 @@ setup(
         'jsonfield==1.0.3',
         'jsonschema==2.5.1',
         'mock==1.3.0',
-        'pandas==0.17.1',
+        'numpy==1.10.4',
         'psycopg2==2.6.1',
         'python-social-auth==0.2.14',
         'seaborn==0.7.0',
