@@ -6,7 +6,7 @@ from django.db import connection
 from django.db import transaction
 from proso_common.models import get_custom_exports
 from proso.django.util import is_on_postgresql
-import proso.db
+import proso.django.db
 import uuid
 
 
@@ -40,5 +40,5 @@ class Command(BaseCommand):
                 cursor.execute('SELECT COUNT(*) FROM {}'.format(table_name))
                 count, = cursor.fetchone()
                 dest_file = settings.DATA_DIR + '/' + name + '.csv'
-                proso.db.dump_table(table_name, 'id', batch_size, dest_file)
+                proso.django.db.dump_table(table_name, 'id', batch_size, dest_file)
                 cursor.execute('DROP TABLE {}'.format(table_name))

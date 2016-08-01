@@ -2,7 +2,7 @@
 from proso_common.models import get_tables_allowed_to_export
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
-import proso.db
+import proso.django.db
 
 
 class Command(BaseCommand):
@@ -42,4 +42,4 @@ class Command(BaseCommand):
             raise CommandError('table "%s" is not supported' % table_name)
         print('processing %s' % table_name)
         dest_file = settings.DATA_DIR + '/' + table_name + '.csv'
-        proso.db.dump_table(table_name, pk_column, batch_size, dest_file)
+        proso.django.db.dump_table(table_name, pk_column, batch_size, dest_file)
