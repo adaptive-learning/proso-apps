@@ -4,6 +4,7 @@ from django.core.cache.backends.locmem import LocMemCache
 from django.views.decorators.cache import cache_page
 from functools import wraps
 from proso.django.config import get_config
+from proso.time import timer
 from threading import currentThread
 import hashlib
 import logging
@@ -49,16 +50,15 @@ def cache_pure(f, expiration=60 * 60 * 24 * 30):
         if is_cache_prepared():
             value = get_request_cache().get(hash_key, CACHE_MISS)
             if value != CACHE_MISS:
-                LOGGER.debug("loaded function result (%s...) form REQUEST CACHE; key: %s..., hash %s", str(value)[:300], key[:300], hash_key)
                 return value
 
         value = cache.get(hash_key, CACHE_MISS)
         if value != CACHE_MISS:
-            LOGGER.debug("loaded function result (%s...) form CACHE; key: %s..., hash %s", str(value)[:300], key[:300], hash_key)
             return value
 
+        timer(hash_key)
         value = f(*args, **kwargs)
-        LOGGER.debug("saved function result (%s...) to CACHE; key: %s..., hash %s", str(value)[:300], key[:300], hash_key)
+        LOGGER.debug("saved function result (%s...) to CACHE; key: %s... time %s", str(value)[:300], key[:300], timer(hash_key))
         cache.set(hash_key, value, expiration)
         if is_cache_prepared():
             get_request_cache().set(hash_key, value)
