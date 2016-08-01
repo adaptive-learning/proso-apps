@@ -14,7 +14,8 @@ from proso.django.cache import get_request_cache, is_cache_prepared, get_from_re
 from proso.django.config import instantiate_from_json
 from proso.django.models import ModelDiffMixin
 from proso.django.request import load_query_json, get_time
-from proso.django.util import disable_for_loaddata, cache_pure
+from proso.django.util import disable_for_loaddata
+from proso.django.cache import cache_pure
 from proso.func import fixed_point
 from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
