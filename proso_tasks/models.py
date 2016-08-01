@@ -4,7 +4,7 @@ from proso.django.models import ModelDiffMixin
 from proso_models.models import Item, ItemRelation, Answer
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
-from proso.django.util import disable_for_loaddata
+from proso.django.models import disable_for_loaddata
 import logging
 
 

@@ -8,7 +8,7 @@ from django.db import transaction
 from proso.django.config import override
 from django.dispatch import receiver
 from django.db.models.signals import post_save
-from proso.django.util import disable_for_loaddata
+from proso.django.models import disable_for_loaddata
 from django.contrib.auth.signals import user_logged_in
 from contextlib import closing
 from django.db import connection

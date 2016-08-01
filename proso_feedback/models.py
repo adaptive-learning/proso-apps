@@ -4,7 +4,7 @@ from datetime import datetime
 from proso_user.models import Session
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from proso.django.util import disable_for_loaddata
+from proso.django.models import disable_for_loaddata
 
 
 class Comment(models.Model):

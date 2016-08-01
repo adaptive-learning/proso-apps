@@ -60,14 +60,6 @@ proso.django.response module
     :undoc-members:
     :show-inheritance:
 
-proso.django.util module
-------------------------
-
-.. automodule:: proso.django.util
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Module contents
 ---------------

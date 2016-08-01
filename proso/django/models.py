@@ -1,4 +1,5 @@
 from django.forms.models import model_to_dict
+from functools import wraps
 
 
 class ModelDiffMixin(object):
@@ -50,3 +51,13 @@ class ModelDiffMixin(object):
             self,
             fields=[field.name for field in self._meta.fields]
         )
+
+
+def disable_for_loaddata(signal_handler):
+    @wraps(signal_handler)
+    def wrapper(*args, **kwargs):
+        if kwargs.get('raw'):
+            return
+        signal_handler(*args, **kwargs)
+
+    return wrapper
