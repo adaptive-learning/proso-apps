@@ -1,13 +1,15 @@
 from .models import Subscription, SubscriptionPlan, SubscriptionPlanDescription
 from django.contrib.auth.decorators import login_required
+from proso.django.request import get_language
 from proso.django.response import render_json
 from django.shortcuts import get_object_or_404
 
 
 def plans(request):
+    lang = get_language(request)
     return render_json(
         request,
-        [p.to_json() for p in SubscriptionPlan.objects.prepare_related().filter(active=True)],
+        [p.to_json(lang=lang) for p in SubscriptionPlan.objects.prepare_related().filter(active=True)],
         template='subscription_json.html'
     )
 

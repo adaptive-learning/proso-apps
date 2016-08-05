@@ -24,7 +24,7 @@ class SubscriptionPlan(models.Model):
 
     objects = SubscriptionPlanManager()
 
-    def to_json(self, nested=False):
+    def to_json(self, nested=False, lang=None):
         result = {
             'identifier': self.identifier,
             'id': self.id,
@@ -34,7 +34,10 @@ class SubscriptionPlan(models.Model):
             'months-validity': self.months_validity,
         }
         if not nested:
-            result['descriptions'] = [d.to_json(nested=True) for d in self.descriptions.all()]
+            if lang is None:
+                result['descriptions'] = [d.to_json(nested=True) for d in self.descriptions.all()]
+            else:
+                result['description'] = [d.to_json(nested=True) for d in self.descriptions.all() if d.lang == lang][0]
         return result
 
 
