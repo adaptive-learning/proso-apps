@@ -92,6 +92,7 @@ class Flashcard(models.Model, ModelDiffMixin):
     context = models.ForeignKey(Context, related_name="flashcards")
     description = models.TextField(null=True, blank=True)
     active = models.BooleanField(default=True)
+    additional_info = models.TextField(null=True, blank=True, default=None)
 
     objects = FlashcardManager()
 
@@ -117,6 +118,8 @@ class Flashcard(models.Model, ModelDiffMixin):
             data["term_secondary"] = self.get_term_secondary().to_json(nested=True)
         if self.description is not None:
             data['description'] = self.description
+        if self.additional_info is not None:
+            data['additional_info'] = self.additional_info
         return data
 
     def get_term(self):

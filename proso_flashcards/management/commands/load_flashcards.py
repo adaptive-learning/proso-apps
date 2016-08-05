@@ -218,6 +218,9 @@ class Command(BaseCommand):
                 if "description" in flashcard and db_flashcard.description != flashcard["description"]:
                     db_flashcard.description = flashcard["description"]
                     modified = True
+                if "additional-info" in flashcard and db_flashcard.description != flashcard["additional-info"]:
+                    db_flashcard.additional_info = flashcard["additional-info"]
+                    modified = True
                 if "active" in flashcard and db_flashcard.active != flashcard["active"]:
                     db_flashcard.active = flashcard["active"]
                     modified = True

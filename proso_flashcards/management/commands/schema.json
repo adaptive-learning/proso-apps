@@ -53,6 +53,9 @@
         "description": {
           "type": "string"
         },
+        "additional-info": {
+          "type": "string"
+        },
         "active": {
           "type": "boolean"
         }
