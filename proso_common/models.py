@@ -66,10 +66,12 @@ def current_custom_configs():
                     return False
         return not all_nones
 
-    for key, configs in _custom_configs.get(currentThread(), {}).items():
-        valid_configs = [c for c in configs if _filter_config(c)]
-        if len(valid_configs):
-            result.append((key, valid_configs[0]['content']))
+    customs = _custom_configs.get(currentThread())
+    if customs is not None:
+        for key, configs in customs.items():
+            valid_configs = [c for c in configs if _filter_config(c)]
+            if len(valid_configs):
+                result.append((key, valid_configs[0]['content']))
     return result
 
 
