@@ -48,8 +48,10 @@ def current_custom_configs():
     result = []
     global _custom_configs
     global _custom_config_filters
-    if _custom_configs[currentThread()] is None:
-        _custom_configs[currentThread()] = CustomConfig.objects.current_custom_configs(get_user_id())
+    if _custom_configs.get(currentThread()) is None:
+        user_id = get_user_id()
+        if user_id is not None:
+            _custom_configs[currentThread()] = CustomConfig.objects.current_custom_configs(user_id)
 
     def _filter_config(config):
         c_key, c_value = next(iter(config['condition'].items()))
@@ -64,7 +66,7 @@ def current_custom_configs():
                     return False
         return not all_nones
 
-    for key, configs in _custom_configs[currentThread()].items():
+    for key, configs in _custom_configs.get(currentThread(), {}).items():
         valid_configs = [c for c in configs if _filter_config(c)]
         if len(valid_configs):
             result.append((key, valid_configs[0]['content']))

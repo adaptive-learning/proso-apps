@@ -26,8 +26,6 @@ class ItemManagerGraphTest(test.TestCase):
 
     def setUp(self):
         super(ItemManagerGraphTest, self).setUp()
-        from proso_common.models import reset_custom_configs
-        reset_custom_configs()
         Item.objects.all().delete()
         ItemRelation.objects.all().delete()
         for item_id in ItemManagerGraphTest.GRAPH.keys():
