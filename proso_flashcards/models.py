@@ -342,6 +342,7 @@ def add_parent(sender, instance, **kwargs):
             parent_id=parent,
             child_id=child,
             visible=True,
+            active=instance.active,
         )
 
 
