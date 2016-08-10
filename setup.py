@@ -60,7 +60,7 @@ setup(
         'Pillow==2.6.0',
         'PyYAML==3.11',
         'clint==0.5.1',
-        'django-debug-toolbar==1.4',
+        'django-debug-toolbar==1.5',
         'django-flatblocks==0.9.2',
         'django-ipware==1.1.3',
         'django-lazysignup==1.0.2',
