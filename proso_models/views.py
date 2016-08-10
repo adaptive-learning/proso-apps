@@ -244,7 +244,7 @@ def user_stats(request):
     if request.GET.get("mastered"):
         timer('user_stats_mastered')
         mastery_threshold = get_mastery_trashold()
-        predictions = get_predictive_model().predict_more_items(environment, user_id, all_leaves, time=get_time_for_knowledge_overview(request))
+        predictions = Item.objects.predict_for_overview(environment, user_id, all_leaves)
         mastered = dict(list(zip(all_leaves, [p >= mastery_threshold for p in predictions])))
         LOGGER.debug("user_stats - getting predictions for items took %s seconds", (timer('user_stats_mastered')))
     for identifier, items in zip(filter_names, reachable_leaves):

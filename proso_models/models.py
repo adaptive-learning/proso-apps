@@ -562,6 +562,44 @@ class ItemType(models.Model):
 
 class ItemManager(models.Manager):
 
+    def predict_for_overview(self, environment, user_id, items):
+        last_times = environment.last_answer_time_more_items(items, user_id)
+        last_times_filtered = [t for t in last_times.values() if t is not None]
+        max_last_time = max(last_times_filtered) if len(last_times_filtered) > 0 else None
+        time_expiration_lower_bound = timedelta(hours=get_config('proso_models', 'knowledge_overview.time_shift_hours', default=4))
+        time_expiration_factor = get_config('proso_models', 'knowledge_overview.time_expiration_factor', default=2)
+        predictive_model = get_predictive_model()
+        to_compute = []
+        cache_key = 'overview_predictions_for_avg_user' if max_last_time is None else 'overview_predictions_for_user-{}'.format(user_id)
+        cached = cache.get(cache_key, {})
+
+        def _has_expired(cache_time, item_time):
+            if max_last_time is None:
+                return False
+            if item_time is None:
+                if max_last_time > cache_time:
+                    return True
+                else:
+                    return False
+            if item_time > cache_time:
+                return True
+            cache_timedelta = cache_time - item_time
+            if cache_timedelta > time_expiration_lower_bound:
+                return False
+            return cache_timedelta < (time_expiration_factor * (datetime.now() - cache_time))
+
+        for item in items:
+            if item not in cached or _has_expired(cached[item][1], last_times[item]):
+                to_compute.append(item)
+        predictions = predictive_model.predict_more_items(
+            environment, user_id, to_compute, time=get_time_for_knowledge_overview()
+        ) if len(to_compute) > 0 else []
+        cached = cache.get(cache_key, {})
+        for item, prediction in zip(to_compute, predictions):
+            cached[item] = prediction, datetime.now()
+        cache.set(cache_key, cached)
+        return [cached.get(item)[0] for item in items]
+
     def item_id_to_json(self, item_id):
         return {
             'object_type': 'item',
