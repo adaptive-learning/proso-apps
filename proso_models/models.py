@@ -573,7 +573,7 @@ class ItemManager(models.Manager):
         """
         Get all available leaves.
         """
-        return sorted(Item.objects.filter(children=None).values_list('id', flat=True))
+        return sorted(Item.objects.filter(active=True, children=None).values_list('id', flat=True))
 
     @cache_pure
     @timeit(name='filter_all_reachable_leaves_many')
