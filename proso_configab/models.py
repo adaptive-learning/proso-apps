@@ -14,7 +14,7 @@ from proso.django.config import override
 from proso.django.models import disable_for_loaddata
 from proso.list import group_by
 from proso.metric import binomial_confidence_mean, confidence_value_to_json, confidence_median
-from proso.rand import roulette
+from proso_common.models import instantiate_from_config
 from proso_models.models import Answer, learning_curve
 import hashlib
 import json
@@ -22,6 +22,13 @@ import logging
 
 
 LOGGER = logging.getLogger('django.request')
+
+
+def get_assignment_strategy():
+    return instantiate_from_config(
+        'proso_configab', 'assignment_strategy',
+        default_class='proso_configab.assignment.RandomStrategy'
+    )
 
 
 class ABConfigMiddleware(object):
@@ -220,16 +227,9 @@ class UserSetupManager(models.Manager):
                     ExperimentSetup.objects.prefetch_related('values').filter(experiment__is_enabled=True, experiment__is_paused=False),
                     by=lambda s: s.experiment_id
                 )
-                for experiment_id, setups in setups_by_experiment.items():
-                    if experiment_id in assigned_experiments:
-                        continue
-                    chosen_id = roulette({s.id: s.probability for s in setups})[0]
-                    chosen_setup = [s for s in setups if s.id == chosen_id][0]
-                    assigned_setups.append(chosen_setup)
-                    UserSetup.objects.create(
-                        experiment_setup=chosen_setup,
-                        user_id=user_id
-                    )
+                assigned_setups.extend(get_assignment_strategy().assign_setups(
+                    {e: setups for e, setups in setups_by_experiment.items() if e not in assigned_experiments}
+                ))
             return {
                 '{}.{}'.format(val.variable.app_name, val.variable.name): val.value
                 for setup in assigned_setups
