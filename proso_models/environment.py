@@ -1,4 +1,3 @@
-from .decorator import cache_environment_for_item
 from .models import Answer, Variable
 from contextlib import closing
 from datetime import datetime
@@ -196,7 +195,6 @@ class DatabaseEnvironment(CommonEnvironment):
                 ''' + where, where_params)
             return cursor.fetchall()
 
-    @cache_environment_for_item()
     def get_items_with_values_more_items(self, key, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(
@@ -232,7 +230,6 @@ class DatabaseEnvironment(CommonEnvironment):
                 else:
                     return audit[0][1]
 
-    @cache_environment_for_item()
     def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(key, items, user, item, symmetric=symmetric)
@@ -442,7 +439,6 @@ class DatabaseEnvironment(CommonEnvironment):
                 + where, where_params)
             return self._ensure_is_datetime(cursor.fetchone()[0])
 
-    @cache_environment_for_item(default=0)
     def number_of_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
@@ -455,7 +451,6 @@ class DatabaseEnvironment(CommonEnvironment):
                 result[i] = v
             return result
 
-    @cache_environment_for_item(default=0)
     def number_of_correct_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
@@ -468,7 +463,6 @@ class DatabaseEnvironment(CommonEnvironment):
                 result[i] = v
             return result
 
-    @cache_environment_for_item(default=0)
     def number_of_first_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
@@ -481,7 +475,6 @@ class DatabaseEnvironment(CommonEnvironment):
                 result[i] = v
             return result
 
-    @cache_environment_for_item()
     def last_answer_time_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
