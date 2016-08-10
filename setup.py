@@ -11,6 +11,7 @@ setup(
     author_email='al@fi.muni.cz',
     url='https://github.com/adaptive-learning/proso-apps',
     namespace_packages=['proso', 'proso.django'],
+    include_package_data = True,
     packages=[
         'proso',
         'proso.django',
