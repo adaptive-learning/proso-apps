@@ -87,7 +87,7 @@ def options(request, json_list, nested):
         options = all_options[question['payload']['item_id']]
         question['payload']['options'] = [Item.objects.item_id_to_json(o) for o in options]
         options_json_list += question['payload']['options']
-    item2object(request, options_json_list, nested=False)
+    item2object(request, options_json_list, nested=True)
     for question in json_list:
         if question['payload']['object_type'] != 'fc_flashcard':
             continue
