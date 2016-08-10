@@ -1,6 +1,32 @@
 {
   "experiments": [
     {
+        "setups": [
+            {
+                "variables": [
+                    {
+                        "name": "item_selector.class",
+                        "app_name": "proso_models",
+                        "value": "proso.models.item_selection.ScoreItemSelection"
+                    }
+                ],
+                "probability": 50
+            },
+            {
+                "variables": [
+                    {
+                        "name": "item_selector.class",
+                        "app_name": "proso_models",
+                        "value": "proso.models.item_selection.RandomItemSelection"
+                    }
+                ],
+                "probability": 50
+            }
+        ],
+        "id": "test-random",
+        "disabled": true
+    },
+    {
       "variables": [
         {
           "values": [

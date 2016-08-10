@@ -1,20 +1,23 @@
-from django.contrib.auth.models import User
-from django.db import models
-from datetime import datetime
 from collections import defaultdict
-from random import randint
-from proso_models.models import Answer, learning_curve
-from django.db import transaction
-from proso.django.config import override
-from django.dispatch import receiver
-from django.db.models.signals import post_save
-from proso.django.models import disable_for_loaddata
-from django.contrib.auth.signals import user_logged_in
 from contextlib import closing
+from datetime import datetime
+from django.contrib.auth.models import User
+from django.contrib.auth.signals import user_logged_in
 from django.db import connection
+from django.db import models
+from django.db import transaction
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from functools import reduce
+from itertools import product
+from proso.django.config import override
+from proso.django.models import disable_for_loaddata
+from proso.list import group_by
 from proso.metric import binomial_confidence_mean, confidence_value_to_json, confidence_median
-import json
+from proso.rand import roulette
+from proso_models.models import Answer, learning_curve
 import hashlib
+import json
 import logging
 
 
@@ -81,20 +84,17 @@ class Variable(models.Model):
 
 class PossibleValue(models.Model):
 
-    experiment = models.ForeignKey(Experiment)
     value = models.CharField(max_length=100)
     variable = models.ForeignKey(Variable)
-    probability = models.IntegerField(default=0)
 
     class Meta:
-        unique_together = ('variable', 'experiment', 'value')
+        unique_together = ('variable', 'value')
 
     def to_json(self, nested=False):
         result = {
             'object_type': 'configab_possible_value',
             'id': self.id,
             'value': self.value,
-            'probability': self.probability,
         }
         if nested:
             result['variable_id'] = self.variable_id
@@ -153,28 +153,42 @@ class ExperimentSetupManager(models.Manager):
                     }
             return result
 
-    def from_values(self, values):
-        experiment_ids = set([val.experiment_id for val in values])
-        if len(experiment_ids) > 1:
-            raise Exception("Values from different experiemnts can not be combined.")
-        content_hash = hashlib.sha1(json.dumps({'{}'.format(val.variable.id): val.id for val in values},
-                                               sort_keys=True).encode()).hexdigest()
-        setup, created = self.get_or_create(content_hash=content_hash)
-        if not created:
-            return setup
-        if len(experiment_ids) == 1:
-            setup.experiment_id = experiment_ids.pop()
-        for val in values:
-            setup.values.add(val)
-        setup.save()
+    def from_values(self, experiment, values, probability):
+        content_hash = hashlib.sha1(
+            json.dumps(
+                {'{}'.format(val.variable.id): val.id for val in values},
+                sort_keys=True
+            ).encode()
+        ).hexdigest()
+        setup, created = self.get_or_create(content_hash=content_hash, experiment_id=experiment.id)
+        if created:
+            setup.probability = probability
+            for val in values:
+                setup.values.add(val)
+            setup.save()
         return setup
+
+    def from_values_product(self, experiment, values_list_with_probabilities):
+        result = []
+        total_probability = sum([
+            reduce(lambda x, y: x * y, [p / 100 for _, p in pvals])
+            for pvals in product(*values_list_with_probabilities)
+        ])
+        for pvalues in product(*values_list_with_probabilities):
+            setup_probability = 100 * reduce(lambda x, y: x * y, [p / 100 for _, p in pvalues]) / (total_probability if total_probability > 0 else 1)
+            result.append(self.from_values(experiment, [v for v, _ in pvalues], setup_probability))
+        return result
 
 
 class ExperimentSetup(models.Model):
 
     experiment = models.ForeignKey(Experiment, null=True, blank=True)
-    content_hash = models.CharField(max_length=40, unique=True)
+    content_hash = models.CharField(max_length=40)
     values = models.ManyToManyField(PossibleValue)
+    probability = models.FloatField(null=True, blank=True, default=0)
+
+    class Meta:
+        unique_together = ('content_hash', 'experiment')
 
     objects = ExperimentSetupManager()
 
@@ -183,7 +197,8 @@ class ExperimentSetup(models.Model):
             'object_type': 'configab_experiment_setup',
             'id': self.id,
             'content_hash': self.content_hash,
-            'values': [val.to_json(nested=True) for val in self.values.all()]
+            'values': [val.to_json(nested=True) for val in self.values.all()],
+            'probability': self.probability,
         }
         if nested:
             result['experiment_id'] = self.experiment_id
@@ -195,40 +210,31 @@ class ExperimentSetup(models.Model):
 class UserSetupManager(models.Manager):
 
     def get_variables_to_override(self, user_id):
-        # 1) There is only one experiment enable in time.
-        # 2) Paused experiments have effect on already assigned users, but new
-        #    users are not assigned.
+        # Paused experiments have effect on already assigned users, but new
+        # users are not assigned.
         with transaction.atomic():
-            # Fetch all setups available for the given user.
-            # If there is one setup of this kind, find values for enabled experiments.
-            # If there is no such setup create one
-            setups = ExperimentSetup.objects.prefetch_related('values', 'values__experiment').filter(usersetup__user_id=user_id)
-            if len(setups) == 1:
-                vals = [val for val in setups[0].values.all() if val.experiment.is_enabled]
-                return {'{}.{}'.format(val.variable.app_name, val.variable.name): val.value for val in vals}
-            experiments = Experiment.objects.filter(is_enabled=True, is_paused=False)
-            to_override = {}
-            experiment_setup_values = []
-            if len(experiments) > 1:
-                raise Exception('Number of enabled experiments is not allowed to be larger than 1, found {}'.format(len(experiments)))
-            if len(experiments) == 1 and Answer.objects.filter(user_id=user_id).count() == 0:
-                experiment = experiments[0]
-                variables = defaultdict(list)
-                for val in experiment.possiblevalue_set.all():
-                    variables[val.variable].append(val)
-                for var, vals in variables.items():
-                    chance = randint(0, 99)
-                    total = 0
-                    for val in vals:
-                        total += val.probability
-                        if chance < total:
-                            experiment_setup_values.append(val)
-                            to_override['{}.{}'.format(var.app_name, var.name)] = val.value
-                            break
-            UserSetup.objects.create(
-                experiment_setup=ExperimentSetup.objects.from_values(experiment_setup_values),
-                user_id=user_id)
-            return to_override
+            assigned_setups = list(ExperimentSetup.objects.prefetch_related('values').filter(usersetup__user_id=user_id, experiment__is_enabled=True))
+            assigned_experiments = {s.experiment_id for s in assigned_setups}
+            if Answer.objects.filter(user_id=user_id).count() == 0:
+                setups_by_experiment = group_by(
+                    ExperimentSetup.objects.prefetch_related('values').filter(experiment__is_enabled=True, experiment__is_paused=False),
+                    by=lambda s: s.experiment_id
+                )
+                for experiment_id, setups in setups_by_experiment.items():
+                    if experiment_id in assigned_experiments:
+                        continue
+                    chosen_id = roulette({s.id: s.probability for s in setups})[0]
+                    chosen_setup = [s for s in setups if s.id == chosen_id][0]
+                    assigned_setups.append(chosen_setup)
+                    UserSetup.objects.create(
+                        experiment_setup=chosen_setup,
+                        user_id=user_id
+                    )
+            return {
+                '{}.{}'.format(val.variable.app_name, val.variable.name): val.value
+                for setup in assigned_setups
+                for val in setup.values.all()
+            }
 
 
 class UserSetup(models.Model):

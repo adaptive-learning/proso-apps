@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from jsonschema import validate
-from proso_configab.models import Experiment, Variable, PossibleValue
+from proso_configab.models import Experiment, Variable, PossibleValue, ExperimentSetup
 from datetime import datetime
 from django.db import transaction
 import os
@@ -37,26 +37,47 @@ class Command(BaseCommand):
                     experiment_db.time_disabled = datetime.now()
                     experiment_db.save()
                     print(' -- experiment', experiment['id'], 'disabled')
-
             if not created:
                 print(' -- experiment', experiment['id'], 'already created, skipping')
                 continue
-            for variable in experiment['variables']:
-                variable_db, _ = Variable.objects.get_or_create(app_name=variable['app_name'], name=variable['name'])
-                prob_sum = sum([val['probability'] for val in variable['values']])
-                if prob_sum != 100:
-                    raise CommandError('The total sum of probs for variable "{}.{}" is {}, expected 100'.format(variable['app_name'], variable['name'], prob_sum))
-                for value in variable['values']:
-                    PossibleValue.objects.create(
-                        experiment=experiment_db,
-                        variable=variable_db,
-                        value=value['value'],
-                        probability=value['probability'],
-                    )
+            if 'variables' in experiment and 'setups' in experiment:
+                raise CommandError('The experiment ({}) can not contain both variables and setups.'.format(experiment['id']))
+            if 'variables' in experiment:
+                self._load_variables(experiment_db, experiment['variables'])
+            elif 'setups' in experiment:
+                self._load_setups(experiment_db, experiment['setups'])
+            else:
+                raise CommandError('The experiment ({}) has to contain either variables, or setups.'.format(experiment['id']))
             print(' -- experiment', experiment['id'], 'created')
-        enabled_experiments = Experiment.objects.filter(is_enabled=True)
-        if len(enabled_experiments) > 1:
-            raise CommandError('Number of enabled experiments is not allowed to be larger than 1, found {}: {}'.format(
-                len(enabled_experiments),
-                ", ".join([e.identifier for e in enabled_experiments])
-            ))
+
+    def _load_variables(self, experiment, variables_json):
+        values_list_with_probabilities = []
+        for variable in variables_json:
+            variable_db, _ = Variable.objects.get_or_create(app_name=variable['app_name'], name=variable['name'])
+            prob_sum = sum([val['probability'] for val in variable['values']])
+            if prob_sum != 100:
+                raise CommandError('The total sum of probs for variable "{}.{}" is {}, expected 100'.format(variable['app_name'], variable['name'], prob_sum))
+            values_with_probs = []
+            for value in variable['values']:
+                value_db, _ = PossibleValue.objects.get_or_create(
+                    variable=variable_db,
+                    value=value['value'],
+                )
+                values_with_probs.append((value_db, value['probability']))
+            values_list_with_probabilities.append(values_with_probs)
+        ExperimentSetup.objects.from_values_product(experiment, values_list_with_probabilities)
+
+    def _load_setups(self, experiment, setups_json):
+        total_prob = sum([s['probability'] for s in setups_json])
+        if total_prob != 100:
+            raise CommandError('The total sum of probs for setups in experiment {} is {}, expected 100.'.format(experiment.identifier, total_prob))
+        for setup in setups_json:
+            values = []
+            for variable in setup['variables']:
+                variable_db, _ = Variable.objects.get_or_create(app_name=variable['app_name'], name=variable['name'])
+                value_db, _ = PossibleValue.objects.get_or_create(
+                    variable=variable_db,
+                    value=variable['value'],
+                )
+                values.append(value_db)
+            ExperimentSetup.objects.from_values(experiment, values, setup['probability'])
