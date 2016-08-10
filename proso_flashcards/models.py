@@ -54,6 +54,7 @@ class Context(models.Model, ModelDiffMixin):
     lang = models.CharField(max_length=2)
     name = models.TextField(null=True, blank=True)
     content = models.TextField(null=True, blank=True)
+    active = models.BooleanField(default=True)
 
     objects = ContextManager()
 
@@ -66,6 +67,7 @@ class Context(models.Model, ModelDiffMixin):
             "lang": self.lang,
             "name": self.name,
             "content": self.content,
+            "active": self.active,
         }
         return json
 

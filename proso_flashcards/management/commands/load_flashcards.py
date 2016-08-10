@@ -113,6 +113,7 @@ class Command(BaseCommand):
                         identifier=context["id"],
                         lang=lang,
                     )
+                db_context.active = context.get('active', True)
                 db_context.name = context["name-{}".format(lang)]
                 content_key = "content-{}".format(lang)
                 if content_key in context:
