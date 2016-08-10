@@ -360,7 +360,7 @@ def change_parent(sender, instance, **kwargs):
         parent_id = parent.item_id if isinstance(parent, Term) else Term.objects.get(pk=parent).item_id
         child_id = instance.item_id
         ItemRelation.objects.filter(parent_id=parent_id, child_id=child_id).delete()
-        ItemRelation.objects.create(parent_id=instance.term.item_id, child_id=child_id, visible=True)
+        ItemRelation.objects.get_or_create(parent_id=instance.term.item_id, child_id=child_id, visible=True)
     if len({'term_secondary', 'term_secondary_id'} & set(instance.changed_fields)) != 0:
         diff = instance.diff
         child_id = instance.item_id
@@ -369,14 +369,14 @@ def change_parent(sender, instance, **kwargs):
             parent_id = parent.item_id if isinstance(parent, Term) else Term.objects.get(pk=parent).item_id
             ItemRelation.objects.filter(parent_id=parent_id, child_id=child_id).delete()
         if instance.term_secondary is not None or instance.term_secondary_id is not None:
-            ItemRelation.objects.create(parent_id=instance.term_secondary.item_id, child_id=child_id, visible=True)
+            ItemRelation.objects.get_or_create(parent_id=instance.term_secondary.item_id, child_id=child_id, visible=True)
     if len({'context', 'context_id'} & set(instance.changed_fields)) != 0:
         diff = instance.diff
         parent = diff['context'][0] if 'context' in diff else diff['context_id'][0]
         parent_id = parent.item_id if isinstance(parent, Context) else Context.objects.get(pk=parent).item_id
         child_id = instance.item_id
         ItemRelation.objects.filter(parent_id=parent_id, child_id=child_id).delete()
-        ItemRelation.objects.create(parent_id=instance.context.item_id, child_id=child_id, visible=True)
+        ItemRelation.objects.get_or_create(parent_id=instance.context.item_id, child_id=child_id, visible=True)
 
 
 @receiver(pre_delete, sender=Flashcard)
