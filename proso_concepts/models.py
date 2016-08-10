@@ -135,7 +135,7 @@ class ConceptManager(models.Manager):
                 # in reality this should by corner case, so it is efficient to not filter Answers
                 continue    # item is not in concept
             time_expiration_lower_bound = get_config('proso_models', 'knowledge_overview.time_shift_hours', default=4)
-            time_expiration_factor = get_config('proso_config', 'time_expiration_factor', default=2)
+            time_expiration_factor = get_config('proso_models', 'knowledge_overview.time_expiration_factor', default=2)
             for concept in mapping[item]:
                 if user in current_user_stats and concept in current_user_stats[user] \
                         and current_user_stats[user][concept].time > time:
