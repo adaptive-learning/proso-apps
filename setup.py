@@ -1,6 +1,9 @@
+from pip.req import parse_requirements
 from setuptools import setup
+import os
 import proso.release
 
+DIR = os.path.dirname(os.path.abspath(__file__))
 VERSION = proso.release.VERSION
 
 setup(
@@ -55,27 +58,12 @@ setup(
         'sphinxcontrib-napoleon>=0.5.0',
     ],
     install_requires=[
-        'Django==1.9.1',
-        'Markdown==2.6.5',
-        'Pillow==2.6.0',
-        'PyYAML==3.11',
-        'clint==0.5.1',
-        'django-debug-toolbar==1.5',
-        'django-flatblocks==0.9.2',
-        'django-ipware==1.1.3',
-        'django-lazysignup==1.0.2',
-        'flake8==2.5.1',
+        str(r.req)
+        for r in parse_requirements(DIR + '/docs/requirements.txt', session=False)
+    ] + [
         'ipython==4.0.3',
-        'jsonfield==1.0.3',
-        'jsonschema==2.5.1',
-        'mock==1.3.0',
         'numpy==1.10.4',
-        'psycopg2==2.6.1',
-        'python-social-auth==0.2.14',
         'seaborn==0.7.0',
-        'ua-parser==0.6.1',
-        'user-agents==1.0.1',
-        'gopay-django-api',
     ],
     license='MIT',
 )
