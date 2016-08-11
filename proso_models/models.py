@@ -1300,7 +1300,9 @@ class Answer(models.Model):
             'item_answered_id': self.item_answered_id,
             'user_id': self.user_id,
             'time': self.time.strftime('%Y-%m-%d %H:%M:%S'),
-            'response_time': self.response_time
+            'response_time': self.response_time,
+            'type': self.type,
+            'guess': self.guess,
         }
         if self.lang is not None:
             result['lang'] = self.lang
