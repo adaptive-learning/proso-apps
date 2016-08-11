@@ -158,7 +158,7 @@ class Skill(models.Model, ModelDiffMixin):
 class TaskAnswerManager(models.Manager):
 
     def prepare_related(self):
-        return self.select_related('context', 'meta')
+        return self.select_related('context', 'metainfo')
 
     def from_json(self, json_object, practice_context, practice_set, user_id):
         json_object = dict(json_object)
