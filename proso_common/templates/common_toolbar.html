@@ -4,8 +4,10 @@
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script>google.load('visualization', '1.1', {packages: ['corechart']});</script>
 <script>
-    if ((!$('html[data-ng-app]') || $('html[data-ng-app]').length == 0)
-            && (!$('html[ng-app]') || $('html[ng-app]').length == 0)) {
-        angular.bootstrap($("#proso-toolbar"), ["proso.apps"]);
-    }
+    $('#proso-toolbar').ready(function() {
+        if ((!$('html[data-ng-app]') || $('html[data-ng-app]').length == 0)
+                && (!$('html[ng-app]') || $('html[ng-app]').length == 0)) {
+            angular.bootstrap(document, ["proso.apps"]);
+        }
+    });
 </script>
