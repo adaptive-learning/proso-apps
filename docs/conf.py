@@ -13,8 +13,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
+import mock
 import os
+import sys
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'testproject.settings'
 
@@ -25,7 +26,14 @@ sys.path.append(os.path.abspath('..'))
 
 import proso.release
 
+MOCK_MODULES = [
+    'numpy',
+]
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
+
 import django
+
 django.setup()
 
 # -- General configuration ------------------------------------------------
