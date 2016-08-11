@@ -63,7 +63,6 @@ setup(
     ] + [
         'ipython==4.0.3',
         'numpy==1.10.4',
-        'seaborn==0.7.0',
     ],
     license='MIT',
 )

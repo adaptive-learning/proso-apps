@@ -17,12 +17,8 @@ from proso_models.models import get_predictive_model
 import json
 import math
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy
 import sys
-
-
-sns.set(style='white')
 
 
 class Command(BaseCommand):
