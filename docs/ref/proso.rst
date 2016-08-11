@@ -12,14 +12,6 @@ Subpackages
 Submodules
 ----------
 
-proso.db module
----------------
-
-.. automodule:: proso.db
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 proso.dict module
 -----------------
 

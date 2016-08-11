@@ -28,8 +28,16 @@ proso.django.config module
     :undoc-members:
     :show-inheritance:
 
+proso.django.db module
+----------------------
+
+.. automodule:: proso.django.db
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 proso.django.enrichment module
------------------------
+------------------------------
 
 .. automodule:: proso.django.enrichment
     :members:

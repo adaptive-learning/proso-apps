@@ -20,14 +20,6 @@ proso.models.item_selection module
     :undoc-members:
     :show-inheritance:
 
-proso.models.optimize module
-----------------------------
-
-.. automodule:: proso.models.optimize
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 proso.models.option_selection module
 ------------------------------------
 

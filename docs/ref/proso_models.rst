@@ -12,14 +12,6 @@ proso_models.admin module
     :undoc-members:
     :show-inheritance:
 
-proso_models.decorator module
------------------------------
-
-.. automodule:: proso_models.decorator
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 proso_models.json_enrich module
 -------------------------------
 
