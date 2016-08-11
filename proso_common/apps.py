@@ -17,4 +17,5 @@ class AppConfig(OAppConfig):
 
     def ready(self):
         for middleware in MIDDLEWARE_CLASSES:
-            settings.MIDDLEWARE_CLASSES = settings.MIDDLEWARE_CLASSES + (middleware, )
+            if middleware not in settings.MIDDLEWARE_CLASSES:
+                settings.MIDDLEWARE_CLASSES = settings.MIDDLEWARE_CLASSES + (middleware, )
