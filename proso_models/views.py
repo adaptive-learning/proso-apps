@@ -129,6 +129,15 @@ def to_practice_counts(request):
     return render_json(request, response, template='models_json.html', help_text=to_practice_counts.__doc__)
 
 
+@allow_lazy_user
+def answers(request):
+    limit = min(int(request.GET.get('limit', 10)), 1000)
+    user_id = get_user_id(request)
+    item_ids = Item.objects.filter_all_reachable_leaves(get_filter(request), get_language(request))
+    found_answers = Answer.objects.answers(Answer.objects.filter(item_asked_id__in=item_ids, user_id=user_id).order_by('-id').values_list('id', flat=True)[:limit])
+    return render_json(request, found_answers, template='models_json.html', help_text=answers.__doc__)
+
+
 def practice_image(request):
     user_id = get_user_id(request)
     limit = min(int(request.GET.get('limit', 10)), 100)

@@ -7,6 +7,7 @@ urlpatterns = patterns(
     'proso_models.views',
     url(r'^(|home)$', ensure_csrf_cookie(TemplateView.as_view(template_name="models_home.html")), name='models_home'),
     url(r'^answer/$', 'answer', name='models_answer'),
+    url(r'^answers/$', 'answers', name='models_answers'),
     url(r'^audit/(?P<key>[\w_]+)', 'audit', name='models_audit'),
     url(r'^learning_curve/', 'learning_curve', name='models_learning_curve'),
     url(r'^practice_image/', 'practice_image', name='models_practice_image'),
