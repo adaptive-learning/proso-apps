@@ -61,8 +61,8 @@ setup(
         str(r.req)
         for r in parse_requirements(DIR + '/docs/requirements.txt', session=False)
     ] + [
-        'ipython==4.0.3',
-        'numpy==1.10.4',
+        'ipython',
+        'numpy',
     ],
     license='MIT',
 )
