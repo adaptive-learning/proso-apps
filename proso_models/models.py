@@ -15,6 +15,7 @@ from proso.django.cache import get_request_cache, is_cache_prepared, get_from_re
 from proso.django.config import instantiate_from_json
 from proso.django.models import ModelDiffMixin, disable_for_loaddata
 from proso.django.request import load_query_json, get_time
+from proso.django.response import HttpError
 from proso.func import fixed_point
 from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
@@ -805,7 +806,7 @@ class ItemManager(models.Manager):
             for identifier, item_id in model.objects.filter(**kwargs).values_list('identifier', item_type['foreign_key']):
                 result[to_find[identifier]] = item_id
         if len(result) != len(identifiers):
-            raise Exception("Can't translate the following identifiers: {}".format(set(identifiers) - set(result.keys())))
+            raise HttpError(404, "Can't translate the following identifiers: {}".format(set(identifiers) - set(result.keys())))
         return result
 
     def get_item_type_id_from_identifier(self, identifier, item_types=None):
