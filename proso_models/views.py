@@ -437,8 +437,11 @@ def audit(request, key):
     limit = 100
     if request.user.is_staff:
         limit = request.GET.get('limit', limit)
-    item = int(request.GET['item']) if 'item' in request.GET else None
-    item_secondary = int(request.GET['item_secondary']) if 'item_secondary' in request.GET else None
+    item_identifier = request.GET['item'] if 'item' in request.GET else None
+    item_secondary_identifier = request.GET['item_secondary'] if 'item_secondary' in request.GET else None
+    translated = Item.objects.translate_identifiers([i for i in [item_identifier, item_secondary_identifier] if i is not None], get_language(request))
+    item = translated.get(item_identifier)
+    item_secondary = translated.get(item_secondary_identifier)
     time = get_time(request)
     environment = get_environment()
     if is_time_overridden(request):
