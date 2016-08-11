@@ -30,7 +30,7 @@ class timeit:
             ts = time.time()
             result = function(*args, **kw)
             te = time.time()
-            LOGGER.debug('%s: %r (%r, %r) took %2.2f seconds' % (self._name, function.__name__, args, kw, te - ts))
+            LOGGER.debug('%s: %r took %2.2f seconds' % (self._name, function.__name__, te - ts))
             return result
 
         return timed
