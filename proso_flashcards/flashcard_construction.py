@@ -59,7 +59,9 @@ class ContextOptionSet(OptionSet):
                 for flashcard in to_find
             }
             if any(['term_secondary' in flashcard for flashcard in to_find]):
-                # we want to exclude options with duplicate term/term_secondary
+                # exclude options:
+                #     1) with duplicate term/term_secondary
+                #     2) with the same question but different answer
                 translated = Item.objects.translate_item_ids(set(flatten(found.values())), language=to_find[0]['lang'])
                 fc_dict = {flashcard['item_id']: flashcard for flashcard in to_find}
                 found_translated = {
@@ -70,17 +72,21 @@ class ContextOptionSet(OptionSet):
                 for fc_item_id, options in found_translated.items():
                     fc = fc_dict[fc_item_id]
                     if question_types[fc['id']] == FlashcardAnswer.FROM_TERM_TO_TERM_SECONDARY:
-                        key = 'term_secondary'
+                        key_to = 'term_secondary'
+                        key_from = 'term'
                     elif question_types[fc['id']] == FlashcardAnswer.FROM_TERM_SECONDARY_TO_TERM:
-                        key = 'term'
+                        key_to = 'term'
+                        key_from = 'term_secondary'
                     else:
                         found[fc['item_id']] = [opt['item_id'] for opt in options]
                         continue
                     options_by_keys = {}
                     for opt in sorted(options, key=lambda o: o['identifier']):
-                        options_by_keys[opt[key]['item_id']] = opt
-                    if fc[key]['item_id'] in options_by_keys:
-                        del options_by_keys[fc[key]['item_id']]
+                        if fc['context']['id'] == opt['context_id'] and fc[key_from]['identifier'] == opt[key_from]['identifier']:
+                            continue
+                        options_by_keys[opt[key_to]['item_id']] = opt
+                    if fc[key_to]['item_id'] in options_by_keys:
+                        del options_by_keys[fc[key_to]['item_id']]
                     found[fc['item_id']] = [opt['item_id'] for opt in options_by_keys.values()]
 
             # trying to decrease probability of race condition
