@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext as _
+from geoip import geolite2
 from ipware.ip import get_ip
 from lazysignup.signals import converted
 from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social, name_lazy_user
@@ -198,11 +199,19 @@ class Location(models.Model):
     objects = LocationManager()
 
     def to_json(self, nested=False):
-        return {
+        result = {
             'id': self.id,
             'object_type': 'location',
             'ip_address': self.ip_address
         }
+        country = self.get_country()
+        if country is not None:
+            result['country'] = country
+        return result
+
+    def get_country(self):
+        match = geolite2.lookup(self.ip_address)
+        return None if match is None else match.country
 
     def __str__(self):
         return self.ip_address
