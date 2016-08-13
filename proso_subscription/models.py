@@ -2,10 +2,13 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from gopay.enums import PaymentStatus
 from gopay_django_api.models import Payment
 from gopay_django_api.signals import payment_changed
+from proso.django.models import disable_for_loaddata
+from proso_user.models import Session
 import uuid
 
 
@@ -106,6 +109,7 @@ class Subscription(models.Model):
     user = models.ForeignKey(User)
     expiration = models.DateTimeField(auto_now_add=True)
     created = models.DateTimeField(auto_now_add=True)
+    session = models.ForeignKey(Session, null=True, blank=True, default=None)
 
     objects = SubscriptionManager()
 
@@ -120,6 +124,7 @@ class Subscription(models.Model):
         if nested:
             result['payment_id'] = self.payment_id
             result['plan_description_id'] = self.plan_description_id
+            result['session_id'] = self.session_id
         else:
             result['payment'] = {
                 'id': self.payment.id,
@@ -128,6 +133,8 @@ class Subscription(models.Model):
                 'status': self.payment.status,
             }
             result['plan_description'] = self.plan_description.to_json()
+            if self.session is not None:
+                result['session'] = self.session.to_json(nested=True)
         return result
 
 
@@ -138,3 +145,10 @@ def update_subcription_payment(sender, instance, previous_status, **kwargs):
     subscription = Subscription.objects.select_related('plan_description__plan').get(payment=instance)
     subscription.expiration = datetime.now() + relativedelta(months=subscription.plan_description.plan.months_validity)
     subscription.save()
+
+
+@receiver(pre_save, sender=Subscription)
+@disable_for_loaddata
+def init_session(sender, instance, **kwargs):
+    if instance.session_id is None:
+        instance.session_id = Session.objects.get_current_session_id()
