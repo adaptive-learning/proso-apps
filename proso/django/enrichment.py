@@ -51,7 +51,7 @@ This module provides enrichment for JSON objects.
 
 from collections import defaultdict
 from importlib import import_module
-from proso.func import is_lambda
+from proso.func import function_name
 from proso.list import flatten
 from threading import Lock
 from time import time
@@ -112,13 +112,13 @@ def register_object_type_enricher(object_types, enricher, dependencies=None, pri
     if dependencies is None:
         dependencies = []
     global _OBJECT_TYPE_ENRICHERS
-    enricher_name = _enricher_name(enricher)
+    enricher_name = function_name(enricher)
     if isinstance(enricher, str):
         def enricher_fun(request, json_list, nested):
             return _enricher_fun(enricher)(request, json_list, nested)
     else:
         enricher_fun = enricher
-    dependency_names = [_enricher_name(fun) for fun in dependencies]
+    dependency_names = [function_name(fun) for fun in dependencies]
     with _OBJECT_TYPE_ENRICHERS_LOCK:
         if enricher_name in _OBJECT_TYPE_ENRICHERS:
             _OBJECT_TYPE_ENRICHERS['dependencies'] = set(_OBJECT_TYPE_ENRICHERS['dependencies'] + dependencies)
@@ -267,14 +267,6 @@ def _collect_json_objects(json, by='object_type'):
             [_collect(x, nested_to_pass) for x in json_inner.values()]
     _collect(json, False)
     return collected, {key: nested_memory.get(key, False) for key in collected.keys()}
-
-
-def _enricher_name(enricher_fun):
-    if isinstance(enricher_fun, str):
-        return enricher_fun
-    if is_lambda(enricher_fun):
-        raise Exception('The enricher function can not be a lambda function.')
-    return '{}.{}'.format(enricher_fun.__module__, enricher_fun.__name__)
 
 
 def _enricher_fun(enricher_name):

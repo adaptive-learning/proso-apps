@@ -33,6 +33,14 @@ def is_lambda(fun):
     return isinstance(fun, type(LAMBDA)) and fun.__name__ == LAMBDA.__name__
 
 
+def function_name(function):
+    if isinstance(function, str):
+        return function
+    if is_lambda(function):
+        raise Exception('Can not retrieve function name from lambda function.')
+    return '{}.{}'.format(function.__module__, function.__name__)
+
+
 def fixed_point(is_zero, plus, minus, f, x):
     """
     Get the least fixed point when it can be computed piecewise.
