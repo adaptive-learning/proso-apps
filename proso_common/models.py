@@ -9,6 +9,7 @@ from django.dispatch import receiver
 from proso.django.config import get_config as get_config_original, get_global_config as get_global_config_original, override_value, instantiate_from_json
 from proso.django.request import is_user_id_overridden, is_time_overridden, get_user_id
 from proso.django.response import BadRequestException
+from proso.func import function_name
 from threading import currentThread
 import abc
 import hashlib
@@ -29,7 +30,7 @@ def reset_custom_configs():
 
 def reset_custom_config_filters():
     global _custom_config_filters
-    _custom_config_filters[currentThread()] = []
+    _custom_config_filters[currentThread()] = {}
 
 
 def reset_url_overridden():
@@ -41,7 +42,7 @@ def reset_url_overridden():
 
 def add_custom_config_filter(config_filter):
     global _custom_config_filters
-    _custom_config_filters[currentThread()].append(config_filter)
+    _custom_config_filters[currentThread()][function_name(config_filter)] = config_filter
 
 
 def current_custom_configs():
@@ -58,7 +59,7 @@ def current_custom_configs():
         if c_key is None:
             return True
         all_nones = True
-        for config_filter in _custom_config_filters[currentThread()]:
+        for config_filter in _custom_config_filters[currentThread()].values():
             filter_result = config_filter(c_key, c_value)
             if filter_result is not None:
                 all_nones = False

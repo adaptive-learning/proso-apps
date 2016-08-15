@@ -24,7 +24,7 @@ class ConfigTest(django.test.TestCase):
         self.assertEqual(get_config('proso_tests', 'a.b.c'), 'blah_overriden')
         CustomConfig.objects.try_create('proso_tests', 'a.b.c', 'blah_overriden_second', self.user.id, 'test_condition', 'value')
         self.assertEqual(get_config('proso_tests', 'a.b.c'), 'blah_overriden')
-        add_custom_config_filter(lambda key, value: key == 'test_condition')
+        add_custom_config_filter(test_filter)
         self.assertEqual(get_config('proso_tests', 'a.b.c'), 'blah_overriden_second')
 
     def test_get_config(self):
@@ -56,3 +56,7 @@ class TestClass:
 
     def __init__(self, dummy):
         self.dummy = dummy
+
+
+def test_filter(key, value):
+    return key == 'test_condition'
