@@ -735,8 +735,8 @@ class ItemManager(models.Manager):
             graph = self.get_children_graph(None, language)
             return self._subset_graph(graph, item_ids)
 
-    def get_reachable_children(self, item_ids, language=None):
-        return self._reachable_items(self.get_children_graph(item_ids, language=language))
+    def get_reachable_children(self, item_ids, language=None, item_type=None):
+        return self._reachable_items(self.get_children_graph(item_ids, language=language), item_type=item_type)
 
     @cache_pure
     def get_parents_graph(self, item_ids, language=None):
@@ -768,8 +768,8 @@ class ItemManager(models.Manager):
             graph = self.get_parents_graph_graph(None, language)
             return self._subset_graph(graph, item_ids)
 
-    def get_reachable_parents(self, item_ids, language=None):
-        return self._reachable_items(self.get_parents_graph(item_ids, language=language))
+    def get_reachable_parents(self, item_ids, language=None, item_type=None):
+        return self._reachable_items(self.get_parents_graph(item_ids, language=language), item_type=item_type)
 
     def translate_identifiers(self, identifiers, language):
         """
@@ -1070,16 +1070,25 @@ class ItemManager(models.Manager):
             }
         return graph
 
-    def _reachable_items(self, graph):
+    def _reachable_items(self, graph, item_type=None):
         if None not in graph:
             return {}
-        return {i: sorted(list(fixed_point(
+        result = {i: sorted(list(fixed_point(
             is_zero=lambda xs: len(xs) == 0,
             minus=lambda xs, ys: xs - ys,
             plus=lambda xs, ys: xs | ys,
             f=lambda xs: reduce(lambda a, b: a | b, [set(graph.get(x, [])) for x in xs], set()),
             x={i}
         ) - {i})) for i in graph[None]}
+        if item_type is None:
+            return result
+        if isinstance(item_type, str):
+            item_type = self.get_item_type_id_from_identifier('{}/nothing'.format(item_type))
+        all_item_type_ids = ItemType.objects.get_all_item_type_ids()
+        return {
+            i_from: [i_to for i_to in i_tos if all_item_type_ids[i_to] == item_type]
+            for i_from, i_tos in result.items()
+        }
 
     def _subset_graph(self, graph, item_ids):
         result = {None: sorted(item_ids)}
