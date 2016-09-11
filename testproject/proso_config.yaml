@@ -30,9 +30,9 @@ default:
         config:
             is_custom_config_allowed: true
         events:
-            source_name: 
+            source_name: default
             endpoint: https://events.proso.hkar.eu
-            token:
+            token: 
     proso_flashcards:
         avoid_also_related_flaschcards: true
         practice:
