@@ -1,5 +1,5 @@
-from django.core.management.base import BaseCommand, CommandError
-from proso_common.models import get_events_logger, get_events_pusher, get_events_client
+from django.core.management.base import BaseCommand
+from proso_common.models import get_events_pusher
 
 
 class Command(BaseCommand):

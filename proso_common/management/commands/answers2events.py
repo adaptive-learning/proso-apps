@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from proso.django.db import connection
 from proso_common.models import get_events_logger, get_events_pusher
 
@@ -31,7 +31,8 @@ class Command(BaseCommand):
                         "guess": round(row[7], 5)
                     }}
 
-                if row[9]: answer["params"]["config_id"] = row[9],
+                if row[9]:
+                    answer["params"]["config_id"] = row[9]
 
                 logger.emit('answer', answer, time=row[1])
 
