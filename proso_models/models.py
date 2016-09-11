@@ -21,7 +21,7 @@ from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
 from proso.time import timeit
-from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config, add_custom_config_filter
+from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config, add_custom_config_filter, get_events_logger
 from proso_common.models import IntegrityCheck
 from proso_user.models import Session
 import django.apps
@@ -1457,6 +1457,29 @@ def init_session(sender, instance, **kwargs):
         return
     if instance.session_id is None:
         instance.session_id = Session.objects.get_current_session_id()
+
+
+@receiver(post_save)
+@disable_for_loaddata
+def emit_answer_event(sender, instance, **kwargs):
+    """
+    Save answer event to log file.
+    """
+    if not issubclass(sender, Answer) or not kwargs['created']:
+        return
+    logger = get_events_logger()
+    logger.emit('answer', {
+        "user_id": instance.user_id,
+        "is_correct": instance.item_asked_id == instance.item_answered_id,
+        "context_id": [instance.context_id],
+        "item_id": instance.item_id,
+        "response_time_ms": instance.response_time,
+        "params": {
+            "session_id": instance.session_id,
+            "practice_set_id": instance.practice_set_id,
+            "config_id": instance.config_id,
+        }}
+    )
 
 
 @receiver(pre_save)
