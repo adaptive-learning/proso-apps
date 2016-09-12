@@ -2,6 +2,7 @@
 from django.core.management.base import BaseCommand
 from proso.django.db import connection
 from proso_common.models import get_events_logger, get_events_pusher
+from clint.textui import progress
 
 
 class Command(BaseCommand):
@@ -16,28 +17,41 @@ class Command(BaseCommand):
         pusher = get_events_pusher()
 
         with connection.cursor() as cursor:
-            cursor.execute("select * from proso_models_answer where time >= %s::date and time < %s::date", (options['from'], options['to']))
+            cursor.execute("""
+                select
+                  user_id,
+                  item_answered_id,
+                  item_asked_id,
+                  context_id,
+                  item_id,
+                  response_time,
+                  session_id,
+                  guess,
+                  config_id,
+                  time
+                from proso_models_answer
+                where time >= %s::date and time < %s::date
+                order by time""", (options['from'], options['to']))
 
             i = 1
-            for row in cursor:
+            for user_id, item_answered_id, item_asked_id, context_id, item_id, response_time, session_id, guess, config_id, time in progress.bar(cursor, expected_size=cursor.rowcount):
                 answer = {
-                    "user_id": row[6],
-                    "is_correct": row[4] == row[5],
-                    "context_id": [row[10]] if row[10] else [],
-                    "item_id": row[3],
-                    "response_time_ms": row[2],
+                    "user_id": user_id,
+                    "is_correct": item_asked_id == item_answered_id,
+                    "context_id": [context_id] if context_id else [],
+                    "item_id": item_id,
+                    "response_time_ms": response_time,
                     "params": {
-                        "session_id": row[8],
-                        "guess": round(row[7], 5)
+                        "session_id": session_id,
+                        "guess": guess
                     }}
 
-                if row[9]:
-                    answer["params"]["config_id"] = row[9]
+                if config_id:
+                    answer["params"]["config_id"] = config_id
 
-                logger.emit('answer', answer, time=row[1])
+                logger.emit('answer', answer, time=time)
 
                 if i % 5000 == 0:
-                    self.stdout.write(str(i))
                     pusher.push_all()
 
                 i += 1
