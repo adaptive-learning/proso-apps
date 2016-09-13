@@ -22,6 +22,7 @@ import json
 import logging
 import proso.svg
 import proso_common.views
+from django.conf import settings
 
 
 LOGGER = logging.getLogger('django.request')
@@ -77,7 +78,7 @@ def status(request):
     }, template='models_json.html')
 
 
-@cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET)
+@cache_page_conditional(condition=lambda request, args, kwargs: 'stats' not in request.GET, cache='file' if 'file' in settings.CACHES else None)
 def to_practice(request):
     practice_filter = get_filter(request)
     item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
