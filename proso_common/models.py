@@ -12,11 +12,13 @@ from proso.django.response import BadRequestException
 from proso.func import function_name
 from threading import currentThread
 from proso.events.client import EventsLogger, Pusher, EventClient
+import logging
 import abc
 import hashlib
 import importlib
 import json
 import os
+import datetime
 
 _is_user_overriden_from_url = {}
 _is_time_overriden_from_url = {}
@@ -25,10 +27,18 @@ _custom_configs = {}
 _custom_config_filters = {}
 
 
+class ProsoEventsLogger(EventsLogger):
+    def emit(self, event_type: str, data: dict, tags: list = [], time: datetime.datetime = datetime.datetime.now()):
+        try:
+            super().emit(event_type, data, tags, time)
+        except:
+            logging.getLogger('django.request').error('Wrong configuration of proso-events. Events are dropped.')
+
+
 def get_events_logger():
-    return EventsLogger(
+    return ProsoEventsLogger(
         get_config('proso_common', 'events.db_file', default=os.path.join(settings.DATA_DIR, 'events.log')),
-        get_config('proso_common', 'events.source_name', required=True)
+        get_config('proso_common', 'events.source_name', default='default')
     )
 
 
@@ -133,7 +143,7 @@ def instantiate_from_config_list(app_name, key, pass_parameters=None, config_nam
     return [
         instantiate_from_json(config, pass_parameters=pass_parameters)
         for config in configs
-    ]
+        ]
 
 
 class CommonMiddleware(object):
@@ -191,7 +201,6 @@ def get_integrity_checks():
 
 
 class IntegrityCheck:
-
     def get_seed(self):
         return self._seed
 
@@ -210,7 +219,6 @@ class IntegrityCheck:
 
 
 class ConfigManager(models.Manager):
-
     def from_content(self, content, app_name=None, key=None):
         try:
             content = json.dumps(content, sort_keys=True)
@@ -227,7 +235,6 @@ class ConfigManager(models.Manager):
 
 
 class Config(models.Model):
-
     app_name = models.CharField(max_length=100, null=True, blank=True)
     key = models.CharField(max_length=100, null=True, blank=True)
     content = models.TextField(null=False, blank=False)
@@ -246,7 +253,6 @@ class Config(models.Model):
 
 
 class CustomConfigManager(models.Manager):
-
     def try_create(self, app_name, key, value, user_id, condition_key=None, condition_value=None):
         if not get_config_original('proso_common', 'config.is_custom_config_allowed', default=False):
             raise BadRequestException('Custom configuration is not allowed.')
@@ -310,7 +316,6 @@ class CustomConfigManager(models.Manager):
 
 
 class CustomConfig(models.Model):
-
     config = models.ForeignKey(Config)
     user = models.ForeignKey(User)
     condition_key = models.CharField(max_length=255, null=True, blank=True, default=None)
