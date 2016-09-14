@@ -112,6 +112,8 @@ def get_config(app_name, key, config_name=None, required=False, default=None):
             break
         config = config.get(k)
     if config is None:
+        config = os.getenv('{}.{}'.format(app_name, key).replace('.', '_').upper())
+    if config is None:
         if required:
             raise Exception("There is no key [%s] in configuration [%s] and app [%s]" % (key, config_name, app_name))
         return default
