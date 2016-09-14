@@ -11,16 +11,37 @@ from proso.django.request import is_user_id_overridden, is_time_overridden, get_
 from proso.django.response import BadRequestException
 from proso.func import function_name
 from threading import currentThread
+from proso.events.client import EventsLogger, Pusher, EventClient
 import abc
 import hashlib
 import importlib
 import json
+import os
 
 _is_user_overriden_from_url = {}
 _is_time_overriden_from_url = {}
 
 _custom_configs = {}
 _custom_config_filters = {}
+
+
+def get_events_logger():
+    return EventsLogger(
+        get_config('proso_common', 'events.db_file', default=os.path.join(settings.DATA_DIR, 'events.log')),
+        get_config('proso_common', 'events.source_name', required=True)
+    )
+
+
+def get_events_client():
+    return EventClient(
+        get_config('proso_common', 'events.token', required=True),
+        get_config('proso_common', 'events.endpoint', required=True),
+        get_config('proso_common', 'events.source_name', required=True)
+    )
+
+
+def get_events_pusher():
+    return Pusher(get_events_client(), (get_events_logger()).event_file)
 
 
 def reset_custom_configs():
