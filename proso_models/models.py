@@ -913,7 +913,11 @@ class ItemManager(models.Manager):
                 x={item_id}
             )
             leaves = {leaf for leaf in leaves if counts[leaf] == 0}
-            return leaves if len(leaves) > 0 else {item_id}
+            if len(leaves) > 0:
+                return leaves
+            if counts[item_id] == 0:
+                return {item_id}
+            return set()
 
         return {item_id: _get_leaves(item_id) for item_id in item_ids}
 
