@@ -647,7 +647,7 @@ class ItemManager(models.Manager):
             filter_result = None
             filter_neg_result = set()
             for inner_filter in identifier_filter:
-                inner_result = set()
+                inner_result = None
                 inner_neg_result = None
                 if len(inner_filter) == 0:
                     raise Exception('Empty nested filters are not allowed.')
@@ -657,6 +657,8 @@ class ItemManager(models.Manager):
                     if identifier.startswith('-'):
                         inner_neg_result = set(leaves[translated[identifier[1:]]])
                     else:
+                        if inner_result is None:
+                            inner_result = set()
                         inner_result |= set(leaves[translated[identifier]])
                 if len(inner_result) > 0:
                     if filter_result is None:
