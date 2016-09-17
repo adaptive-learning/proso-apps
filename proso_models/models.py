@@ -647,7 +647,7 @@ class ItemManager(models.Manager):
             filter_result = None
             filter_neg_result = set()
             for inner_filter in identifier_filter:
-                inner_result = set()
+                inner_result = None
                 inner_neg_result = None
                 if len(inner_filter) == 0:
                     raise Exception('Empty nested filters are not allowed.')
@@ -657,6 +657,8 @@ class ItemManager(models.Manager):
                     if identifier.startswith('-'):
                         inner_neg_result = set(leaves[translated[identifier[1:]]])
                     else:
+                        if inner_result is None:
+                            inner_result = set()
                         inner_result |= set(leaves[translated[identifier]])
                 if len(inner_result) > 0:
                     if filter_result is None:
@@ -913,7 +915,11 @@ class ItemManager(models.Manager):
                 x={item_id}
             )
             leaves = {leaf for leaf in leaves if counts[leaf] == 0}
-            return leaves if len(leaves) > 0 else {item_id}
+            if len(leaves) > 0:
+                return leaves
+            if counts[item_id] == 0:
+                return {item_id}
+            return set()
 
         return {item_id: _get_leaves(item_id) for item_id in item_ids}
 
