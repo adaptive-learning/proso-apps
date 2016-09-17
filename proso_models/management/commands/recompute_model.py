@@ -90,7 +90,7 @@ class Command(BaseCommand):
 
     def handle_validate(self, options):
         timer('recompute_validation')
-        info = self.load_environment_info(options['initial'], options['config_name'])
+        info = self.load_environment_info(options['initial'], options['config_name'], False)
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
@@ -186,7 +186,7 @@ class Command(BaseCommand):
         print(' -- collecting garbage, time:', timer('recompute_gc'), 'seconds, deleted', variables, 'variables,', audits, 'audit records,', infos, 'environment info records')
 
     def handle_cancel(self, options):
-        info = self.load_environment_info(False, options['config_name'])
+        info = self.load_environment_info(False, options['config_name'], False)
         print(' -- cancelling')
         info.status = EnvironmentInfo.STATUS_DISABLED
         info.save()
