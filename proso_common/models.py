@@ -12,11 +12,13 @@ from proso.django.response import BadRequestException
 from proso.func import function_name
 from threading import currentThread
 from proso.events.client import EventsLogger, Pusher, EventClient
+import logging
 import abc
 import hashlib
 import importlib
 import json
 import os
+import datetime
 
 _is_user_overriden_from_url = {}
 _is_time_overriden_from_url = {}
@@ -25,10 +27,18 @@ _custom_configs = {}
 _custom_config_filters = {}
 
 
+class ProsoEventsLogger(EventsLogger):
+    def emit(self, event_type: str, data: dict, tags: list = [], time: datetime.datetime = datetime.datetime.now()):
+        try:
+            super().emit(event_type, data, tags, time)
+        except:
+            logging.getLogger('django.request').error('Wrong configuration of proso-events. Events are dropped.')
+
+
 def get_events_logger():
-    return EventsLogger(
+    return ProsoEventsLogger(
         get_config('proso_common', 'events.db_file', default=os.path.join(settings.DATA_DIR, 'events.log')),
-        get_config('proso_common', 'events.source_name', required=True)
+        get_config('proso_common', 'events.source_name', default='default')
     )
 
 
