@@ -52,6 +52,7 @@ setup(
         'proso_subscription',
         'proso_subscription.management',
         'proso_subscription.management.commands',
+        'proso_subscription.migrations',
     ],
     setup_requires=[
         'Sphinx>=1.3',
