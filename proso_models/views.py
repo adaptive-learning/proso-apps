@@ -113,7 +113,7 @@ def to_practice_counts(request):
         data = json.loads(request.body.decode("utf-8"))["filters"]
     if "filters" in request.GET:
         data = load_query_json(request.GET, "filters")
-    if data is None:
+    if data is None or len(data) == 0:
         return render_json(request, {}, template='models_json.html', help_text=to_practice_counts.__doc__)
     language = get_language(request)
     timer('to_practice_counts')
