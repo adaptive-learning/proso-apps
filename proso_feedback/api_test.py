@@ -30,5 +30,5 @@ class FeedbackAPITest(TestCase):
         response = self.client.post('/feedback/rating/', json.dumps({
             'value': 3
         }), content_type='application/json')
-        self.assertEqual(response.status_code, 201, "User can give a rating with invalid value.")
+        self.assertEqual(response.status_code, 201, "User can give a rating with valid value.")
         self.assertEqual(Rating.objects.all().count(), 1, "The rating from user is saved.")
