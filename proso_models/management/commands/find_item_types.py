@@ -1,6 +1,7 @@
-from proso_models.models import ItemType
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from optparse import make_option
+from proso_models.models import ItemType
 
 
 class Command(BaseCommand):
@@ -25,6 +26,7 @@ class Command(BaseCommand):
                 )[0].id)
             print(' - ', model, ':', table, ':', foreign_key, ':', language)
         if not options['dry']:
+            cache.clear()
             valids = ItemType.objects.filter(id__in=found).update(valid=True)
             invalids = ItemType.objects.exclude(id__in=found).update(valid=False)
             print('After database updated: {} valid item types and {} invalid ones.'.format(valids, invalids))
