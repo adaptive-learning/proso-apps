@@ -64,10 +64,10 @@ class ConceptsAPITest(TestCase):
             self.assertEquals(stats["practiced_items_count"], len(set(ids)), "Stats has correct 'practiced_items_count'")
             self.assertEquals(stats["answer_count"], len(ids), "Stats has correct 'answer_count'")
             self.assertEquals(stats["correct_answer_count"], corrects, "Stats has correct 'correct_answer_count'")
-            self.assertAlmostEqual(stats["time_spent"], time, msg="Stats has correct 'time_spent'", delta=0.1)
+            self.assertAlmostEqual(stats["time_spent"], time, msg="Stats has correct 'time_spent'", delta=0.2)
             self.assertEquals(stats["session_count"], 1, "Stats has correct 'session_count'")
-            self.assertAlmostEqual(stats["time_first"], time_first, msg="Stats has correct 'time_first'", delta=0.1)
-            self.assertAlmostEqual(stats["time_last"], time_last, msg="Stats has correct 'time_last'", delta=0.1)
+            self.assertAlmostEqual(stats["time_first"], time_first, msg="Stats has correct 'time_first'", delta=0.2)
+            self.assertAlmostEqual(stats["time_last"], time_last, msg="Stats has correct 'time_last'", delta=0.2)
 
     def _get_concepts(self, lang=None):
         url = '/concepts/concepts?all=True'
