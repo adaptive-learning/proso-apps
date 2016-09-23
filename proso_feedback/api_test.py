@@ -23,7 +23,7 @@ class FeedbackAPITest(TestCase):
     def testRating(self):
         # invalid value
         response = self.client.post('/feedback/rating/', json.dumps({
-            'value': 4
+            'value': 100
         }), content_type='application/json')
         self.assertEqual(response.status_code, 400, "User can't give a rating with invalid value.")
         # valid value
