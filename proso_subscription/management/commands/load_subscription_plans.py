@@ -38,7 +38,7 @@ class Command(BaseCommand):
                 if description is None:
                     description = SubscriptionPlanDescription(plan=plan, lang=lang)
                 description.currency = description_json['currency']
-                description.price = description_json['price']
+                description.price = description_json['price'] * 100
                 description.name = description_json['name']
                 description.description = description_json['description']
                 description.save()
