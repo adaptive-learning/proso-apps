@@ -90,16 +90,22 @@ def rating(request):
 
     POST parameters (JSON):
         value:
-            one of the following numbers:
+            one of the following numbers (how difficult questions are?):
                 (1) too easy,
                 (2) appropriate,
                 (3) too difficult
+            or one of the following numbers (how difficult questions should be?):
+                (4) much easier
+                (5) bit easier
+                (6) the same
+                (7) bit harder
+                (8) much harder
     """
     if request.method == 'GET':
         return render(request, 'feedback_rating.html', {}, help_text=rating.__doc__)
     if request.method == 'POST':
         data = json_body(request.body.decode("utf-8"))
-        if data['value'] not in list(range(1, 4)):
+        if data['value'] not in list(range(1, 9)):
             return render_json(
                 request,
                 {'error': _('The given value is not valid.'), 'error_type': 'invalid_value'},
