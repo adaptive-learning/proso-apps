@@ -26,6 +26,11 @@ class Rating(models.Model):
         (EASY, 'Too Easy'),
         (RIGHT, 'Just Right'),
         (HARD, 'Too Hard'),
+        (4, 'Much easier'),
+        (5, 'Bit easier'),
+        (6, 'The same'),
+        (7, 'Bit harder'),
+        (8, 'Much harder'),
     )
     user = models.ForeignKey(User)
     inserted = models.DateTimeField(default=datetime.now)
