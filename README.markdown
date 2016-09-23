@@ -31,10 +31,21 @@ To run tests:
 
 ## Release
 
-In case of final major version (you have to setup your PIP environment before and be in `master` branch):
+You have to setup you PIP environment. Create a `~/.pypirc` file containing your credentials to
+[https://pypi.python.org](https://pypi.python.org):
+
+```
+[server-login]
+username: ...
+password: ...
+```
+
+Major version is release manually.
+
+In case of final minor version (you have to be in `master` branch):
 
 	make release
 
-In case of final micro version (you have to setup your PIP environment and be in proper `master-*.X` branch):
+In case of final micro version (you have to be in proper `master-*.X` branch):
 
 	make release-micro
