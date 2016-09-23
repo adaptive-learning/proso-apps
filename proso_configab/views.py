@@ -17,7 +17,7 @@ def show_more(request, object_class, should_cache=True):
     def _load_objects(request, object_class):
         select_related_all = {}
         prefetch_related_all = {
-            Experiment: ['possiblevalue_set__variable', 'experimentsetup_set__values']
+            Experiment: ['experimentsetup_set__values', 'experimentsetup_set__values__variable']
         }
         select_related = select_related_all.get(object_class, [])
         prefetch_related = prefetch_related_all.get(object_class, [])

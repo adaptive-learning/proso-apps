@@ -62,15 +62,6 @@ class Experiment(models.Model):
         if not self.is_enabled:
             result['time_disabled'] = self.time_disabled.strftime('%Y-%m-%d %H:%M:%S')
         if not nested:
-            values = defaultdict(list)
-            for val in self.possiblevalue_set.all():
-                values[val.variable].append(val)
-            if len(values) > 0:
-                result['variables'] = []
-            for variable, vals in values.items():
-                variable_json = variable.to_json(nested=True)
-                variable_json['possible_values'] = [val.to_json(nested=True) for val in vals]
-                result['variables'].append(variable_json)
             result['setups'] = [setup.to_json(nested=True) for setup in self.experimentsetup_set.all()]
         return result
 
@@ -103,11 +94,10 @@ class PossibleValue(models.Model):
             'id': self.id,
             'value': self.value,
         }
+        result['variable'] = self.variable.to_json(nested=True)
         if nested:
             result['variable_id'] = self.variable_id
-            result['experiment_id'] = self.experiment_id
         else:
-            result['variable'] = self.variable.to_json(nested=True)
             result['experiment'] = self.experiment.to_json(nested=True)
         return result
 
