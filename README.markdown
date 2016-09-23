@@ -31,10 +31,10 @@ To run tests:
 
 ## Release
 
-In case of final major version (you have to setup your PIP environment before):
+In case of final major version (you have to setup your PIP environment before and be in `master` branch):
 
 	make release
 
-In case of final micro version:
+In case of final micro version (you have to setup your PIP environment and be in proper `master-*.X` branch):
 
 	make release-micro
