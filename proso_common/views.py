@@ -160,11 +160,14 @@ def custom_config(request):
 
     POST parameters (JSON keys):
         app_name: application name for which the configuration property is
-            valid (e.g., proso_common)
-        key: name of the property
-        value: value of the property (number, string, boolean, ...)
-        condition_key (optional): name of the condition which is used to filter the property
-        condition_value (optional): value for the condition filtering the property
+            valid (e.g., proso_models)
+        key: name of the property (e.g., predictive_model.class)
+        value: value of the property (number, string, boolean, ...,
+            e.g, proso.models.prediction.PriorCurrentPredictiveModel)
+        condition_key (optional): name of the condition which is used to filter
+            the property (e.g., practice_filter)
+        condition_value (optional): value for the condition filtering the
+            property (e.g., [["context/world"],["category/state"]])
     """
     if request.method == 'POST':
         config_dict = json_body(request.body.decode('utf-8'))
