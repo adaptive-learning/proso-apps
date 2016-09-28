@@ -13,7 +13,7 @@ MICRO_VERSION=$(word 3,$(subst ., ,$(VERSION)))
 
 ################################################################################
 
-upload: reinstall grunt test register
+upload: reinstall grunt register
 	python setup.py sdist upload
 
 register:
