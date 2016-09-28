@@ -1,6 +1,7 @@
 from .models import get_environment, get_predictive_model, get_item_selector, get_active_environment_info, \
     Answer, Item, recommend_users as models_recommend_users, PracticeContext, PracticeSet,\
-    learning_curve as models_learning_curve, get_filter, get_mastery_trashold, get_time_for_knowledge_overview
+    learning_curve as models_learning_curve, get_filter, get_mastery_trashold, get_time_for_knowledge_overview, \
+    survival_curve_answers as models_survival_curve_answers, survival_curve_time as models_survival_curve_time
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -357,7 +358,33 @@ def practice(request):
     return render_json(request, result, template='models_json.html', help_text=practice.__doc__)
 
 
-@staff_member_required
+def survival_curve(request, metric):
+    '''
+    Shows a learning curve based on the randomized testing.
+
+    GET parameters:
+      length:
+        length of the learning curve
+      context:
+        JSON representing the practice context
+      all_users:
+        if present stop filtering users based on the minimal number of testing
+        answers (=length)
+    '''
+    practice_filter = get_filter(request, force=False)
+    context = None if practice_filter is None else PracticeContext.objects.from_content(practice_filter).id
+    if metric == 'answers':
+        length = int(request.GET.get('length', 100))
+        models_survival_curve_answers(length, context=context)
+    else:
+        length = int(request.GET.get('length', 600))
+        models_survival_curve_time(length, context=context)
+    return render_json(
+        request,
+        models_learning_curve(length, context=context),
+        template='models_json.html', help_text=learning_curve.__doc__)
+
+
 def learning_curve(request):
     '''
     Shows a learning curve based on the randomized testing.
@@ -371,15 +398,13 @@ def learning_curve(request):
         if present stop filtering users based on the minimal number of testing
         answers (=length)
     '''
-    context = PracticeContext.objects.from_content(get_filter(request))
+    practice_filter = get_filter(request, force=False)
+    context = None if practice_filter is None else PracticeContext.objects.from_content(practice_filter).id
     length = int(request.GET.get('length', 10))
-    if 'all_users' in request.GET:
-        user_length = 1
-    else:
-        user_length = None
+    models_survival_curve_answers(length * 10, context=context)
     return render_json(
         request,
-        models_learning_curve(length, context=context.id, user_length=user_length),
+        models_learning_curve(length, context=context),
         template='models_json.html', help_text=learning_curve.__doc__)
 
 

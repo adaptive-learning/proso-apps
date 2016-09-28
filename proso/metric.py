@@ -2,6 +2,8 @@ import numpy
 
 
 def binomial_confidence_mean(xs, z=1.96):
+    if len(xs) == 0:
+        return None, (None, None)
     mean = numpy.mean(xs)
     confidence = z * numpy.sqrt((mean * (1 - mean)) / len(xs))
     return mean, (mean - confidence, mean + confidence)
@@ -18,10 +20,10 @@ def confidence_median(xs, z=1.96):
 
 def confidence_value_to_json(confidence_value):
     return {
-        'value': format_number(confidence_value[0]),
+        'value': None if confidence_value[0] is None else format_number(confidence_value[0]),
         'confidence_interval': {
-            'min': format_number(confidence_value[1][0]),
-            'max': format_number(confidence_value[1][1]),
+            'min': None if confidence_value[0] is None else format_number(confidence_value[1][0]),
+            'max': None if confidence_value[0] is None else format_number(confidence_value[1][1]),
         }
     }
 
