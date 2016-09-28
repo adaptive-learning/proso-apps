@@ -13,9 +13,8 @@ from itertools import product
 from proso.django.config import override
 from proso.django.models import disable_for_loaddata
 from proso.list import group_by
-from proso.metric import binomial_confidence_mean, confidence_value_to_json, confidence_median
 from proso_common.models import instantiate_from_config
-from proso_models.models import Answer, learning_curve
+from proso_models.models import Answer, learning_curve, survival_curve_answers, survival_curve_time
 import hashlib
 import json
 import logging
@@ -104,49 +103,39 @@ class PossibleValue(models.Model):
 
 class ExperimentSetupManager(models.Manager):
 
-    def get_stats(self, experiment_setup_ids, answers_per_user=10, learning_curve_length=5, learning_curve_max_users=1000):
+    def get_stats(self, experiment_setup_ids, survival_curve_length=100, learning_curve_length=5, curve_max_users=1000):
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
                 SELECT
                     proso_configab_answerexperimentsetup.experiment_setup_id,
-                    proso_models_answer.user_id,
-                    COUNT(proso_models_answer.id) as number_of_answers,
-                    COUNT(DISTINCT(proso_models_answer.session_id)) number_of_sessions
+                    proso_models_answer.user_id
                 FROM proso_models_answer
                 INNER JOIN proso_configab_answerexperimentsetup ON proso_configab_answerexperimentsetup.answer_id = proso_models_answer.id
                 WHERE proso_configab_answerexperimentsetup.experiment_setup_id IN (''' + ', '.join(['%s' for _ in experiment_setup_ids]) + ''')
                 GROUP BY proso_configab_answerexperimentsetup.experiment_setup_id, proso_models_answer.user_id
-                HAVING COUNT(proso_models_answer.id) > %s
                 ''',
-                experiment_setup_ids + [answers_per_user]
+                experiment_setup_ids
             )
-            fetched = defaultdict(list)
             experiment_users = defaultdict(set)
             for row in cursor:
                 experiment_users[row[0]].add(row[1])
-                fetched[row[0]].append({
-                    'number_of_answers': row[2],
-                    'number_of_sessions': row[3]
-                })
             result = {}
             for experiment_setup_id in experiment_setup_ids:
-                if experiment_setup_id in fetched:
-                    data = fetched[experiment_setup_id]
+                if experiment_setup_id in experiment_users:
                     users = experiment_users[experiment_setup_id]
                     result[experiment_setup_id] = {
-                        'number_of_users': len(data),
-                        'number_of_answers': confidence_value_to_json(confidence_median([d['number_of_answers'] for d in data])),
-                        'returning_chance': confidence_value_to_json(
-                            binomial_confidence_mean([d['number_of_sessions'] > 1 for d in data])),
-                        'learning_curve': learning_curve(learning_curve_length, users=users, number_of_users=learning_curve_max_users),
-                        'learning_curve_all_users': learning_curve(learning_curve_length, users=users, number_of_users=learning_curve_max_users, user_length=1)
+                        'number_of_users': len(users),
+                        'survival_curve_answers': survival_curve_answers(survival_curve_length, users=users, number_of_users=curve_max_users),
+                        'survival_curve_time': survival_curve_time(survival_curve_length, users=users, number_of_users=curve_max_users),
+                        'learning_curve': learning_curve(learning_curve_length, users=users, number_of_users=curve_max_users),
                     }
                 else:
                     result[experiment_setup_id] = {
                         'number_of_users': 0,
-                        'number_of_answers_median': None,
-                        'returning_chance': None,
+                        'survival_curve_answers': survival_curve_answers(survival_curve_length, users=[], number_of_users=curve_max_users),
+                        'survival_curve_time': survival_curve_time(survival_curve_length, users=[], number_of_users=curve_max_users),
+                        'learning_curve': learning_curve(learning_curve_length, users=[], number_of_users=curve_max_users),
                     }
             return result
 

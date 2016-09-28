@@ -10,6 +10,7 @@ from django.db.models import Count, F
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from functools import reduce
+from itertools import zip_longest
 from proso.django.cache import cache_pure
 from proso.django.cache import get_request_cache, is_cache_prepared, get_from_request_permenent_cache, set_to_request_permanent_cache
 from proso.django.config import instantiate_from_json
@@ -30,6 +31,7 @@ import importlib
 import json
 import logging
 import proso.list
+import random
 import re
 
 
@@ -112,7 +114,9 @@ def get_mastery_trashold():
     return get_config("proso_models", "mastery_threshold", default=0.9)
 
 
-def get_filter(request):
+def get_filter(request, force=True):
+    if not force and 'filter' not in request.GET:
+        return None
     identifier_filter = load_query_json(request.GET, "filter", "[]")
     add_custom_config_filter(custom_filter_for_filters(identifier_filter))
     return identifier_filter
@@ -136,79 +140,129 @@ def get_option_selector(item_selector, options_number=None):
     )
 
 
-def learning_curve(length, context=None, users=None, user_length=None, number_of_users=1000):
-    if user_length is None:
-        user_length = length
-    with closing(connection.cursor()) as cursor:
-        cursor.execute("SELECT id FROM proso_models_answermeta WHERE content LIKE '%%random_without_options%%'")
-        meta_ids = [str(x[0]) for x in cursor.fetchall()]
-    EMPTY_LEARNING_CURVE = {
-        'number_of_users': 0,
-        'number_of_data_points': 0,
-        'success': [],
-        'object_type': 'learning_curve',
-    }
-    if len(meta_ids) == 0:
-        return EMPTY_LEARNING_CURVE
+EMPTY_CURVE = {
+    'number_of_users': 0,
+    'number_of_data_points': 0,
+    'values': [],
+    'object_type': 'learning_curve',
+}
 
-    def _get_where(context, users, meta_ids):
-        _where = ['metainfo_id IN ({})'.format(','.join(meta_ids))]
-        _where_params = []
-        if context is not None:
-            _where.append('context_id = %s')
-            _where_params.append(context)
-        if users is not None:
-            _where.append('user_id IN ({})'.format(','.join(['%s' for _ in users])))
-            _where_params += users
-        return _where, _where_params
 
+def survival_curve_time(length, context=None, users=None, number_of_users=1000):
+    if users is not None and len(users) == 0:
+        return EMPTY_CURVE
     with closing(connection.cursor()) as cursor:
-        where, where_params = _get_where(context, users, meta_ids)
+        where, where_params = _get_where_for_answers(
+            context,
+            users if (users is None or len(users) <= number_of_users) else random.sample(users, number_of_users),
+        )
         cursor.execute(
             '''
             SELECT
-                user_id
+                SUM(response_time)
             FROM proso_models_answer
-            WHERE ''' + ' AND '.join(where) + '''
-            GROUP BY context_id, user_id
-            HAVING COUNT(id) >= %s
-            ORDER BY RANDOM()
-            LIMIT %s
-            ''', where_params + [user_length, number_of_users])
-        valid_users = list(set([x[0] for x in cursor.fetchall()]))
-    if len(valid_users) == 0:
-        return EMPTY_LEARNING_CURVE
+            WHERE response_time > 0
+            AND ''' + 'AND '.join(where) + '''
+            GROUP BY user_id
+            ''', where_params)
+        vals = [x[0] for x in cursor.fetchall()]
+
+        def _mean_with_confidence(xs):
+            return confidence_value_to_json(binomial_confidence_mean([x for x in xs if x is not None]))
+        return {
+            'number_of_users': len(vals),
+            'number_of_datapoints': len(vals),
+            'values': [_mean_with_confidence([v > limit for v in vals]) for limit in range(length)],
+            'object_type': 'survival_curve',
+        }
+
+
+def survival_curve_answers(length, context=None, users=None, number_of_users=1000):
+    if users is not None and len(users) == 0:
+        return EMPTY_CURVE
     with closing(connection.cursor()) as cursor:
-        where, where_params = _get_where(context, valid_users, meta_ids)
+        where, where_params = _get_where_for_answers(
+            context,
+            users if (users is None or len(users) <= number_of_users) else random.sample(users, number_of_users),
+        )
+        cursor.execute(
+            '''
+            SELECT
+                COUNT(*) AS answers
+            FROM proso_models_answer
+            ''' + ('' if len(where) == 0 else 'WHERE ' + 'AND '.join(where)) + '''
+            GROUP BY user_id
+            ''', where_params)
+        vals = [x[0] for x in cursor.fetchall()]
+
+        def _mean_with_confidence(xs):
+            return confidence_value_to_json(binomial_confidence_mean([x for x in xs if x is not None]))
+        return {
+            'number_of_users': len(vals),
+            'number_of_datapoints': len(vals),
+            'values': [_mean_with_confidence([v > limit for v in vals]) for limit in range(length)],
+            'object_type': 'survival_curve',
+        }
+
+
+def learning_curve(length, context=None, users=None, number_of_users=1000):
+    with closing(connection.cursor()) as cursor:
+        cursor.execute("SELECT id FROM proso_models_answermeta WHERE content LIKE '%%random_without_options%%'")
+        meta_ids = [str(x[0]) for x in cursor.fetchall()]
+    if len(meta_ids) == 0:
+        return EMPTY_CURVE
+    if users is not None and len(users) == 0:
+        return EMPTY_CURVE
+    with closing(connection.cursor()) as cursor:
+        where, where_params = _get_where_for_answers(
+            context,
+            users if (users is None or len(users) <= number_of_users) else random.sample(users, number_of_users),
+            meta_ids
+        )
         cursor.execute(
             '''
             SELECT
                 context_id,
                 user_id,
-                item_asked_id = COALESCE(item_answered_id, -1)
+                item_asked_id != COALESCE(item_answered_id, -1)
             FROM proso_models_answer
             WHERE ''' + ' AND '.join(where) + '''
             ORDER BY id
             ''', where_params)
         context_answers = defaultdict(lambda: defaultdict(list))
-        for row in cursor:
-            context_answers[row[0]][row[1]].append(row[2])
+        found_users = set()
+        for context_id, user_id, correct in cursor:
+            found_users.add(user_id)
+            context_answers[context_id][user_id].append(correct)
         user_answers = [
-            answers[:min(len(answers), length)] + [None for _ in range(length - min(len(answers), length))]
+            answers[:min(len(answers), length)]
             for user_answers in context_answers.values()
             for answers in user_answers.values()
-            if len(answers) >= user_length
         ]
 
         def _mean_with_confidence(xs):
             return confidence_value_to_json(binomial_confidence_mean([x for x in xs if x is not None]))
 
         return {
-            'number_of_users': len(valid_users),
+            'number_of_users': len(found_users),
             'number_of_datapoints': len(user_answers),
-            'success': list(map(_mean_with_confidence, list(zip(*user_answers)))),
+            'values': [_mean_with_confidence(point) for point in zip_longest(*user_answers)],
             'object_type': 'learning_curve',
         }
+
+
+def _get_where_for_answers(context=None, users=None, meta_ids=None):
+    where = []
+    if meta_ids is not None:
+        where.append('metainfo_id IN ({})'.format(','.join(meta_ids)))
+    where_params = []
+    if context is not None:
+        where.append('context_id = %s')
+        where_params.append(context)
+    if users is not None:
+        where.append('user_id IN ({})'.format(','.join(['%s' for _ in users])))
+        where_params += users
+    return where, where_params
 
 
 def recommend_users(register_time_interval, number_of_answers_interval, success_rate_interval, variable_name, variable_interval, limit):
