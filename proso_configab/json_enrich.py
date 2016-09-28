@@ -2,7 +2,7 @@ from .models import ExperimentSetup
 
 
 def experiment_setup_stats(request, json_list, nested):
-    if 'stats' in request.GET:
+    if 'stats' not in request.GET:
         return
     answers_per_user = int(request.GET.get('answers_per_user', 10))
     learning_curve_length = int(request.GET.get('learning_curve_length', 5))
