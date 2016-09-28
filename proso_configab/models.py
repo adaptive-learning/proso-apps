@@ -217,9 +217,16 @@ class UserSetupManager(models.Manager):
                     ExperimentSetup.objects.prefetch_related('values').filter(experiment__is_enabled=True, experiment__is_paused=False),
                     by=lambda s: s.experiment_id
                 )
-                assigned_setups.extend(get_assignment_strategy().assign_setups(
+                to_assign = get_assignment_strategy().assign_setups(
+                    user_id,
                     {e: setups for e, setups in setups_by_experiment.items() if e not in assigned_experiments}
-                ))
+                )
+                for setup in to_assign:
+                    assigned_setups.append(setup)
+                    UserSetup.objects.create(
+                        user_id=user_id,
+                        experiment_setup=setup
+                    )
             return {
                 '{}.{}'.format(val.variable.app_name, val.variable.name): val.value
                 for setup in assigned_setups
