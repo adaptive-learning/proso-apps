@@ -165,7 +165,7 @@ def survival_curve_time(length, context=None, users=None, number_of_users=1000):
             AND ''' + 'AND '.join(where) + '''
             GROUP BY user_id
             ''', where_params)
-        vals = [x[0] for x in cursor.fetchall()]
+        vals = [x[0] / 1000 for x in cursor.fetchall()]
 
         def _mean_with_confidence(xs):
             return confidence_value_to_json(binomial_confidence_mean([x for x in xs if x is not None]))
