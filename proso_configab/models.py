@@ -127,14 +127,14 @@ class ExperimentSetupManager(models.Manager):
                     result[experiment_setup_id] = {
                         'number_of_users': len(users),
                         'survival_curve_answers': survival_curve_answers(survival_curve_length, users=users, number_of_users=curve_max_users),
-                        'survival_curve_time': survival_curve_time(survival_curve_length, users=users, number_of_users=curve_max_users),
+                        'survival_curve_time': survival_curve_time(survival_curve_length * 6, users=users, number_of_users=curve_max_users),
                         'learning_curve': learning_curve(learning_curve_length, users=users, number_of_users=curve_max_users),
                     }
                 else:
                     result[experiment_setup_id] = {
                         'number_of_users': 0,
                         'survival_curve_answers': survival_curve_answers(survival_curve_length, users=[], number_of_users=curve_max_users),
-                        'survival_curve_time': survival_curve_time(survival_curve_length, users=[], number_of_users=curve_max_users),
+                        'survival_curve_time': survival_curve_time(survival_curve_length * 6, users=[], number_of_users=curve_max_users),
                         'learning_curve': learning_curve(learning_curve_length, users=[], number_of_users=curve_max_users),
                     }
             return result
