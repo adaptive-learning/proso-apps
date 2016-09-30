@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.utils.timezone import now
 from gopay.enums import PaymentStatus
 from gopay_django_api.models import Payment
 from gopay_django_api.signals import payment_changed
@@ -107,7 +108,7 @@ class Subscription(models.Model):
     plan_description = models.ForeignKey(SubscriptionPlanDescription)
     payment = models.ForeignKey(Payment)
     user = models.ForeignKey(User)
-    expiration = models.DateTimeField(auto_now_add=True)
+    expiration = models.DateTimeField(default=now)
     created = models.DateTimeField(auto_now_add=True)
     session = models.ForeignKey(Session, null=True, blank=True, default=None)
 
