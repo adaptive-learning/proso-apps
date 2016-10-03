@@ -714,7 +714,7 @@ class ItemManager(models.Manager):
                         if inner_result is None:
                             inner_result = set()
                         inner_result |= set(leaves[translated[identifier]])
-                if len(inner_result) > 0:
+                if inner_result is not None:
                     if filter_result is None:
                         filter_result = inner_result
                     else:
