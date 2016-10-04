@@ -26,6 +26,6 @@ def subscribe(request, description_id):
 def my_subscriptions(request):
     return render_json(
         request,
-        [s.to_json() for s in Subscription.objects.prepare_related().filter(user_id=request.user.id)],
+        [s.to_json() for s in Subscription.objects.prepare_related().filter(user_id=request.user.id).order_by('-created')],
         template='subscription_json.html'
     )
