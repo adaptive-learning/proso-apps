@@ -77,7 +77,7 @@ class OptionsNumber(metaclass=abc.ABCMeta):
     def get_number_of_options(self, target_probability, prediction, allow_zero_options, options_available):
         if options_available == 0:
             if self.is_zero_options_restriction_allowed() and not allow_zero_options:
-                raise Exception("Zero options are not allowed, but there are no candidates for options in case of item.")
+                raise Exception("Zero options are not allowed, but there are no candidates for options.")
             else:
                 return 0
         number_of_options = self.compute_number_of_options(target_probability, prediction)
