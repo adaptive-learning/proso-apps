@@ -35,6 +35,7 @@ class SubscriptionPlan(models.Model):
             'id': self.id,
             'object_type': 'subscription_plan',
             'type': self.type,
+            'featured': self.featured,
             'active': self.active,
             'months-validity': self.months_validity,
         }
