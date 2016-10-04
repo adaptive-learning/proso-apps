@@ -86,9 +86,7 @@ class OptionsNumber(metaclass=abc.ABCMeta):
                 return 0
         number_of_options = self.compute_number_of_options(target_probability, prediction)
         if number_of_options == 0:
-            if self.is_zero_options_allowed() and (not self.is_zero_options_restriction_allowed() or allow_zero_options):
-                number_of_options = 0
-            else:
+            if not self.is_zero_options_allowed() or (self.is_zero_options_restriction_allowed() and not allow_zero_options):
                 number_of_options = self.get_max_options() - 1
         return min(options_available, number_of_options)
 
