@@ -34,6 +34,9 @@
         "type": {
           "type": "string"
         },
+        "featured": {
+          "type": "boolean"
+        },
         "patternProperties":{
             "^description-(\\w\\w)$": {
                 "$ref": "#/definitions/description"

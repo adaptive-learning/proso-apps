@@ -30,6 +30,7 @@ class Command(BaseCommand):
             plan.months_validity = plan_json['months-validity']
             plan.type = plan_json['type']
             plan.active = not plan_json.get('disabled', False)
+            plan.featured = plan_json.get('featured', False)
             plan.save()
             langs = [k[-2:] for k in plan_json.keys() if re.match(r'^description-\w\w$', k)]
             for lang in langs:

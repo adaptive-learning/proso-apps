@@ -25,6 +25,7 @@ class SubscriptionPlan(models.Model):
     months_validity = models.IntegerField()
     type = models.CharField(max_length=255)
     active = models.BooleanField(default=True)
+    featured = models.BooleanField(default=False)
 
     objects = SubscriptionPlanManager()
 

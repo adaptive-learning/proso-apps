@@ -13,3 +13,4 @@ class TestPlansLoading(TestCase):
         self.assertFalse(second.active)
         self.assertEqual(first.descriptions.all().count(), 2)
         self.assertEqual(second.descriptions.all().count(), 2)
+        self.assertTrue(first.featured)

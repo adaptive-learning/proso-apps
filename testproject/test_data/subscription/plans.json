@@ -4,6 +4,7 @@
             "id": "first",
             "type": "uknown",
             "months-validity": 12,
+            "featured": true,
             "description-en": {
                 "price": 4,
                 "currency": "EUR",
