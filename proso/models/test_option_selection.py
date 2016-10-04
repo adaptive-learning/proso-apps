@@ -4,37 +4,41 @@ import random
 
 class TestFullyRandomOptionsNumber(proso.models.option_selection.TestOptionsNumber):
 
-    def get_options_number(self, max_options, allow_zero_options_restriction):
+    def get_options_number(self, max_options, allow_zero_options_restriction, allow_zero_options):
         return proso.models.option_selection.FullyRandomOptionsNumber(
             max_options=max_options,
-            allow_zero_options_restriction=allow_zero_options_restriction
+            allow_zero_options_restriction=allow_zero_options_restriction,
+            allow_zero_options=allow_zero_options
         )
 
 
 class TestPartiallyRandomNumber(proso.models.option_selection.TestOptionsNumber):
 
-    def get_options_number(self, max_options, allow_zero_options_restriction):
+    def get_options_number(self, max_options, allow_zero_options_restriction, allow_zero_options):
         return proso.models.option_selection.PartiallyRandomOptionsNumber(
             max_options=max_options,
-            allow_zero_options_restriction=allow_zero_options_restriction
+            allow_zero_options_restriction=allow_zero_options_restriction,
+            allow_zero_options=allow_zero_options
         )
 
 
 class TestAdjustedOptionsNumber(proso.models.option_selection.TestOptionsNumber):
 
-    def get_options_number(self, max_options, allow_zero_options_restriction):
+    def get_options_number(self, max_options, allow_zero_options_restriction, allow_zero_options):
         return proso.models.option_selection.AdjustedOptionsNumber(
             max_options=max_options,
-            allow_zero_options_restriction=allow_zero_options_restriction
+            allow_zero_options_restriction=allow_zero_options_restriction,
+            allow_zero_options=allow_zero_options
         )
 
 
 class TestUniformlyAdjustedOptionsNumber(proso.models.option_selection.TestOptionsNumber):
 
-    def get_options_number(self, max_options, allow_zero_options_restriction):
+    def get_options_number(self, max_options, allow_zero_options_restriction, allow_zero_options):
         return proso.models.option_selection.UniformlyAdjustedOptionsNumber(
             max_options=max_options,
-            allow_zero_options_restriction=allow_zero_options_restriction
+            allow_zero_options_restriction=allow_zero_options_restriction,
+            allow_zero_options=allow_zero_options
         )
 
 

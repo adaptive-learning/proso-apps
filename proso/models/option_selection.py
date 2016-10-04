@@ -64,25 +64,29 @@ class OptionSelection(metaclass=abc.ABCMeta):
 
 class OptionsNumber(metaclass=abc.ABCMeta):
 
-    def __init__(self, max_options=6, allow_zero_options_restriction=True):
+    def __init__(self, max_options=6, allow_zero_options_restriction=True, allow_zero_options=True):
         self._max_options = max_options
         self._allow_zero_options_restriction = allow_zero_options_restriction
+        self._allow_zero_options = allow_zero_options
 
     def is_zero_options_restriction_allowed(self):
         return self._allow_zero_options_restriction
+
+    def is_zero_options_allowed(self):
+        return self._allow_zero_options
 
     def get_max_options(self):
         return self._max_options
 
     def get_number_of_options(self, target_probability, prediction, allow_zero_options, options_available):
         if options_available == 0:
-            if self.is_zero_options_restriction_allowed() and not allow_zero_options:
+            if not self.is_zero_options_allowed() or (self.is_zero_options_restriction_allowed() and not allow_zero_options):
                 raise Exception("Zero options are not allowed, but there are no candidates for options.")
             else:
                 return 0
         number_of_options = self.compute_number_of_options(target_probability, prediction)
         if number_of_options == 0:
-            if not self.is_zero_options_restriction_allowed() or allow_zero_options:
+            if self.is_zero_options_allowed() and (not self.is_zero_options_restriction_allowed() or allow_zero_options):
                 number_of_options = 0
             else:
                 number_of_options = self.get_max_options() - 1
@@ -212,19 +216,19 @@ class TestOptionsNumber(unittest.TestCase):
         for target_probability in numpy.linspace(0, 1, 6):
             for prediction in numpy.linspace(0, 1, 6):
                 for options_available in [2, 100]:
-                        number_of_options = self.get_options_number(max_options, True).get_number_of_options(
+                        number_of_options = self.get_options_number(max_options, True, True).get_number_of_options(
                             target_probability, prediction, True, options_available)
                         self.assertTrue(number_of_options >= 0)
                         self.assertTrue(number_of_options <= options_available)
                         self.assertTrue(number_of_options <= max_options)
-                        number_of_options = self.get_options_number(max_options, True).get_number_of_options(
+                        number_of_options = self.get_options_number(max_options, True, True).get_number_of_options(
                             target_probability, prediction, False, options_available)
                         self.assertTrue(number_of_options > 0)
                         self.assertTrue(number_of_options <= options_available)
                         self.assertTrue(number_of_options <= max_options)
 
     @abc.abstractmethod
-    def get_options_number(self, max_options, allow_zero_options_restriction):
+    def get_options_number(self, max_options, allow_zero_options_restriction, allow_zero_options):
         pass
 
 
