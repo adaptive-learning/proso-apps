@@ -1,8 +1,9 @@
-from .models import Subscription, SubscriptionPlan, SubscriptionPlanDescription
+from .models import Subscription, SubscriptionPlan, SubscriptionPlanDescription, DiscountCode
 from django.contrib.auth.decorators import login_required
 from proso.django.request import get_language
 from proso.django.response import render_json
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 
 
 def plans(request):
@@ -15,10 +16,12 @@ def plans(request):
 
 
 @login_required()
+@transaction.atomic
 def subscribe(request, description_id):
     return_url = request.GET.get('return_url', request.META['HTTP_HOST'])
     description = get_object_or_404(SubscriptionPlanDescription, id=description_id)
-    subscription = Subscription.objects.subscribe(request.user, description, return_url)
+    discount_code = get_object_or_404(DiscountCode, code=DiscountCode.objects.prepare_code(request.GET.get('discount_code')), active=True) if 'discount_code' in request.GET else None
+    subscription = Subscription.objects.subscribe(request.user, description, discount_code, return_url)
     return render_json(request, subscription.to_json(), template='subscription_json.html', status=202)
 
 

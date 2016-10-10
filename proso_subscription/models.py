@@ -9,8 +9,11 @@ from gopay.enums import PaymentStatus
 from gopay_django_api.models import Payment
 from gopay_django_api.signals import payment_changed
 from proso.django.models import disable_for_loaddata
+from proso.django.response import BadRequestException
 from proso_user.models import Session
 import uuid
+import string
+import random
 
 
 class SubscriptionPlanManager(models.Manager):
@@ -81,38 +84,89 @@ class SubscriptionPlanDescription(models.Model):
         return result
 
 
+class DiscountCodeManager(models.Manager):
+
+    def prepare_related(self):
+        return self.select_related('plan')
+
+    def prepare_code(self, code):
+        return code.upper()
+
+    def generate_code(self, length=20):
+        return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
+
+
+class DiscountCode(models.Model):
+
+    plan = models.ForeignKey(SubscriptionPlan, null=True, blank=True, default=None)
+    usage_limit = models.IntegerField(null=True, blank=True, default=None)
+    discount_percentage = models.IntegerField()
+    code = models.CharField(max_length=100)
+    identifier = models.CharField(max_length=255)
+    active = models.BooleanField(default=True)
+
+    objects = DiscountCodeManager()
+
+    def to_json(self, nested=False):
+        result = {
+            'object_type': 'subscription_discount_code',
+            'id': self.id,
+            'discount_percentage': self.discount_percentage
+        }
+        if self.plan is not None and not nested:
+            result['plan'] = self.plan.to_json(nested=True)
+        if self.usage_limit:
+            result['usage_limit'] = self.usage_limit
+        return result
+
+
 class SubscriptionManager(models.Manager):
 
     def prepare_related(self):
-        return self.select_related('payment', 'plan_description', 'plan_description__plan')
+        return self.select_related('payment', 'plan_description', 'plan_description__plan', 'discount')
 
-    def subscribe(self, user, plan_description, return_url):
-        payment = Payment.objects.create_single_payment(
-            Payment.objects.create_contact(email=user.email),
-            order_number=str(uuid.uuid1()),
-            order_description=plan_description.description,
-            order_items={
-                plan_description.name: plan_description.price,
-            },
-            currency=plan_description.currency,
-            amount=plan_description.price,
-            return_url=return_url
-        )
-        return self.create(
+    def subscribe(self, user, plan_description, discount_code, return_url):
+        if discount_code and discount_code.usage_limit is not None and discount_code.subscriptions.all().count() >= discount_code.usage_limit:
+            raise BadRequestException('The given discount code has been already used by a maximum number of subscribers.')
+        if discount_code.plan_id is not None and plan_description.plan_id != discount_code.plan_id:
+            raise BadRequestException('The given discount code does not match with the given subscription plan.')
+        price = int(plan_description.price * ((1 - discount_code.discount_percentage / 100.0) if discount_code else 1))
+        if price > 0:
+            payment = Payment.objects.create_single_payment(
+                Payment.objects.create_contact(email=user.email),
+                order_number=str(uuid.uuid1()),
+                order_description=plan_description.description,
+                order_items={
+                    plan_description.name: plan_description.price,
+                },
+                currency=plan_description.currency,
+                amount=price,
+                return_url=return_url
+            )
+        else:
+            payment = None
+
+        subscription = Subscription(
             plan_description=plan_description,
             payment=payment,
-            user=user
+            user=user,
+            discount=discount_code
         )
+        if payment is None:
+            subscription.expiration = datetime.now() + relativedelta(months=subscription.plan_description.plan.months_validity)
+        subscription.save()
+        return subscription
 
 
 class Subscription(models.Model):
 
     plan_description = models.ForeignKey(SubscriptionPlanDescription)
-    payment = models.ForeignKey(Payment)
+    payment = models.ForeignKey(Payment, null=True, blank=True)
     user = models.ForeignKey(User)
     expiration = models.DateTimeField(default=now)
     created = models.DateTimeField(auto_now_add=True)
     session = models.ForeignKey(Session, null=True, blank=True, default=None)
+    discount = models.ForeignKey(DiscountCode, null=True, blank=True, default=None, related_name='subscriptions')
 
     objects = SubscriptionManager()
 
@@ -129,12 +183,15 @@ class Subscription(models.Model):
             result['plan_description_id'] = self.plan_description_id
             result['session_id'] = self.session_id
         else:
-            result['payment'] = {
-                'id': self.payment.id,
-                'object_type': 'payment',
-                'state': self.payment.state,
-                'status': self.payment.status,
-            }
+            if self.payment is not None:
+                result['payment'] = {
+                    'id': self.payment.id,
+                    'object_type': 'payment',
+                    'state': self.payment.state,
+                    'status': self.payment.status,
+                }
+            if self.discount is not None:
+                result['discount'] = self.discount.to_json(nested=True)
             result['plan_description'] = self.plan_description.to_json()
             if self.session is not None:
                 result['session'] = self.session.to_json(nested=True)

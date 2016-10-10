@@ -36,5 +36,18 @@
                 "description": "description in czech crowns"
             }
         }
+    ],
+    "discount-codes": [
+        {
+            "id": "global",
+            "discount-percentage": 100
+        },
+        {
+            "id": "local-first",
+            "discount-percentage": 30,
+            "plan": "first",
+            "usage-limit": 100,
+            "code": "slunicko"
+        }
     ]
 }
