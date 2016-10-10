@@ -12,7 +12,6 @@ from proso.django.models import disable_for_loaddata
 from proso.django.response import BadRequestException
 from proso_user.models import Session
 from django.db.models import Q
-from gopay.enums import PaymentStatus
 import uuid
 import string
 import random
