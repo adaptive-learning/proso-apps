@@ -30,6 +30,7 @@ class Command(BaseCommand):
             if plan is None:
                 plan = SubscriptionPlan(identifier=plan_json['id'])
             plan.months_validity = plan_json['months-validity']
+            plan.months_referral = plan_json.get('months-referral', 0)
             plan.type = plan_json['type']
             plan.active = not plan_json.get('disabled', False)
             plan.featured = plan_json.get('featured', False)

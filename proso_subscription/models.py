@@ -26,6 +26,7 @@ class SubscriptionPlan(models.Model):
 
     identifier = models.SlugField()
     months_validity = models.IntegerField()
+    months_referral = models.IntegerField(default=0)
     type = models.CharField(max_length=255)
     active = models.BooleanField(default=True)
     featured = models.BooleanField(default=False)
@@ -41,6 +42,7 @@ class SubscriptionPlan(models.Model):
             'featured': self.featured,
             'active': self.active,
             'months-validity': self.months_validity,
+            'months-referral': self.months_referral,
         }
         if not nested:
             if lang is None:
@@ -125,11 +127,13 @@ class SubscriptionManager(models.Manager):
     def prepare_related(self):
         return self.select_related('payment', 'plan_description', 'plan_description__plan', 'discount')
 
-    def subscribe(self, user, plan_description, discount_code, return_url):
+    def subscribe(self, user, plan_description, discount_code, referral_user, return_url):
         if discount_code and discount_code.usage_limit is not None and discount_code.subscriptions.all().count() >= discount_code.usage_limit:
             raise BadRequestException('The given discount code has been already used by a maximum number of subscribers.')
         if discount_code.plan_id is not None and plan_description.plan_id != discount_code.plan_id:
             raise BadRequestException('The given discount code does not match with the given subscription plan.')
+        if referral_user is not None and referral_user.id == user.id:
+            raise BadRequestException("The referral user can not be the same as the given subscriber.")
         price = int(plan_description.price * ((1 - discount_code.discount_percentage / 100.0) if discount_code else 1))
         if price > 0:
             payment = Payment.objects.create_single_payment(
@@ -150,7 +154,8 @@ class SubscriptionManager(models.Manager):
             plan_description=plan_description,
             payment=payment,
             user=user,
-            discount=discount_code
+            discount=discount_code,
+            referral=referral_user
         )
         if payment is None:
             subscription.expiration = datetime.now() + relativedelta(months=subscription.plan_description.plan.months_validity)
@@ -162,13 +167,17 @@ class Subscription(models.Model):
 
     plan_description = models.ForeignKey(SubscriptionPlanDescription)
     payment = models.ForeignKey(Payment, null=True, blank=True)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, related_name='subscriptions')
     expiration = models.DateTimeField(default=now)
     created = models.DateTimeField(auto_now_add=True)
     session = models.ForeignKey(Session, null=True, blank=True, default=None)
     discount = models.ForeignKey(DiscountCode, null=True, blank=True, default=None, related_name='subscriptions')
+    referral = models.ForeignKey(User, null=True, blank=True, default=None, related_name='referred_subscriptions')
 
     objects = SubscriptionManager()
+
+    def is_active(self):
+        return self.expiration > datetime.now()
 
     def to_json(self, nested=False):
         result = {
@@ -203,6 +212,16 @@ def update_subcription_payment(sender, instance, previous_status, **kwargs):
     if previous_status['state'] == PaymentStatus.PAID or instance.state != PaymentStatus.PAID:
         return
     subscription = Subscription.objects.select_related('plan_description__plan').get(payment=instance)
+    if subscription.plan_description.plan.months_referral and subscription.referral:
+        referral_subscription = subscription.referral.subscriptions.filter(
+            plan_description__plan__type=subscription.plan_description.plan.type
+        ).order_by('-expiration').first()
+        if referral_subscription is not None and subscription.plan_description.plan.months_referral:
+            if referral_subscription.is_active():
+                referral_subscription.expiration += relativedelta(months=subscription.plan_description.plan.months_referral)
+            else:
+                referral_subscription.expiration = datetime.now() + relativedelta(months=subscription.plan_description.plan.months_referral)
+            referral_subscription.save()
     subscription.expiration = datetime.now() + relativedelta(months=subscription.plan_description.plan.months_validity)
     subscription.save()
 

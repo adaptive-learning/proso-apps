@@ -4,6 +4,7 @@
             "id": "first",
             "type": "uknown",
             "months-validity": 12,
+            "months-referral": 1,
             "featured": true,
             "description-en": {
                 "price": 4,
