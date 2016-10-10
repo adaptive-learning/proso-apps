@@ -11,6 +11,8 @@ from gopay_django_api.signals import payment_changed
 from proso.django.models import disable_for_loaddata
 from proso.django.response import BadRequestException
 from proso_user.models import Session
+from django.db.models import Q
+from gopay.enums import PaymentStatus
 import uuid
 import string
 import random
@@ -139,6 +141,8 @@ class SubscriptionManager(models.Manager):
             raise BadRequestException('The given discount code has been already used by a maximum number of subscribers.')
         if discount_code.plan_id is not None and plan_description.plan_id != discount_code.plan_id:
             raise BadRequestException('The given discount code does not match with the given subscription plan.')
+        if discount_code is not None and user.subscriptions.filter(Q(discount=discount_code) & (Q(payment__isnull=True) | Q(payment__state__in=[PaymentStatus.PAID, PaymentStatus.CREATED]))).count() > 0:
+            raise BadRequestException('The given discount code has been already used by the given user.')
         if referral_user is not None and referral_user.id == user.id:
             raise BadRequestException("The referral user can not be the same as the given subscriber.")
         price = int(plan_description.price * ((1 - discount_code.discount_percentage / 100.0) if discount_code else 1))
