@@ -210,6 +210,8 @@ class Location(models.Model):
         return result
 
     def get_country(self):
+        if self.ip_address is None or self.ip_address.startswith('127.0'):
+            return None
         match = geolite2.lookup(self.ip_address)
         return None if match is None else match.country
 
