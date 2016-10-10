@@ -17,7 +17,7 @@ class TestPlansLoading(TestCase):
         code_global = DiscountCode.objects.get(identifier="global")
         code_local = DiscountCode.objects.get(identifier="local-first")
         self.assertIsNotNone(code_global.code)
-        self.assertEqual(code_global.discount_percentage, 20)
+        self.assertEqual(code_global.discount_percentage, 100)
         self.assertIsNone(code_global.plan)
         self.assertIsNone(code_global.usage_limit)
         self.assertEqual(code_local.code, DiscountCode.objects.prepare_code("slunicko"))
