@@ -127,6 +127,13 @@ class SubscriptionManager(models.Manager):
     def prepare_related(self):
         return self.select_related('payment', 'plan_description', 'plan_description__plan', 'discount')
 
+    def is_active(self, user, subscription_type):
+        if user is None:
+            return False
+        if user.is_staff:
+            return True
+        return self.filter(user_id=user.id, plan__type=subscription_type, expiration__gte=datetime.now()).count() > 0
+
     def subscribe(self, user, plan_description, discount_code, referral_user, return_url):
         if discount_code and discount_code.usage_limit is not None and discount_code.subscriptions.all().count() >= discount_code.usage_limit:
             raise BadRequestException('The given discount code has been already used by a maximum number of subscribers.')
