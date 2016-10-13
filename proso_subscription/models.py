@@ -131,7 +131,7 @@ class DiscountCode(models.Model):
 class SubscriptionManager(models.Manager):
 
     def prepare_related(self):
-        return self.select_related('payment', 'plan_description', 'plan_description__plan', 'discount')
+        return self.select_related('payment', 'plan_description', 'plan_description__plan', 'discount', 'user')
 
     def is_active(self, user, subscription_type):
         if user is None:
@@ -194,11 +194,10 @@ class Subscription(models.Model):
     def is_active(self):
         return self.expiration > datetime.now()
 
-    def to_json(self, nested=False):
+    def to_json(self, nested=False, confidential=False):
         result = {
             'expiration': self.expiration.strftime('%Y-%m-%d %H:%M:%S'),
             'created': self.created.strftime('%Y-%m-%d %H:%M:%S'),
-            'user_id': self.user_id,
             'id': self.id,
             'object_type': 'subscription_subscription',
         }
@@ -206,19 +205,25 @@ class Subscription(models.Model):
             result['payment_id'] = self.payment_id
             result['plan_description_id'] = self.plan_description_id
             result['session_id'] = self.session_id
+            result['user_id'] = self.user_id
         else:
-            if self.payment is not None:
-                result['payment'] = {
-                    'id': self.payment.id,
-                    'object_type': 'payment',
-                    'state': self.payment.state,
-                    'status': self.payment.status,
-                }
-            if self.discount is not None:
-                result['discount'] = self.discount.to_json(nested=True)
+            if not confidential:
+                if self.payment is not None:
+                    result['payment'] = {
+                        'id': self.payment.id,
+                        'object_type': 'payment',
+                        'state': self.payment.state,
+                        'status': self.payment.status,
+                    }
+                if self.discount is not None:
+                    result['discount'] = self.discount.to_json(nested=True)
+                if self.session is not None:
+                    result['session'] = self.session.to_json(nested=True)
             result['plan_description'] = self.plan_description.to_json()
-            if self.session is not None:
-                result['session'] = self.session.to_json(nested=True)
+            result['user'] = {
+                'id': self.user.id,
+                'username': self.user.username
+            }
         return result
 
 

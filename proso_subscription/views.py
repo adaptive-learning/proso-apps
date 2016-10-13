@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from gopay.enums import PaymentStatus
 from proso.django.request import get_language
 from proso.django.response import render_json
 
@@ -13,6 +14,15 @@ def plans(request):
     return render_json(
         request,
         [p.to_json(lang=lang, discount_code=discount_code) for p in SubscriptionPlan.objects.prepare_related().filter(active=True)],
+        template='subscription_json.html'
+    )
+
+
+@login_required()
+def my_referrals(request):
+    return render_json(
+        request,
+        [s.to_json(confidential=True) for s in request.user.referred_subscriptions.order_by('-created').filter(payment__state=PaymentStatus.PAID)],
         template='subscription_json.html'
     )
 
