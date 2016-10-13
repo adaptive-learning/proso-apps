@@ -143,7 +143,7 @@ class SubscriptionManager(models.Manager):
     def subscribe(self, user, plan_description, discount_code, referral_user, return_url):
         if discount_code and discount_code.usage_limit is not None and discount_code.subscriptions.all().count() >= discount_code.usage_limit:
             raise BadRequestException('The given discount code has been already used by a maximum number of subscribers.')
-        if discount_code.plan_id is not None and plan_description.plan_id != discount_code.plan_id:
+        if discount_code is not None and discount_code.plan_id is not None and plan_description.plan_id != discount_code.plan_id:
             raise BadRequestException('The given discount code does not match with the given subscription plan.')
         if discount_code is not None and user.subscriptions.filter(Q(discount=discount_code) & (Q(payment__isnull=True) | Q(payment__state__in=[PaymentStatus.PAID, PaymentStatus.CREATED]))).count() > 0:
             raise BadRequestException('The given discount code has been already used by the given user.')
