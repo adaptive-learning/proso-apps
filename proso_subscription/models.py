@@ -34,7 +34,7 @@ class SubscriptionPlan(models.Model):
 
     objects = SubscriptionPlanManager()
 
-    def to_json(self, nested=False, lang=None):
+    def to_json(self, nested=False, lang=None, discount_code=None):
         result = {
             'identifier': self.identifier,
             'id': self.id,
@@ -47,9 +47,9 @@ class SubscriptionPlan(models.Model):
         }
         if not nested:
             if lang is None:
-                result['descriptions'] = [d.to_json(nested=True) for d in self.descriptions.all()]
+                result['descriptions'] = [d.to_json(nested=True, discount_code=discount_code) for d in self.descriptions.all()]
             else:
-                result['description'] = [d.to_json(nested=True) for d in self.descriptions.all() if d.lang == lang][0]
+                result['description'] = [d.to_json(nested=True, discount_code=discount_code) for d in self.descriptions.all() if d.lang == lang][0]
         return result
 
 
@@ -70,7 +70,7 @@ class SubscriptionPlanDescription(models.Model):
 
     objects = SubscriptionPlanDescriptionManager()
 
-    def to_json(self, nested=False):
+    def to_json(self, nested=False, discount_code=None):
         result = {
             'id': self.id,
             'object_type': 'subscription_plan_description',
@@ -84,6 +84,8 @@ class SubscriptionPlanDescription(models.Model):
             result['plan_id'] = self.plan_id
         else:
             result['plan'] = self.plan.to_json(nested=True)
+        if discount_code is not None and (discount_code.plan_id is None or discount_code.plan_id == self.plan_id):
+            result['price_after_discount'] = discount_code.get_updated_price(self.price)
         return result
 
 
@@ -109,6 +111,9 @@ class DiscountCode(models.Model):
     active = models.BooleanField(default=True)
 
     objects = DiscountCodeManager()
+
+    def get_updated_price(self, price):
+        return int(round(price * (1 - self.discount_percentage / 100.0)))
 
     def to_json(self, nested=False):
         result = {
@@ -144,7 +149,7 @@ class SubscriptionManager(models.Manager):
             raise BadRequestException('The given discount code has been already used by the given user.')
         if referral_user is not None and referral_user.id == user.id:
             raise BadRequestException("The referral user can not be the same as the given subscriber.")
-        price = int(plan_description.price * ((1 - discount_code.discount_percentage / 100.0) if discount_code else 1))
+        price = plan_description.price if discount_code is None else discount_code.get_updated_price(plan_description.price)
         if price > 0:
             payment = Payment.objects.create_single_payment(
                 Payment.objects.create_contact(email=user.email),
