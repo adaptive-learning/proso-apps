@@ -35,9 +35,9 @@ class ProsoEventsLogger(EventsLogger):
             logging.getLogger('django.request').error('Wrong configuration of proso-events. Events are dropped.')
 
 
-def get_events_logger():
+def get_events_logger(events_log_name=None):
     return ProsoEventsLogger(
-        get_config('proso_common', 'events.db_file', default=os.path.join(settings.DATA_DIR, 'events.log')),
+        get_config('proso_common', 'events.db_file', default=os.path.join(settings.DATA_DIR, events_log_name if events_log_name else 'events.log')),
         get_config('proso_common', 'events.source_name', default='default')
     )
 
@@ -50,8 +50,8 @@ def get_events_client():
     )
 
 
-def get_events_pusher():
-    return Pusher(get_events_client(), (get_events_logger()).event_file)
+def get_events_pusher(events_log_name=None):
+    return Pusher(get_events_client(), (get_events_logger(events_log_name)).event_file)
 
 
 def reset_custom_configs():

@@ -13,8 +13,9 @@ class Command(BaseCommand):
         parser.add_argument('to', type=str)
 
     def handle(self, *args, **options):
-        logger = get_events_logger()
-        pusher = get_events_pusher()
+        events_log = 'answers2events.log'
+        logger = get_events_logger(events_log)
+        pusher = get_events_pusher(events_log)
 
         with connection.cursor() as cursor:
             cursor.execute("""
