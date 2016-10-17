@@ -12,9 +12,12 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'expiration',
         'payment_status'
     )
+    search_fields = (
+        'user__username',
+    )
 
     def payment_status(self, s):
-        return s.payment.status['state']
+        return s.payment.status['state'] if s.payment is not None else 'FREE'
 
 
 admin.site.register(Subscription, SubscriptionAdmin)
