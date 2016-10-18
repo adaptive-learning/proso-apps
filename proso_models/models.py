@@ -791,6 +791,7 @@ class ItemManager(models.Manager):
             graph = self.get_children_graph(None, language)
             return self._subset_graph(graph, item_ids)
 
+    @cache_pure(request_only=True)
     def get_reachable_children(self, item_ids, language=None):
         return self._reachable_items(self.get_children_graph(item_ids, language=language))
 
@@ -824,6 +825,7 @@ class ItemManager(models.Manager):
             graph = self.get_parents_graph_graph(None, language)
             return self._subset_graph(graph, item_ids)
 
+    @cache_pure(request_only=True)
     def get_reachable_parents(self, item_ids, language=None):
         return self._reachable_items(self.get_parents_graph(item_ids, language=language))
 

@@ -33,7 +33,7 @@ def cache_page_conditional(condition, timeout=3600, cache=None):
     return _cache_page_conditional
 
 
-def cache_pure(f, expiration=60 * 60 * 24 * 30):
+def cache_pure(f, expiration=60 * 60 * 24 * 30, request_only=False):
     """ Cache decorator for functions taking one or more arguments. """
 
     @wraps(f)
@@ -58,8 +58,9 @@ def cache_pure(f, expiration=60 * 60 * 24 * 30):
 
         timer(hash_key)
         value = f(*args, **kwargs)
-        LOGGER.debug("saved function result (%s...) to CACHE; key: %s... time %s", str(value)[:300], key[:300], timer(hash_key))
-        cache.set(hash_key, value, expiration)
+        if not request_only:
+            LOGGER.debug("saved function result (%s...) to CACHE; key: %s... time %s", str(value)[:300], key[:300], timer(hash_key))
+            cache.set(hash_key, value, expiration)
         if is_cache_prepared():
             get_request_cache().set(hash_key, value)
 
