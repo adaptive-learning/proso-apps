@@ -136,6 +136,8 @@ class SubscriptionManager(models.Manager):
     def is_active(self, user, subscription_type):
         if user is None:
             return False
+        if user.id is None:
+            return False
         if user.is_staff:
             return True
         return self.filter(user_id=user.id, plan_description__plan__type=subscription_type, expiration__gte=datetime.now()).count() > 0
