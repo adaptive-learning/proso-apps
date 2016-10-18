@@ -10,6 +10,7 @@ from proso.django.config import get_config as get_config_original, get_global_co
 from proso.django.request import is_user_id_overridden, is_time_overridden, get_user_id
 from proso.django.response import BadRequestException
 from proso.func import function_name
+from proso.reflection import instantiate_with_lazy_parameters
 from threading import currentThread
 from proso.events.client import EventsLogger, Pusher, EventClient
 import logging
@@ -156,6 +157,21 @@ def instantiate_from_config(app_name, key, default_class=None, default_parameter
         default_parameters=default_parameters,
         pass_parameters=pass_parameters
     )
+
+
+def instantiate_from_config_lazy(app_name, key, default_class=None, default_parameters=None, config_name=None):
+    if default_parameters is None:
+        default_parameters = {}
+
+    def _args(arg, default=None):
+        config = get_config(app_name, key, config_name=config_name, required=(default_class is None), default={})
+        return config.get('parameters', {}).get(arg, default_parameters.get(arg, default))
+    return instantiate_with_lazy_parameters(
+        get_config(app_name, key, config_name=config_name, required=(default_class is None), default={}).get('class', default_class),
+        _args,
+        **default_parameters
+    )
+
 
 
 def instantiate_from_config_list(app_name, key, pass_parameters=None, config_name=None):
