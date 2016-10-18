@@ -1,0 +1,5 @@
+proso_tests:
+    a.b.c:
+        - value: blah_overriden_from_custom_config
+          condition_key: test_condition
+          condition_value: true
