@@ -1,4 +1,4 @@
-from .models import instantiate_from_config, get_config, reset_custom_configs, reset_custom_config_filters, CustomConfig, add_custom_config_filter
+from .models import instantiate_from_config, get_config, reset_custom_configs, reset_custom_config_filters, CustomConfig, add_custom_config_filter, custom_config_filter
 from proso.django.config import get_default_config_name, set_default_config_name
 from proso.django.request import set_current_request
 from django.contrib.auth.models import User
@@ -18,6 +18,13 @@ class ConfigTest(django.test.TestCase):
         request.user = self.user
         set_current_request(request)
         CustomConfig.objects.all().delete()
+
+    def test_with_custom_config_filter(self):
+        CustomConfig.objects.try_create('proso_tests', 'a.b.c', 'blah_overriden', self.user.id, 'test_condition', 'value')
+        self.assertEqual(get_config('proso_tests', 'a.b.c'), 'blah')
+        with custom_config_filter(test_filter):
+            self.assertEqual(get_config('proso_tests', 'a.b.c'), 'blah_overriden')
+        self.assertEqual(get_config('proso_tests', 'a.b.c'), 'blah')
 
     def test_custom_configs(self):
         CustomConfig.objects.try_create('proso_tests', 'a.b.c', 'blah_overriden', self.user.id)

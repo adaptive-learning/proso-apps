@@ -19,6 +19,7 @@ import importlib
 import json
 import os
 import datetime
+import uuid
 
 _is_user_overriden_from_url = {}
 _is_time_overriden_from_url = {}
@@ -71,9 +72,27 @@ def reset_url_overridden():
     _is_time_overriden_from_url[currentThread()] = False
 
 
-def add_custom_config_filter(config_filter):
+def add_custom_config_filter(config_filter, name=None):
     global _custom_config_filters
-    _custom_config_filters[currentThread()][function_name(config_filter)] = config_filter
+    _custom_config_filters[currentThread()][function_name(config_filter) if name is None else name] = config_filter
+
+
+def remove_custom_config_filter(name):
+    global _custom_config_filters
+    del _custom_config_filters[currentThread()][name]
+
+
+class custom_config_filter:
+
+    def __init__(self, config_filter):
+        self._config_filter = config_filter
+        self._name = str(uuid.uuid1())
+
+    def __enter__(self):
+        add_custom_config_filter(self._config_filter, self._name)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        remove_custom_config_filter(name=self._name)
 
 
 def current_custom_configs():
