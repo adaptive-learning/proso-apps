@@ -173,7 +173,6 @@ def instantiate_from_config_lazy(app_name, key, default_class=None, default_para
     )
 
 
-
 def instantiate_from_config_list(app_name, key, pass_parameters=None, config_name=None):
     configs = get_config(app_name, key, config_name=config_name, default=[])
     return [
