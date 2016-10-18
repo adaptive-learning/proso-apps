@@ -7,6 +7,7 @@ import math
 import unittest
 import numpy
 from mock import MagicMock
+from proso.func import get_maybe_lazy
 
 
 LOGGER = logging.getLogger('django.request')
@@ -70,13 +71,13 @@ class OptionsNumber(metaclass=abc.ABCMeta):
         self._allow_zero_options = allow_zero_options
 
     def is_zero_options_restriction_allowed(self):
-        return self._allow_zero_options_restriction
+        return get_maybe_lazy(self._allow_zero_options_restriction)
 
     def is_zero_options_allowed(self):
-        return self._allow_zero_options
+        return get_maybe_lazy(self._allow_zero_options)
 
     def get_max_options(self):
-        return self._max_options
+        return get_maybe_lazy(self._max_options)
 
     def get_number_of_options(self, target_probability, prediction, allow_zero_options, options_available):
         if options_available == 0:

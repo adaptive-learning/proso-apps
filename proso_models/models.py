@@ -22,7 +22,7 @@ from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
 from proso.time import timeit
-from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config, add_custom_config_filter, get_events_logger
+from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config, add_custom_config_filter, get_events_logger, instantiate_from_config_lazy
 from proso_common.models import IntegrityCheck
 from proso_user.models import Session
 import django.apps
@@ -104,7 +104,7 @@ def get_item_selector():
 
 
 def get_options_number():
-    return instantiate_from_config(
+    return instantiate_from_config_lazy(
         'proso_models', 'options_count',
         default_class='proso.models.option_selection.AdjustedOptionsNumber'
     )
