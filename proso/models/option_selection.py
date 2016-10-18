@@ -1,12 +1,14 @@
-import abc
 from collections import defaultdict
-import logging
-import random
-import proso.rand
-import math
-import unittest
-import numpy
 from mock import MagicMock
+from proso.func import get_maybe_lazy
+from proso.models.context import selected_item_context
+import abc
+import logging
+import math
+import numpy
+import proso.rand
+import random
+import unittest
 
 
 LOGGER = logging.getLogger('django.request')
@@ -40,21 +42,22 @@ class OptionSelection(metaclass=abc.ABCMeta):
         target_probability = self._item_selector.get_target_probability(environment, user, None)
         result = []
         for item in items:
-            prediction = predictions[item]
-            item_options = [o for o in options[item] if o != item]
-            if prediction is None:
-                raise ValueError("Prediction for item {} is missing.".format(item))
-            number_of_options = self.options_number().get_number_of_options(target_probability, prediction, allow_zero_options[item], len(item_options))
-            if number_of_options == 0:
-                result.append([])
-                continue
-            confusing_factors = dict(zip(item_options, environment.confusing_factor_more_items(item, item_options)))
-            result_options = self.compute_options(target_probability, prediction, number_of_options, confusing_factors)
-            if len(result_options) != number_of_options:
-                raise Exception('There is a wrong number of options for multiple-choice question! Number of options set to: {}, confusing factors {}'.format(number_of_options, confusing_factors))
-            if len(set(result_options)) != number_of_options:
-                raise Exception('There are some options more times for multiple-choice question! Number of options set to: {}, confusing factors {}'.format(number_of_options, confusing_factors))
-            result.append(result_options + [item])
+            with selected_item_context(item, items):
+                prediction = predictions[item]
+                item_options = [o for o in options[item] if o != item]
+                if prediction is None:
+                    raise ValueError("Prediction for item {} is missing.".format(item))
+                number_of_options = self.options_number().get_number_of_options(target_probability, prediction, allow_zero_options[item], len(item_options))
+                if number_of_options == 0:
+                    result.append([])
+                    continue
+                confusing_factors = dict(zip(item_options, environment.confusing_factor_more_items(item, item_options)))
+                result_options = self.compute_options(target_probability, prediction, number_of_options, confusing_factors)
+                if len(result_options) != number_of_options:
+                    raise Exception('There is a wrong number of options for multiple-choice question! Number of options set to: {}, confusing factors {}'.format(number_of_options, confusing_factors))
+                if len(set(result_options)) != number_of_options:
+                    raise Exception('There are some options more times for multiple-choice question! Number of options set to: {}, confusing factors {}'.format(number_of_options, confusing_factors))
+                result.append(result_options + [item])
         return result
 
     @abc.abstractmethod
@@ -70,13 +73,13 @@ class OptionsNumber(metaclass=abc.ABCMeta):
         self._allow_zero_options = allow_zero_options
 
     def is_zero_options_restriction_allowed(self):
-        return self._allow_zero_options_restriction
+        return get_maybe_lazy(self._allow_zero_options_restriction)
 
     def is_zero_options_allowed(self):
-        return self._allow_zero_options
+        return get_maybe_lazy(self._allow_zero_options)
 
     def get_max_options(self):
-        return self._max_options
+        return get_maybe_lazy(self._max_options)
 
     def get_number_of_options(self, target_probability, prediction, allow_zero_options, options_available):
         if options_available == 0:

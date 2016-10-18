@@ -33,39 +33,45 @@ def cache_page_conditional(condition, timeout=3600, cache=None):
     return _cache_page_conditional
 
 
-def cache_pure(f, expiration=60 * 60 * 24 * 30):
-    """ Cache decorator for functions taking one or more arguments. """
+class cache_pure:
 
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if hasattr(settings, 'TESTING') and settings.TESTING:
-            return f(*args, **kwargs)
-        if len(args) > 0 and re.match(r"<.+ object at \w+>", repr(args[0])) is not None:
-            key_args = [args[0].__class__] + list(args[1:])
-        else:
-            key_args = args
+    def __init__(self, expiration=60 * 60 * 24 * 30, request_only=False):
+        self._expiration = expiration
+        self._request_only = request_only
 
-        key = "{}:args:{}-kwargs:{}".format(f.__name__, repr(key_args), repr(kwargs))
-        hash_key = hashlib.sha1(key.encode()).hexdigest()
-        if is_cache_prepared():
-            value = get_request_cache().get(hash_key, CACHE_MISS)
+    def __call__(self, func):
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if hasattr(settings, 'TESTING') and settings.TESTING:
+                return func(*args, **kwargs)
+            if len(args) > 0 and re.match(r"<.+ object at \w+>", repr(args[0])) is not None:
+                key_args = [args[0].__class__] + list(args[1:])
+            else:
+                key_args = args
+
+            key = "{}:args:{}-kwargs:{}".format(func.__name__, repr(key_args), repr(kwargs))
+            hash_key = hashlib.sha1(key.encode()).hexdigest()
+            if is_cache_prepared():
+                value = get_request_cache().get(hash_key, CACHE_MISS)
+                if value != CACHE_MISS:
+                    return value
+
+            value = cache.get(hash_key, CACHE_MISS)
             if value != CACHE_MISS:
                 return value
 
-        value = cache.get(hash_key, CACHE_MISS)
-        if value != CACHE_MISS:
+            timer(hash_key)
+            value = func(*args, **kwargs)
+            if not self._request_only:
+                LOGGER.debug("saved function result (%s...) to CACHE; key: %s... time %s", str(value)[:300], key[:300], timer(hash_key))
+                cache.set(hash_key, value, self._expiration)
+            if is_cache_prepared():
+                get_request_cache().set(hash_key, value)
+
             return value
 
-        timer(hash_key)
-        value = f(*args, **kwargs)
-        LOGGER.debug("saved function result (%s...) to CACHE; key: %s... time %s", str(value)[:300], key[:300], timer(hash_key))
-        cache.set(hash_key, value, expiration)
-        if is_cache_prepared():
-            get_request_cache().set(hash_key, value)
-
-        return value
-
-    return wrapper
+        return wrapper
 
 
 def get_from_request_permenent_cache(key):

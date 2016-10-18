@@ -120,3 +120,7 @@ def memo_Y(f):
             return ret
         return f(Yf)()
     return f(Yf)
+
+
+def get_maybe_lazy(val):
+    return val() if callable(val) else val

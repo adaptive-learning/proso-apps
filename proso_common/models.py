@@ -10,6 +10,7 @@ from proso.django.config import get_config as get_config_original, get_global_co
 from proso.django.request import is_user_id_overridden, is_time_overridden, get_user_id
 from proso.django.response import BadRequestException
 from proso.func import function_name
+from proso.reflection import instantiate_with_lazy_parameters
 from threading import currentThread
 from proso.events.client import EventsLogger, Pusher, EventClient
 import logging
@@ -19,6 +20,7 @@ import importlib
 import json
 import os
 import datetime
+import uuid
 
 _is_user_overriden_from_url = {}
 _is_time_overriden_from_url = {}
@@ -71,9 +73,27 @@ def reset_url_overridden():
     _is_time_overriden_from_url[currentThread()] = False
 
 
-def add_custom_config_filter(config_filter):
+def add_custom_config_filter(config_filter, name=None):
     global _custom_config_filters
-    _custom_config_filters[currentThread()][function_name(config_filter)] = config_filter
+    _custom_config_filters[currentThread()][function_name(config_filter) if name is None else name] = config_filter
+
+
+def remove_custom_config_filter(name):
+    global _custom_config_filters
+    del _custom_config_filters[currentThread()][name]
+
+
+class custom_config_filter:
+
+    def __init__(self, config_filter):
+        self._config_filter = config_filter
+        self._name = str(uuid.uuid1())
+
+    def __enter__(self):
+        add_custom_config_filter(self._config_filter, self._name)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        remove_custom_config_filter(name=self._name)
 
 
 def current_custom_configs():
@@ -82,8 +102,7 @@ def current_custom_configs():
     global _custom_config_filters
     if _custom_configs.get(currentThread()) is None:
         user_id = get_user_id()
-        if user_id is not None:
-            _custom_configs[currentThread()] = CustomConfig.objects.current_custom_configs(user_id)
+        _custom_configs[currentThread()] = CustomConfig.objects.current_custom_configs(user_id)
 
     def _filter_config(config):
         c_key, c_value = next(iter(config['condition'].items()))
@@ -137,6 +156,20 @@ def instantiate_from_config(app_name, key, default_class=None, default_parameter
         default_class=default_class,
         default_parameters=default_parameters,
         pass_parameters=pass_parameters
+    )
+
+
+def instantiate_from_config_lazy(app_name, key, default_class=None, default_parameters=None, config_name=None):
+    if default_parameters is None:
+        default_parameters = {}
+
+    def _args(arg, default=None):
+        config = get_config(app_name, key, config_name=config_name, required=(default_class is None), default={})
+        return config.get('parameters', {}).get(arg, default_parameters.get(arg, default))
+    return instantiate_with_lazy_parameters(
+        get_config(app_name, key, config_name=config_name, required=(default_class is None), default={}).get('class', default_class),
+        _args,
+        **default_parameters
     )
 
 
@@ -287,13 +320,14 @@ class CustomConfigManager(models.Manager):
 
     def current_custom_configs(self, user_id):
         if user_id is None:
-            return {}
+            user_id = -1
         if not get_config_original('proso_common', 'config.is_custom_config_allowed', default=False):
             return {}
         with closing(connection.cursor()) as cursor:
             cursor.execute(
                 '''
                 SELECT
+                    user_id IS NULL AS priority,
                     custom_config.id,
                     config.app_name,
                     config.key,
@@ -309,10 +343,11 @@ class CustomConfigManager(models.Manager):
                     WHERE user_id = %s
                     GROUP BY config.app_name, config.key, condition_key, condition_value
                 )
-                ORDER BY custom_config.id DESC
+                OR user_id IS NULL
+                ORDER BY priority, custom_config.id DESC
                 ''', [user_id])
             result = defaultdict(list)
-            for pk, app_name, key, content, condition_key, condition_value in cursor:
+            for _, pk, app_name, key, content, condition_key, condition_value in cursor:
                 result['{}.{}'.format(app_name, key)].append({
                     'pk': pk,
                     'content': json.loads(content),
@@ -324,7 +359,7 @@ class CustomConfigManager(models.Manager):
 class CustomConfig(models.Model):
 
     config = models.ForeignKey(Config)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, null=True, blank=True, default=None)
     condition_key = models.CharField(max_length=255, null=True, blank=True, default=None)
     condition_value = models.TextField(null=True, blank=True, default=None)
 

@@ -22,8 +22,8 @@ from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
 from proso.time import timeit
-from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config, add_custom_config_filter, get_events_logger
-from proso_common.models import IntegrityCheck
+from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config, add_custom_config_filter, get_events_logger, instantiate_from_config_lazy
+from proso_common.models import IntegrityCheck, CustomConfig
 from proso_user.models import Session
 import django.apps
 import hashlib
@@ -104,7 +104,7 @@ def get_item_selector():
 
 
 def get_options_number():
-    return instantiate_from_config(
+    return instantiate_from_config_lazy(
         'proso_models', 'options_count',
         default_class='proso.models.option_selection.AdjustedOptionsNumber'
     )
@@ -556,11 +556,11 @@ class EnvironmentInfo(models.Model):
 
 class ItemTypeManager(models.Manager):
 
-    @cache_pure
+    @cache_pure()
     def get_all_item_type_ids(self):
         return dict(Item.objects.exclude(item_type_id__isnull=True).values_list('id', 'item_type_id'))
 
-    @cache_pure
+    @cache_pure()
     def get_all_types(self):
         return {item_type.id: item_type.to_json() for item_type in self.all()}
 
@@ -668,7 +668,7 @@ class ItemManager(models.Manager):
         """
         return sorted(Item.objects.filter(active=True, children=None).values_list('id', flat=True))
 
-    @cache_pure
+    @cache_pure()
     @timeit(name='filter_all_reachable_leaves_many')
     def filter_all_reachable_leaves_many(self, identifier_filters, language):
         """
@@ -761,7 +761,7 @@ class ItemManager(models.Manager):
         """
         return self.filter_all_reachable_leaves_many([identifier_filter], language)[0]
 
-    @cache_pure
+    @cache_pure()
     def get_children_graph(self, item_ids=None, language=None):
         """
         Get a subgraph of items reachable from the given set of items through
@@ -791,10 +791,11 @@ class ItemManager(models.Manager):
             graph = self.get_children_graph(None, language)
             return self._subset_graph(graph, item_ids)
 
+    @cache_pure(request_only=True)
     def get_reachable_children(self, item_ids, language=None):
         return self._reachable_items(self.get_children_graph(item_ids, language=language))
 
-    @cache_pure
+    @cache_pure()
     def get_parents_graph(self, item_ids, language=None):
         """
         Get a subgraph of items reachable from the given set of items through
@@ -824,6 +825,7 @@ class ItemManager(models.Manager):
             graph = self.get_parents_graph_graph(None, language)
             return self._subset_graph(graph, item_ids)
 
+    @cache_pure(request_only=True)
     def get_reachable_parents(self, item_ids, language=None):
         return self._reachable_items(self.get_parents_graph(item_ids, language=language))
 
@@ -935,7 +937,7 @@ class ItemManager(models.Manager):
                 result[item_id] = obj.to_json(nested=is_nested_fun(item_id))
         return result
 
-    @cache_pure
+    @cache_pure()
     def get_leaves(self, item_ids, language=None):
         """
         Get mapping of items to their reachable leaves. Leaves having
@@ -1088,7 +1090,7 @@ class ItemManager(models.Manager):
                 to_delete |= {old_relations[child_id].pk for child_id in set(old_relations.keys()) - set(children)}
             ItemRelation.objects.filter(pk__in=to_delete).delete()
 
-    @cache_pure
+    @cache_pure()
     def get_children_counts(self, active=True):
         query = self
         if active is not None:
@@ -1626,6 +1628,15 @@ def drop_environment_relation(sender, instance, **kwargs):
     child = instance.child_id
     environment.delete("child", item=parent, item_secondary=child, symmetric=False)
     environment.delete("parent", item=child, item_secondary=parent, symmetric=False)
+
+
+@receiver(pre_save, sender=CustomConfig)
+def process_parent_for_custom_filter(sender, instance, **kwargs):
+    if instance.condition_key != 'selected_item_has_parent' or '/' not in instance.condition_value:
+        return
+    language = instance.condition_value.split('@')[0]
+    identifier = instance.condition_value.split('@')[1]
+    instance.condition_value = Item.objects.translate_identifiers([identifier], language=language)[identifier]
 
 
 PROSO_MODELS_TO_EXPORT = [Answer]
