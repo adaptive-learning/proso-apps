@@ -556,11 +556,11 @@ class EnvironmentInfo(models.Model):
 
 class ItemTypeManager(models.Manager):
 
-    @cache_pure
+    @cache_pure()
     def get_all_item_type_ids(self):
         return dict(Item.objects.exclude(item_type_id__isnull=True).values_list('id', 'item_type_id'))
 
-    @cache_pure
+    @cache_pure()
     def get_all_types(self):
         return {item_type.id: item_type.to_json() for item_type in self.all()}
 
@@ -668,7 +668,7 @@ class ItemManager(models.Manager):
         """
         return sorted(Item.objects.filter(active=True, children=None).values_list('id', flat=True))
 
-    @cache_pure
+    @cache_pure()
     @timeit(name='filter_all_reachable_leaves_many')
     def filter_all_reachable_leaves_many(self, identifier_filters, language):
         """
@@ -761,7 +761,7 @@ class ItemManager(models.Manager):
         """
         return self.filter_all_reachable_leaves_many([identifier_filter], language)[0]
 
-    @cache_pure
+    @cache_pure()
     def get_children_graph(self, item_ids=None, language=None):
         """
         Get a subgraph of items reachable from the given set of items through
@@ -795,7 +795,7 @@ class ItemManager(models.Manager):
     def get_reachable_children(self, item_ids, language=None):
         return self._reachable_items(self.get_children_graph(item_ids, language=language))
 
-    @cache_pure
+    @cache_pure()
     def get_parents_graph(self, item_ids, language=None):
         """
         Get a subgraph of items reachable from the given set of items through
@@ -937,7 +937,7 @@ class ItemManager(models.Manager):
                 result[item_id] = obj.to_json(nested=is_nested_fun(item_id))
         return result
 
-    @cache_pure
+    @cache_pure()
     def get_leaves(self, item_ids, language=None):
         """
         Get mapping of items to their reachable leaves. Leaves having
@@ -1090,7 +1090,7 @@ class ItemManager(models.Manager):
                 to_delete |= {old_relations[child_id].pk for child_id in set(old_relations.keys()) - set(children)}
             ItemRelation.objects.filter(pk__in=to_delete).delete()
 
-    @cache_pure
+    @cache_pure()
     def get_children_counts(self, active=True):
         query = self
         if active is not None:

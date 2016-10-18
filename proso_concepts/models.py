@@ -62,7 +62,7 @@ class ConceptManager(models.Manager):
     def prepare_related(self):
         return self.prefetch_related('tags', 'actions')
 
-    @cache_pure
+    @cache_pure()
     def get_concept_item_mapping(self, concepts=None, lang=None):
         """
         Get mapping of concepts to items belonging to concept.
@@ -87,7 +87,7 @@ class ConceptManager(models.Manager):
                                                                     for concept in concepts], lang)
         return dict(zip([c.pk for c in concepts], item_lists))
 
-    @cache_pure
+    @cache_pure()
     def get_item_concept_mapping(self, lang):
         """ Get mapping of items_ids to concepts containing these items
 
