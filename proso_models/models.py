@@ -23,7 +23,7 @@ from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
 from proso.time import timeit
 from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config, add_custom_config_filter, get_events_logger, instantiate_from_config_lazy
-from proso_common.models import IntegrityCheck
+from proso_common.models import IntegrityCheck, CustomConfig
 from proso_user.models import Session
 import django.apps
 import hashlib
@@ -1628,6 +1628,15 @@ def drop_environment_relation(sender, instance, **kwargs):
     child = instance.child_id
     environment.delete("child", item=parent, item_secondary=child, symmetric=False)
     environment.delete("parent", item=child, item_secondary=parent, symmetric=False)
+
+
+@receiver(pre_save, sender=CustomConfig)
+def process_parent_for_custom_filter(sender, instance, **kwargs):
+    if instance.condition_key != 'selected_item_has_parent' or '/' not in instance.condition_value:
+        return
+    language = instance.condition_value.split('@')[0]
+    identifier = instance.condition_value.split('@')[1]
+    instance.condition_value = Item.objects.translate_identifiers([identifier], language=language)[identifier]
 
 
 PROSO_MODELS_TO_EXPORT = [Answer]
