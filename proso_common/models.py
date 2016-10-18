@@ -109,7 +109,7 @@ def current_custom_configs():
         if c_key is None:
             return True
         all_nones = True
-        for config_filter in _custom_config_filters[currentThread()].values():
+        for config_filter in _custom_config_filters.get(currentThread(), {}).values():
             filter_result = config_filter(c_key, c_value)
             if filter_result is not None:
                 all_nones = False
