@@ -6,7 +6,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
 from django.db import transaction
 from optparse import make_option
-from proso_models.models import instantiate_from_config, get_config
+from proso.list import flatten
+from proso_models.models import instantiate_from_config, get_config, Item
 from proso.django.config import set_default_config_name
 from proso.django.db import is_on_postgresql
 from proso.models.environment import InMemoryEnvironment
@@ -209,6 +210,7 @@ class Command(BaseCommand):
         timer('recompute_prepare')
         environment = self.load_environment(info)
         users, items = self.load_user_and_item_ids(info, options['batch_size'])
+        items += list(set(flatten(Item.objects.get_reachable_parents(items).values())))
         environment.prefetch(users, items)
         predictive_model = get_predictive_model(info.to_json())
         print(' -- preparing phase, time:', timer('recompute_prepare'), 'seconds')
