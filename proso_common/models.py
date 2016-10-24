@@ -30,7 +30,7 @@ _custom_config_filters = {}
 
 
 class ProsoEventsLogger(EventsLogger):
-    def emit(self, event_type: str, data: dict, tags: list = [], time: datetime.datetime = datetime.datetime.now()):
+    def emit(self, event_type: str, data: dict, tags: list = None, time: datetime.datetime = None):
         try:
             super().emit(event_type, data, tags, time)
         except:
@@ -84,7 +84,6 @@ def remove_custom_config_filter(name):
 
 
 class custom_config_filter:
-
     def __init__(self, config_filter):
         self._config_filter = config_filter
         self._name = str(uuid.uuid1())
@@ -166,6 +165,7 @@ def instantiate_from_config_lazy(app_name, key, default_class=None, default_para
     def _args(arg, default=None):
         config = get_config(app_name, key, config_name=config_name, required=(default_class is None), default={})
         return config.get('parameters', {}).get(arg, default_parameters.get(arg, default))
+
     return instantiate_with_lazy_parameters(
         get_config(app_name, key, config_name=config_name, required=(default_class is None), default={}).get('class', default_class),
         _args,
@@ -178,7 +178,7 @@ def instantiate_from_config_list(app_name, key, pass_parameters=None, config_nam
     return [
         instantiate_from_json(config, pass_parameters=pass_parameters)
         for config in configs
-    ]
+        ]
 
 
 class CommonMiddleware(object):
@@ -236,7 +236,6 @@ def get_integrity_checks():
 
 
 class IntegrityCheck:
-
     def get_seed(self):
         return self._seed
 
@@ -255,7 +254,6 @@ class IntegrityCheck:
 
 
 class ConfigManager(models.Manager):
-
     def from_content(self, content, app_name=None, key=None):
         try:
             content = json.dumps(content, sort_keys=True)
@@ -272,7 +270,6 @@ class ConfigManager(models.Manager):
 
 
 class Config(models.Model):
-
     app_name = models.CharField(max_length=100, null=True, blank=True)
     key = models.CharField(max_length=100, null=True, blank=True)
     content = models.TextField(null=False, blank=False)
@@ -291,7 +288,6 @@ class Config(models.Model):
 
 
 class CustomConfigManager(models.Manager):
-
     def try_create(self, app_name, key, value, user_id, condition_key=None, condition_value=None):
         if not get_config_original('proso_common', 'config.is_custom_config_allowed', default=False):
             raise BadRequestException('Custom configuration is not allowed.')
@@ -357,7 +353,6 @@ class CustomConfigManager(models.Manager):
 
 
 class CustomConfig(models.Model):
-
     config = models.ForeignKey(Config)
     user = models.ForeignKey(User, null=True, blank=True, default=None)
     condition_key = models.CharField(max_length=255, null=True, blank=True, default=None)
