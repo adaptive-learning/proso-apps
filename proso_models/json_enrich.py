@@ -60,10 +60,11 @@ def number_of_answers(request, json_list, nested):
         return
     object_item_ids = [x['item_id'] for x in json_list]
     user = get_user_id(request)
+
     leaves = models.Item.objects.get_leaves(object_item_ids, language=get_language(request))
     all_leaves = list(set(flatten(leaves.values())))
-    number_of_answers = dict(zip(all_leaves, _environment(request).number_of_answers_more_items(
-        user=user, items=all_leaves)))
+    number_of_answers = _environment(request).number_of_answers_more_items(
+        user=user, items=all_leaves)
     for object_json in json_list:
         num = sum([number_of_answers[leave] for leave in leaves[object_json['item_id']]])
         object_json['number_of_answers'] = num
@@ -78,8 +79,8 @@ def number_of_correct_answers(request, json_list, nested):
     user = get_user_id(request)
     leaves = models.Item.objects.get_leaves(object_item_ids, language=get_language(request))
     all_leaves = set(flatten(leaves.values()))
-    number_of_correct_answers = dict(zip(all_leaves, _environment(request).number_of_correct_answers_more_items(
-        user=user, items=all_leaves)))
+    number_of_correct_answers = _environment(request).number_of_correct_answers_more_items(
+        user=user, items=all_leaves)
     for object_json in json_list:
         num = sum([number_of_correct_answers[leave] for leave in leaves[object_json['item_id']]])
         object_json['number_of_correct_answers'] = num
