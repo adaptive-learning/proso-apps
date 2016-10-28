@@ -96,10 +96,10 @@ class Command(BaseCommand):
         if data is not None:
             print("\nLoading contexts")
         model = settings.PROSO_FLASHCARDS.get("context_extension", Context)
-        db_contexts = {}
+        self.db_contexts = {}
         item_mapping = {}
         for db_context in model.objects.all():
-            db_contexts[db_context.identifier, db_context.lang] = db_context
+            self.db_contexts[db_context.identifier, db_context.lang] = db_context
             item_mapping[db_context.identifier] = db_context.item_id
         if data is None:
             return
@@ -131,27 +131,29 @@ class Command(BaseCommand):
                 else:
                     db_context.save()
                     item_mapping[db_context.identifier] = db_context.item_id
-                db_contexts[db_context.identifier, db_context.lang] = db_context
+                self.db_contexts[db_context.identifier, db_context.lang] = db_context
 
-        self._load_item_relations(data, db_contexts, 'categories')
-        print(("New total number of contexts in DB: {}".format(len(db_contexts))))
+        self._load_item_relations(data, self.db_contexts, 'categories')
+        print(("New total number of contexts in DB: {}".format(len(self.db_contexts))))
 
     def _load_terms(self, data=None):
         if data is not None:
             print("\nLoading terms")
         model = settings.PROSO_FLASHCARDS.get("term_extension", Term)
-        db_terms = {}
+        self.db_terms = {}
         item_mapping = {}
+        self.langs = set()
         for db_term in model.objects.all():
-            db_terms[db_term.identifier, db_term.lang] = db_term
+            self.db_terms[db_term.identifier, db_term.lang] = db_term
             item_mapping[db_term.identifier] = db_term.item_id
+            self.langs.add(db_term.lang)
         if data is None:
             return
 
         for term in progress.bar(data, every=max(1, len(data) // 100)):
             langs = [k[-2:] for k in list(term.keys()) if re.match(r'^name-\w\w$', k)]
             for lang in langs:
-                db_term = model.objects.filter(identifier=term["id"], lang=lang).first()
+                db_term = self.db_terms.get((term["id"], lang))
                 if db_term is None:
                     db_term = model(
                         identifier=term["id"],
@@ -168,10 +170,10 @@ class Command(BaseCommand):
                 else:
                     db_term.save()
                     item_mapping[db_term.identifier] = db_term.item_id
-                db_terms[db_term.identifier, db_term.lang] = db_term
+                self.db_terms[db_term.identifier, db_term.lang] = db_term
 
-        self._load_item_relations(data, db_terms, 'categories')
-        print(("New total number of terms in DB: {}".format(len(db_terms))))
+        self._load_item_relations(data, self.db_terms, 'categories')
+        print(("New total number of terms in DB: {}".format(len(self.db_terms))))
 
     def _load_flashcards(self, data, ignored_flashcards_strategy):
         if data is not None:
@@ -185,25 +187,25 @@ class Command(BaseCommand):
         db_flascards_before_load = copy.copy(db_flashcards)
 
         for flashcard in progress.bar(data, every=max(1, len(data) // 100)):
-            if 'term-secondary' not in flashcard:
-                terms = Term.objects.filter(identifier=flashcard["term"])
-                terms_secondary = [None] * len(terms)
-            else:
-                terms_all = Term.objects.filter(identifier__in=[flashcard['term'], flashcard['term-secondary']])
-                terms = sorted([t for t in terms_all if t.identifier == flashcard['term']], key=lambda t: t.lang)
-                terms_secondary = sorted([t for t in terms_all if t.identifier == flashcard['term-secondary']], key=lambda t: t.lang)
-                if len(terms_secondary) == 0:
-                    raise CommandError("Secondary term {} for flashcard {} doesn't exist".format(flashcard["term-secondary"], flashcard["id"]))
-            if len(terms) == 0:
-                raise CommandError("Term {} for flashcard {} doesn't exist".format(flashcard["term"], flashcard["id"]))
-            for term, term_secondary in zip(terms, terms_secondary):
+            for lang in self.langs:
+                term = self.db_terms.get((flashcard["term"], lang))
+                if term is None:
+                    raise CommandError("Term {} for flashcard {} doesn't exist".format(flashcard["term"], flashcard["id"]))
+                if 'term-secondary' in flashcard:
+                    term_secondary = self.db_terms.get((flashcard["term-secondary"], lang))
+                    if term_secondary is None:
+                        raise CommandError("Secondary term {} for flashcard {} doesn't exist".format(flashcard["term-secondary"], flashcard["id"]))
+                else:
+                    term_secondary = None
                 if term_secondary is not None and term.lang != term_secondary.lang:
                     raise CommandError('Term {} and secondary term {} are localized to different languages.'.format(term.identifier, term_secondary.identifier))
-                db_flashcard = Flashcard.objects.filter(identifier=flashcard["id"], lang=term.lang).first()
-                context_id = Context.objects.filter(identifier=flashcard["context"], lang=term.lang).values_list("id", flat=True).first()
-                if context_id is None:
+                db_flashcard = db_flashcards.get((flashcard["id"], term.lang))
+                context = self.db_contexts.get((flashcard["context"], term.lang))
+                if context is None:
                     raise CommandError(
                         "Context {} for flashcard {} doesn't exist".format(flashcard["context"], flashcard["id"]))
+                else:
+                    context_id = context.id
                 modified = False
                 if db_flashcard is None:
                     modified = True
@@ -219,7 +221,7 @@ class Command(BaseCommand):
                 if "description" in flashcard and db_flashcard.description != flashcard["description"]:
                     db_flashcard.description = flashcard["description"]
                     modified = True
-                if "additional-info" in flashcard and db_flashcard.description != flashcard["additional-info"]:
+                if "additional-info" in flashcard and db_flashcard.additional_info != flashcard["additional-info"]:
                     db_flashcard.additional_info = flashcard["additional-info"]
                     modified = True
                 if "active" in flashcard and db_flashcard.active != flashcard["active"]:
