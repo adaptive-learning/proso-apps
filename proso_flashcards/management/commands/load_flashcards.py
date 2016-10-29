@@ -72,7 +72,7 @@ class Command(BaseCommand):
         for category in progress.bar(data, every=max(1, len(data) // 100)):
             langs = [k[-2:] for k in category.keys() if re.match(r'^name-\w\w$', k)]
             for lang in langs:
-                db_category = Category.objects.filter(identifier=category["id"], lang=lang).first()
+                db_category = db_categories.get((category["id"], lang))
                 if db_category is None:
                     db_category = Category(
                         identifier=category["id"],
@@ -107,7 +107,7 @@ class Command(BaseCommand):
         for context in progress.bar(data, every=max(1, len(data) // 100)):
             langs = [k[-2:] for k in list(context.keys()) if re.match(r'^name-\w\w$', k)]
             for lang in langs:
-                db_context = model.objects.filter(identifier=context["id"], lang=lang).first()
+                db_context = self.db_contexts.get((context["id"], lang))
                 if db_context is None:
                     db_context = model(
                         identifier=context["id"],
