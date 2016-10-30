@@ -6,7 +6,7 @@ try:
     from proso_common.models import custom_config_filter
     from proso_models.models import Item
     DJANGO_READY = True
-except ImproperlyConfigured:
+except (ImproperlyConfigured, ImportError):
     pass
 
 
