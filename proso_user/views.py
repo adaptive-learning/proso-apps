@@ -110,15 +110,9 @@ def show_more(request, object_class, should_cache=True):
         objs = object_class.objects
         if len(select_related) > 0:
             objs = objs.select_related(*select_related)
-        if 'filter_column' in request.GET and 'filter_value' in request.GET:
-            column = request.GET['filter_column']
-            value = request.GET['filter_value']
-            if value.isdigit():
-                value = int(value)
-
-            objs = objs.prefetch_related(*prefetch_related).filter(**{column: value})
-        else:
-            objs = objs.prefetch_related(*prefetch_related).all()
+        objs = objs.prefetch_related(*prefetch_related)
+        db_filter = proso_common.views.get_db_filter(request)
+        objs = objs.all() if db_filter is None else objs.filter(**db_filter)
         return objs
 
     return proso_common.views.show_more(

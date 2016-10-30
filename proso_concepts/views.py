@@ -32,14 +32,8 @@ def show_more(request, object_class, should_cache=True):
 
     def _load_objects(request, object_class):
         objs = object_class.objects.prepare_related()
-        if 'filter_column' in request.GET and 'filter_value' in request.GET:
-            column = request.GET['filter_column']
-            value = request.GET['filter_value']
-            if value.isdigit():
-                value = int(value)
-            objs = objs.filter(**{column: value})
-        else:
-            objs = objs.all()
+        db_filter = proso_common.views.get_db_filter(request)
+        objs = objs.all() if db_filter is None else objs.filter(**db_filter)
         if object_class == Concept:
             objs = objs.filter(active=True, lang=get_language(request))
         return objs

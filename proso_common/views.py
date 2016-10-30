@@ -8,6 +8,7 @@ from django.db.models.sql.datastructures import EmptyResultSet
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie
+from proso.conversion import str2type
 from proso.django.request import json_body
 from proso.django.response import render_json
 from proso_common.models import get_tables_allowed_to_export, get_custom_exports, get_global_config
@@ -237,3 +238,16 @@ def _csv_table(request, filename):
     response['Content-Length'] = os.path.getsize(download_file)
     response['Content-Disposition'] = 'attachment; filename=' + filename + '.csv'
     return response
+
+
+def get_db_filter(request):
+    found = {}
+    if 'filter_column' in request.GET and 'filter_value' in request.GET:
+        found[request.GET['filter_column']] = str2type(request.GET['filter_value'])
+    for key, value in request.GET.items():
+        if key.startswith('filter_') and key != 'filter_column':
+            value = str2type(value)
+            if isinstance(value, list):
+                key = '{}__in'.format(key)
+            found[key.replace('filter_', '')] = value
+    return found if len(found) > 0 else None
