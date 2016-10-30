@@ -6,6 +6,7 @@ from django.db import connection
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from proso.conversion import str2type
 from proso.django.config import get_config as get_config_original, get_global_config as get_global_config_original, override_value, instantiate_from_json
 from proso.django.request import is_user_id_overridden, is_time_overridden, get_user_id
 from proso.django.response import BadRequestException
@@ -295,16 +296,7 @@ class CustomConfigManager(models.Manager):
             raise Exception("The value can not be None.")
         if isinstance(value, dict) or isinstance(value, list):
             raise Exception("The value has to be scalar.")
-        if isinstance(value, str):
-            if value.isdigit():
-                value = int(value)
-            elif value.lower() == 'true':
-                value = True
-            elif value.lower() == 'false':
-                value = False
-            elif value.replace('.', '').isdigit():
-                value = float(value)
-        config = Config.objects.from_content(value, key=key, app_name=app_name)
+        config = Config.objects.from_content(str2type(value), key=key, app_name=app_name)
         created = self.create(
             user_id=user_id,
             condition_key=condition_key,

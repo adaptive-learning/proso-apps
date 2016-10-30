@@ -25,16 +25,8 @@ def show_more(request, object_class, should_cache=True):
         objs = object_class.objects
         if hasattr(objs, 'prepare_related'):
             objs = objs.prepare_related().filter(active=True)
-        if 'filter_column' in request.GET and 'filter_value' in request.GET:
-            column = request.GET['filter_column']
-            value = request.GET['filter_value']
-            if value.isdigit():
-                value = int(value)
-            objs = objs.filter(**{column: value})
-        else:
-            objs = objs.all()
-            language = get_language(request)
-            objs = objs.filter(lang=language)
+        db_filter = proso_common.views.get_db_filter(request)
+        objs = objs.filter(lang=get_language(request)) if db_filter is None else objs.filter(**db_filter)
         return objs
 
     return proso_common.views.show_more(
