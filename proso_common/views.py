@@ -245,7 +245,7 @@ def get_db_filter(request):
     if 'filter_column' in request.GET and 'filter_value' in request.GET:
         found[request.GET['filter_column']] = str2type(request.GET['filter_value'])
     for key, value in request.GET.items():
-        if key.startswith('filter_') and key != 'filter_column':
+        if key.startswith('filter_') and key not in ['filter_column', 'filter_value']:
             value = str2type(value)
             if isinstance(value, list):
                 key = '{}__in'.format(key)
