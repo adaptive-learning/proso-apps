@@ -44,7 +44,7 @@ unittest:
 django-test:
 	python manage.py test --traceback --pattern *_test.py;
 
-test: unittest doctest django-test
+test: unittest django-test
 
 reinstall: check uninstall install
 

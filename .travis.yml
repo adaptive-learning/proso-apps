@@ -27,4 +27,5 @@ install:
   - python setup.py install_lib
   - make install
 script:
+  - make doctest
   - make test
