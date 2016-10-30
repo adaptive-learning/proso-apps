@@ -1640,4 +1640,16 @@ def process_parent_for_custom_filter(sender, instance, **kwargs):
 
 
 PROSO_MODELS_TO_EXPORT = [Answer]
+PROSO_CUSTOM_EXPORT = {
+    'relations': '''
+    SELECT
+        id,
+        key,
+        value,
+        item_primary_id,
+        item_secondary_id
+    FROM proso_models_variable
+    WHERE key IN ('child', 'parent')
+    ''',
+}
 PROSO_INTEGRITY_CHECKS = [LonelyItems, ExclusiveEnvironmentUpdates]
