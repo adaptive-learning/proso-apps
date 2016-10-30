@@ -40,6 +40,10 @@ username: ...
 password: ...
 ```
 
+Make sure you have the environment active, or activate it:
+
+	workon proso-apps
+	
 Major version is release manually.
 
 In case of final minor version (you have to be in `master` branch):
