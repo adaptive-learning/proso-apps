@@ -44,6 +44,7 @@ class Command(BaseCommand):
                 " <file> JSON file containing questions")
         with open(args[0], 'r', encoding='utf8') as json_file:
             with transaction.atomic():
+                self._init_from_db()
                 data = json.load(json_file)
                 validate(data, schema)
                 if "categories" in data:
@@ -96,18 +97,13 @@ class Command(BaseCommand):
         if data is not None:
             print("\nLoading contexts")
         model = settings.PROSO_FLASHCARDS.get("context_extension", Context)
-        self.db_contexts = {}
-        item_mapping = {}
-        for db_context in model.objects.all():
-            self.db_contexts[db_context.identifier, db_context.lang] = db_context
-            item_mapping[db_context.identifier] = db_context.item_id
         if data is None:
             return
 
         for context in progress.bar(data, every=max(1, len(data) // 100)):
             langs = [k[-2:] for k in list(context.keys()) if re.match(r'^name-\w\w$', k)]
             for lang in langs:
-                db_context = self.db_contexts.get((context["id"], lang))
+                db_context = self._db_contexts.get((context["id"], lang))
                 if db_context is None:
                     db_context = model(
                         identifier=context["id"],
@@ -125,35 +121,28 @@ class Command(BaseCommand):
                         'There is no content for context %s, language %s' % (db_context.identifier, lang))
                 if "load_data" in model.__dict__:
                     model.load_data(context, db_context)
-                if db_context.identifier in item_mapping:
-                    db_context.item_id = item_mapping[db_context.identifier]
+                if db_context.identifier in self._context_item_mapping:
+                    db_context.item_id = self._context_item_mapping[db_context.identifier]
                     db_context.save()
                 else:
                     db_context.save()
-                    item_mapping[db_context.identifier] = db_context.item_id
-                self.db_contexts[db_context.identifier, db_context.lang] = db_context
+                    self._context_item_mapping[db_context.identifier] = db_context.item_id
+                self._db_contexts[db_context.identifier, db_context.lang] = db_context
 
-        self._load_item_relations(data, self.db_contexts, 'categories')
-        print(("New total number of contexts in DB: {}".format(len(self.db_contexts))))
+        self._load_item_relations(data, self._db_contexts, 'categories')
+        print(("New total number of contexts in DB: {}".format(len(self._db_contexts))))
 
     def _load_terms(self, data=None):
         if data is not None:
             print("\nLoading terms")
         model = settings.PROSO_FLASHCARDS.get("term_extension", Term)
-        self.db_terms = {}
-        item_mapping = {}
-        self.langs = set()
-        for db_term in model.objects.all():
-            self.db_terms[db_term.identifier, db_term.lang] = db_term
-            item_mapping[db_term.identifier] = db_term.item_id
-            self.langs.add(db_term.lang)
         if data is None:
             return
 
         for term in progress.bar(data, every=max(1, len(data) // 100)):
             langs = [k[-2:] for k in list(term.keys()) if re.match(r'^name-\w\w$', k)]
             for lang in langs:
-                db_term = self.db_terms.get((term["id"], lang))
+                db_term = self._db_terms.get((term["id"], lang))
                 if db_term is None:
                     db_term = model(
                         identifier=term["id"],
@@ -164,16 +153,16 @@ class Command(BaseCommand):
                     db_term.type = term["type"]
                 if "load_data" in model.__dict__:
                     model.load_data(term, db_term)
-                if db_term.identifier in item_mapping:
-                    db_term.item_id = item_mapping[db_term.identifier]
+                if db_term.identifier in self._term_item_mapping:
+                    db_term.item_id = self._term_item_mapping[db_term.identifier]
                     db_term.save()
                 else:
                     db_term.save()
-                    item_mapping[db_term.identifier] = db_term.item_id
-                self.db_terms[db_term.identifier, db_term.lang] = db_term
+                    self._term_item_mapping[db_term.identifier] = db_term.item_id
+                self._db_terms[db_term.identifier, db_term.lang] = db_term
 
-        self._load_item_relations(data, self.db_terms, 'categories')
-        print(("New total number of terms in DB: {}".format(len(self.db_terms))))
+        self._load_item_relations(data, self._db_terms, 'categories')
+        print(("New total number of terms in DB: {}".format(len(self._db_terms))))
 
     def _load_flashcards(self, data, ignored_flashcards_strategy):
         if data is not None:
@@ -187,12 +176,12 @@ class Command(BaseCommand):
         db_flascards_before_load = copy.copy(db_flashcards)
 
         for flashcard in progress.bar(data, every=max(1, len(data) // 100)):
-            for lang in self.langs:
-                term = self.db_terms.get((flashcard["term"], lang))
+            for lang in self._langs:
+                term = self._db_terms.get((flashcard["term"], lang))
                 if term is None:
                     raise CommandError("Term {} for flashcard {} doesn't exist".format(flashcard["term"], flashcard["id"]))
                 if 'term-secondary' in flashcard:
-                    term_secondary = self.db_terms.get((flashcard["term-secondary"], lang))
+                    term_secondary = self._db_terms.get((flashcard["term-secondary"], lang))
                     if term_secondary is None:
                         raise CommandError("Secondary term {} for flashcard {} doesn't exist".format(flashcard["term-secondary"], flashcard["id"]))
                 else:
@@ -200,7 +189,7 @@ class Command(BaseCommand):
                 if term_secondary is not None and term.lang != term_secondary.lang:
                     raise CommandError('Term {} and secondary term {} are localized to different languages.'.format(term.identifier, term_secondary.identifier))
                 db_flashcard = db_flashcards.get((flashcard["id"], term.lang))
-                context = self.db_contexts.get((flashcard["context"], term.lang))
+                context = self._db_contexts.get((flashcard["context"], term.lang))
                 if context is None:
                     raise CommandError(
                         "Context {} for flashcard {} doesn't exist".format(flashcard["context"], flashcard["id"]))
@@ -297,6 +286,23 @@ class Command(BaseCommand):
             item: [translated[parent] for parent in parents]
             for item, parents in parent_subgraph.items()
         })
+
+    def _init_from_db(self):
+        print("\nInitializing data from DB")
+        term_model = settings.PROSO_FLASHCARDS.get("term_extension", Term)
+        self._db_terms = {}
+        self._term_item_mapping = {}
+        self._langs = set()
+        for db_term in term_model.objects.all():
+            self._db_terms[db_term.identifier, db_term.lang] = db_term
+            self._term_item_mapping[db_term.identifier] = db_term.item_id
+            self._langs.add(db_term.lang)
+        context_model = settings.PROSO_FLASHCARDS.get("context_extension", Context)
+        self._db_contexts = {}
+        self._context_item_mapping = {}
+        for db_context in context_model.objects.all():
+            self._db_contexts[db_context.identifier, db_context.lang] = db_context
+            self._context_item_mapping[db_context.identifier] = db_context.item_id
 
 
 def check_db_lang_integrity():
