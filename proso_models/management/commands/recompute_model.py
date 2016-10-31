@@ -112,6 +112,10 @@ class Command(BaseCommand):
     def handle_dry(self, options):
         info = self.load_environment_info(options['initial'], options['config_name'], True)
         environment = InMemoryEnvironment(audit_enabled=False)
+        environment = self.load_environment(info)
+        users, items = self.load_user_and_item_ids(info, options['batch_size'])
+        items += list(set(flatten(Item.objects.get_reachable_parents(items).values())))
+        environment.prefetch(users, items)
         predictive_model = get_predictive_model(info.to_json())
         with closing(connection.cursor()) as cursor:
             cursor.execute('SELECT COUNT(*) FROM proso_models_answer')
