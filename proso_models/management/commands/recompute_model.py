@@ -78,16 +78,17 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        if options['cancel']:
-            self.handle_cancel(options)
-        elif options['garbage_collector']:
-            self.handle_gc(options)
-        elif options['dry']:
-            self.handle_dry(options)
-        else:
-            self.handle_recompute(options)
-        if options['validate']:
-            self.handle_validate(options)
+        with transaction.atomic():
+            if options['cancel']:
+                self.handle_cancel(options)
+            elif options['garbage_collector']:
+                self.handle_gc(options)
+            elif options['dry']:
+                self.handle_dry(options)
+            else:
+                self.handle_recompute(options)
+            if options['validate']:
+                self.handle_validate(options)
 
     def handle_validate(self, options):
         timer('recompute_validation')
@@ -200,11 +201,10 @@ class Command(BaseCommand):
         timer('recompute_all')
         info = self.load_environment_info(options['initial'], options['config_name'], False)
         if options['finish']:
-            with transaction.atomic():
-                to_process = self.number_of_answers_to_process(info)
-                if self.number_of_answers_to_process(info) >= options['batch_size'] and not options['force']:
-                    raise CommandError("There is more then allowed number of answers (%s) to process." % to_process)
-                self.recompute(info, options)
+            to_process = self.number_of_answers_to_process(info)
+            if self.number_of_answers_to_process(info) >= options['batch_size'] and not options['force']:
+                raise CommandError("There is more then allowed number of answers (%s) to process." % to_process)
+            self.recompute(info, options)
         else:
             self.recompute(info, options)
         print(' -- total time of recomputation:', timer('recompute_all'), 'seconds')
