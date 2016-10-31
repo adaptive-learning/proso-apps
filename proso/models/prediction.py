@@ -6,7 +6,6 @@ from collections import defaultdict
 import abc
 import numpy
 import operator
-from proso.list import flatten
 
 
 class PredictiveModel(metaclass=abc.ABCMeta):
