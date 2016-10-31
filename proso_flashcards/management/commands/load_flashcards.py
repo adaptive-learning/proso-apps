@@ -140,7 +140,8 @@ class Command(BaseCommand):
             return
 
         for term in progress.bar(data, every=max(1, len(data) // 100)):
-            langs = [k[-2:] for k in list(term.keys()) if re.match(r'^name-\w\w$', k)]
+            langs = {k[-2:] for k in list(term.keys()) if re.match(r'^name-\w\w$', k)}
+            self._langs |= langs
             for lang in langs:
                 db_term = self._db_terms.get((term["id"], lang))
                 if db_term is None:
