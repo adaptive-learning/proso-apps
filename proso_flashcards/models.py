@@ -377,8 +377,8 @@ def change_parent(sender, instance, **kwargs):
         parent = diff['context'][0] if 'context' in diff else diff['context_id'][0]
         child_id = instance.item_id
         if parent is not None:
-           parent_id = parent.item_id if isinstance(parent, Context) else Context.objects.get(pk=parent).item_id
-           ItemRelation.objects.filter(parent_id=parent_id, child_id=child_id).delete()
+            parent_id = parent.item_id if isinstance(parent, Context) else Context.objects.get(pk=parent).item_id
+            ItemRelation.objects.filter(parent_id=parent_id, child_id=child_id).delete()
         ItemRelation.objects.get_or_create(parent_id=instance.context.item_id, child_id=child_id, visible=True)
 
 
