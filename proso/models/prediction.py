@@ -1,9 +1,12 @@
 from functools import reduce
 from math import exp
 from proso.time import timeit
+from proso.django.cache import cache_pure
+from collections import defaultdict
 import abc
 import numpy
 import operator
+from proso.list import flatten
 
 
 class PredictiveModel(metaclass=abc.ABCMeta):
@@ -355,7 +358,7 @@ class ShiftedPredictiveModel(PredictiveModel):
 
 class PFAEStaircase(PredictiveModel):
 
-    def __init__(self, pfae_good=1.8, pfae_bad=0.8, elo_alpha=0.8, elo_dynamic_alpha=0.05, staircase_size=20, staircase_base=60):
+    def __init__(self, pfae_good=1.8, pfae_bad=0.8, elo_alpha=0.8, elo_dynamic_alpha=0.05, staircase_size=20, staircase_base=60, parent_contribution=0.3):
         self._pfae_good = pfae_good
         self._pfae_bad = pfae_bad
         self._elo_alpha = elo_alpha
@@ -364,11 +367,16 @@ class PFAEStaircase(PredictiveModel):
         MAX = 10 * 365 * 24 * 60 * 60  # 10 years
         if MAX > self._staircase[-1]:
             self._staircase.append(MAX)
+        self._parent_contribution = parent_contribution
 
     def prepare_phase(self, environment, user, item, time, **kwargs):
         result = {}
+        result['parents'], parent_ids = self._load_structure_for_items(environment, [item])
+        result['parents'] = result['parents'][item]
+        parent_ids = list(parent_ids)
         result['prior_skill'] = environment.read('prior_skill', user=user, default=0)
-        result['difficulty'] = environment.read('difficulty', item=item, default=0)
+        result['difficulties'] = environment.read_more_items('difficulty', items=[item] + parent_ids, default=0)
+        result['parent_updates'] = environment.read_more_items('number_of_difficulty_updates', items=parent_ids, default=0)
         result['current_skill'] = environment.read('current_skill', user=user, item=item)
         result['use_prior'] = result['current_skill'] is None
         if result['use_prior']:
@@ -386,10 +394,13 @@ class PFAEStaircase(PredictiveModel):
 
     def prepare_phase_more_items(self, environment, user, items, time, **kwargs):
         result = {}
+        result['parents'], parent_ids = self._load_structure_for_items(environment, items)
+        parent_ids = list(parent_ids)
         result['prior_skill'] = environment.read('prior_skill', user=user, default=0)
-        result['difficulties'] = environment.read_more_items('difficulty', items=items, default=0)
+        result['difficulties'] = environment.read_more_items('difficulty', items=items + parent_ids, default=0)
         result['current_skills'] = environment.read_more_items('current_skill', user=user, items=items)
         result['last_times'] = environment.last_answer_time_more_items(user=user, items=items)
+        result['items_first_answers'] = environment.number_of_first_answers_more_items(items=items)
         staircase_keys = ['staircase_val_{}'.format(i) for i in self._staircase] + ['staircase_count_{}'.format(i) for i in self._staircase]
         staircase_loaded = environment.read_more_keys(staircase_keys, default=0)
         result['staircase'] = {
@@ -400,7 +411,16 @@ class PFAEStaircase(PredictiveModel):
 
     def predict_phase(self, data, user, item, time, **kwargs):
         if data['current_skill'] is None:
-            skill = data['prior_skill'] - data['difficulty']
+            if len(data['parents']) > 0:
+                total_parent_weight = sum(data['parents'].values())
+                parent_difficulty = sum([data['difficulties'][p] * w for p, w in data['parents'].items()]) / total_parent_weight
+                if data['item_first_answers'] == 0:
+                    total_difficulty = parent_difficulty
+                else:
+                    total_difficulty = (1 - self._parent_contribution) * data['difficulties'][item] + self._parent_contribution * parent_difficulty
+                skill = data['prior_skill'] - total_difficulty
+            else:
+                skill = data['prior_skill'] - data['difficulties'][item]
         else:
             seconds_ago = _total_seconds_diff(time, data['last_time']) if data['last_time'] and time else self._staircase[-1]
             skill = data['current_skill'] + self._get_shift(seconds_ago, data['staircase'])
@@ -414,10 +434,12 @@ class PFAEStaircase(PredictiveModel):
         for i in items:
             preds.append(self.predict_phase({
                 'prior_skill': data['prior_skill'],
-                'difficulty': data['difficulties'][i],
+                'difficulties': data['difficulties'],
                 'current_skill': data['current_skills'][i],
                 'last_time': data['last_times'][i],
+                'item_first_answers': data['items_first_answers'][i],
                 'staircase': data['staircase'],
+                'parents': data['parents'][i],
             }, user, i, time, **kwargs))
         return preds
 
@@ -425,7 +447,16 @@ class PFAEStaircase(PredictiveModel):
         result = correct
         diff = result - prediction
         if data['current_skill'] is None:
-            current_skill = data['prior_skill'] - data['difficulty']
+            if len(data['parents']) > 0:
+                total_parent_weight = sum(data['parents'].values())
+                parent_difficulty = sum([data['difficulties'][p] * w for p, w in data['parents'].items()]) / total_parent_weight
+                if data['item_first_answers'] == 0:
+                    total_difficulty = parent_difficulty
+                else:
+                    total_difficulty = (1 - self._parent_contribution) * data['difficulties'][item] + self._parent_contribution * parent_difficulty
+                current_skill = data['prior_skill'] - total_difficulty
+            else:
+                current_skill = data['prior_skill'] - data['difficulties'][item]
         else:
             current_skill = data['current_skill']
         if result:
@@ -441,8 +472,15 @@ class PFAEStaircase(PredictiveModel):
                 'prior_skill', data['prior_skill'] + prior_skill_alpha * diff,
                 user=user, time=time, answer=answer_id)
             environment.write(
-                'difficulty', data['difficulty'] - difficulty_alpha * diff,
+                'difficulty', data['difficulties'][item] - difficulty_alpha * diff,
                 item=item, time=time, answer=answer_id)
+            for parent in data['parents']:
+                updates = data['parent_updates'][parent]
+                environment.write(
+                    'difficulty', data['difficulties'][parent] - alpha_fun(updates) * diff,
+                    item=parent, time=time, answer=answer_id, audit=False)
+                environment.update('number_of_difficulty_updates', 0, lambda x: x + 1, item=parent)
+
         else:
             seconds_ago = _total_seconds_diff(time, data['last_time']) if data['last_time'] and time else self._staircase[-1]
             self._update_shift(environment, seconds_ago, data['staircase'], diff)
@@ -495,6 +533,37 @@ class PFAEStaircase(PredictiveModel):
         upper_log = numpy.log(upper)
         distance = (seconds_ago_log - lower_log) / (upper_log - lower_log)
         return lower, upper, distance
+
+    def _load_structure_for_items(self, environment, item_ids):
+        parents = {}
+        parent_ids = set()
+        for item_id in item_ids:
+            item_parents = self._load_parents(environment, item_id)
+            parents[item_id] = item_parents
+            parent_ids |= set(item_parents.keys())
+        return parents, list(parent_ids)
+
+    def _load_children(self, environment, item_id):
+        return self._get_structure(environment)[1].get(item_id, {})
+
+    def _load_parents(self, environment, item_id):
+        return self._get_structure(environment)[0].get(item_id, {})
+
+    def _get_structure(self, environment):
+        if not hasattr(self, '_structure'):
+            self._structure = self._prepare_structure(environment)
+        return self._structure
+
+    @cache_pure()
+    def _prepare_structure(self, environment):
+        parents = defaultdict(lambda: [])
+        children = defaultdict(lambda: [])
+        for _, child, parent, value in environment.read_all_with_key('parent'):
+            parents[child].append((parent, value))
+            children[parent].append((child, value))
+        parents = {c: {p: 1 / (len(children[p]) + 1) for p, _ in ps} for c, ps in parents.items()}
+        children = {p: {c: 1 / (len(parents[c]) + 1) for c, _ in cs} for p, cs in children.items()}
+        return parents, children
 
 
 def predict_simple(skill_asked, number_of_options=None, guess=None):
