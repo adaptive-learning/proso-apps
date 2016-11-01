@@ -52,6 +52,9 @@ class SubscriptionPlan(models.Model):
                 result['description'] = [d.to_json(nested=True, discount_code=discount_code) for d in self.descriptions.all() if d.lang == lang][0]
         return result
 
+    def __str__(self):
+        return "{0.identifier}".format(self)
+
 
 class SubscriptionPlanDescriptionManager(models.Manager):
 
