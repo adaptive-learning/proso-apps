@@ -23,6 +23,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
 class DiscountCodeAdmin(admin.ModelAdmin):
 
     list_display = (
+        'identifier',
         'code',
         'discount_percentage',
         'plan',
