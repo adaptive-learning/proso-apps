@@ -67,15 +67,16 @@ def render_json(request, json, template=None, status=None, help_text=None, versi
 
 class HttpError(Exception):
 
-    def __init__(self, status, message):
+    def __init__(self, status, message, error_type):
         super(HttpError, self).__init__(message)
         self.http_status = status
+        self.error_type = error_type
 
 
 class BadRequestException(HttpError):
 
-    def __init__(self, message):
-        super(BadRequestException, self).__init__(400, message)
+    def __init__(self, message, error_type=None):
+        super(BadRequestException, self).__init__(400, message, error_type)
 
 
 class JsonResponse(HttpResponse):

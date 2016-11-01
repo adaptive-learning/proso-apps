@@ -112,6 +112,21 @@ class DiscountCode(models.Model):
 
     objects = DiscountCodeManager()
 
+    def is_valid(self, user, plan_description=None, throw_exception=False):
+        if self.usage_limit is not None and self.subscriptions.all().count() >= self.usage_limit:
+            if throw_exception:
+                raise BadRequestException('The given discount code has been already used by a maximum number of subscribers.', 'discount_code_limit_exceeded')
+            return False
+        if user.is_authenticated() and user.subscriptions.filter(Q(discount=self) & (Q(payment__isnull=True) | Q(payment__state__in=[PaymentStatus.PAID, PaymentStatus.CREATED]))).count() > 0:
+            if throw_exception:
+                raise BadRequestException('The given discount code has been already used by the given user.', 'discount_code_already_used')
+            return False
+        if self.plan_id is not None and plan_description.plan_id != self.plan_id:
+            if throw_exception:
+                raise BadRequestException('The given discount code does not match with the given subscription plan.', 'discount_code_does_not_match')
+            return False
+        return True
+
     def get_updated_price(self, price):
         return int(round(price * (1 - self.discount_percentage / 100.0)))
 
@@ -143,12 +158,8 @@ class SubscriptionManager(models.Manager):
         return self.filter(user_id=user.id, plan_description__plan__type=subscription_type, expiration__gte=datetime.now()).count() > 0
 
     def subscribe(self, user, plan_description, discount_code, referral_user, return_url):
-        if discount_code and discount_code.usage_limit is not None and discount_code.subscriptions.all().count() >= discount_code.usage_limit:
-            raise BadRequestException('The given discount code has been already used by a maximum number of subscribers.')
-        if discount_code is not None and discount_code.plan_id is not None and plan_description.plan_id != discount_code.plan_id:
-            raise BadRequestException('The given discount code does not match with the given subscription plan.')
-        if discount_code is not None and user.subscriptions.filter(Q(discount=discount_code) & (Q(payment__isnull=True) | Q(payment__state__in=[PaymentStatus.PAID, PaymentStatus.CREATED]))).count() > 0:
-            raise BadRequestException('The given discount code has been already used by the given user.')
+        if discount_code is not None:
+            discount_code.is_valid(user, plan_description=plan_description, throw_exception=True)
         if referral_user is not None and referral_user.id == user.id:
             raise BadRequestException("The referral user can not be the same as the given subscriber.")
         price = plan_description.price if discount_code is None else discount_code.get_updated_price(plan_description.price)

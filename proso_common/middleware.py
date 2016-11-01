@@ -49,7 +49,7 @@ class ErrorMiddleware(object):
         if isinstance(exception, HttpError):
             return render_json(request, {
                 'error': str(exception),
-                'error_type': 'bad_request'
+                'error_type': 'bad_request' if exception.error_type is None else exception.error_type
                 }, template='common_json.html', status=exception.http_status)
 
 

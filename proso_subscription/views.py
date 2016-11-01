@@ -11,6 +11,8 @@ from proso.django.response import render_json
 def plans(request):
     lang = get_language(request)
     discount_code = get_discount_code(request)
+    if discount_code is not None:
+        discount_code.is_valid(request.user, throw_exception=True)
     return render_json(
         request,
         [p.to_json(lang=lang, discount_code=discount_code) for p in SubscriptionPlan.objects.prepare_related().filter(active=True)],
