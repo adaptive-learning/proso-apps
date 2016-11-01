@@ -1474,9 +1474,12 @@ def identifier_filter_canonical(identifier_filter):
 
 def custom_filter_for_filters(identifier_filter):
     def _custom_filter_for_filters(key, value):
-        if key != 'practice_filter':
-            return None
-        return identifier_filter_eq(json.loads(value), identifier_filter)
+        if key == 'practice_filter':
+            return identifier_filter_eq(json.loads(value), identifier_filter)
+        if key == 'practice_filter_contains':
+            identifier_filter_str = json.dumps(identifier_filter)
+            return value in identifier_filter_str and '-{}'.format(value) not in identifier_filter_str
+        return None
     return _custom_filter_for_filters
 
 
@@ -1637,6 +1640,15 @@ def process_parent_for_custom_filter(sender, instance, **kwargs):
     language = instance.condition_value.split('@')[0]
     identifier = instance.condition_value.split('@')[1]
     instance.condition_value = Item.objects.translate_identifiers([identifier], language=language)[identifier]
+
+
+@receiver(pre_save, sender=CustomConfig)
+def forcesst_practice_filter_contains_custom_filter(sender, instance, **kwargs):
+    if instance.condition_key != 'practice_filter_contains':
+        return
+    for char in ['[', ']', ',']:
+        if char in instance.condition_value:
+            raise Exception('The custom config filter "practice_filter_contains" can not contain "{}" character.'.format(char))
 
 
 PROSO_MODELS_TO_EXPORT = [Answer]
