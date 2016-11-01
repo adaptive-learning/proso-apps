@@ -6,8 +6,6 @@ import yaml
 from django.db import transaction
 from optparse import make_option
 
-print(settings.BASE_DIR)
-
 
 class Command(BaseCommand):
 
