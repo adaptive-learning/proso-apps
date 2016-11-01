@@ -138,6 +138,8 @@ class DiscountCode(models.Model):
         }
         if self.plan is not None and not nested:
             result['plan'] = self.plan.to_json(nested=True)
+        if not nested:
+            result['usage'] = self.subscriptions.all().count()
         if self.usage_limit:
             result['usage_limit'] = self.usage_limit
         return result

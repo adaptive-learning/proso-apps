@@ -20,6 +20,14 @@ def plans(request):
     )
 
 
+def discount_code_view(request, code):
+    return render_json(
+        request,
+        get_object_or_404(DiscountCode, code=DiscountCode.objects.prepare_code(code), active=True).to_json(),
+        template='subscription_json.html'
+    )
+
+
 @login_required()
 def my_referrals(request):
     return render_json(
