@@ -26,7 +26,6 @@ def cache_page_conditional(condition, timeout=3600, cache=None):
         def __cache_page_conditional(request, *args, **kwargs):
             f = viewfunc
             if condition(request, args, kwargs):
-                LOGGER.debug('cache hit for view function {}'.format(f.__name__))
                 f = cache_page(timeout, cache=cache)(f)
             return f(request, *args, **kwargs)
         return __cache_page_conditional
@@ -64,7 +63,6 @@ class cache_pure:
             timer(hash_key)
             value = func(*args, **kwargs)
             if not self._request_only:
-                LOGGER.debug("saved function result (%s...) to CACHE; key: %s... time %s", str(value)[:300], key[:300], timer(hash_key))
                 cache.set(hash_key, value, self._expiration)
             if is_cache_prepared():
                 get_request_cache().set(hash_key, value)
