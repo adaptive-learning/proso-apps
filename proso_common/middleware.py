@@ -1,16 +1,16 @@
-
-from django.template.loader import render_to_string
-import re
 from django.conf import settings
-from django.utils.encoding import force_text
-from django.utils import translation
 from django.contrib.auth import logout
-from django.shortcuts import redirect
+from django.db import connection
 from django.http import HttpResponseRedirect
-from social.exceptions import AuthAlreadyAssociated
+from django.shortcuts import redirect
+from django.template.loader import render_to_string
+from django.utils import translation
+from django.utils.encoding import force_text
 from proso.django.response import HttpError, render_json
+from social.exceptions import AuthAlreadyAssociated
 import datetime
 import logging
+import re
 
 LOGGER = logging.getLogger('django.request')
 _HTML_TYPES = ('text/html', 'application/xhtml+xml')
@@ -51,6 +51,16 @@ class ErrorMiddleware(object):
                 'error': str(exception),
                 'error_type': 'bad_request' if exception.error_type is None else exception.error_type
                 }, template='common_json.html', status=exception.http_status)
+
+
+class LogQueriesMiddleware(object):
+
+    def process_response(self, request, response):
+        total_time = 0.0
+        for query in connection.queries:
+            total_time += float(query['time'])
+        LOGGER.debug('total number of {} queries took {} seconds'.format(len(connection.queries), total_time))
+        return response
 
 
 class AuthAlreadyAssociatedMiddleware(object):
