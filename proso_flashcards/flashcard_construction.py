@@ -6,6 +6,7 @@ from proso_flashcards.models import FlashcardAnswer, Category, Context, Flashcar
 from proso_models.models import Item
 import abc
 import random
+from proso.time import timeit
 
 
 def get_option_set():
@@ -37,6 +38,7 @@ class EmptyOptionSet(OptionSet):
 
 
 class ContextOptionSet(OptionSet):
+    @timeit(name='get_option_set')
     def get_option_for_flashcards(self, flashcards_with_question_types):
         question_types = {fc['id']: question_type for fc, question_type in flashcards_with_question_types}
         opt_set_cache = cache.get('flashcard_construction__context_option_set', {})
