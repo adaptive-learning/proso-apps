@@ -895,6 +895,7 @@ class ItemManager(models.Manager):
             raise Exception('There is no item type for name "{}".'.format(identifier_type))
         return item_types[0]['id']
 
+    @timeit()
     def translate_item_ids(self, item_ids, language, is_nested=None):
         """
         Translate a list of item ids to JSON objects which reference them.
