@@ -38,7 +38,7 @@ def function_name(function):
         return function
     if is_lambda(function):
         raise Exception('Can not retrieve function name from lambda function.')
-    return '{}.{}'.format(function.__module__, function.__name__)
+    return '{}.{}'.format(function.__module__, str(function).split(' ')[1])
 
 
 def fixed_point(is_zero, plus, minus, f, x):
