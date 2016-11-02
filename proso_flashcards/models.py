@@ -78,10 +78,10 @@ class Context(models.Model, ModelDiffMixin):
 class FlashcardManager(models.Manager):
 
     def prepare_related(self):
-        return self.select_related(Flashcard.related_term(), Flashcard.related_context())
+        return self.select_related(Flashcard.related_term(), Flashcard.related_term_secondary(), Flashcard.related_context())
 
     def prepare(self):
-        return self.select_related(Flashcard.related_term())
+        return self.select_related(Flashcard.related_term(), Flashcard.related_term_secondary())
 
 
 class Flashcard(models.Model, ModelDiffMixin):
