@@ -864,7 +864,7 @@ class ItemManager(models.Manager):
             for identifier, item_id in model.objects.filter(**kwargs).values_list('identifier', item_type['foreign_key']):
                 result[to_find[identifier]] = item_id
         if len(result) != len(identifiers):
-            raise HttpError(404, "Can't translate the following identifiers: {}".format(set(identifiers) - set(result.keys())))
+            raise HttpError(404, "Can't translate the following identifiers: {}".format(set(identifiers) - set(result.keys())), 'identifier_not_found')
         return result
 
     def get_item_type_id_from_identifier(self, identifier, item_types=None):

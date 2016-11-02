@@ -35,7 +35,7 @@ def _load_user_id_from_GET(request, allow_override=False):
     else:
         profile = UserProfile.objects.filter(user__username=request.GET['username']).first()
     if profile is None:
-        raise HttpError(404, _('There is no profile for the given user'))
+        raise HttpError(404, _('There is no profile for the given user'), 'profile_not_found')
     if profile.public:
         return profile.user_id
     else:
