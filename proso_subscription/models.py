@@ -91,6 +91,9 @@ class SubscriptionPlanDescription(models.Model):
             result['price_after_discount'] = discount_code.get_updated_price(self.price)
         return result
 
+    def __str__(self):
+        return "{0.name}".format(self)
+
 
 class DiscountCodeManager(models.Manager):
 
@@ -146,6 +149,9 @@ class DiscountCode(models.Model):
         if self.usage_limit:
             result['usage_limit'] = self.usage_limit
         return result
+
+    def __str__(self):
+        return "{0.identifier}: {0.discount_percentage}%".format(self)
 
 
 class SubscriptionManager(models.Manager):
