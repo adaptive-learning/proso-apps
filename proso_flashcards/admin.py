@@ -41,11 +41,15 @@ class AnswerAdmin(admin.ModelAdmin):
     def options_count(self, a):
         return a.options.count()
 
+    def context_wrapped(self, a):
+        return str(a.context).replace(',', ', ')
+    context_wrapped.short_description = 'Context'
+
     list_display = (
         'user',
         'item_asked',
         'item_answered',
-        'context',
+        'context_wrapped',
         'is_correct',
         'options_count',
         'type',
