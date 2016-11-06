@@ -65,7 +65,7 @@ def options(request, json_list, nested):
         if len(option_sets[question['payload']['item_id']]) == 0 and 'term_secondary' not in question['payload']:
             # If we do not have enough options, we have to force direction
             question['question_type'] = FlashcardAnswer.FROM_TERM
-        allow_zero_option[question['payload']['item_id']] = question['question_type'] in {FlashcardAnswer.FROM_TERM, FlashcardAnswer.FROM_TERM_TO_TERM_SECONDARY}
+        allow_zero_option[question['payload']['item_id']] = question['question_type'] in {FlashcardAnswer.FROM_TERM, FlashcardAnswer.FROM_TERM_SECONDARY_TO_TERM}
 
     all_options = {i: options for i, options in zip(selected_items, option_selector.select_options_more_items(
         environment, user_id, selected_items, time, option_sets,
