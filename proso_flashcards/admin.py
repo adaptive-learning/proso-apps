@@ -54,8 +54,20 @@ class AnswerAdmin(admin.ModelAdmin):
         'options_count',
         'type',
         'time',
-        'asked_ago')
-    raw_id_fields = ("options",)
+        'asked_ago',
+    )
+    raw_id_fields = (
+        'config',
+        'context',
+        'item',
+        'item_answered',
+        'item_asked',
+        'metainfo',
+        'options',
+        'practice_set',
+        'session',
+        'user',
+    )
     search_fields = ('user__username',)
 
 
