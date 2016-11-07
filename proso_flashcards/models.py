@@ -193,6 +193,7 @@ class Category(models.Model, ModelDiffMixin):
             "lang": self.lang,
             "name": self.name,
             "type": self.type,
+            "active": self.active,
         }
 
     def __str__(self):

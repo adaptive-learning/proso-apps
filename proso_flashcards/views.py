@@ -41,6 +41,8 @@ def show_more(request, object_class, should_cache=True):
                 object_class == settings.PROSO_FLASHCARDS.get("context_extension", Context) or object_class == Category:
             language = get_language(request)
             objs = objs.filter(lang=language)
+        if object_class in [Flashcard, Category, Context]:
+            objs = objs.filter(active=True)
         return objs
 
     return proso_common.views.show_more(
