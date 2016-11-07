@@ -80,6 +80,7 @@ class Command(BaseCommand):
                         lang=lang,
                     )
                 db_category.name = category["name-{}".format(lang)]
+                db_category.active = category.get('active', True)
                 if "type" in category:
                     db_category.type = category["type"]
                 if db_category.identifier in item_mapping:

@@ -182,6 +182,7 @@ class Category(models.Model, ModelDiffMixin):
     lang = models.CharField(max_length=2)
     name = models.TextField()
     type = models.CharField(max_length=50, null=True, blank=True)
+    active = models.BooleanField(default=True)
 
     def to_json(self, nested=False):
         return {
