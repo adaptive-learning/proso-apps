@@ -1,5 +1,10 @@
 import json
 
+try:
+    JSONDecodeError = json.JSONDecodeError
+except AttributeError:
+    JSONDecodeError = ValueError
+
 
 def str2type(value):
     """
@@ -19,5 +24,5 @@ def str2type(value):
         return value
     try:
         return json.loads(value)
-    except json.decoder.JSONDecodeError:
+    except JSONDecodeError:
         return value
