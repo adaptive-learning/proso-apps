@@ -9,6 +9,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_display = (
         'user',
         'plan_description',
+        'discount',
         'created',
         'expiration',
         'payment_status'
@@ -18,6 +19,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
     )
     list_filter = (
         'plan_description',
+        'discount',
     )
     raw_id_fields = (
         "session",
