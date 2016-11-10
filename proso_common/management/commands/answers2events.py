@@ -29,13 +29,14 @@ class Command(BaseCommand):
                   session_id,
                   guess,
                   config_id,
-                  time
+                  time,
+                  practice_set_id
                 from proso_models_answer
                 where time >= %s::date and time < %s::date
                 order by time""", (options['from'], options['to']))
 
             i = 1
-            for user_id, item_answered_id, item_asked_id, context_id, item_id, response_time, session_id, guess, config_id, time in progress.bar(cursor, expected_size=cursor.rowcount):
+            for user_id, item_answered_id, item_asked_id, context_id, item_id, response_time, session_id, guess, config_id, time, practice_set_id in progress.bar(cursor, expected_size=cursor.rowcount):
                 answer = {
                     "user_id": user_id,
                     "is_correct": item_asked_id == item_answered_id,
@@ -44,9 +45,10 @@ class Command(BaseCommand):
                     "response_time_ms": response_time,
                     "params": {
                         "session_id": session_id,
-                        "guess": guess
                     }}
 
+                if practice_set_id:
+                    answer["params"]["practice_set_id"] = practice_set_id
                 if config_id:
                     answer["params"]["config_id"] = config_id
 

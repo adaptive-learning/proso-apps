@@ -1537,7 +1537,7 @@ def emit_answer_event(sender, instance, **kwargs):
     logger.emit('answer', {
         "user_id": instance.user_id,
         "is_correct": instance.item_asked_id == instance.item_answered_id,
-        "context_id": [instance.context_id],
+        "context_id": [instance.context_id] if instance.context_id else [],
         "item_id": instance.item_id,
         "response_time_ms": instance.response_time,
         "params": {
