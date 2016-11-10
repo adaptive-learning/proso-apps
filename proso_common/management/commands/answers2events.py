@@ -45,6 +45,7 @@ class Command(BaseCommand):
                     "response_time_ms": response_time,
                     "params": {
                         "session_id": session_id,
+                        "guess": guess
                     }}
 
                 if practice_set_id:
