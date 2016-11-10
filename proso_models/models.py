@@ -1542,6 +1542,7 @@ def emit_answer_event(sender, instance, **kwargs):
         "response_time_ms": instance.response_time,
         "params": {
             "session_id": instance.session_id,
+            "guess": instance.guess,
             "practice_set_id": instance.practice_set_id,
             "config_id": instance.config_id,
         }}
