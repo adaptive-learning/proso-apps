@@ -176,12 +176,12 @@ class SubscriptionManager(models.Manager):
         price = plan_description.price if discount_code is None else discount_code.get_updated_price(plan_description.price)
         if price > 0:
             payment = Payment.objects.create_single_payment(
-                Payment.objects.create_contact(email=user.email),
                 order_number=str(uuid.uuid1()),
                 order_description=plan_description.description,
                 order_items={
                     plan_description.name: plan_description.price,
                 },
+                contact=Payment.objects.create_contact(email=user.email),
                 currency=plan_description.currency,
                 amount=price,
                 return_url=return_url
