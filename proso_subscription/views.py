@@ -12,9 +12,6 @@ from gopay.enums import PaymentStatus
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from proso.django.request import get_language
 from proso.django.response import render_json
-import matplotlib.pyplot as plt
-import pandas
-import seaborn as sns
 
 
 def plans(request):
@@ -31,6 +28,12 @@ def plans(request):
 
 @staff_member_required
 def revenue_per_month(request, currency):
+    try:
+        import matplotlib.pyplot as plt
+        import pandas
+        import seaborn as sns
+    except ImportError:
+        return HttpResponse('Can not import python packages for analysis.', status=503)
     now = datetime.now()
     ago = int(request.GET.get('ago', 0))
     today = now.replace(hour=0, minute=0, second=0, microsecond=0) - relativedelta(months=ago)
