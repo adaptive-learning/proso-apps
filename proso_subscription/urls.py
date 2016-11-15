@@ -11,4 +11,5 @@ urlpatterns = patterns(
     url(r'^myreferrals/$', 'my_referrals', name='subscription_my_referrals'),
     url(r'^subscribe/(?P<description_id>\d+)$', 'subscribe', name='subscription_subscribe'),
     url(r'^discount_code/(?P<code>\w+)$', 'discount_code_view', name='subscription_discount_code_view'),
+    url(r'^revenue_per_month/(?P<currency>\w+)$', 'revenue_per_month', name='subscription_revenue_per_month'),
 )
