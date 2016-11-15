@@ -43,5 +43,6 @@ class DiscountCodeAdmin(admin.ModelAdmin):
         'discount_percentage',
     )
 
+
 admin.site.register(Subscription, SubscriptionAdmin)
 admin.site.register(DiscountCode, DiscountCodeAdmin)
