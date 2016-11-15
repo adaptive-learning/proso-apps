@@ -91,7 +91,8 @@ def options(request, json_list, nested):
     for question in json_list:
         if question['payload']['object_type'] != 'fc_flashcard':
             continue
-        question['payload']['options'] = sorted(question['payload']['options'], key=lambda o: o['term']['name'])
+        sort_key = 'term_secondary' if question['question_type'] == FlashcardAnswer.FROM_TERM_TO_TERM_SECONDARY else 'term'
+        question['payload']['options'] = sorted(question['payload']['options'], key=lambda o: o[sort_key]['name'])
 
 
 def question_type(request, json_list, nested):
