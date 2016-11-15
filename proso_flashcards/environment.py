@@ -1,3 +1,4 @@
+from collections import defaultdict
 from contextlib import closing
 from django.core.cache import cache
 from django.db import connection
@@ -25,6 +26,27 @@ class DatabaseEnvironment(ODatabaseEnvironment):
         if len(to_find) != 0:
             LOGGER.debug('cache miss for confusing factor, item {}, {} other items and user {}'.format(item, len(to_find), user))
             user_where, user_params = self._column_comparison('user_id', user, force_null=False)
+            with closing(connection.cursor()) as cursor:
+                cursor.execute(
+                    '''
+                    SELECT DISTINCT main.item_id, c.identifier
+                    FROM proso_flashcards_flashcard AS main
+                    INNER JOIN proso_flashcards_flashcard AS fc
+                        ON (
+                            main.term_id = fc.term_id OR
+                            main.term_secondary_id = fc.term_id
+                        )
+                    INNER JOIN proso_flashcards_context AS c
+                        ON c.id = fc.context_id
+                    WHERE
+                        fc.term_secondary_id IS NULL AND
+                        fc.active AND
+                        main.item_id IN (''' + ','.join('%s' for _ in [item] + to_find) + ')',
+                    [item] + to_find
+                )
+                context_mapping = defaultdict(set)
+                for i, c in cursor:
+                    context_mapping[i].add(c)
             with closing(connection.cursor()) as cursor:
                 cursor.execute(
                     '''
@@ -58,7 +80,7 @@ class DatabaseEnvironment(ODatabaseEnvironment):
                 for item_answered, count in cursor:
                     found[item_answered] = count
                 for i in to_find:
-                    found[i] = found.get(i, 0)
+                    found[i] = 1000 * (found.get(i, 0.05) + 0 if len(context_mapping[item]) == 0 else (len(context_mapping[i] & context_mapping[item]) / len(context_mapping[i] | context_mapping[item])))
                 cache_expiration = get_config('proso_models', 'confusing_factor.cache_expiration', default=24 * 60 * 60)
                 # trying to decrease probability of race condition
                 confusing_factor_cache = cache.get('database_environment__confusing_factor', {})
