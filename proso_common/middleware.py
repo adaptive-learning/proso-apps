@@ -7,7 +7,9 @@ from django.template.loader import render_to_string
 from django.utils import translation
 from django.utils.encoding import force_text
 from proso.django.response import HttpError, render_json
+from proso_common.models import add_custom_config_filter
 from social.exceptions import AuthAlreadyAssociated
+from user_agents import parse
 import datetime
 import logging
 import re
@@ -153,3 +155,20 @@ class GoogleAuthChangeDomain(object):
             target_domain = settings.LANGUAGE_DOMAINS[language_code]
             if target_domain != request.META['HTTP_HOST']:
                 return redirect_domain(request, target_domain)
+
+
+class CustomFiltersMiddleware(object):
+
+    def process_request(self, request):
+        def _filter(key, value):
+            if key != 'device':
+                return None
+            user_agent = parse(request.META['HTTP_USER_AGENT'])
+            if value == 'pc' and user_agent.is_pc:
+                return True
+            if value in {'mobile', 'touchscreen'} and user_agent.is_mobile:
+                return True
+            if value in {'tablet', 'touchscreen'} and user_agent.is_tablet:
+                return True
+            return False
+        add_custom_config_filter(_filter)
