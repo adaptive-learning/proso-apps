@@ -8,7 +8,8 @@
     {
       "id": "0002",
       "name-en": "global category",
-      "name-cs": "globalni kategorie"
+      "name-cs": "globalni kategorie",
+      "display-priority": 100
     },
     {
       "id": "0003",

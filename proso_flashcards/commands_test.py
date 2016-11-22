@@ -57,6 +57,8 @@ class TestFlashcardsLoading(TestCase):
                 [categories[child] for child in children],
                 self.CATEGORY_CHILDREN.get(categories[item], [])
             )
+        self.assertEqual(Category.objects.get(identifier="0001", lang="en").display_priority, 0)
+        self.assertEqual(Category.objects.get(identifier="0002", lang="en").display_priority, 100)
 
     def _check_contexts(self):
         categories = {c.item_id: c.identifier for c in Category.objects.filter(lang='en')}
