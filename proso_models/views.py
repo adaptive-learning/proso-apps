@@ -205,8 +205,8 @@ def answers_per_month(request):
 
     if 'percentage' in request.GET:
         def _percentage(group):
-            total = len(group)
-            return group.groupby('category').apply(lambda g: 100 * len(g) / total).reset_index().rename(columns={0: 'answers'})
+            total = group['answers'].sum()
+            return group.groupby('category').apply(lambda g: 100 * g['answers'].sum() / total).reset_index().rename(columns={0: 'answers'})
         data = data.groupby('month').apply(_percentage).reset_index()
 
     def _apply(group):
@@ -220,7 +220,6 @@ def answers_per_month(request):
     fig = plt.figure()
     for i, category in enumerate(sorted(data['category'].unique())):
         item_data = data[data['category'] == category]
-        print(item_data)
         sns.barplot(
             x='month',
             y='answers_cumsum',
