@@ -9,6 +9,7 @@ from gopay.enums import PaymentStatus
 from gopay_django_api.models import Payment
 from gopay_django_api.signals import payment_changed
 from proso.django.models import disable_for_loaddata
+from proso.django.request import get_current_request
 from proso.django.response import BadRequestException
 from proso_user.models import Session
 from django.db.models import Q
@@ -174,6 +175,9 @@ class SubscriptionManager(models.Manager):
         if referral_user is not None and referral_user.id == user.id:
             raise BadRequestException("The referral user can not be the same as the given subscriber.")
         price = plan_description.price if discount_code is None else discount_code.get_updated_price(plan_description.price)
+        lang = get_current_request().LANGUAGE_CODE.split('-')[0].split('_')[0].upper()
+        if lang not in {'CS', 'EN', 'DE'}:
+            lang = 'EN'
         if price > 0:
             payment = Payment.objects.create_single_payment(
                 order_number=str(uuid.uuid1()),
@@ -184,7 +188,8 @@ class SubscriptionManager(models.Manager):
                 contact=Payment.objects.create_contact(email=user.email),
                 currency=plan_description.currency,
                 amount=price,
-                return_url=return_url
+                return_url=return_url,
+                lang=lang
             )
         else:
             payment = None
