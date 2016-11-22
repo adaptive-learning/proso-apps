@@ -3,12 +3,13 @@ from .models import get_environment, get_predictive_model, get_item_selector, ge
     learning_curve as models_learning_curve, get_filter, get_mastery_trashold, get_time_for_knowledge_overview, \
     survival_curve_answers as models_survival_curve_answers, survival_curve_time as models_survival_curve_time
 from django.contrib.admin.views.decorators import staff_member_required
-from django.db import transaction
+from django.db import transaction, connection
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import ensure_csrf_cookie
 from lazysignup.decorators import allow_lazy_user
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from proso.django.cache import cache_page_conditional
 from proso.django.enrichment import enrich_json_objects_by_object_type
 from proso.django.request import is_time_overridden, get_time, get_language, load_query_json
@@ -161,6 +162,84 @@ def practice_image(request):
             OFFSET_Y + SQUARE_SIZE * i, SQUARE_SIZE, color, border_color=0)
         svg.print_text(OFFSET_X + SQUARE_SIZE * (len(items_in_order) + 1), OFFSET_Y + SQUARE_SIZE * i + 0.8 * SQUARE_SIZE, answer.time.strftime('%H:%M:%S %Y-%m-%d'), font_size=10)
     return HttpResponse(str(svg), content_type="image/svg+xml")
+
+
+def answers_per_month(request):
+    try:
+        from pylab import rcParams
+        import matplotlib.pyplot as plt
+        import pandas
+        import seaborn as sns
+    except ImportError:
+        return HttpResponse('Can not import python packages for analysis.', status=503)
+    categories = load_query_json(request.GET, "categories", "[]")
+    translated = Item.objects.translate_identifiers(categories, get_language(request))
+    translated_inverted = {item: name for name, item in translated.items()}
+    children = pandas.DataFrame([
+        {'item': item, 'category': translated_inverted[category]}
+        for category, items in Item.objects.get_reachable_children(
+            list(translated.values()), get_language(request)
+        ).items()
+        for item in items
+    ])
+    with connection.cursor() as cursor:
+        cursor.execute(
+            '''
+            SELECT item_id, date_part('month', time), COUNT(1)
+            FROM proso_models_answer
+            GROUP BY 1, 2
+            '''
+        )
+        data = []
+        for item, month, answers in cursor:
+            data.append({
+                'item': item,
+                'month': month,
+                'answers': answers,
+            })
+    data = pandas.DataFrame(data)
+    if len(children) == 0:
+        data['category'] = data['item'].apply(lambda i: 'category/all')
+    else:
+        data = pandas.merge(data, children, on='item', how='inner')
+
+    if 'percentage' in request.GET:
+        def _percentage(group):
+            total = len(group)
+            return group.groupby('category').apply(lambda g: 100 * len(g) / total).reset_index().rename(columns={0: 'answers'})
+        data = data.groupby('month').apply(_percentage).reset_index()
+
+    def _apply(group):
+        group['answers_cumsum'] = group['answers'].cumsum()
+        return group
+    data = data.sort_values(by=['category'], ascending=False).groupby('month').apply(_apply)
+    data['month'] = data['month'].astype(int)
+    sns.set(style='white')
+    rcParams['figure.figsize'] = 15, 10
+    palette = sns.color_palette("hls", max(5, len(categories)))
+    fig = plt.figure()
+    for i, category in enumerate(sorted(data['category'].unique())):
+        item_data = data[data['category'] == category]
+        print(item_data)
+        sns.barplot(
+            x='month',
+            y='answers_cumsum',
+            data=item_data,
+            label=category.split('/')[1],
+            color=palette[i % len(palette)],
+            ci=None
+        )
+    plt.ylabel('Answers' + (' (%)' if 'percentage' in request.GET else ''))
+    plt.xlabel('Month')
+    plt.title('Answers per Month')
+    if 'percentage' in request.GET:
+        plt.ylim(0, 100)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+    response = HttpResponse(content_type='image/png')
+    canvas = FigureCanvas(fig)
+    canvas.print_png(response)
+    return response
 
 
 @ensure_csrf_cookie

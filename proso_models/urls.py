@@ -8,6 +8,7 @@ urlpatterns = patterns(
     url(r'^(|home)$', ensure_csrf_cookie(TemplateView.as_view(template_name="models_home.html")), name='models_home'),
     url(r'^answer/$', 'answer', name='models_answer'),
     url(r'^answers/$', 'answers', name='models_answers'),
+    url(r'^answers_per_month/$', 'answers_per_month', name='models_answers_per_month'),
     url(r'^audit/(?P<key>[\w_]+)', 'audit', name='models_audit'),
     url(r'^learning_curve/', 'learning_curve', name='models_learning_curve'),
     url(r'^survival_answers/', 'survival_curve', {'metric': 'answers'}, name='models_survival_answers'),
