@@ -183,6 +183,7 @@ class Category(models.Model, ModelDiffMixin):
     name = models.TextField()
     type = models.CharField(max_length=50, null=True, blank=True)
     active = models.BooleanField(default=True)
+    display_priority = models.FloatField(null=True, default=0, blank=True)
 
     def to_json(self, nested=False):
         return {
@@ -194,6 +195,7 @@ class Category(models.Model, ModelDiffMixin):
             "name": self.name,
             "type": self.type,
             "active": self.active,
+            "display_priority": self.display_priority,
         }
 
     def __str__(self):

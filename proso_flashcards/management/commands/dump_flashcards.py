@@ -65,7 +65,7 @@ class Command(BaseCommand):
     def _dump_categories(self, data=None):
         data = []
         for category in Category.objects.distinct("identifier").prefetch_related("parents").order_by("identifier"):
-            c = {"id": category.identifier}
+            c = {"id": category.identifier, "display-priority": category.display_priority}
             if category.type is not None:
                 c["type"] = category.type
             for c2 in Category.objects.filter(identifier=category.identifier).order_by("lang"):

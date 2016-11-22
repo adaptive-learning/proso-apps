@@ -81,6 +81,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "display-priority": {
+          "type": "number"
         }
       },
       "patternProperties":{
