@@ -8,6 +8,7 @@ from django.db.models.signals import pre_save, post_save
 from django.db.models import Q
 from django.dispatch import receiver
 from django.template.loader import render_to_string
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from geoip import geolite2
 from html2text import html2text
@@ -25,6 +26,7 @@ import datetime
 import hashlib
 import hmac
 import logging
+import os
 import user_agents
 
 LOGGER = logging.getLogger('django.request')
@@ -316,7 +318,7 @@ class Session(models.Model):
 
 class ScheduledEmailManager(models.Manager):
 
-    def schedule_more(self, from_email, subject, template_file, emails=None, skip_emails=None, langs=None):
+    def schedule_more(self, from_email, subject, template_file, emails=None, skip_emails=None, langs=None, output_dir=None, dry=False):
         from proso_models.models import Answer
         if emails is None:
             users = User.objects.filter(Q(email__isnull=False) & ~Q(email=''))
@@ -335,9 +337,17 @@ class ScheduledEmailManager(models.Manager):
         for user in users:
             if not send_emails.get(user.id, False):
                 continue
-            msg_html = render_to_string(template_file, {'user': user, 'token': UserProfile.objects.get_user_hash(user)})
+            msg_html = render_to_string(template_file, {
+                'user': user,
+                'token': UserProfile.objects.get_user_hash(user),
+                'subject': subject,
+            })
+            if output_dir:
+                with open(os.path.join(output_dir, '{}_{}.html'.format(slugify(subject), user.email)), 'w') as f:
+                    f.write(msg_html)
             msg_plain = html2text(msg_html)
-            self.schedule(user, subject, msg_plain, from_email, html_message=msg_html)
+            if not dry:
+                self.schedule(user, subject, msg_plain, from_email, html_message=msg_html)
             result.append(user)
         return result
 
