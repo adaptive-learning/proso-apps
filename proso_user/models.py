@@ -417,6 +417,7 @@ class ScheduledEmail(models.Model):
 
         }
 
+
 class UserQuestionEventManager(models.Manager):
 
     def from_type_value(self, type, value):
