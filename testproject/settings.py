@@ -168,8 +168,7 @@ except ImportError:
 except SyntaxError:
     HASHES = {}
 
-EMAIL_HOST = 'localhost'
-EMAIL_PORT = 25
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 LOGGING = {
     'version': 1,
