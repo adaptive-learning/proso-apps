@@ -363,7 +363,7 @@ class ScheduledEmailManager(models.Manager):
         )
 
     def send(self, n=100, auth_user=None, auth_password=None):
-        emails = list(self.select_related('user').filter(status=ScheduledEmail.STATUS_SCHEDULED, scheduled__gt=datetime.datetime.now() - datetime.timedelta(minutes=1)).order_by('-scheduled')[:n])
+        emails = list(self.select_related('user').filter(status=ScheduledEmail.STATUS_SCHEDULED, scheduled__gt=datetime.datetime.now() - datetime.timedelta(minutes=121)).order_by('-scheduled')[:n])
         user_ids = [e.user_id for e in emails]
         send_emails = dict(UserProfile.objects.filter(user_id__in=user_ids).values_list('user_id', 'send_emails'))
         with closing(get_connection(username=auth_user, password=auth_password)) as connection:
