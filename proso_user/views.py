@@ -220,6 +220,19 @@ def questions_to_ask(request):
     return render_json(request, list(questions), template='user_json.html')
 
 
+@transaction.atomic()
+def stop_sending_emails(request, user_id, token):
+    profile = get_object_or_404(UserProfile, user_id=user_id)
+    if UserProfile.objects.get_user_hash(profile.user) != token:
+        return render_json(request, {
+            'error': _('The given token does not match.'),
+            'error_type': 'unauthorized'
+        }, status=401, template='user_json.html')
+    profile.send_emails = False
+    profile.save()
+    return HttpResponse('ok', status=202)
+
+
 def logout(request):
     auth.logout(request)
     return HttpResponse('ok', status=202)

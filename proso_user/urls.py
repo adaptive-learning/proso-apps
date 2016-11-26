@@ -22,6 +22,7 @@ urlpatterns = patterns(
     url(r'^question/(?P<id>\d+)', 'show_one', {'object_class': UserQuestion}, name='show_user_question'),
     url(r'^possible_answers/', 'show_more', {'object_class': UserQuestionPossibleAnswer}, name='show_user_question_possible_answers'),
     url(r'^possible_answer/(?P<id>\d+)', 'show_one', {'object_class': UserQuestionPossibleAnswer}, name='show_user_question_possible_answer'),
+    url(r'^stop_sending_emails/(?P<user_id>\d+)/(?P<token>\w+)', 'stop_sending_emails', name='user_stop_sending_emails'),
 ) + patterns(
     'proso_user.views_classes',
     url(r'^classes/$', 'classes', name='classes'),

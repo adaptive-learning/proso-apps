@@ -17,6 +17,7 @@ from proso_common.models import get_config
 from social.apps.django_app.default.models import UserSocialAuth
 import datetime
 import hashlib
+import hmac
 import logging
 import user_agents
 
@@ -52,7 +53,13 @@ def get_user_id(request, allow_override=False):
 
 
 def get_content_hash(content):
-    return hashlib.sha1(content.encode()).hexdigest()
+    return str(hashlib.sha1(content.encode()).hexdigest())
+
+
+class UserProfileManager(models.Manager):
+
+    def get_user_hash(self, user):
+        return hmac.new(key=user.password.encode(), msg=str(user.id).encode()).hexdigest()
 
 
 class UserProfile(models.Model):
@@ -60,6 +67,8 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User)
     send_emails = models.BooleanField(default=True)
     public = models.BooleanField(default=False)
+
+    objects = UserProfileManager()
 
     def to_json(self, nested=False, stats=False):
         data = {
