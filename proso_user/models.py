@@ -1,5 +1,7 @@
 from collections import defaultdict
+from contextlib import closing
 from django.contrib.auth.models import User
+from django.core.mail import get_connection, send_mail
 from django.db import models
 from django.db import transaction
 from django.db.models.signals import pre_save, post_save
@@ -14,6 +16,7 @@ from proso.django.request import get_current_request
 from proso.django.response import HttpError
 from proso.rand import random_string
 from proso_common.models import get_config
+from smtplib import SMTPException
 from social.apps.django_app.default.models import UserSocialAuth
 import datetime
 import hashlib
@@ -307,6 +310,83 @@ class Session(models.Model):
             result['http_user_agent'] = self.http_user_agent.to_json(nested=True)
         return result
 
+
+class ScheduledEmailManager(models.Manager):
+
+    def schedule(self, user, subject, message, from_email, scheduled=None, html_message=None):
+        self.create(
+            user=user,
+            subject=subject,
+            message=message,
+            from_email=from_email,
+            scheduled=datetime.datetime.now() if scheduled is None else scheduled,
+            html_message=html_message,
+            status=ScheduledEmail.STATUS_SCHEDULED
+        )
+
+    def send(self, n=100, auth_user=None, auth_password=None):
+        emails = list(self.select_related('user').filter(status=ScheduledEmail.STATUS_SCHEDULED, scheduled__gt=datetime.datetime.now() - datetime.timedelta(minutes=1)).order_by('-scheduled')[:n])
+        user_ids = [e.user_id for e in emails]
+        send_emails = dict(UserProfile.objects.filter(user_id__in=user_ids).values_list('user_id', 'send_emails'))
+        with closing(get_connection(username=auth_user, password=auth_password)) as connection:
+            for email in emails:
+                if not send_emails[email.user_id]:
+                    email.status = ScheduledEmail.STATUS_SKIPPED
+                    email.save()
+                    continue
+                try:
+                    send_mail(
+                        email.subject,
+                        email.message,
+                        email.from_email,
+                        [email.user.email],
+                        connection=connection,
+                        html_message=email.html_message
+                    )
+                    email.status = ScheduledEmail.STATUS_SENT
+                except SMTPException:
+                    email.status = ScheduledEmail.STATUS_FAILED
+                email.save()
+
+
+class ScheduledEmail(models.Model):
+
+    STATUS_SCHEDULED = 0
+    STATUS_SENT = 1
+    STATUS_SKIPPED = 2
+    STATUS_FAILED = 3
+
+    STATUS = (
+        (STATUS_SCHEDULED, 'scheduled'),
+        (STATUS_SENT, 'sent'),
+        (STATUS_SKIPPED, 'skipped'),
+        (STATUS_FAILED, 'failed'),
+    )
+
+    user = models.ForeignKey(User)
+    created = models.DateTimeField(auto_now_add=True)
+    scheduled = models.DateTimeField()
+    processed = models.DateTimeField(auto_now=True)
+    status = models.PositiveSmallIntegerField(choices=STATUS)
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    html_message = models.TextField(default=None, null=True, blank=True)
+    from_email = models.CharField(max_length=255)
+
+    objects = ScheduledEmailManager()
+
+    def to_json(self, nested=False):
+        return {
+            'created': self.created.strftime('%Y-%m-%d %H:%M:%S'),
+            'scheduled': self.scheduled.strftime('%Y-%m-%d %H:%M:%S'),
+            'processed': self.processed.strftime('%Y-%m-%d %H:%M:%S'),
+            'object_type': 'scheduled_email',
+            'status': dict(ScheduledEmail.STATUS)[self.status],
+            'subject': self.subject,
+            'message': self.message,
+            'html_message': self.html_message,
+
+        }
 
 class UserQuestionEventManager(models.Manager):
 
