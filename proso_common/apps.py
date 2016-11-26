@@ -38,5 +38,4 @@ class AppConfig(OAppConfig):
 
 def install_middleware(middleware):
     if middleware not in settings.MIDDLEWARE_CLASSES:
-        print('installing middleware', middleware)
         settings.MIDDLEWARE_CLASSES = settings.MIDDLEWARE_CLASSES + (middleware, )
