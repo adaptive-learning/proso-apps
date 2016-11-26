@@ -36,6 +36,17 @@ class Command(BaseCommand):
             action='append',
             default=[]
         ),
+        make_option(
+            '--output',
+            dest='output_dir',
+            default=None
+        ),
+        make_option(
+            '--dry',
+            dest='dry',
+            action='store_true',
+            default=False
+        )
     )
 
     def handle(self, *args, **options):
@@ -45,7 +56,9 @@ class Command(BaseCommand):
             options['from_email'], options['subject'], os.path.realpath(options['template_file']),
             emails=None if len(options['emails']) == 0 else options['emails'],
             skip_emails=None if len(options['skip_emails']) == 0 else options['skip_emails'],
-            langs=None if len(options['langs']) == 0 else options['langs']
+            langs=None if len(options['langs']) == 0 else options['langs'],
+            output_dir=None if options['output_dir'] is None else os.path.realpath(options['output_dir']),
+            dry=options['dry']
         )
         if options['verbosity'] > 1:
             print('E-mail scheduled for:')
