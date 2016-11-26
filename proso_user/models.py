@@ -373,6 +373,7 @@ class ScheduledEmailManager(models.Manager):
                     )
                     email.status = ScheduledEmail.STATUS_SENT
                 except SMTPException:
+                    LOGGER.exception('There is an error during sending a scheduled email.')
                     email.status = ScheduledEmail.STATUS_FAILED
                 email.save()
 
