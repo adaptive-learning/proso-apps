@@ -9,6 +9,7 @@ django-ipware==1.1.3
 django-lazysignup==1.0.2
 flake8==2.6.2
 gopay-django-api==0.5
+html2text==2016.9.19
 jsonfield==1.0.3
 jsonschema==2.5.1
 mock==1.3.0

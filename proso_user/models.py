@@ -5,9 +5,12 @@ from django.core.mail import get_connection, send_mail
 from django.db import models
 from django.db import transaction
 from django.db.models.signals import pre_save, post_save
+from django.db.models import Q
 from django.dispatch import receiver
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from geoip import geolite2
+from html2text import html2text
 from ipware.ip import get_ip
 from lazysignup.signals import converted
 from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social, name_lazy_user
@@ -312,6 +315,31 @@ class Session(models.Model):
 
 
 class ScheduledEmailManager(models.Manager):
+
+    def schedule_more(self, from_email, subject, template_file, emails=None, skip_emails=None, langs=None):
+        from proso_models.models import Answer
+        if emails is None:
+            users = User.objects.filter(Q(email__isnull=False) & ~Q(email=''))
+        else:
+            users = User.objects.filter(email__in=emails)
+        if skip_emails is not None:
+            users = users.exclude(email__in=skip_emails)
+        users = list(users)
+        user_ids = [user.id for user in users]
+        if langs is not None:
+            valid_users = set(Answer.objects.filter(lang__in=langs, user_id__in=user_ids).distinct('user_id').values_list('user_id', flat=True))
+            users = [u for u in users if u.id in valid_users]
+            user_ids = list(valid_users - set(user_ids))
+        send_emails = dict(UserProfile.objects.filter(user_id__in=user_ids).values_list('user_id', 'send_emails'))
+        result = []
+        for user in users:
+            if not send_emails.get(user.id, False):
+                continue
+            msg_html = render_to_string(template_file, {'user': user, 'token': UserProfile.objects.get_user_hash(user)})
+            msg_plain = html2text(msg_html)
+            self.schedule(user, subject, msg_plain, from_email, html_message=msg_html)
+            result.append(user)
+        return result
 
     def schedule(self, user, subject, message, from_email, scheduled=None, html_message=None):
         self.create(
