@@ -13,7 +13,7 @@ MIDDLEWARE_CLASSES = [
     'proso_common.middleware.LogQueriesMiddleware',
     'proso_common.middleware.ErrorMiddleware',
     'proso_common.middleware.AuthAlreadyAssociatedMiddleware',
-
+    'proso_common.middleware.CustomFiltersMiddleware',
 ]
 
 
