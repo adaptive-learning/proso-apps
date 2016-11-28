@@ -318,7 +318,7 @@ class Session(models.Model):
 
 class ScheduledEmailManager(models.Manager):
 
-    def schedule_more(self, from_email, subject, template_file, emails=None, skip_emails=None, langs=None, output_dir=None, dry=False):
+    def schedule_more(self, from_email, subject, template_file, emails=None, skip_emails=None, langs=None, output_dir=None, dry=False, active_since=None):
         from proso_models.models import Answer
         if emails is None:
             users = User.objects.filter(Q(email__isnull=False) & ~Q(email=''))
@@ -331,7 +331,13 @@ class ScheduledEmailManager(models.Manager):
         if langs is not None:
             valid_users = set(Answer.objects.filter(lang__in=langs, user_id__in=user_ids).distinct('user_id').values_list('user_id', flat=True))
             users = [u for u in users if u.id in valid_users]
-            user_ids = list(valid_users - set(user_ids))
+            user_ids = list(valid_users & set(user_ids))
+        if active_since is not None:
+            if isinstance(active_since, str):
+                active_since = datetime.datetime(active_since, '%Y-%M-%d')
+            valid_users = set(Answer.objects.filter(time__gte=active_since).values_list('user_id', flat=True))
+            users = [u for u in users if u.id in valid_users]
+            user_ids = list(valid_users & set(user_ids))
         send_emails = dict(UserProfile.objects.filter(user_id__in=user_ids).values_list('user_id', 'send_emails'))
         result = []
         for user in users:
@@ -343,7 +349,9 @@ class ScheduledEmailManager(models.Manager):
                 'subject': subject,
             })
             if output_dir:
-                with open(os.path.join(output_dir, '{}_{}.html'.format(slugify(subject), user.email)), 'w') as f:
+                filename = os.path.join(output_dir, '{}_{}.html'.format(slugify(subject), user.email))
+                with open(filename, 'w') as f:
+                    print('Creating {}'.format(filename))
                     f.write(msg_html)
             msg_plain = html2text(msg_html)
             if not dry:
