@@ -13,6 +13,11 @@ class Command(BaseCommand):
             default=[]
         ),
         make_option(
+            '--skip-emails-file',
+            dest='skip_emails_file',
+            default=None
+        ),
+        make_option(
             '--email',
             dest='emails',
             action='append',
@@ -50,8 +55,8 @@ class Command(BaseCommand):
             default=False
         ),
         make_option(
-            '--active-since',
-            dest='active_since',
+            '--active-from',
+            dest='active_from',
             default=None
         )
     )
@@ -70,6 +75,9 @@ class Command(BaseCommand):
             subject = options['subjects'][0]
             to_process = [(None, subject, template_file)]
         skip_emails = list(options['skip_emails'])
+        if options['skip_emails_file'] is not None:
+            with open(os.path.realpath(options['skip_emails_file']), 'r') as f:
+                skip_emails.append(f.readlines())
         for lang, subject, template_file in to_process:
             if options['dry']:
                 print()
@@ -82,7 +90,7 @@ class Command(BaseCommand):
                 langs=None if lang is None else [lang],
                 output_dir=None if options['output_dir'] is None else os.path.realpath(options['output_dir']),
                 dry=options['dry'],
-                active_since=options['active_since']
+                active_from=options['active_from']
             )
             for user in users:
                 skip_emails.append(user.email)
