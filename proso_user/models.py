@@ -318,7 +318,7 @@ class Session(models.Model):
 
 class ScheduledEmailManager(models.Manager):
 
-    def schedule_more(self, from_email, subject, template_file, emails=None, skip_emails=None, langs=None, output_dir=None, dry=False, active_since=None):
+    def schedule_more(self, from_email, subject, template_file, emails=None, skip_emails=None, langs=None, output_dir=None, dry=False, active_from=None):
         from proso_models.models import Answer
         if emails is None:
             users = User.objects.filter(Q(email__isnull=False) & ~Q(email=''))
@@ -332,10 +332,11 @@ class ScheduledEmailManager(models.Manager):
             valid_users = set(Answer.objects.filter(lang__in=langs, user_id__in=user_ids).distinct('user_id').values_list('user_id', flat=True))
             users = [u for u in users if u.id in valid_users]
             user_ids = list(valid_users & set(user_ids))
-        if active_since is not None:
-            if isinstance(active_since, str):
-                active_since = datetime.datetime(active_since, '%Y-%M-%d')
-            valid_users = set(Answer.objects.filter(time__gte=active_since).values_list('user_id', flat=True))
+        if active_from is not None:
+            if isinstance(active_from, str):
+                active_from = datetime.datetime.strptime(active_from, '%Y-%m-%d')
+            print(active_from)
+            valid_users = set(Answer.objects.filter(time__gte=active_from).values_list('user_id', flat=True))
             users = [u for u in users if u.id in valid_users]
             user_ids = list(valid_users & set(user_ids))
         send_emails = dict(UserProfile.objects.filter(user_id__in=user_ids).values_list('user_id', 'send_emails'))
