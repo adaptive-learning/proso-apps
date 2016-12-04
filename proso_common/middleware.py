@@ -163,6 +163,8 @@ class CustomFiltersMiddleware(object):
         def _filter(key, value):
             if key != 'device':
                 return None
+            if 'HTTP_USER_AGENT' not in request.META:
+                return None
             user_agent = parse(request.META['HTTP_USER_AGENT'])
             if value == 'pc' and user_agent.is_pc:
                 return True
