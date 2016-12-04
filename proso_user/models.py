@@ -22,6 +22,7 @@ from proso.rand import random_string
 from proso_common.models import get_config
 from smtplib import SMTPException
 from social.apps.django_app.default.models import UserSocialAuth
+import copy
 import datetime
 import hashlib
 import hmac
@@ -318,12 +319,16 @@ class Session(models.Model):
 
 class ScheduledEmailManager(models.Manager):
 
-    def schedule_more(self, from_email, subject, template_file, emails=None, skip_emails=None, langs=None, output_dir=None, dry=False, active_from=None):
+    def schedule_more(self, from_email, subject, template_file, users=None, emails=None, skip_emails=None, langs=None, output_dir=None, dry=False, active_from=None, template_kwargs=None, scheduled=None):
         from proso_models.models import Answer
-        if emails is None:
-            users = User.objects.filter(Q(email__isnull=False) & ~Q(email=''))
-        else:
+        if users is not None and emails is not None:
+            raise Exception('Both users and e-mails can not be specified.')
+        if template_kwargs is None:
+            template_kwargs = {}
+        if emails is not None:
             users = User.objects.filter(email__in=emails)
+        elif users is None:
+            users = User.objects.filter(Q(email__isnull=False) & ~Q(email=''))
         if skip_emails is not None:
             users = users.exclude(email__in=skip_emails)
         users = list(users)
@@ -335,7 +340,6 @@ class ScheduledEmailManager(models.Manager):
         if active_from is not None:
             if isinstance(active_from, str):
                 active_from = datetime.datetime.strptime(active_from, '%Y-%m-%d')
-            print(active_from)
             valid_users = set(Answer.objects.filter(time__gte=active_from).values_list('user_id', flat=True))
             users = [u for u in users if u.id in valid_users]
             user_ids = list(valid_users & set(user_ids))
@@ -344,11 +348,11 @@ class ScheduledEmailManager(models.Manager):
         for user in users:
             if not send_emails.get(user.id, False):
                 continue
-            msg_html = render_to_string(template_file, {
-                'user': user,
-                'token': UserProfile.objects.get_user_hash(user),
-                'subject': subject,
-            })
+            user_template_kwargs = copy.deepcopy(template_kwargs)
+            user_template_kwargs['user'] = user
+            user_template_kwargs['token'] = UserProfile.objects.get_user_hash(user)
+            user_template_kwargs['subject'] = subject
+            msg_html = render_to_string(template_file, user_template_kwargs)
             if output_dir:
                 filename = os.path.join(output_dir, '{}_{}.html'.format(slugify(subject), user.email))
                 with open(filename, 'w') as f:
@@ -356,7 +360,7 @@ class ScheduledEmailManager(models.Manager):
                     f.write(msg_html)
             msg_plain = html2text(msg_html)
             if not dry:
-                self.schedule(user, subject, msg_plain, from_email, html_message=msg_html)
+                self.schedule(user, subject, msg_plain, from_email, html_message=msg_html, scheduled=scheduled)
             result.append(user)
         return result
 
