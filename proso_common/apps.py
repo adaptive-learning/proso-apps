@@ -4,6 +4,7 @@ import importlib
 
 
 MIDDLEWARE_CLASSES = [
+    'proso_common.middleware.StatsMiddleware',
     'proso.django.request.RequestMiddleware',
     'proso.django.config.ConfigMiddleware',
     'proso.django.cache.RequestCacheMiddleware',

@@ -9,7 +9,9 @@ from django.utils.encoding import force_text
 from proso.django.response import HttpError, render_json
 from proso_common.models import add_custom_config_filter
 from social.exceptions import AuthAlreadyAssociated
+from proso_common.models import get_events_logger
 from user_agents import parse
+import time
 import datetime
 import logging
 import re
@@ -174,3 +176,29 @@ class CustomFiltersMiddleware(object):
                 return True
             return False
         add_custom_config_filter(_filter)
+
+
+class StatsMiddleware(object):
+    def process_request(self, request):
+        request._start = time.time()
+
+    def process_response(self, request, response):
+        logger = get_events_logger()
+
+        # compute the db time for the queries just run
+        if len(connection.queries) > 0:
+            db_time = sum([float(q['time']) for q in connection.queries])
+        else:
+            db_time = 0.0
+
+        stats = {
+            'path': request.path,
+            'method': request.method,
+            'status': response.status_code,
+            'time': round(time.time() - request._start, 5),
+            'dbtime': db_time,
+            'numqueries': len(connection.queries),
+        }
+
+        logger.emit('applog', stats)
+        return response
