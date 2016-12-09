@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
-from proso.django.models import ModelDiffMixin
-from proso_models.models import Item, ItemRelation, Answer
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
+from proso.django.models import ModelDiffMixin
 from proso.django.models import disable_for_loaddata
+from proso.django.request import get_current_request
+from proso_models.models import Item, ItemRelation, Answer
 import logging
 
 
@@ -66,9 +67,11 @@ class Context(models.Model, ModelDiffMixin):
             "object_type": "fc_context",
             "lang": self.lang,
             "name": self.name,
-            "content": self.content,
             "active": self.active,
         }
+        request = get_current_request(force=False)
+        if request is None or not request.GET.get('without_content', False):
+            json['content'] = self.content
         return json
 
     def __str__(self):
@@ -78,7 +81,11 @@ class Context(models.Model, ModelDiffMixin):
 class FlashcardManager(models.Manager):
 
     def prepare_related(self):
-        return self.select_related(Flashcard.related_term(), Flashcard.related_term_secondary(), Flashcard.related_context())
+        related = [Flashcard.related_term(), Flashcard.related_term_secondary()]
+        request = get_current_request(force=False)
+        if request is None or not request.GET.get('without_contexts', False):
+            related.append(Flashcard.related_context())
+        return self.select_related(*related)
 
     def prepare(self):
         return self.select_related(Flashcard.related_term(), Flashcard.related_term_secondary())
@@ -98,7 +105,7 @@ class Flashcard(models.Model, ModelDiffMixin):
 
     objects = FlashcardManager()
 
-    def to_json(self, nested=False, contexts=True):
+    def to_json(self, nested=False):
         data = {
             "id": self.pk,
             "identifier": self.identifier,
@@ -112,7 +119,8 @@ class Flashcard(models.Model, ModelDiffMixin):
             data["options"] = [o.to_json(nested=True) for o in sorted(self.options, key=lambda f: f.term.name)]
         if hasattr(self, 'practice_meta'):
             data['practice_meta'] = self.practice_meta
-        if not nested and contexts:
+        request = get_current_request(force=False)
+        if not nested and (request is None or not request.GET.get('without_contexts', False)):
             data["context"] = self.get_context().to_json(nested=True)
         else:
             data["context_id"] = self.context_id
