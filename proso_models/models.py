@@ -922,20 +922,21 @@ class ItemManager(models.Manager):
         groupped = proso.list.group_by(item_ids, by=lambda item_id: all_item_type_ids[item_id])
         result = {}
         for item_type_id, items in groupped.items():
-            item_type = ItemType.objects.get_all_types()[item_type_id]
-            model = ItemType.objects.get_model(item_type_id)
-            kwargs = {'{}__in'.format(item_type['foreign_key']): items}
-            if 'language' in item_type:
-                kwargs[item_type['language']] = language
-            if any([not is_nested_fun(item_id) for item_id in items]) and hasattr(model.objects, 'prepare_related'):
-                objs = model.objects.prepare_related()
-            elif hasattr(model.objects, 'prepare'):
-                objs = model.objects.prepare()
-            else:
-                objs = model.objects
-            for obj in objs.filter(**kwargs):
-                item_id = getattr(obj, item_type['foreign_key'])
-                result[item_id] = obj.to_json(nested=is_nested_fun(item_id))
+            with timeit('translating item type {}'.format(item_type_id)):
+                item_type = ItemType.objects.get_all_types()[item_type_id]
+                model = ItemType.objects.get_model(item_type_id)
+                kwargs = {'{}__in'.format(item_type['foreign_key']): items}
+                if 'language' in item_type:
+                    kwargs[item_type['language']] = language
+                if any([not is_nested_fun(item_id) for item_id in items]) and hasattr(model.objects, 'prepare_related'):
+                    objs = model.objects.prepare_related()
+                elif hasattr(model.objects, 'prepare'):
+                    objs = model.objects.prepare()
+                else:
+                    objs = model.objects
+                for obj in objs.filter(**kwargs):
+                    item_id = getattr(obj, item_type['foreign_key'])
+                    result[item_id] = obj.to_json(nested=is_nested_fun(item_id))
         return result
 
     @cache_pure()
