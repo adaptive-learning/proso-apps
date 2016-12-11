@@ -137,6 +137,10 @@ class CommonEnvironment(Environment):
         pass
 
     @abc.abstractmethod
+    def has_answer(self, user=None, item=None, context=None):
+        pass
+
+    @abc.abstractmethod
     def number_of_answers_more_items(self, items, user=None):
         pass
 
@@ -146,6 +150,10 @@ class CommonEnvironment(Environment):
 
     @abc.abstractmethod
     def number_of_first_answers_more_items(self, items, user=None):
+        pass
+
+    @abc.abstractmethod
+    def has_answer_more_items(self, items, user=None):
         pass
 
     @abc.abstractmethod
@@ -320,6 +328,9 @@ class InMemoryEnvironment(CommonEnvironment):
             raise Exception('Using context is not supported.')
         return self.read(self.NUMBER_OF_FIRST_ANSWERS, user=user, item=item, default=0)
 
+    def has_answer(self, user=None, item=None, context=None):
+        return self.number_of_first_answers(user=user, item=item, context=context) > 0
+
     def last_answer_time(self, user=None, item=None, context=None):
         if context is not None:
             raise Exception('Using context is not supported.')
@@ -333,6 +344,9 @@ class InMemoryEnvironment(CommonEnvironment):
 
     def number_of_first_answers_more_items(self, items, user=None):
         return self.read_more_items(self.NUMBER_OF_FIRST_ANSWERS, items, user=user, default=0)
+
+    def has_answer_more_items(self, items, user=None):
+        return {i: v > 0 for i, v in self.number_of_first_answers_more_items(items, user=user).items()}
 
     def last_answer_time_more_items(self, items, user=None):
         return self.time_more_items(self.NUMBER_OF_ANSWERS, items, user=user)
@@ -622,8 +636,11 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         items = [self.generate_item() for i in range(10)]
         self.assertEqual(env.number_of_first_answers(), 0)
         self.assertEqual(env.number_of_first_answers(user=user_1), 0)
+        self.assertFalse(env.has_answer(user=user_1))
         self.assertEqual(env.number_of_first_answers(user=user_1, item=items[0]), 0)
+        self.assertFalse(env.has_answer(user=user_1, item=items[0]))
         self.assertEqual(env.number_of_first_answers(item=items[0]), 0)
+        self.assertFalse(env.has_answer(item=items[0]))
         self.assertEqual(env.number_of_first_answers_more_items(items), {i: 0 for i in items})
         for u in [user_1, user_2]:
             for i in items:
@@ -631,8 +648,11 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
                     env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
         self.assertEqual(env.number_of_first_answers(), 20)
         self.assertEqual(env.number_of_first_answers(user=user_1), 10)
+        self.assertTrue(env.has_answer(user=user_1))
         self.assertEqual(env.number_of_first_answers(user=user_1, item=items[0]), 1)
+        self.assertTrue(env.has_answer(user=user_1, item=items[0]))
         self.assertEqual(env.number_of_first_answers(item=items[0]), 2)
+        self.assertTrue(env.has_answer(item=items[0]))
         self.assertEqual(env.number_of_first_answers_more_items(items), {i: 2 for i in items})
 
     def test_symmetry(self):
