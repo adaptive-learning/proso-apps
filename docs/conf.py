@@ -26,9 +26,7 @@ sys.path.append(os.path.abspath('..'))
 
 import proso.release
 
-MOCK_MODULES = [
-    'numpy',
-]
+MOCK_MODULES = []
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
