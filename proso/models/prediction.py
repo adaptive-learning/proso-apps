@@ -399,7 +399,7 @@ class PFAEStaircase(PredictiveModel):
         result['difficulties'] = environment.read_more_items('difficulty', items=items + parent_ids, default=0)
         result['current_skills'] = environment.read_more_items('current_skill', user=user, items=items)
         result['last_times'] = environment.last_answer_time_more_items(user=user, items=items)
-        result['items_first_answers'] = environment.number_of_first_answers_more_items(items=items)
+        result['items_has_answer'] = environment.has_answer_more_items(items=items)
         staircase_keys = ['staircase_val_{}'.format(i) for i in self._staircase] + ['staircase_count_{}'.format(i) for i in self._staircase]
         staircase_loaded = environment.read_more_keys(staircase_keys, default=0)
         result['staircase'] = {
@@ -413,7 +413,7 @@ class PFAEStaircase(PredictiveModel):
             if len(data['parents']) > 0:
                 total_parent_weight = sum(data['parents'].values())
                 parent_difficulty = sum([data['difficulties'][p] * w for p, w in data['parents'].items()]) / total_parent_weight
-                if data['item_first_answers'] == 0:
+                if ('item_first_answers' in data and data['item_first_answers'] == 0) or ('item_has_answer' in data and data['item_has_answer']):
                     total_difficulty = parent_difficulty
                 else:
                     total_difficulty = (1 - self._parent_contribution) * data['difficulties'][item] + self._parent_contribution * parent_difficulty
@@ -436,7 +436,7 @@ class PFAEStaircase(PredictiveModel):
                 'difficulties': data['difficulties'],
                 'current_skill': data['current_skills'][i],
                 'last_time': data['last_times'][i],
-                'item_first_answers': data['items_first_answers'][i],
+                'item_has_answer': data['items_has_answer'][i],
                 'staircase': data['staircase'],
                 'parents': data['parents'][i],
             }, user, i, time, **kwargs))

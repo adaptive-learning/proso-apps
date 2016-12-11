@@ -8,6 +8,7 @@ from django.db import transaction
 from proso.django.db import is_on_postgresql
 from proso.models.environment import CommonEnvironment, InMemoryEnvironment
 from proso_common.models import get_config
+from proso.time import timeit
 import logging
 import os.path
 import re
@@ -195,6 +196,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 ''' + where, where_params)
             return cursor.fetchall()
 
+    @timeit()
     def get_items_with_values_more_items(self, key, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(
@@ -230,6 +232,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 else:
                     return audit[0][1]
 
+    @timeit()
     def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(key, items, user, item, symmetric=symmetric)
@@ -253,6 +256,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 result.update({x_y_z1[0]: x_y_z1[2] if x_y_z1[1] == item else (x_y_z1[1], x_y_z1[2]) for x_y_z1 in cursor})
             return result
 
+    @timeit()
     def read_more_keys(self, keys, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_single(keys, user, item, item_secondary, symmetric=symmetric)
@@ -274,6 +278,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 result[k] = v
             return result
 
+    @timeit()
     def read_all_with_key(self, key):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'key': key})
@@ -308,6 +313,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 else:
                     return self._ensure_is_datetime(audit[0][0])
 
+    @timeit()
     def time_more_items(self, key, items, user=None, item=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(key, items, user, item, symmetric=symmetric)
@@ -429,6 +435,9 @@ class DatabaseEnvironment(CommonEnvironment):
                 + where + ' GROUP BY user_id, item_id) AS t', where_params)
             return cursor.fetchone()[0]
 
+    def has_answer(self, user=None, item=None, context=None):
+        return self.number_of_first_answers(user=user, item=item, context=context)
+
     def last_answer_time(self, user=None, item=None, context=None):
         if item is not None and context is not None:
             raise Exception('Either item or context has to be unspecified')
@@ -439,6 +448,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 + where, where_params)
             return self._ensure_is_datetime(cursor.fetchone()[0])
 
+    @timeit()
     def number_of_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
@@ -451,6 +461,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 result[i] = v
             return result
 
+    @timeit()
     def number_of_correct_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
@@ -463,6 +474,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 result[i] = v
             return result
 
+    @timeit()
     def number_of_first_answers_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
@@ -475,6 +487,38 @@ class DatabaseEnvironment(CommonEnvironment):
                 result[i] = v
             return result
 
+    @timeit()
+    def has_answer_more_items(self, items, user=None):
+        cached_all = {}
+        answer_cache = cache.get('database_environment__has_answer', {})
+        for item in items:
+            cache_key = '{}_{}'.format(item, user)
+            found = answer_cache.get(cache_key)
+            if found:
+                cached_all[item] = True
+        to_find = [i for i in items if i not in set(cached_all.keys())]
+        if len(cached_all) != 0:
+            LOGGER.debug('cache hit for having answers, items {} and user {}'.format(len(cached_all), user))
+        if len(to_find) != 0:
+            LOGGER.debug('cache miss for having answers, items {} and user {}'.format(len(to_find), user))
+            with closing(connection.cursor()) as cursor:
+                where, where_params = self._where({'user_id': user, 'item_id': to_find}, False, for_answers=True)
+                cursor.execute(
+                    'SELECT item_id, 1 FROM proso_models_answer WHERE '
+                    + where + ' GROUP BY item_id',
+                    where_params)
+                for i, _ in cursor:
+                    cached_all[i] = True
+                cache_expiration = get_config('proso_models', 'having_answers.cache_expiration', default=30 * 24 * 60 * 60)
+                # trying to decrease probability of race condition
+                answer_cache = cache.get('database_environment__has_answer', {})
+                for item in cached_all.keys():
+                    cache_key = '{}_{}'.format(item, user)
+                    answer_cache[cache_key] = True
+                cache.set('database_environment__has_answer', answer_cache, cache_expiration)
+        return {i: cached_all.get(i, False) for i in items}
+
+    @timeit()
     def last_answer_time_more_items(self, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'user_id': user, 'item_id': items}, False, for_answers=True)
@@ -496,6 +540,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def avoid_audit(self, avoid_audit):
         self._avoid_audit = avoid_audit
 
+    @timeit()
     def rolling_success(self, user, window_size=10, context=None):
         where, where_params = self._where({'user_id': user, 'context_id': context}, False, for_answers=True)
         with closing(connection.cursor()) as cursor:
@@ -518,6 +563,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def confusing_factor(self, item, item_secondary, user=None):
         return self.confusing_factor_more_items(item, [item_secondary], user=user)[0]
 
+    @timeit()
     def confusing_factor_more_items(self, item, items, user=None):
         cached_all = {}
         confusing_factor_cache = cache.get('database_environment__confusing_factor', {})
