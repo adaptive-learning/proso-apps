@@ -762,6 +762,7 @@ class ItemManager(models.Manager):
         return self.filter_all_reachable_leaves_many([identifier_filter], language)[0]
 
     @cache_pure()
+    @timeit(name='get_children_graph')
     def get_children_graph(self, item_ids=None, language=None):
         """
         Get a subgraph of items reachable from the given set of items through
@@ -829,6 +830,7 @@ class ItemManager(models.Manager):
     def get_reachable_parents(self, item_ids, language=None):
         return self._reachable_items(self.get_parents_graph(item_ids, language=language))
 
+    @timeit(name='translate_identifiers')
     def translate_identifiers(self, identifiers, language):
         """
         Translate a list of identifiers to item ids. Identifier is a string of
@@ -940,6 +942,7 @@ class ItemManager(models.Manager):
         return result
 
     @cache_pure()
+    @timeit(name='get_leaves')
     def get_leaves(self, item_ids, language=None):
         """
         Get mapping of items to their reachable leaves. Leaves having
