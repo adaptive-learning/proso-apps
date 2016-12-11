@@ -103,6 +103,7 @@ class ContextOptionSet(OptionSet):
         else:
             return flashcard['context_id']
 
+
 class Direction(metaclass=abc.ABCMeta):
     def __init__(self, **kwargs):
         pass
