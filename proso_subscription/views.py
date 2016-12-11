@@ -9,7 +9,6 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from gopay.enums import PaymentStatus
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from proso.django.request import get_language
 from proso.django.response import render_json
 
@@ -29,6 +28,7 @@ def plans(request):
 @staff_member_required
 def revenue_per_month(request, currency):
     try:
+        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
         import matplotlib.pyplot as plt
         import pandas
         import seaborn as sns
