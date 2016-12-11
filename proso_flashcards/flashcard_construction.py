@@ -44,7 +44,7 @@ class ContextOptionSet(OptionSet):
         opt_set_cache = cache.get('flashcard_construction__context_option_set', {})
         to_find = [fc for (fc, question_type) in flashcards_with_question_types if (fc['item_id'], question_type) not in opt_set_cache]
         if len(to_find) > 0:
-            context_ids = {flashcard['context']['id'] for flashcard in to_find}
+            context_ids = {self.get_context_id(flashcard) for flashcard in to_find}
             types_all_item_ids = set([c.item_id for c in Category.objects.filter(type='flashcard_type')])
             flashcard_item_ids = set([flashcard['item_id'] for flashcard in to_find])
             reachable_parents = Item.objects.get_reachable_parents(flashcard_item_ids, language=to_find[0]['lang'])
@@ -56,7 +56,7 @@ class ContextOptionSet(OptionSet):
             found = {
                 flashcard['item_id']: [i for i in reduce(
                     lambda xs, ys: set(xs) & set(ys),
-                    Item.objects.get_leaves({context_item_ids[flashcard['context']['id']]} | flashcard_types[flashcard['item_id']], language=flashcard['lang']).values()
+                    Item.objects.get_leaves({context_item_ids[self.get_context_id(flashcard)]} | flashcard_types[flashcard['item_id']], language=flashcard['lang']).values()
                 ) if (secondary_terms.get(i) is not None) == ('term_secondary' in flashcard)]
                 for flashcard in to_find
             }
@@ -84,7 +84,7 @@ class ContextOptionSet(OptionSet):
                         continue
                     options_by_keys = {}
                     for opt in sorted(options, key=lambda o: o['identifier']):
-                        if fc['context']['id'] == opt['context_id'] and fc[key_from]['identifier'] == opt[key_from]['identifier']:
+                        if self.get_context_id(fc) == opt['context_id'] and fc[key_from]['identifier'] == opt[key_from]['identifier']:
                             continue
                         options_by_keys[opt[key_to]['item_id']] = opt
                     if fc[key_to]['item_id'] in options_by_keys:
@@ -97,6 +97,11 @@ class ContextOptionSet(OptionSet):
             cache.set('flashcard_construction__context_option_set', opt_set_cache)
         return {fc['item_id']: opt_set_cache[fc['item_id']] for fc, _ in flashcards_with_question_types}
 
+    def get_context_id(self, flashcard):
+        if 'context' in flashcard:
+            return flashcard['context']['id']
+        else:
+            return flashcard['context_id']
 
 class Direction(metaclass=abc.ABCMeta):
     def __init__(self, **kwargs):
