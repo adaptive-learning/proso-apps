@@ -183,6 +183,10 @@ class StatsMiddleware(object):
         request._start = time.time()
 
     def process_response(self, request, response):
+        if not hasattr(request, '_start'):
+            LOGGER.warning('The request has no "_start" attribute.')
+            return response
+
         logger = get_events_logger()
 
         # compute the db time for the queries just run
