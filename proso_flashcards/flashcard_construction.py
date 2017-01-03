@@ -123,9 +123,21 @@ class RandomDirection(Direction):
 
 class OnlyFromTermDirection(Direction):
     def get_direction(self, flashcard):
-        return FlashcardAnswer.FROM_TERM
+        if 'term_secondary' in flashcard:
+            return FlashcardAnswer.FROM_TERM_TO_TERM_SECONDARY
+        else:
+            return FlashcardAnswer.FROM_TERM
+
+
+class OnlyFromSecondaryTerm(Direction):
+    def get_direction(self, flashcard):
+        if 'term_secondary' not in flashcard:
+            raise Exception('There is no secondary term, so the question type "from secondary term" is not valid.')
+        return FlashcardAnswer.FROM_TERM_SECONDARY_TO_TERM
 
 
 class OnlyFromDescriptionDirection(Direction):
     def get_direction(self, flashcard):
+        if 'term_secondary' in flashcard:
+            raise Exception('There is a secondary term, so the question type "from description" is not valid.')
         return FlashcardAnswer.FROM_DESCRIPTION
