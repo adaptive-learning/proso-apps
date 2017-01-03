@@ -1657,7 +1657,7 @@ def forcesst_practice_filter_contains_custom_filter(sender, instance, **kwargs):
             raise Exception('The custom config filter "practice_filter_contains" can not contain "{}" character.'.format(char))
 
 
-PROSO_MODELS_TO_EXPORT = [Answer]
+PROSO_MODELS_TO_EXPORT = [Answer, PracticeContext]
 PROSO_CUSTOM_EXPORT = {
     'relations': '''
     SELECT
