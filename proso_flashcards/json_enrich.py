@@ -2,6 +2,7 @@ from .flashcard_construction import get_direction, get_option_set
 from collections import defaultdict
 from proso.django.request import get_time, is_time_overridden
 from proso.list import flatten
+from proso.models.context import selected_item_context
 from proso_common.models import get_config
 from proso_flashcards.models import Flashcard, FlashcardAnswer
 from proso_models.json_enrich import item2object
@@ -79,10 +80,14 @@ def options(request, json_list, nested):
 
 
 def question_type(request, json_list, nested):
-    direction = get_direction()
+    items = sorted([question['payload']['item_id'] for question in json_list if question['payload']['object_type'] == 'fc_flashcard'])
     for question in json_list:
         if question['payload']['object_type'] == 'fc_flashcard':
-            question['question_type'] = direction.get_direction(question['payload'])
+            with selected_item_context(question['payload']['item_id'], items):
+                # We instantiate a direction for each question separately, so it can
+                # be dependent on the question payload. On the other side, it could
+                # be really slow in the case of a large number of questions.
+                question['question_type'] = get_direction().get_direction(question['payload'])
 
 
 def answer_flashcards(request, json_list, nested):
