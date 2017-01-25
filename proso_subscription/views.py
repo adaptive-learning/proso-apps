@@ -1,12 +1,11 @@
 from .models import Subscription, SubscriptionPlan, SubscriptionPlanDescription, DiscountCode
-from calendar import monthrange
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from gopay.enums import PaymentStatus
 from proso.django.request import get_language
@@ -36,81 +35,61 @@ def revenue_per_month(request, currency):
         return HttpResponse('Can not import python packages for analysis.', status=503)
     now = datetime.now()
     ago = int(request.GET.get('ago', 0))
-    today = now.replace(hour=0, minute=0, second=0, microsecond=0) - relativedelta(months=ago)
+    today_month = now.replace(hour=0, minute=0, second=0, microsecond=0, day=1) - relativedelta(months=ago)
     subscriptions = Subscription.objects.prepare_related().filter(
         payment__state=PaymentStatus.PAID,
-        expiration__gte=today
+        expiration__gte=today_month
     )
     data = []
     for sub in subscriptions:
         expiration = sub.payment.updated + relativedelta(months=sub.plan_description.plan.months_validity)
-        first_month_days = monthrange(sub.payment.updated.year, sub.payment.updated.month)[1]
-        last_month_days = monthrange(expiration.year, expiration.month)[1]
         record = {
             'paid': sub.payment.updated,
             'expiration': expiration,
             'revenue': sub.payment.status['amount'] / 100,
             'currency': sub.payment.status['currency'],
             'months': sub.plan_description.plan.months_validity,
-            'first_percentage': (first_month_days- sub.payment.updated.day + 1) / first_month_days,
-            'last_percentage': expiration.day / last_month_days,
         }
-        percentage_total = record['first_percentage'] + record['last_percentage']
-        record['first_percentage'] /= percentage_total
-        record['last_percentage'] /= percentage_total
         data.append(record)
     data = pandas.DataFrame(data)
+    if len(data) == 0:
+        raise Http404("There are no active subscriptions.")
+    print(data)
     data = data[data['currency'] == currency]
-    result = []
-    for i in range(12 + ago):
-        month = (today.month + i) % 12
-        if month == 0:
-            month = 12
-        year = today.year if month >= today.month else (today.year + 1)
-        month_data = data[
-            data['paid'].apply(lambda p: p.year < year or (p.month <= month and p.year == year)) &
-            data['expiration'].apply(lambda e: e.year > year or (e.month >= month and e.year == year))
-        ]
-        if len(month_data) == 0:
-            result.append({
-                'year_month': '{}-{}'.format(year, month if month > 9 else '0{}'.format(month)),
-                'revenue': 0,
-                'currency': currency,
-                'count': 0,
-                'percentage': 0,
-            })
-        for paid, expiration, revenue, currency, months, first_percentage, last_percentage in month_data[['paid', 'expiration', 'revenue', 'currency', 'months', 'first_percentage', 'last_percentage']].values:
-            percentage = 1.0
-            if expiration.year == year and expiration.month == month:
-                percentage = last_percentage
-            elif paid.year == year and paid.month == month:
-                percentage = first_percentage
-            result.append({
-                'year_month': '{}-{}'.format(year, month if month > 9 else '0{}'.format(month)),
-                'revenue': (revenue / months) * percentage,
-                'currency': currency,
-                'percentage': percentage,
-                'count': 1,
-            })
-    result = pandas.DataFrame(result)
+    data['year_month'] = data['paid'].apply(lambda x: pandas.to_datetime(str(x)).strftime('%Y-%m'))
 
     def _apply(group):
         return pandas.DataFrame([{
             'revenue': group['revenue'].sum(),
-            'count': group['count'].sum(),
-            'percentage': group['percentage'].sum(),
+            'count': len(group),
         }])
+    result = data.groupby('year_month').apply(_apply).reset_index()
+    counts = []
+    for year_month in [today_month + relativedelta(months=i) for i in range(12 + ago)]:
+        year = year_month.year
+        month = year_month.month
+        year_month_data = data[
+            data['paid'].apply(lambda p: p.year < year or (p.month <= month and p.year == year)) &
+            data['expiration'].apply(lambda e: e.year > year or (e.month >= month and e.year == year))
+        ]
+        counts.append({
+            'year_month': year_month.strftime('%Y-%m'),
+            'count_dist': len(year_month_data),
+        })
+    result = pandas.merge(pandas.DataFrame(counts), result, on='year_month', how='left').fillna(0)
+
+    print(result)
     sns.set(style='white')
-    result = result.groupby(['year_month', 'currency']).apply(_apply).reset_index()
     fig = plt.figure()
-    sns.barplot(x='year_month', y='revenue', data=result, color=sns.color_palette()[0], label='Average revenue')
+    sns.barplot(x='year_month', y='revenue', data=result, color=sns.color_palette()[0], label='Revenue')
     plt.legend()
     plt.xticks(rotation=90)
     plt.xlabel('Year-Month')
     plt.ylabel('Revenue ({})'.format(currency))
     plt.twinx()
     sns.pointplot(result['year_month'], result['count'], linestyles='--', color='black', label='Number of subscriptions')
-    plt.ylim(0, 1.2 * result['count'].max())
+    sns.pointplot(result['year_month'], result['count_dist'], linestyles=':', color='red', label='Number of subscriptions (dist)')
+    plt.ylim(0, 1.2 * max(result['count'].max(), result['count_dist'].max()))
     plt.ylabel('Number of subscriptions')
     plt.tight_layout()
     plt.title('Total revenue: {}'.format(result['revenue'].sum()))
