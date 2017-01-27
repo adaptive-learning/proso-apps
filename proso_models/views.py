@@ -1,7 +1,7 @@
 from .models import get_environment, get_predictive_model, get_item_selector, get_active_environment_info, \
     Answer, Item, recommend_users as models_recommend_users, PracticeContext, PracticeSet,\
     learning_curve as models_learning_curve, get_filter, get_mastery_trashold, get_time_for_knowledge_overview, \
-    survival_curve_answers as models_survival_curve_answers, survival_curve_time as models_survival_curve_time
+    survival_curve_answers as models_survival_curve_answers, survival_curve_time as models_survival_curve_time, get_forbidden_items
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction, connection
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -404,7 +404,7 @@ def practice(request):
         PracticeSet.objects.filter(answer__user_id=request.user.id).update(finished=True)
 
     if limit > 0:
-        item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request))
+        item_ids = Item.objects.filter_all_reachable_leaves(practice_filter, get_language(request), forbidden_identifiers=get_forbidden_items())
         item_ids = list(set(item_ids) - set(avoid))
         limit_size = get_config('proso_models', 'practice.limit_item_set_size_to_select_from', default=None)
         if limit_size is not None and limit_size < len(item_ids):

@@ -17,7 +17,7 @@ from proso.django.config import instantiate_from_json
 from proso.django.models import ModelDiffMixin, disable_for_loaddata
 from proso.django.request import load_query_json, get_time
 from proso.django.response import HttpError
-from proso.func import fixed_point
+from proso.func import fixed_point, function_name
 from proso.list import flatten
 from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
@@ -25,6 +25,7 @@ from proso.time import timeit
 from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config, add_custom_config_filter, get_events_logger, instantiate_from_config_lazy
 from proso_common.models import IntegrityCheck, CustomConfig
 from proso_user.models import Session
+from threading import currentThread
 import django.apps
 import hashlib
 import importlib
@@ -313,6 +314,17 @@ def recommend_users(register_time_interval, number_of_answers_interval, success_
             ''', params + [limit]
         )
         return [x[0] for x in cursor.fetchall()]
+
+
+ITEM_RESTRICTORS = defaultdict(dict)
+
+
+def add_item_restrictor(restrictor):
+    ITEM_RESTRICTORS[currentThread()][function_name(restrictor)] = restrictor
+
+
+def get_forbidden_items():
+    return flatten([restrictor() for restrictor in ITEM_RESTRICTORS[currentThread()].values()])
 
 
 ################################################################################
@@ -672,7 +684,7 @@ class ItemManager(models.Manager):
 
     @cache_pure()
     @timeit(name='filter_all_reachable_leaves_many')
-    def filter_all_reachable_leaves_many(self, identifier_filters, language):
+    def filter_all_reachable_leaves_many(self, identifier_filters, language, forbidden_identifiers=None):
         """
         Provides the same functionality as .. py:method:: ItemManager.filter_all_reachable_leaves(),
         but for more filters in the same time.
@@ -693,12 +705,17 @@ class ItemManager(models.Manager):
             for identifier_filter in identifier_filters
             for identifier in set(flatten(identifier_filter))
         ]
+        if forbidden_identifiers is None:
+            forbidden_identifiers = []
+        for identifier in forbidden_identifiers:
+            item_identifiers.append(identifier)
         translated = self.translate_identifiers(item_identifiers, language)
-        leaves = self.get_leaves(set(translated.values()), language=language)
+        forbidden_item_ids = {translated[identifier] for identifier in forbidden_identifiers}
+        leaves = self.get_leaves({translated[i] for i in item_identifiers}, language=language, forbidden_item_ids=forbidden_item_ids)
         result = []
         for identifier_filter in identifier_filters:
             if len(identifier_filter) == 0:
-                result.append(self.get_all_available_leaves())
+                result.append(self.get_all_available_leaves(language=language, forbidden_item_ids=forbidden_item_ids))
                 continue
             filter_result = None
             filter_neg_result = set()
@@ -726,7 +743,7 @@ class ItemManager(models.Manager):
             result.append(sorted(list(filter_result - filter_neg_result)))
         return result
 
-    def filter_all_reachable_leaves(self, identifier_filter, language):
+    def filter_all_reachable_leaves(self, identifier_filter, language, forbidden_identifiers=None):
         """
         Get all leaves corresponding to the given filter:
 
@@ -761,7 +778,7 @@ class ItemManager(models.Manager):
         Returns:
             list: list of item ids
         """
-        return self.filter_all_reachable_leaves_many([identifier_filter], language)[0]
+        return self.filter_all_reachable_leaves_many([identifier_filter], language, forbidden_identifiers=forbidden_identifiers)[0]
 
     @cache_pure()
     @timeit(name='get_children_graph')
