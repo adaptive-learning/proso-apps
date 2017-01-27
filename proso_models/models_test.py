@@ -84,6 +84,7 @@ class ItemManagerGraphTest(test.TestCase):
         self.assertEqual(Item.objects.get_all_leaves([7]), [7])
 
     def test_get_leaves(self):
+        self.assertEqual(Item.objects.get_leaves(), {1: {5, 6, 7}, 2: {5, 6}, 3: {6, 7}, 4: {7}})
         self.assertEqual(Item.objects.get_leaves([2, 3]), {2: {5, 6}, 3: {6, 7}})
         self.assertEqual(Item.objects.get_leaves([1, 4]), {1: {5, 6, 7}, 4: {7}})
         self.assertEqual(Item.objects.get_leaves([7]), {7: {7}})

@@ -951,7 +951,7 @@ class ItemManager(models.Manager):
 
     @cache_pure()
     @timeit(name='get_leaves')
-    def get_leaves(self, item_ids, language=None):
+    def get_leaves(self, item_ids=None, language=None):
         """
         Get mapping of items to their reachable leaves. Leaves having
         inactive relations to other items are omitted.
@@ -966,6 +966,9 @@ class ItemManager(models.Manager):
         """
         children = self.get_children_graph(item_ids, language=language)
         counts = self.get_children_counts(active=None)
+        if item_ids is None:
+            # not leaves
+            item_ids = set(children.keys())
 
         def _get_leaves(item_id):
             leaves = set()
@@ -992,7 +995,7 @@ class ItemManager(models.Manager):
 
         return {item_id: _get_leaves(item_id) for item_id in item_ids}
 
-    def get_all_leaves(self, item_ids, language=None):
+    def get_all_leaves(self, item_ids=None, language=None):
         """
         Get all leaves reachable from the given set of items. Leaves having
         inactive relations to other items are omitted.
