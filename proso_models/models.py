@@ -1005,11 +1005,7 @@ class ItemManager(models.Manager):
         Returns:
             set: leaf items which are reachable from the given set of items
         """
-        children = self.get_children_graph(item_ids, language=language)
-        froms = set(children.keys())
-        tos = set([ii for iis in children.values() for ii in iis])
-        counts = self.get_children_counts(active=None)
-        return sorted([leaf for leaf in ((set(item_ids) | tos) - froms) if counts[leaf] == 0])
+        return sorted(set(flatten(self.get_leaves(item_ids, language=language).values())))
 
     def get_reference_fields(self, exclude_models=None):
         """
