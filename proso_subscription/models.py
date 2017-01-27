@@ -2,6 +2,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.timezone import now
@@ -11,11 +12,22 @@ from gopay_django_api.signals import payment_changed
 from proso.django.models import disable_for_loaddata
 from proso.django.request import get_current_request
 from proso.django.response import BadRequestException
+from proso_common.models import get_config
 from proso_user.models import Session
-from django.db.models import Q
-import uuid
-import string
 import random
+import string
+import uuid
+
+
+def get_forbidden_categories(user):
+    result = []
+    for sub_type, categories in get_config('proso_subscription', 'premium_categories', default={}).items():
+        if Subscription.objects.is_active(user, sub_type):
+            continue
+        for category in categories:
+            if random.random() < (1 - category.get('random_access', 0)):
+                result.append(category['id'])
+    return result
 
 
 class SubscriptionPlanManager(models.Manager):
