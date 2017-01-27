@@ -662,14 +662,13 @@ class ItemManager(models.Manager):
             'item_id': item_id,
         }
 
-    def get_all_available_leaves(self, forbidden_item_ids=None):
+    @cache_pure()
+    @timeit(name='get_all_available_leaves')
+    def get_all_available_leaves(self, language=None, forbidden_item_ids=None):
         """
         Get all available leaves.
         """
-        if forbidden_item_ids is None:
-            return sorted(Item.objects.filter(active=True, children=None).values_list('id', flat=True))
-        else:
-            return self.get_all_leaves(forbidden_item_ids=forbidden_item_ids)
+        return self.get_all_leaves(language=language, forbidden_item_ids=forbidden_item_ids)
 
     @cache_pure()
     @timeit(name='filter_all_reachable_leaves_many')
@@ -999,6 +998,7 @@ class ItemManager(models.Manager):
 
         return {item_id: _get_leaves(item_id) for item_id in item_ids}
 
+    @timeit(name='get_all_leaves')
     def get_all_leaves(self, item_ids=None, language=None, forbidden_item_ids=None):
         """
         Get all leaves reachable from the given set of items. Leaves having
