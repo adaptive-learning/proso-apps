@@ -662,11 +662,14 @@ class ItemManager(models.Manager):
             'item_id': item_id,
         }
 
-    def get_all_available_leaves(self):
+    def get_all_available_leaves(self, forbidden_item_ids=None):
         """
         Get all available leaves.
         """
-        return sorted(Item.objects.filter(active=True, children=None).values_list('id', flat=True))
+        if forbidden_item_ids is None:
+            return sorted(Item.objects.filter(active=True, children=None).values_list('id', flat=True))
+        else:
+            return self.get_all_leaves(forbidden_item_ids=forbidden_item_ids)
 
     @cache_pure()
     @timeit(name='filter_all_reachable_leaves_many')
@@ -951,7 +954,7 @@ class ItemManager(models.Manager):
 
     @cache_pure()
     @timeit(name='get_leaves')
-    def get_leaves(self, item_ids=None, language=None):
+    def get_leaves(self, item_ids=None, language=None, forbidden_item_ids=None):
         """
         Get mapping of items to their reachable leaves. Leaves having
         inactive relations to other items are omitted.
@@ -964,7 +967,8 @@ class ItemManager(models.Manager):
         Returns:
             dict: item id -> list of items (reachable leaves)
         """
-        children = self.get_children_graph(item_ids, language=language)
+        forbidden_item_ids = set() if forbidden_item_ids is None else set(forbidden_item_ids)
+        children = self.get_children_graph(item_ids, language=language, forbidden_item_ids=forbidden_item_ids)
         counts = self.get_children_counts(active=None)
         if item_ids is None:
             # not leaves
@@ -989,13 +993,13 @@ class ItemManager(models.Manager):
             leaves = {leaf for leaf in leaves if counts[leaf] == 0}
             if len(leaves) > 0:
                 return leaves
-            if counts[item_id] == 0:
+            if counts[item_id] == 0 and item_id not in forbidden_item_ids:
                 return {item_id}
             return set()
 
         return {item_id: _get_leaves(item_id) for item_id in item_ids}
 
-    def get_all_leaves(self, item_ids=None, language=None):
+    def get_all_leaves(self, item_ids=None, language=None, forbidden_item_ids=None):
         """
         Get all leaves reachable from the given set of items. Leaves having
         inactive relations to other items are omitted.
@@ -1008,7 +1012,7 @@ class ItemManager(models.Manager):
         Returns:
             set: leaf items which are reachable from the given set of items
         """
-        return sorted(set(flatten(self.get_leaves(item_ids, language=language).values())))
+        return sorted(set(flatten(self.get_leaves(item_ids, language=language, forbidden_item_ids=forbidden_item_ids).values())))
 
     def get_reference_fields(self, exclude_models=None):
         """
