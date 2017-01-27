@@ -763,7 +763,7 @@ class ItemManager(models.Manager):
 
     @cache_pure()
     @timeit(name='get_children_graph')
-    def get_children_graph(self, item_ids=None, language=None):
+    def get_children_graph(self, item_ids=None, language=None, forbidden_item_ids=None):
         """
         Get a subgraph of items reachable from the given set of items through
         the 'child' relation.
@@ -777,6 +777,8 @@ class ItemManager(models.Manager):
             dict: item id -> list of items (child items), root items are
             referenced by None key
         """
+        if forbidden_item_ids is None:
+            forbidden_item_ids = set()
 
         def _children(item_ids):
             if item_ids is None:
@@ -784,13 +786,19 @@ class ItemManager(models.Manager):
             else:
                 item_ids = [ii for iis in item_ids.values() for ii in iis]
                 items = Item.objects.filter(id__in=item_ids, active=True).prefetch_related('children')
-            return {item.id: sorted([_item.id for _item in item.children.all() if _item.active]) for item in items}
+            return {
+                item.id: sorted([
+                    _item.id for _item in item.children.all()
+                    if _item.active and _item.id not in forbidden_item_ids
+                ])
+                for item in items if item.id not in forbidden_item_ids
+            }
 
         if item_ids is None:
             return self._reachable_graph(None, _children, language=language)
         else:
-            graph = self.get_children_graph(None, language)
-            return self._subset_graph(graph, item_ids)
+            graph = self.get_children_graph(None, language, forbidden_item_ids=forbidden_item_ids)
+            return self._subset_graph(graph, set(item_ids) - set(forbidden_item_ids))
 
     @cache_pure(request_only=True)
     def get_reachable_children(self, item_ids, language=None):

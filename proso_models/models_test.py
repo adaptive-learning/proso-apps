@@ -53,6 +53,7 @@ class ItemManagerGraphTest(test.TestCase):
 
     def test_children_graph(self):
         self.assertEqual(Item.objects.get_children_graph([7]), {None: [7]})
+        self.assertEqual(Item.objects.get_children_graph([7], forbidden_item_ids=[7]), {None: []})
         self.assertEqual(
             Item.objects.get_children_graph([1]),
             {None: [1], 1: [2, 3], 2: [5, 6], 3: [6, 7]}
@@ -60,6 +61,14 @@ class ItemManagerGraphTest(test.TestCase):
         self.assertEqual(
             Item.objects.get_children_graph([2, 4]),
             {None: [2, 4], 2: [5, 6], 4: [7]}
+        )
+        self.assertEqual(
+            Item.objects.get_children_graph(forbidden_item_ids=[3]),
+            {1: [2], 2: [5, 6], 4: [7]}
+        )
+        self.assertEqual(
+            Item.objects.get_children_graph([1], forbidden_item_ids=[3]),
+            {None: [1], 1: [2], 2: [5, 6]}
         )
 
     def test_reachable_children(self):
