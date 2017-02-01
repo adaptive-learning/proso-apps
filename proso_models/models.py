@@ -850,7 +850,34 @@ class ItemManager(models.Manager):
         if item_ids is None:
             return self._reachable_graph(None, _parents, language=language)
         else:
-            graph = self.get_parents_graph_graph(None, language)
+            graph = self.get_parents_graph(None, language)
+            return self._subset_graph(graph, item_ids)
+
+    def get_graph(self, item_ids, language=None):
+        """
+        Get a subgraph of items reachable from the given set of items through
+        any relation.
+
+        Args:
+            item_ids (list): items which are taken as roots for the reachability
+            language (str): if specified, filter out items which are not
+                available in the given language
+
+        Returns:
+            dict: item id -> list of items (parent items), root items are
+            referenced by None key
+        """
+        def _related(item_ids):
+            if item_ids is None:
+                items = Item.objects.filter(active=True).prefetch_related('parents', 'children')
+            else:
+                item_ids = [ii for iis in item_ids.values() for ii in iis]
+                items = Item.objects.filter(id__in=item_ids, active=True).prefetch_related('parents', 'children')
+            return {item.id: sorted([_item.id for rel in [item.parents.all(), item.children.all()] for _item in rel]) for item in items}
+        if item_ids is None:
+            return self._reachable_graph(None, _related, language=language)
+        else:
+            graph = self.get_graph(None, language)
             return self._subset_graph(graph, item_ids)
 
     @cache_pure(request_only=True)

@@ -36,6 +36,19 @@ class ItemManagerGraphTest(test.TestCase):
                 ItemRelation.objects.create(parent=item, child=Item.objects.get(id=child))
             item.save()
 
+    def test_graph(self):
+        print(Item.objects.get_parents_graph([4]))
+        self.assertEqual(Item.objects.get_graph([4]), {
+            None: [4],
+            1: [2, 3],
+            2: [1, 5, 6],
+            3: [1, 6, 7],
+            4: [7],
+            5: [2],
+            6: [2, 3],
+            7: [3, 4],
+        })
+
     def test_parents_graph(self):
         self.assertEqual(Item.objects.get_parents_graph([4]), {None: [4]})
         self.assertEqual(
