@@ -102,6 +102,8 @@ class Flashcard(models.Model, ModelDiffMixin):
     description = models.TextField(null=True, blank=True)
     active = models.BooleanField(default=True)
     additional_info = models.TextField(null=True, blank=True, default=None)
+    disable_open_questions = models.BooleanField(default=False)
+    restrict_open_questions = models.BooleanField(default=False)
 
     objects = FlashcardManager()
 
@@ -114,6 +116,8 @@ class Flashcard(models.Model, ModelDiffMixin):
             "active": self.active,
             "lang": self.lang,
             "term": self.get_term().to_json(nested=True),
+            "disable_open_questions": self.disable_open_questions,
+            "restrict_open_questions": self.restrict_open_questions,
         }
         if hasattr(self, "options"):
             data["options"] = [o.to_json(nested=True) for o in sorted(self.options, key=lambda f: f.term.name)]

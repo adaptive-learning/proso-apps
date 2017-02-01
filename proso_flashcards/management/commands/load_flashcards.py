@@ -219,6 +219,12 @@ class Command(BaseCommand):
                 if "active" in flashcard and db_flashcard.active != flashcard["active"]:
                     db_flashcard.active = flashcard["active"]
                     modified = True
+                if "disable-open-questions" in flashcard and db_flashcard.disable_open_questions != flashcard['disable-open-questions']:
+                    db_flashcard.disable_open_questions = flashcard['disable-open-questions']
+                    modified = True
+                if "restrict-open-questions" in flashcard and db_flashcard.restrict_open_questions != flashcard['restrict-open-questions']:
+                    db_flashcard.restrict_open_questions = flashcard['restrict-open-questions']
+                    modified = True
                 if (db_flashcard.identifier in item_mapping and
                         db_flashcard.item_id != item_mapping[db_flashcard.identifier]):
                     db_flashcard.item_id = item_mapping[db_flashcard.identifier]

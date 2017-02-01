@@ -43,6 +43,10 @@ class TestFlashcardsLoading(TestCase):
         call_command('load_flashcards', 'testproject/test_data/flashcards/flashcards.json')
         self._check_flashcards(self.FLASHCARD_CHILDREN)
         self.assertEqual(Flashcard.objects.get(identifier="0003", lang="en").additional_info, "some info")
+        self.assertFalse(Flashcard.objects.get(identifier="0004", lang="en").disable_open_questions)
+        self.assertTrue(Flashcard.objects.get(identifier="0004", lang="en").restrict_open_questions)
+        self.assertTrue(Flashcard.objects.get(identifier="0005", lang="en").disable_open_questions)
+        self.assertFalse(Flashcard.objects.get(identifier="0005", lang="en").restrict_open_questions)
         call_command('load_flashcards', 'testproject/test_data/flashcards/flashcards_changed.json')
         self._check_flashcards(self.FLASHCARD_CHILDREN_CHANGED)
 
