@@ -22,7 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "schema.json"), "r") as schema_file:
             schema = json.load(schema_file)
-        with open(options["filename"][0], 'r') as json_file:
+        with open(options["filename"][0], 'r', encoding='utf8') as json_file:
             with transaction.atomic():
                 data = json.load(json_file)
                 validate(data, schema)
