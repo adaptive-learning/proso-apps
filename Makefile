@@ -22,14 +22,16 @@ register:
 
 ################################################################################
 
-docker-up:
-	docker-compose build
+docker-pull:
+	docker-compose pull
+
+docker-up: docker-pull
 	docker-compose up
 
-docker-bash:
+docker-bash: docker-pull
 	docker-compose run --rm proso-apps bash
 
-docker-tests:
+docker-tests: docker-pull
 	docker-compose run --rm proso-apps bash -c "cd /proso-apps && make test"
 
 sphinx-apidoc:
