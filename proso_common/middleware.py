@@ -7,7 +7,6 @@ from django.template.loader import render_to_string
 from django.utils import translation
 from django.utils.encoding import force_text
 
-from proso.django.request import get_current_request
 from proso.django.response import HttpError, render_json
 from proso_common.models import add_custom_config_filter
 from social.exceptions import AuthAlreadyAssociated
@@ -17,8 +16,6 @@ import time
 import datetime
 import logging
 import re
-
-from proso_models.models import get_filter
 
 LOGGER = logging.getLogger('django.request')
 _HTML_TYPES = ('text/html', 'application/xhtml+xml')
