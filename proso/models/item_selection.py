@@ -4,17 +4,15 @@ import math
 import logging
 import proso.django.log
 import numpy
+import json
 from collections import defaultdict
 
-
 LOGGER = logging.getLogger('django.request')
-
 
 DEFAULT_TARGET_PROBABILITY = 0.65
 
 
 class ItemSelection(metaclass=abc.ABCMeta):
-
     def __init__(self, predictive_model, target_probability=DEFAULT_TARGET_PROBABILITY, history_adjustment=True):
         self._predictive_model = predictive_model
         self._target_probability = target_probability
@@ -38,7 +36,8 @@ class ItemSelection(metaclass=abc.ABCMeta):
                 raise Exception('Can not compute predictions without items.')
             if time is None:
                 raise Exception('Can not compute predictions without time.')
-            self._predictions_cache = dict(zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
+            self._predictions_cache = dict(
+                zip(items, self._predictive_model.predict_more_items(environment, user, items, time)))
         return self._predictions_cache
 
     def history_adjustment(self):
@@ -46,7 +45,8 @@ class ItemSelection(metaclass=abc.ABCMeta):
 
     def get_target_probability(self, environment, user, practice_context=None):
         if self._history_adjustment:
-            return adjust_target_probability(self._target_probability, self.get_rolling_success(environment, user, practice_context))
+            return adjust_target_probability(self._target_probability,
+                                             self.get_rolling_success(environment, user, practice_context))
         else:
             return self._target_probability
 
@@ -57,7 +57,6 @@ class ItemSelection(metaclass=abc.ABCMeta):
 
 
 class RandomItemSelection(ItemSelection):
-
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
         candidates = random.sample(items, min(n, len(items)))
         # HACK: option selector needs predictions already prepared
@@ -69,14 +68,15 @@ class RandomItemSelection(ItemSelection):
 
 
 class TestWrapperItemSelection(ItemSelection):
-
     def __init__(self, item_selector, nth=10):
         self._item_selector = item_selector
         self._nth = nth
 
     def select(self, environment, user, items, time, practice_context, n, **kwargs):
         if self._nth < n:
-            raise Exception('Number of items ({}) to select has to be lower than or equal to the "nth" ({}) parameter.'.format(n, self._nth))
+            raise Exception(
+                'Number of items ({}) to select has to be lower than or equal to the "nth" ({}) parameter.'.format(n,
+                                                                                                                   self._nth))
         items_in_queue = kwargs.get('items_in_queue', 0)
         number_of_answers = environment.number_of_answers(user=user, context=practice_context) + items_in_queue
         test_position = number_of_answers % self._nth
@@ -84,14 +84,17 @@ class TestWrapperItemSelection(ItemSelection):
             test_position = self._nth - test_position
         if test_position >= n:
             return self._item_selector.select(environment, user, items, time, practice_context, n, **kwargs)
-        LOGGER.debug('Providing random test item on position {}, items in queue {}'.format(test_position, items_in_queue))
+        LOGGER.debug(
+            'Providing random test item on position {}, items in queue {}'.format(test_position, items_in_queue))
         # HACK: option selector needs predictions already prepared
         self.get_predictions(environment, user, items, time)
         test_item = random.choice(items)
         test_meta = {'test': 'random_without_options'}
         items = [i for i in items if i != test_item]
-        selected_items, meta = self._item_selector.select(environment, user, items, time, practice_context, n - 1, **kwargs) if n - 1 > 0 else ([], [])
-        return selected_items[:test_position] + [test_item] + selected_items[test_position:], meta[:test_position] + [test_meta] + meta[test_position:]
+        selected_items, meta = self._item_selector.select(environment, user, items, time, practice_context, n - 1,
+                                                          **kwargs) if n - 1 > 0 else ([], [])
+        return selected_items[:test_position] + [test_item] + selected_items[test_position:], meta[:test_position] + [
+            test_meta] + meta[test_position:]
 
     def history_adjustment(self):
         return self._item_selector.history_adjustment()
@@ -107,7 +110,6 @@ class TestWrapperItemSelection(ItemSelection):
 
 
 class ScoreItemSelection(ItemSelection):
-
     def __init__(
             self, predictive_model, weight_probability=10.0, weight_number_of_answers=5.0,
             weight_time_ago=5, weight_parent_time_ago=5.0, weight_parent_number_of_answers=2.5,
@@ -190,7 +192,7 @@ class ScoreItemSelection(ItemSelection):
                             answers_num[chosen],
                             self._weight_number_of_answers * self._score_answers_num(answers_num[chosen]),
                             [x[0] for x in parents[chosen]])
-                        )
+                    )
                 candidates.append(chosen)
                 for p, v in parents[chosen]:
                     last_answer_time_parents[p] = time
@@ -237,6 +239,7 @@ class ScoreItemSelection(ItemSelection):
                 return max(times)
             else:
                 return None
+
         return dict([(p_chs1[0], _max_time_from_items(p_chs1[1])) for p_chs1 in list(children.items())])
 
     def __str__(self):
@@ -250,3 +253,46 @@ def adjust_target_probability(target_probability, rolling_success):
     norm = 1 - target_probability if rolling_success > target_probability else target_probability
     correction = ((target_probability - rolling_success) / max(0.001, norm)) * (1 - norm)
     return target_probability + correction
+
+
+class ContextBasedItemSelection(ScoreItemSelection):
+    def __init__(self, predictive_model, weight_probability=10.0, weight_number_of_answers=5.0, weight_time_ago=5,
+                 weight_parent_time_ago=5.0, weight_parent_number_of_answers=2.5,
+                 target_probability=DEFAULT_TARGET_PROBABILITY, time_ago_max=120, recompute_parent_score=True,
+                 history_adjustment=True, estimate_parent_factors=True):
+        from proso.django.request import get_current_request
+        from proso_models.models import get_filter
+        from proso_concepts.models import Concept
+
+        req = get_current_request()
+
+        categories = get_filter(req)
+        categories = list(set().union(*categories))
+        categories.sort(reverse=True)
+        category_identifier = Concept.objects.filter(query=json.dumps([categories])).first().identifier
+
+        LOGGER.debug("REQUEST FILTERS: %s" % json.dumps([categories]))
+        LOGGER.debug("REQUEST FILTER -> CATEGORY_IDENTIFIER: %s" % category_identifier)
+
+        if category_identifier in ["9286c11ae03051824142", "0abbc00aab49f3ab3087", "e7576f2d7d9acdc8938d",
+                                   "e0a6b9187f402bc4b6b4", "5003410ef72a80a76ab8", "6b799a540d42f7164d57",
+                                   "777959a7e2799da678ce", "32110d4fd300c32b6dda", "b239ffe83950753eff4b",
+                                   "55dfd24083b6c5248539", "0c74a5bff211f8c1366b", "176c56aa2399180149c0",
+                                   "3f987d036bf3b84033c6", "cf3e1afe7556fc9b5302"]:
+            target_probability = 0.80
+        elif category_identifier in ["5d96cf6829a091825ab1", "07907708da836f3e41c0", "88775c0f18142298fdab",
+                                     "99b2a9bd43cd5226eec1", "dd326eccb76dbfae6dd1", "09b896106800eb5f1931",
+                                     "149c12764fe26ebcf685"]:
+            target_probability = 0.50
+        else:
+            target_probability = 0.65
+
+        LOGGER.debug("REQUEST FILTER -> USING TARGET_PROBABILITY == %f" % target_probability)
+
+        super().__init__(predictive_model, weight_probability, weight_number_of_answers, weight_time_ago,
+                         weight_parent_time_ago, weight_parent_number_of_answers, target_probability, time_ago_max,
+                         recompute_parent_score, history_adjustment, estimate_parent_factors)
+
+    def __str__(self):
+        return 'CONTEXT BASED ITEM SELECTION: target probability {0:.2f}, weight probability {1:.2f}, weight time {2:.2f}, weight answers {3:.2f}'.format(
+            self._target_probability, self._weight_probability, self._weight_time_ago, self._weight_number_of_answers)

@@ -6,6 +6,8 @@ from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils import translation
 from django.utils.encoding import force_text
+
+from proso.django.request import get_current_request
 from proso.django.response import HttpError, render_json
 from proso_common.models import add_custom_config_filter
 from social.exceptions import AuthAlreadyAssociated
@@ -16,12 +18,13 @@ import datetime
 import logging
 import re
 
+from proso_models.models import get_filter
+
 LOGGER = logging.getLogger('django.request')
 _HTML_TYPES = ('text/html', 'application/xhtml+xml')
 
 
 class ToolbarMiddleware(object):
-
     def process_response(self, request, response):
 
         if not hasattr(request, "user") or not request.user.is_staff:
@@ -48,17 +51,15 @@ class ToolbarMiddleware(object):
 
 
 class ErrorMiddleware(object):
-
     def process_exception(self, request, exception):
         if isinstance(exception, HttpError):
             return render_json(request, {
                 'error': str(exception),
                 'error_type': 'bad_request' if exception.error_type is None else exception.error_type
-                }, template='common_json.html', status=exception.http_status)
+            }, template='common_json.html', status=exception.http_status)
 
 
 class LogQueriesMiddleware(object):
-
     def process_response(self, request, response):
         total_time = 0.0
         for query in connection.queries:
@@ -68,7 +69,6 @@ class LogQueriesMiddleware(object):
 
 
 class AuthAlreadyAssociatedMiddleware(object):
-
     def process_exception(self, request, exception):
         if isinstance(exception, AuthAlreadyAssociated):
             url = request.path  # should be something like '/complete/google/'
@@ -160,7 +160,6 @@ class GoogleAuthChangeDomain(object):
 
 
 class CustomFiltersMiddleware(object):
-
     def process_request(self, request):
         def _filter(key, value):
             if key != 'device':
@@ -175,6 +174,7 @@ class CustomFiltersMiddleware(object):
             if value in {'tablet', 'touchscreen'} and user_agent.is_tablet:
                 return True
             return False
+
         add_custom_config_filter(_filter)
 
 

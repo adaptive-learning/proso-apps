@@ -35,7 +35,7 @@ class Command(BaseCommand):
 
         self.stdout.write("Successfully imported concepts")
         self.stdout.write("Total {} concepts and {} tags in DB".format(Concept.objects.all().count(),
-                                                                    Tag.objects.all().count()))
+                                                                       Tag.objects.all().count()))
 
     def prepare_tags(self, data):
         self.tag_names = data["tags"]
@@ -43,7 +43,7 @@ class Command(BaseCommand):
         for tag in Tag.objects.all():
             self.tags["{}:{}:{}".format(tag.type, tag.value, tag.lang)] = tag
             new_type_name = self.tag_names[tag.type]["names"][tag.lang]
-            new_value_name=self.tag_names[tag.type]["values"][tag.value][tag.lang]
+            new_value_name = self.tag_names[tag.type]["values"][tag.value][tag.lang]
             if tag.type_name != new_type_name or tag.value_name != new_value_name:
                 tag.type_name = new_type_name
                 tag.value_name = new_value_name
