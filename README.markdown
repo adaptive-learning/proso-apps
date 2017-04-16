@@ -1,3 +1,5 @@
+[![Stories in Ready](https://badge.waffle.io/adaptive-learning/proso-apps.png?label=ready&title=Ready)](https://waffle.io/adaptive-learning/proso-apps)
+[![Stories in Ready](https://badge.waffle.io/adaptive-learning/proso-apps.png?label=ready&title=Ready)](https://waffle.io/adaptive-learning/proso-apps)
 # PROSO Apps
 
 [![Build Status](https://travis-ci.org/adaptive-learning/proso-apps.png)](https://travis-ci.org/adaptive-learning/proso-apps)
