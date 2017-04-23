@@ -17,8 +17,10 @@ class Command(BaseCommand):
         logger = get_events_logger(events_log)
         pusher = get_events_pusher(events_log)
 
-        with connection.cursor() as cursor:
-            cursor.execute("""
+        cursor = connection.cursor('answers2events-cursor')
+        cursor.itersize = 5001
+
+        cursor.execute("""
                 select
                   user_id,
                   item_answered_id,
@@ -35,31 +37,34 @@ class Command(BaseCommand):
                 where time >= %s::date and time < %s::date
                 order by time""", (options['from'], options['to']))
 
-            i = 1
-            for user_id, item_answered_id, item_asked_id, context_id, item_id, response_time, session_id, guess, config_id, time, practice_set_id in progress.bar(cursor, expected_size=cursor.rowcount):
-                answer = {
-                    "user_id": user_id,
-                    "is_correct": item_asked_id == item_answered_id,
-                    "context_id": [context_id] if context_id else [],
-                    "item_id": item_id,
-                    "response_time_ms": response_time,
-                    "params": {
-                        "session_id": session_id,
-                        "guess": guess
-                    }}
+        i = 1
+        for user_id, item_answered_id, item_asked_id, context_id, item_id, response_time, session_id, guess, config_id, time, practice_set_id in progress.bar(
+                cursor, expected_size=cursor.rowcount):
+            
+            answer = {
+                "user_id": user_id,
+                "is_correct": item_asked_id == item_answered_id,
+                "context_id": [context_id] if context_id else [],
+                "item_id": item_id,
+                "response_time_ms": response_time,
+                "params": {
+                    "session_id": session_id,
+                    "guess": guess
+                }}
 
-                if practice_set_id:
-                    answer["params"]["practice_set_id"] = practice_set_id
-                if config_id:
-                    answer["params"]["config_id"] = config_id
+            if practice_set_id:
+                answer["params"]["practice_set_id"] = practice_set_id
+            if config_id:
+                answer["params"]["config_id"] = config_id
 
-                logger.emit('answer', answer, time=time)
+            logger.emit('answer', answer, time=time)
 
-                if i % 5000 == 0:
-                    pusher.push_all()
+            if i % 5000 == 0:
+                pusher.push_all()
 
-                i += 1
+            i += 1
+        pusher.push_all()
 
-            pusher.push_all()
+        cursor.close()
 
-            self.stdout.write(self.style.SUCCESS('Successfully sent events.'))
+        self.stdout.write(self.style.SUCCESS('Successfully sent events.'))
