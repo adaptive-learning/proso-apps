@@ -40,7 +40,7 @@ class Command(BaseCommand):
         i = 1
         for user_id, item_answered_id, item_asked_id, context_id, item_id, response_time, session_id, guess, config_id, time, practice_set_id in progress.bar(
                 cursor, expected_size=cursor.rowcount):
-            
+
             answer = {
                 "user_id": user_id,
                 "is_correct": item_asked_id == item_answered_id,
