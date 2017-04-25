@@ -17,8 +17,8 @@ class Command(BaseCommand):
         logger = get_events_logger(events_log)
         pusher = get_events_pusher(events_log)
 
-        cursor = connection.cursor('answers2events-cursor')
-        cursor.itersize = 5001
+        cursor = connection.cursor()
+        cursor.itersize = 60000
 
         cursor.execute("""
                 select
