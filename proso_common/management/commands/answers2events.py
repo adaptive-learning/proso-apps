@@ -37,9 +37,8 @@ class Command(BaseCommand):
                 where time >= %s::date and time < %s::date
                 order by time""", (options['from'], options['to']))
 
-        i = 1
-        for user_id, item_answered_id, item_asked_id, context_id, item_id, response_time, session_id, guess, config_id, time, practice_set_id in progress.bar(
-                cursor, expected_size=cursor.rowcount):
+        for i, (user_id, item_answered_id, item_asked_id, context_id, item_id, response_time, session_id, guess, config_id, time, practice_set_id) in enumerate(progress.bar(
+                cursor, expected_size=cursor.rowcount)):
 
             answer = {
                 "user_id": user_id,
@@ -62,7 +61,6 @@ class Command(BaseCommand):
             if i % 5000 == 0:
                 pusher.push_all()
 
-            i += 1
         pusher.push_all()
 
         cursor.close()
