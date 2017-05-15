@@ -21,7 +21,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         user_group = options['user_group'][0]
-        print(user_group)
         if user_group == 'edookit':
             users = list(User.objects.filter(social_auth__provider='edookit'))
         else:
