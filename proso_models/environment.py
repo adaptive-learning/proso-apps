@@ -451,10 +451,8 @@ class DatabaseEnvironment(CommonEnvironment):
                 result[i] = self._ensure_is_datetime(d)
             return result
 
-
     def shift_answers(self, before_answer):
         self._before_answer = before_answer
-
 
     @timeit()
     def rolling_success(self, user, window_size=10, context=None):

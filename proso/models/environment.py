@@ -477,7 +477,6 @@ class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
         self.assertEqual(9 * 3 + 2, len(env.read_all_with_key('k2')))
 
 
-
 class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
 
     def test_time(self):
