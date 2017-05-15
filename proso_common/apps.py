@@ -10,7 +10,6 @@ MIDDLEWARE_CLASSES = [
     'proso.django.cache.RequestCacheMiddleware',
     'proso.django.log.RequestLogMiddleware',
     'proso_common.models.CommonMiddleware',
-    'proso_common.middleware.ToolbarMiddleware',
     'proso_common.middleware.LogQueriesMiddleware',
     'proso_common.middleware.ErrorMiddleware',
     'proso_common.middleware.AuthAlreadyAssociatedMiddleware',

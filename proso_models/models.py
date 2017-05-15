@@ -10,7 +10,6 @@ from django.db.models import Count, F
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from functools import reduce
-from itertools import zip_longest
 from proso.django.cache import cache_pure
 from proso.django.cache import get_request_cache, is_cache_prepared, get_from_request_permenent_cache, set_to_request_permanent_cache
 from proso.django.config import instantiate_from_json
@@ -19,7 +18,6 @@ from proso.django.request import load_query_json, get_time
 from proso.django.response import HttpError
 from proso.func import fixed_point, function_name
 from proso.list import flatten
-from proso.metric import binomial_confidence_mean, confidence_value_to_json
 from proso.models.item_selection import TestWrapperItemSelection
 from proso.time import timeit
 from proso_common.models import Config, instantiate_from_config, instantiate_from_config_list, get_global_config, get_config, add_custom_config_filter, get_events_logger, instantiate_from_config_lazy
@@ -32,7 +30,6 @@ import importlib
 import json
 import logging
 import proso.list
-import random
 import re
 
 
@@ -139,181 +136,6 @@ def get_option_selector(item_selector, options_number=None):
         default_class='proso.models.option_selection.CompetitiveOptionSelection',
         pass_parameters=[item_selector, options_number]
     )
-
-
-EMPTY_CURVE = {
-    'number_of_users': 0,
-    'number_of_data_points': 0,
-    'values': [],
-    'object_type': 'learning_curve',
-}
-
-
-def survival_curve_time(length, context=None, users=None, number_of_users=1000):
-    if users is not None and len(users) == 0:
-        return EMPTY_CURVE
-    with closing(connection.cursor()) as cursor:
-        where, where_params = _get_where_for_answers(
-            context,
-            users if (users is None or len(users) <= number_of_users) else random.sample(users, number_of_users),
-        )
-        cursor.execute(
-            '''
-            SELECT
-                SUM(response_time)
-            FROM proso_models_answer
-            WHERE response_time > 0
-            AND ''' + 'AND '.join(where) + '''
-            GROUP BY user_id
-            ''', where_params)
-        vals = [x[0] / 1000 for x in cursor.fetchall()]
-
-        def _mean_with_confidence(xs):
-            return confidence_value_to_json(binomial_confidence_mean([x for x in xs if x is not None]))
-        return {
-            'number_of_users': len(vals),
-            'number_of_datapoints': len(vals),
-            'values': [_mean_with_confidence([v > limit for v in vals]) for limit in range(length)],
-            'object_type': 'survival_curve',
-        }
-
-
-def survival_curve_answers(length, context=None, users=None, number_of_users=1000):
-    if users is not None and len(users) == 0:
-        return EMPTY_CURVE
-    with closing(connection.cursor()) as cursor:
-        where, where_params = _get_where_for_answers(
-            context,
-            users if (users is None or len(users) <= number_of_users) else random.sample(users, number_of_users),
-        )
-        cursor.execute(
-            '''
-            SELECT
-                COUNT(*) AS answers
-            FROM proso_models_answer
-            ''' + ('' if len(where) == 0 else 'WHERE ' + 'AND '.join(where)) + '''
-            GROUP BY user_id
-            ''', where_params)
-        vals = [x[0] for x in cursor.fetchall()]
-
-        def _mean_with_confidence(xs):
-            return confidence_value_to_json(binomial_confidence_mean([x for x in xs if x is not None]))
-        return {
-            'number_of_users': len(vals),
-            'number_of_datapoints': len(vals),
-            'values': [_mean_with_confidence([v > limit for v in vals]) for limit in range(length)],
-            'object_type': 'survival_curve',
-        }
-
-
-def learning_curve(length, context=None, users=None, number_of_users=1000):
-    with closing(connection.cursor()) as cursor:
-        cursor.execute("SELECT id FROM proso_models_answermeta WHERE content LIKE '%%random_without_options%%'")
-        meta_ids = [str(x[0]) for x in cursor.fetchall()]
-    if len(meta_ids) == 0:
-        return EMPTY_CURVE
-    if users is not None and len(users) == 0:
-        return EMPTY_CURVE
-    with closing(connection.cursor()) as cursor:
-        where, where_params = _get_where_for_answers(
-            context,
-            users if (users is None or len(users) <= number_of_users) else random.sample(users, number_of_users),
-            meta_ids
-        )
-        cursor.execute(
-            '''
-            SELECT
-                context_id,
-                user_id,
-                item_asked_id != COALESCE(item_answered_id, -1)
-            FROM proso_models_answer
-            WHERE ''' + ' AND '.join(where) + '''
-            ORDER BY id
-            ''', where_params)
-        context_answers = defaultdict(lambda: defaultdict(list))
-        found_users = set()
-        for context_id, user_id, correct in cursor:
-            found_users.add(user_id)
-            context_answers[context_id][user_id].append(correct)
-        user_answers = [
-            answers[:min(len(answers), length)]
-            for user_answers in context_answers.values()
-            for answers in user_answers.values()
-        ]
-
-        def _mean_with_confidence(xs):
-            return confidence_value_to_json(binomial_confidence_mean([x for x in xs if x is not None]))
-
-        return {
-            'number_of_users': len(found_users),
-            'number_of_datapoints': len(user_answers),
-            'values': [_mean_with_confidence(point) for point in zip_longest(*user_answers)],
-            'object_type': 'learning_curve',
-        }
-
-
-def _get_where_for_answers(context=None, users=None, meta_ids=None):
-    where = []
-    if meta_ids is not None:
-        where.append('metainfo_id IN ({})'.format(','.join(meta_ids)))
-    where_params = []
-    if context is not None:
-        where.append('context_id = %s')
-        where_params.append(context)
-    if users is not None:
-        where.append('user_id IN ({})'.format(','.join(['%s' for _ in users])))
-        where_params += users
-    return where, where_params
-
-
-def recommend_users(register_time_interval, number_of_answers_interval, success_rate_interval, variable_name, variable_interval, limit):
-    where = []
-    having = []
-    params = []
-
-    def _create_condition(column_name, interval, where, params):
-        if interval[0] is not None:
-            where.append('{} >= %s'.format(column_name))
-            params.append(interval[0])
-        if interval[1] is not None:
-            where.append('{} <= %s'.format(column_name))
-            params.append(interval[1])
-    _create_condition('date_joined', register_time_interval, where, params)
-    if variable_name is not None:
-        _create_condition('proso_models_variable.value', variable_interval, where, params)
-    _create_condition('AVG(CASE WHEN item_asked_id = item_answered_id THEN 1 ELSE 0 END)', success_rate_interval, having, params)
-    _create_condition('COUNT(proso_models_answer.id)', number_of_answers_interval, having, params)
-    having_final = ''
-    where_final = ''
-    if len(where) > 0:
-        where_final = 'WHERE {}'.format(' AND '.join(where))
-    if len(having) > 0:
-        having_final = 'HAVING {}'.format(' AND '.join(having))
-    if variable_name is not None:
-        variable_join = '''
-            INNER JOIN proso_models_variable
-                ON proso_models_answer.user_id = proso_models_variable.user_id
-                AND proso_models_variable.key = '{}'
-                AND proso_models_variable.item_primary_id IS NULL
-            '''.format(variable_name)
-    else:
-        variable_join = ''
-    with closing(connection.cursor()) as cursor:
-        cursor.execute(
-            '''
-            SELECT
-                auth_user.id
-            FROM auth_user
-            INNER JOIN proso_models_answer ON auth_user.id = proso_models_answer.user_id
-            ''' + variable_join + '''
-            ''' + where_final + '''
-            GROUP BY auth_user.id
-            ''' + having_final + '''
-            ORDER BY RANDOM()
-            LIMIT %s
-            ''', params + [limit]
-        )
-        return [x[0] for x in cursor.fetchall()]
 
 
 ITEM_RESTRICTORS = defaultdict(dict)

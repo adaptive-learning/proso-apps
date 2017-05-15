@@ -1,9 +1,6 @@
-from collections import defaultdict
-from contextlib import closing
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.signals import user_logged_in
-from django.db import connection
 from django.db import models
 from django.db import transaction
 from django.db.models.signals import post_save
@@ -14,7 +11,7 @@ from proso.django.config import override
 from proso.django.models import disable_for_loaddata
 from proso.list import group_by
 from proso_common.models import instantiate_from_config
-from proso_models.models import Answer, learning_curve, survival_curve_answers, survival_curve_time
+from proso_models.models import Answer
 import hashlib
 import json
 import logging
@@ -102,42 +99,6 @@ class PossibleValue(models.Model):
 
 
 class ExperimentSetupManager(models.Manager):
-
-    def get_stats(self, experiment_setup_ids, survival_curve_length=100, learning_curve_length=5, curve_max_users=1000):
-        with closing(connection.cursor()) as cursor:
-            cursor.execute(
-                '''
-                SELECT
-                    proso_configab_answerexperimentsetup.experiment_setup_id,
-                    proso_models_answer.user_id
-                FROM proso_models_answer
-                INNER JOIN proso_configab_answerexperimentsetup ON proso_configab_answerexperimentsetup.answer_id = proso_models_answer.id
-                WHERE proso_configab_answerexperimentsetup.experiment_setup_id IN (''' + ', '.join(['%s' for _ in experiment_setup_ids]) + ''')
-                GROUP BY proso_configab_answerexperimentsetup.experiment_setup_id, proso_models_answer.user_id
-                ''',
-                experiment_setup_ids
-            )
-            experiment_users = defaultdict(set)
-            for row in cursor:
-                experiment_users[row[0]].add(row[1])
-            result = {}
-            for experiment_setup_id in experiment_setup_ids:
-                if experiment_setup_id in experiment_users:
-                    users = experiment_users[experiment_setup_id]
-                    result[experiment_setup_id] = {
-                        'number_of_users': len(users),
-                        'survival_curve_answers': survival_curve_answers(survival_curve_length, users=users, number_of_users=curve_max_users),
-                        'survival_curve_time': survival_curve_time(survival_curve_length * 6, users=users, number_of_users=curve_max_users),
-                        'learning_curve': learning_curve(learning_curve_length, users=users, number_of_users=curve_max_users),
-                    }
-                else:
-                    result[experiment_setup_id] = {
-                        'number_of_users': 0,
-                        'survival_curve_answers': survival_curve_answers(survival_curve_length, users=[], number_of_users=curve_max_users),
-                        'survival_curve_time': survival_curve_time(survival_curve_length * 6, users=[], number_of_users=curve_max_users),
-                        'learning_curve': learning_curve(learning_curve_length, users=[], number_of_users=curve_max_users),
-                    }
-            return result
 
     def from_values(self, experiment, values, probability):
         content_hash = hashlib.sha1(

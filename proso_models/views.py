@@ -1,8 +1,7 @@
 from .models import get_environment, get_predictive_model, get_item_selector, get_active_environment_info, \
-    Answer, Item, recommend_users as models_recommend_users, PracticeContext, PracticeSet,\
-    learning_curve as models_learning_curve, get_filter, get_mastery_trashold, get_time_for_knowledge_overview, \
-    survival_curve_answers as models_survival_curve_answers, survival_curve_time as models_survival_curve_time, get_forbidden_items
-from django.contrib.admin.views.decorators import staff_member_required
+    Answer, Item, PracticeContext, PracticeSet,\
+    get_filter, get_mastery_trashold, get_time_for_knowledge_overview, \
+    get_forbidden_items
 from django.db import transaction, connection
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.translation import ugettext as _
@@ -19,7 +18,6 @@ from proso.time import timer
 from proso_common.models import get_config
 from proso_user.models import get_user_id
 from random import sample
-import datetime
 import json
 import logging
 import proso.svg
@@ -428,135 +426,6 @@ def practice(request):
         result = []
 
     return render_json(request, result, template='models_json.html', help_text=practice.__doc__)
-
-
-def survival_curve(request, metric):
-    '''
-    Shows a learning curve based on the randomized testing.
-
-    GET parameters:
-      length:
-        length of the learning curve
-      context:
-        JSON representing the practice context
-      all_users:
-        if present stop filtering users based on the minimal number of testing
-        answers (=length)
-    '''
-    practice_filter = get_filter(request, force=False)
-    context = None if practice_filter is None else PracticeContext.objects.from_content(practice_filter).id
-    if metric == 'answers':
-        length = int(request.GET.get('length', 100))
-        models_survival_curve_answers(length, context=context)
-    else:
-        length = int(request.GET.get('length', 600))
-        models_survival_curve_time(length, context=context)
-    return render_json(
-        request,
-        models_learning_curve(length, context=context),
-        template='models_json.html', help_text=learning_curve.__doc__)
-
-
-def learning_curve(request):
-    '''
-    Shows a learning curve based on the randomized testing.
-
-    GET parameters:
-      length:
-        length of the learning curve
-      context:
-        JSON representing the practice context
-      all_users:
-        if present stop filtering users based on the minimal number of testing
-        answers (=length)
-    '''
-    practice_filter = get_filter(request, force=False)
-    context = None if practice_filter is None else PracticeContext.objects.from_content(practice_filter).id
-    length = int(request.GET.get('length', 10))
-    models_survival_curve_answers(length * 10, context=context)
-    return render_json(
-        request,
-        models_learning_curve(length, context=context),
-        template='models_json.html', help_text=learning_curve.__doc__)
-
-
-@staff_member_required
-def recommend_users(request):
-    '''
-    Recommend users for further analysis.
-
-    GET parameters:
-      register_min:
-        minimal date of user's registration ('%Y-%m-%d')
-      register_max:
-        maximal date of user's registration ('%Y-%m-%d')
-      number_of_answers_min:
-        minimal number of user's answers
-      number_of_answers_max:
-        maximal number of user's answers
-      success_min:
-        minimal user's success rate
-      success_max:
-        maximal user's success rate
-      variable_name:
-        name of the filtered parameter
-      variable_min:
-        minimal value of the parameter of the model
-      variable_max:
-        maximal value of parameter of the model
-      limit:
-        number of returned questions (default 10, maximum 100)
-    '''
-    limit = int(request.GET.get('limit', 1))
-
-    def _get_interval(key):
-        return request.GET.get('{}_min'.format(key)), request.GET.get('{}_max'.format(key))
-
-    def _convert_time_interval(interval):
-        mapped = [None if x is None else datetime.datetime.strptime(x, '%Y-%m-%d') for x in list(interval)]
-        return mapped[0], mapped[1]
-
-    recommended = models_recommend_users(
-        _convert_time_interval(_get_interval('register')),
-        _get_interval('number_of_answers'),
-        _get_interval('success'),
-        request.GET.get('variable_name'),
-        _get_interval('variable'),
-        limit)
-    return render_json(request, recommended, template='models_json.html', help_text=recommend_users.__doc__)
-
-
-@allow_lazy_user
-def read(request, key):
-    if 'user' in request.GET:
-        user = get_user_id(request)
-    else:
-        user = None
-    item = int(request.GET['item']) if 'item' in request.GET else None
-    item_secondary = int(request.GET['item_secondary']) if 'item_secondary' in request.GET else None
-    time = get_time(request)
-    environment = get_environment()
-    if is_time_overridden(request):
-        environment.shift_time(time)
-    value = environment.read(key, user=user, item=item, item_secondary=item_secondary)
-    if value is None:
-        return render_json(
-            request,
-            {'error': 'value with key "%s" not found' % key},
-            template='models_json.html', status=404)
-    else:
-        return render_json(
-            request,
-            {
-                'object_type': 'value',
-                'key': key,
-                'item_primary_id': item,
-                'item_secondary_id': item_secondary,
-                'user_id': user,
-                'value': value
-            },
-            template='models_json.html'
-        )
 
 
 def _get_answers(request):

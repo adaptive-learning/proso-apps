@@ -3,10 +3,7 @@ from django.contrib.auth import logout
 from django.db import connection
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
-from django.template.loader import render_to_string
 from django.utils import translation
-from django.utils.encoding import force_text
-
 from proso.django.response import HttpError, render_json
 from proso_common.models import add_custom_config_filter
 from social.exceptions import AuthAlreadyAssociated
@@ -15,36 +12,9 @@ from user_agents import parse
 import time
 import datetime
 import logging
-import re
+
 
 LOGGER = logging.getLogger('django.request')
-_HTML_TYPES = ('text/html', 'application/xhtml+xml')
-
-
-class ToolbarMiddleware(object):
-    def process_response(self, request, response):
-
-        if not hasattr(request, "user") or not request.user.is_staff:
-            return response
-
-        # Check for responses where the config_bar can't be inserted.
-        content_encoding = response.get('Content-Encoding', '')
-        content_type = response.get('Content-Type', '').split(';')[0]
-        if any((getattr(response, 'streaming', False), 'gzip' in content_encoding, content_type not in _HTML_TYPES)):
-            return response
-
-        # Insert the toolbar in the response.
-        content = force_text(response.content, encoding=settings.DEFAULT_CHARSET)
-        insert_before = '</html>'
-        pattern = re.escape(insert_before)
-        response.content = re.sub(
-            pattern,
-            render_to_string('common_toolbar.html') + insert_before,
-            content,
-            flags=re.IGNORECASE)
-        if response.get('Content-Length', None):
-            response['Content-Length'] = len(response.content)
-        return response
 
 
 class ErrorMiddleware(object):
