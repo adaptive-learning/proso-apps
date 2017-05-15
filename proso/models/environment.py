@@ -38,10 +38,6 @@ class Environment(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def audit(self, key, user=None, item=None, item_secondary=None, limit=None, symmetric=True):
-        pass
-
-    @abc.abstractmethod
     def get_items_with_values(self, key, item, user=None):
         pass
 
@@ -66,19 +62,19 @@ class Environment(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=True, answer=None):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, symmetric=True, permanent=True, answer=None):
         pass
 
     @abc.abstractmethod
     def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         pass
 
-    def update(self, key, init_value, update_fun, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, answer=None):
+    def update(self, key, init_value, update_fun, user=None, item=None, item_secondary=None, time=None, symmetric=True, answer=None):
         value = self.read(
             key, user=user, item=item, item_secondary=item_secondary, default=init_value, symmetric=symmetric)
         self.write(
             key, update_fun(value), user=user,
-            item=item, item_secondary=item_secondary, time=time, audit=audit, symmetric=symmetric, answer=answer)
+            item=item, item_secondary=item_secondary, time=time, symmetric=symmetric, answer=answer)
 
     @abc.abstractmethod
     def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
@@ -90,10 +86,6 @@ class Environment(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def export_values(self):
-        pass
-
-    @abc.abstractmethod
-    def export_audit(self):
         pass
 
     def flush(self):
@@ -172,8 +164,6 @@ class CommonEnvironment(Environment):
     def confusing_factor_more_items(self, item, items, user=None):
         pass
 
-    @abc.abstractmethod
-    def rolling_success(self, user, window_size=10):
         pass
 
     def add_write_hook(self, write_hook):
@@ -196,11 +186,10 @@ class InMemoryEnvironment(CommonEnvironment):
     LAST_CORRECTNESS = 'last_correctness'
     CONFUSING_FACTOR = 'confusing_factor'
 
-    def __init__(self, audit_enabled=True):
+    def __init__(self):
         CommonEnvironment.__init__(self)
-        # key -> user -> item_primary -> item_secondary -> [(permanent, time, value)]
-        self._data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
-        self._audit_enabled = audit_enabled
+        # key -> user -> item_primary -> item_secondary -> (permanent, time, answer, value)
+        self._data = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
 
     def process_answer(self, user, item, asked, answered, time, answer, response_time, guess, **kwargs):
         if time is None:
@@ -222,30 +211,15 @@ class InMemoryEnvironment(CommonEnvironment):
             self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered, answer=answer)
             self.update(self.CONFUSING_FACTOR, 0, increment, item=asked, item_secondary=answered, user=user, answer=answer)
 
-    def audit(self, key, user=None, item=None, item_secondary=None, limit=None, symmetric=True):
-        if not self._audit_enabled:
-            raise Exception('Audit can not be retrieved, because it is not enabled.')
-        items = [item_secondary, item]
-        if symmetric and item is not None and item_secondary is not None:
-            items.sort()
-        found = self._data[key][user][items[1]][items[0]]
-        if found and found[0][0]:
-            return []
-        found = [(x[1], x[3]) for x in found]
-        if limit is not None:
-            found = found[-limit:]
-        found.reverse()
-        return found
-
     def get_items_with_values(self, key, item, user=None):
-        return [(i_l[0], i_l[1][-1][3]) for i_l in list(self._data[key][user][item].items())]
+        return [(i_l[0], i_l[1][3]) for i_l in list(self._data[key][user][item].items())]
 
     def get_items_with_values_more_items(self, key, items, user=None):
         return {i: self.get_items_with_values(key, i, user) for i in items}
 
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         found = self._get(key, user=user, item=item, item_secondary=item_secondary, symmetric=symmetric)
-        if found:
+        if found is not None:
             return found[3]
         else:
             return default
@@ -264,28 +238,23 @@ class InMemoryEnvironment(CommonEnvironment):
         for user, d in self._data[key].items():
             for item, dd in d.items():
                 for item_secondary, f in dd.items():
-                    found.append((user, item, item_secondary, f[-1][3]))
+                    found.append((user, item, item_secondary, f[3]))
         return found
 
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, symmetric=True, permanent=False, answer=None):
         value = float(value)
-        if permanent:
-            audit = False
+        if time is None:
+            time = datetime.datetime.now()
         items = [item_secondary, item]
         if symmetric and item is not None and item_secondary is not None:
             items.sort()
-        if time is None:
-            time = datetime.datetime.now()
-        found = self._data[key][user][items[1]][items[0]]
-        if len(found) and found[-1][0] != permanent:
+        found = self._data[key][user][items[1]].get(items[0])
+        if found is not None and found[0] != permanent:
             raise Exception("The variable %s for items %s, %s and user %s changed permamency from %s to %s" % (
-                key, item, item_secondary, user, found[-1][0], permanent
+                key, item, item_secondary, user, found[0], permanent
             ))
-        previous_value = found[-1][3] if len(found) > 0 else None
-        if (audit and self._audit_enabled) or not found:
-            found.append((permanent, time, answer, value))
-        else:
-            found[-1] = (permanent, time, answer, value)
+        previous_value = None if found is None else found[3]
+        self._data[key][user][items[1]][items[0]] = (permanent, time, answer, value)
         self.call_write_hooks(key, value, user, item, item_secondary, time, previous_value, answer)
 
     def delete(self, key, user=None, item=None, item_secondary=None, symmetric=True):
@@ -351,18 +320,6 @@ class InMemoryEnvironment(CommonEnvironment):
     def last_answer_time_more_items(self, items, user=None):
         return self.time_more_items(self.NUMBER_OF_ANSWERS, items, user=user)
 
-    def rolling_success(self, user, window_size=10, context=None):
-        if context is not None:
-            raise Exception('Using context is not supported.')
-        if not self._audit_enabled:
-            raise Exception('Rolling success can not be retrieved, because audit is not enabled.')
-        audit = self.audit(self.LAST_CORRECTNESS, user=user, limit=window_size)
-        audit = [x_y[1] for x_y in audit]
-        if len(audit) < window_size:
-            return None
-        else:
-            return sum(audit) / float(len(audit))
-
     def confusing_factor(self, item, item_secondary, user=None):
         return self.read(self.CONFUSING_FACTOR, item=item, item_secondary=item_secondary, user=user, default=0)
 
@@ -378,26 +335,11 @@ class InMemoryEnvironment(CommonEnvironment):
                             permanent, time, answer, value = values[-1]
                             yield (key, user, item_primary, item_secondary, permanent, time, answer, value)
 
-    def export_audit(self):
-        if not self._audit_enabled:
-            raise Exception('Audit can not be exported, because it is not enabled.')
-        for key, users in self._data.items():
-            for user, primaries in users.items():
-                for item_primary, secondaries in primaries.items():
-                    for item_secondary, values in secondaries.items():
-                        for permanent, time, answer, value in values:
-                            if not permanent:
-                                yield (key, user, item_primary, item_secondary, time, answer, value)
-
     def _get(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         items = [item_secondary, item]
         if symmetric and item is not None and item_secondary is not None:
             items.sort()
-        found = self._data[key][user][items[1]][items[0]]
-        if found:
-            return found[-1]
-        else:
-            return None
+        return self._data[key][user][items[1]].get(items[0])
 
 
 ################################################################################
@@ -470,21 +412,6 @@ class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
             },
         ], test_hook.events)
 
-    def test_permanent(self):
-        items = [self.generate_item() for i in range(3)]
-        env = self.generate_environment()
-        env.write('key', items[0])
-        with self.assertRaises(Exception):
-            env.delete('key')
-        with self.assertRaises(Exception):
-            env.write('key', 1, permament=True)
-        env.write('key_permanent', 1, permanent=True)
-        env.write('key_permanent', 2, permanent=True)
-        self.assertEqual([], env.audit('key_permanent'))
-        self.assertEqual(2, env.read('key_permanent'))
-        env.delete('key_permanent')
-        self.assertEqual([], env.audit('key_permanent'))
-
     def test_write_and_read(self):
         env = self.generate_environment()
         user = self.generate_user()
@@ -506,17 +433,17 @@ class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
     def test_read_more_items(self):
         env = self.generate_environment()
         item = self.generate_item()
-        items = [self.generate_item() for i in range(10)]
+        items = [self.generate_item() for i in range(5)]
         user = self.generate_user()
-        for i, v in zip(items, list(range(10))):
+        for i, v in zip(items, list(range(5))):
             env.write('key', v, item=i)
-        for i, v in zip(items, list(range(10, 20))):
+        for i, v in zip(items, list(range(5, 10))):
             env.write('key', v, user=user, item=i)
-        for i, v in zip(items, list(range(20, 30))):
+        for i, v in zip(items, list(range(10, 15))):
             env.write('key', v, user=user, item=item, item_secondary=i)
         self.assertDictEqual({i: v for v, i in enumerate(items)}, env.read_more_items('key', items))
-        self.assertDictEqual({i: v + 10 for v, i in enumerate(items)}, env.read_more_items('key', items, user=user))
-        self.assertDictEqual({i: v + 20 for v, i in enumerate(items)}, env.read_more_items('key', items=items, user=user, item=item))
+        self.assertDictEqual({i: v + 5 for v, i in enumerate(items)}, env.read_more_items('key', items, user=user))
+        self.assertDictEqual({i: v + 10 for v, i in enumerate(items)}, env.read_more_items('key', items=items, user=user, item=item))
 
     def test_read_more_keys(self):
         env = self.generate_environment()
@@ -549,16 +476,6 @@ class TestEnvironment(unittest.TestCase, metaclass=abc.ABCMeta):
         self.assertEqual(9 * 3 + 2, len(env.read_all_with_key('k1')))
         self.assertEqual(9 * 3 + 2, len(env.read_all_with_key('k2')))
 
-    def test_audit(self):
-        env = self.generate_environment()
-        for value in range(100):
-            env.write('key', value)
-        expected = list(map(float, list(range(100))))
-        expected.reverse()
-        found = list(list(zip(*env.audit('key')))[1])
-        self.assertEqual(expected, found)
-        found = list(list(zip(*env.audit('key', limit=10)))[1])
-        self.assertEqual(expected[:10], found)
 
 
 class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
@@ -566,7 +483,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
     def test_time(self):
         env = self.generate_environment()
         users = [self.generate_user() for i in range(2)]
-        items = [self.generate_item() for i in range(10)]
+        items = [self.generate_item() for i in range(5)]
         self.assertIsNone(env.time('key'))
         self.assertIsNone(env.time('key', user=users[0]))
         self.assertIsNone(env.time('key', user=users[0], item=items[0]))
@@ -594,7 +511,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         env = self.generate_environment()
         user_1 = self.generate_user()
         user_2 = self.generate_user()
-        items = [self.generate_item() for i in range(10)]
+        items = [self.generate_item() for i in range(5)]
         self.assertEqual(env.number_of_answers(), 0)
         self.assertEqual(env.number_of_answers(user=user_1), 0)
         self.assertEqual(env.number_of_answers(user=user_1, item=items[0]), 0)
@@ -603,8 +520,8 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         for u in [user_1, user_2]:
             for i in items:
                 env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
-        self.assertEqual(env.number_of_answers(), 20)
-        self.assertEqual(env.number_of_answers(user=user_1), 10)
+        self.assertEqual(env.number_of_answers(), 10)
+        self.assertEqual(env.number_of_answers(user=user_1), 5)
         self.assertEqual(env.number_of_answers(user=user_1, item=items[0]), 1)
         self.assertEqual(env.number_of_answers(item=items[0]), 2)
         self.assertEqual(env.number_of_answers_more_items(items), {i: 2 for i in items})
@@ -613,7 +530,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         env = self.generate_environment()
         user_1 = self.generate_user()
         user_2 = self.generate_user()
-        items = [self.generate_item() for i in range(10)]
+        items = [self.generate_item() for i in range(5)]
         self.assertEqual(env.number_of_correct_answers(), 0)
         self.assertEqual(env.number_of_correct_answers(user=user_1), 0)
         self.assertEqual(env.number_of_correct_answers(user=user_1, item=items[0]), 0)
@@ -621,10 +538,10 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.number_of_first_answers_more_items(items), {i: 0 for i in items})
         for u in [user_1, user_2]:
             for i in items:
-                for j in range(10):
+                for j in range(5):
                     env.process_answer(u, i, i, i if j < 5 else i + 1, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
-        self.assertEqual(env.number_of_correct_answers(), 100)
-        self.assertEqual(env.number_of_correct_answers(user=user_1), 50)
+        self.assertEqual(env.number_of_correct_answers(), 50)
+        self.assertEqual(env.number_of_correct_answers(user=user_1), 25)
         self.assertEqual(env.number_of_correct_answers(user=user_1, item=items[0]), 5)
         self.assertEqual(env.number_of_correct_answers(item=items[0]), 10)
         self.assertEqual(env.number_of_correct_answers_more_items(items), {i: 10 for i in items})
@@ -633,7 +550,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         env = self.generate_environment()
         user_1 = self.generate_user()
         user_2 = self.generate_user()
-        items = [self.generate_item() for i in range(10)]
+        items = [self.generate_item() for i in range(5)]
         self.assertEqual(env.number_of_first_answers(), 0)
         self.assertEqual(env.number_of_first_answers(user=user_1), 0)
         self.assertFalse(env.has_answer(user=user_1))
@@ -644,10 +561,10 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.number_of_first_answers_more_items(items), {i: 0 for i in items})
         for u in [user_1, user_2]:
             for i in items:
-                for j in range(10):
+                for j in range(5):
                     env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
-        self.assertEqual(env.number_of_first_answers(), 20)
-        self.assertEqual(env.number_of_first_answers(user=user_1), 10)
+        self.assertEqual(env.number_of_first_answers(), 10)
+        self.assertEqual(env.number_of_first_answers(user=user_1), 5)
         self.assertTrue(env.has_answer(user=user_1))
         self.assertEqual(env.number_of_first_answers(user=user_1, item=items[0]), 1)
         self.assertTrue(env.has_answer(user=user_1, item=items[0]))
@@ -671,7 +588,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         env = self.generate_environment()
         user_1 = self.generate_user()
         user_2 = self.generate_user()
-        items = [self.generate_item() for i in range(10)]
+        items = [self.generate_item() for i in range(5)]
         self.assertIsNone(env.last_answer_time())
         self.assertIsNone(env.last_answer_time(user=user_1))
         self.assertIsNone(env.last_answer_time(user=user_1, item=items[0]))
@@ -679,7 +596,7 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertEqual(env.last_answer_time_more_items(items), {i: None for i in items})
         for u in [user_1, user_2]:
             for i in items:
-                for j in range(10):
+                for j in range(5):
                     env.process_answer(u, i, i, i, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
         self.assertIsNotNone(env.number_of_first_answers())
         self.assertIsNotNone(env.number_of_first_answers(user=user_1))
@@ -687,27 +604,11 @@ class TestCommonEnvironment(TestEnvironment, metaclass=abc.ABCMeta):
         self.assertIsNotNone(env.number_of_first_answers(item=items[0]))
         self.assertNotEqual(env.number_of_first_answers_more_items(items), {i: None for i in items})
 
-    def test_rolling_success(self):
-        env = self.generate_environment()
-        user_1 = self.generate_user()
-        user_2 = self.generate_user()
-        items = [self.generate_item() for i in range(10)]
-        self.assertIsNone(env.rolling_success(user_1))
-        self.assertIsNone(env.rolling_success(user_2))
-        diff = 0
-        for u in [user_1, user_2]:
-            for i in items:
-                for j in range(10):
-                    env.process_answer(u, i, i, i + diff, datetime.datetime.now(), self.generate_answer_id(), 1000, 0)
-            diff += 1
-        self.assertEqual(env.rolling_success(user_1), 1.0)
-        self.assertEqual(env.rolling_success(user_2), 0.0)
-
     def test_confusing_factor(self):
         env = self.generate_environment()
         user_1 = self.generate_user()
         user_2 = self.generate_user()
-        items = [self.generate_item() for i in range(10)]
+        items = [self.generate_item() for i in range(5)]
         self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1]), 0)
         self.assertEqual(env.confusing_factor(item=items[0], item_secondary=items[1], user=user_1), 0)
         for i in items:

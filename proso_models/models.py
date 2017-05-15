@@ -335,7 +335,7 @@ class LonelyItems(IntegrityCheck):
 
     def check(self):
         referenced = set()
-        for _, django_field in Item.objects.get_reference_fields(exclude_models=[Audit, Variable]):
+        for _, django_field in Item.objects.get_reference_fields(exclude_models=[Variable]):
             db_column = django_field.get_attname_column()[1]
             db_table = django_field.model._meta.db_table
             with closing(connection.cursor()) as cursor:
@@ -353,177 +353,6 @@ class LonelyItems(IntegrityCheck):
                     'message': 'There are some not referenced items.',
                     'items': lonely_items,
                 }
-
-
-class ExclusiveEnvironmentUpdates(IntegrityCheck):
-
-    def __init__(self, size=1000000):
-        self._size = size
-
-    def check(self):
-        with closing(connection.cursor()) as cursor:
-            cursor.execute('SELECT COUNT(*) FROM proso_models_answer')
-            rows = cursor.fetchone()[0]
-            cursor.execute(
-                '''
-                SELECT setseed(%s);
-                SELECT answer_id, key, info_id
-                FROM proso_models_audit as audit
-                INNER JOIN (SELECT id FROM proso_models_answer OFFSET floor(random() * %s) LIMIT %s) AS selected
-                    ON audit.answer_id = selected.id
-                GROUP BY 1, 2, 3
-                HAVING COUNT(*) > 1;
-                ''', [1.0 / self.get_seed(), max(0, rows - self._size), min(self._size, rows)])
-            found = [{
-                'answer_id': answer_id,
-                'key': key,
-                'info_id': info_id
-            } for answer_id, key, info_id in cursor.fetchall()]
-            if len(found) == 0:
-                return None
-            else:
-                return {
-                    'message': 'There are multiple updates of the same variable for one answer.',
-                    'incidents': found,
-                }
-
-
-class EnvironmentItemUpdateDirection(IntegrityCheck):
-
-    def __init__(self, key, correct_increases=True, size=100):
-        self._key = key
-        self._correct_increases = correct_increases
-        self._size = size
-
-    def check(self):
-        with closing(connection.cursor()) as cursor:
-            cursor.execute(
-                '''
-                SELECT setseed(%s);
-                SELECT
-                    audit.id,
-                    audit.item_primary_id,
-                    audit.value,
-                    answer.item_asked_id = answer.item_answered_id AS correct
-                FROM proso_models_audit AS audit
-                INNER JOIN (SELECT * FROM (SELECT DISTINCT(item_id) FROM proso_models_answer) AS d_items ORDER BY random() LIMIT %s) AS selected
-                    ON audit.item_primary_id = selected.item_id
-                INNER JOIN proso_models_answer AS answer
-                    ON audit.answer_id = answer.id
-                INNER JOIN proso_models_environmentinfo AS info
-                    ON info_id = info.id
-                WHERE info.status = 3 AND key = %s
-                ORDER BY item_primary_id, id
-                ''', [1.0 / self.get_seed(), self._size, self._key])
-            incidents = []
-            previous_value = None
-            previous_id = None
-            previous_item = None
-            for audit_id, item_id, value, correct in cursor:
-                if item_id != previous_item:
-                    previous_value = None
-                    previous_id = None
-                if previous_value is not None:
-                    if self._correct_increases:
-                        if correct and previous_value > value:
-                            incidents.append(previous_id, audit_id, previous_value, value)
-                        elif not correct and previous_value < value:
-                            incidents.append(previous_id, audit_id, previous_value, value)
-                    else:
-                        if correct and previous_value < value:
-                            incidents.append(previous_id, audit_id, previous_value, value)
-                        elif not correct and previous_value > value:
-                            incidents.append(previous_id, audit_id, previous_value, value)
-                previous_id = audit_id
-                previous_item = item_id
-                previous_value = value
-            if len(incidents) == 0:
-                return None
-            else:
-                return {
-                    'message': 'There are wrong item updates for key {}'.format(self._key),
-                    'incidents': [{
-                        'audit_id_previous': p_id,
-                        'audit_id_current': c_id,
-                        'audit_value_previous': p_value,
-                        'audit_value_current': c_value,
-                    } for p_id, c_id, p_value, c_value in incidents],
-                }
-
-
-class EnvironmentUserUpdateDirection(IntegrityCheck):
-
-    def __init__(self, key, correct_increases=True, size=1000):
-        self._key = key
-        self._correct_increases = correct_increases
-        self._size = size
-
-    def check(self):
-        with closing(connection.cursor()) as cursor:
-            cursor.execute(
-                '''
-                SELECT setseed(%s);
-                SELECT
-                    audit.id,
-                    audit.item_primary_id,
-                    audit.value,
-                    answer.item_asked_id = answer.item_answered_id AS correct
-                FROM proso_models_audit AS audit
-                INNER JOIN (SELECT id FROM auth_user ORDER BY random() LIMIT %s) AS selected
-                    ON audit.user_id = selected.id
-                INNER JOIN proso_models_answer AS answer
-                    ON audit.answer_id = answer.id
-                INNER JOIN proso_models_environmentinfo AS info
-                    ON info_id = info.id
-                WHERE info.status = 3 AND key = %s
-                ORDER BY user_id, id
-                ''', [1.0 / self.get_seed(), self._size, self._key])
-            incidents = []
-            previous_value = None
-            previous_id = None
-            previous_user = None
-            for audit_id, user_id, value, correct in cursor:
-                if user_id != previous_user:
-                    previous_value = None
-                    previous_id = None
-                if previous_value is not None:
-                    if self._correct_increases:
-                        if correct and previous_value > value:
-                            incidents.append(previous_id, audit_id, previous_value, value)
-                        elif not correct and previous_value < value:
-                            incidents.append(previous_id, audit_id, previous_value, value)
-                    else:
-                        if correct and previous_value < value:
-                            incidents.append(previous_id, audit_id, previous_value, value)
-                        elif not correct and previous_value > value:
-                            incidents.append(previous_id, audit_id, previous_value, value)
-                previous_id = audit_id
-                previous_user = user_id
-                previous_value = value
-            if len(incidents) == 0:
-                return None
-            else:
-                return {
-                    'message': 'There are wrong user updates for key {}'.format(self._key),
-                    'incidents': [{
-                        'audit_id_previous': p_id,
-                        'audit_id_current': c_id,
-                        'audit_value_previous': p_value,
-                        'audit_value_current': c_value,
-                    } for p_id, c_id, p_value, c_value in incidents],
-                }
-
-
-class DifficultyUpdates(EnvironmentItemUpdateDirection):
-
-    def __init__(self):
-        EnvironmentItemUpdateDirection.__init__(self, key='difficulty', correct_increases=False)
-
-
-class PriorSkillUpdates(EnvironmentItemUpdateDirection):
-
-    def __init__(self):
-        EnvironmentItemUpdateDirection.__init__(self, key='prior_skill')
 
 
 ################################################################################
@@ -585,7 +414,7 @@ class ItemTypeManager(models.Manager):
     def find_object_types(self, with_answers=True):
         result = []
         langs = {}
-        for django_model, django_field in Item.objects.get_reference_fields(exclude_models=[Answer, Audit, Variable, ItemRelation]):
+        for django_model, django_field in Item.objects.get_reference_fields(exclude_models=[Answer, Variable, ItemRelation]):
             db_column = django_field.get_attname_column()[1]
             db_table = django_field.model._meta.db_table
             model = _model_class_name(django_model)
@@ -1454,7 +1283,6 @@ class Variable(models.Model):
     permanent = models.BooleanField(default=False)
     key = models.CharField(max_length=50)
     value = models.FloatField()
-    audit = models.BooleanField(default=True)
     updated = models.DateTimeField(default=datetime.now)
     info = models.ForeignKey(EnvironmentInfo, null=True, blank=True, default=None)
     answer = models.ForeignKey(Answer, null=True, blank=True, default=None)
@@ -1480,28 +1308,6 @@ class Variable(models.Model):
             ['info', 'key', 'user', 'item_primary', 'item_secondary']
         ]
 
-
-class Audit(models.Model):
-    user = models.ForeignKey(User, null=True, blank=True, default=None)
-    item_primary = models.ForeignKey(
-        Item,
-        null=True,
-        blank=True,
-        default=None,
-        related_name='item_primary_audits')
-    item_secondary = models.ForeignKey(
-        Item,
-        null=True,
-        blank=True,
-        default=None,
-        related_name='item_secondary_audits')
-    key = models.CharField(max_length=50)
-    value = models.FloatField()
-    time = models.DateTimeField(default=datetime.now)
-    info = models.ForeignKey(EnvironmentInfo, null=True, blank=True, default=None)
-    answer = models.ForeignKey(Answer, null=True, blank=True, default=None)
-
-    class Meta:
         app_label = 'proso_models'
         index_together = [
             ['info', 'key'],
@@ -1626,7 +1432,6 @@ def update_predictive_model(sender, instance, **kwargs):
     # We want to make the prediction before the answer is saved,
     # but we need answer id to track it.
     environment.shift_answers(instance.pk)
-    environment.avoid_audit(True)
     predictive_model = get_predictive_model()
     predictive_model.predict_and_update(
         environment,
@@ -1639,22 +1444,6 @@ def update_predictive_model(sender, instance, **kwargs):
         item_asked=instance.item_asked_id,
         response_time=instance.response_time,
     )
-
-
-@receiver(post_save, sender=Variable)
-@disable_for_loaddata
-def log_audit(sender, instance, **kwargs):
-    if instance.audit:
-        audit = Audit(
-            user_id=instance.user_id,
-            item_primary=instance.item_primary,
-            item_secondary=instance.item_secondary,
-            key=instance.key,
-            value=instance.value,
-            time=instance.updated,
-            info_id=instance.info_id,
-            answer=instance.answer)
-        audit.save()
 
 
 @receiver(pre_save, sender=ItemRelation)
@@ -1725,4 +1514,4 @@ PROSO_CUSTOM_EXPORT = {
     WHERE key IN ('child', 'parent')
     ''',
 }
-PROSO_INTEGRITY_CHECKS = [LonelyItems, ExclusiveEnvironmentUpdates]
+PROSO_INTEGRITY_CHECKS = [LonelyItems]

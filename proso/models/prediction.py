@@ -477,7 +477,7 @@ class PFAEStaircase(PredictiveModel):
                 updates = data['parent_updates'][parent]
                 environment.write(
                     'difficulty', data['difficulties'][parent] - alpha_fun(updates) * diff,
-                    item=parent, time=time, answer=answer_id, audit=False)
+                    item=parent, time=time, answer=answer_id)
                 environment.update('number_of_difficulty_updates', 0, lambda x: x + 1, item=parent)
 
         else:

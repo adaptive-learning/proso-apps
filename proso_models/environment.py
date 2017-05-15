@@ -82,7 +82,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
                 found.append((k[1], k[2], k[3], v[1]))
         return found + InMemoryEnvironment.read_all_with_key(self, key)
 
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, symmetric=True, permanent=False, answer=None):
         prefetched_key = self._prefetched_key(key, user, item, item_secondary, symmetric)
         prefetched = self._prefetched.get(prefetched_key)
         if prefetched is not None:
@@ -90,7 +90,7 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
             del self._prefetched[prefetched_key]
         InMemoryEnvironment.write(
             self, key, value, user=user, item=item,
-            item_secondary=item_secondary, time=time, audit=audit,
+            item_secondary=item_secondary, time=time,
             symmetric=symmetric, permanent=permanent, answer=answer
         )
 
@@ -105,38 +105,23 @@ class InMemoryDatabaseFlushEnvironment(InMemoryEnvironment):
             )
 
     def flush(self, clean):
-        filename_audit = os.path.join(settings.DATA_DIR, 'environment_flush_audit.csv')
         filename_variable = os.path.join(settings.DATA_DIR, 'environment_flush_variable.csv')
-        with open(filename_audit, 'w') as file_audit:
-            for (key, u, i_p, i_s, t, a, v) in self.export_audit():
-                if key in self.DROP_KEYS:
-                    continue
-                file_audit.write(
-                    '%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, t.strftime('%Y-%m-%d %H:%M:%S'), a, v, self._info_id))
         with open(filename_variable, 'w') as file_variable:
             for (key, u, i_p, i_s, p, t, a, v) in self.export_values():
                 file_variable.write(
-                    '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, 0, t, a, p, self._info_id))
+                    '%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % (key, u, i_p, i_s, v, t, a, p, self._info_id))
         with transaction.atomic():
             with closing(connection.cursor()) as cursor:
                 cursor.execute('SET CONSTRAINTS ALL DEFERRED')
                 if self._to_delete:
                     cursor.execute('DELETE FROM proso_models_variable WHERE id IN (' + ','.join(map(str, self._to_delete)) + ')')
-                with open(filename_audit, 'r') as file_audit:
-                    cursor.copy_from(
-                        file_audit,
-                        'proso_models_audit',
-                        sep=',',
-                        null='None',
-                        columns=['key', 'user_id', 'item_primary_id', 'item_secondary_id', 'time', 'answer_id', 'value', 'info_id']
-                    )
                 with open(filename_variable, 'r') as file_variable:
                     cursor.copy_from(
                         file_variable,
                         'proso_models_variable',
                         sep=',',
                         null='None',
-                        columns=['key', 'user_id', 'item_primary_id', 'item_secondary_id', 'value', 'audit', 'updated', 'answer_id', 'permanent', 'info_id']
+                        columns=['key', 'user_id', 'item_primary_id', 'item_secondary_id', 'value', 'updated', 'answer_id', 'permanent', 'info_id']
                     )
                 if clean:
                     cursor.execute('DELETE FROM proso_models_variable WHERE key IN (' + ','.join(['%s' for k in self.DROP_KEYS]) + ') AND info_id = %s', self.DROP_KEYS + [self._info_id])
@@ -155,9 +140,7 @@ class DatabaseEnvironment(CommonEnvironment):
 
     def __init__(self, info_id=None):
         CommonEnvironment.__init__(self)
-        self._time = None
         self._before_answer = None
-        self._avoid_audit = False
         self._info_id = info_id
 
     def process_answer(self, user, item, asked, answered, time, answer_id, response_time, guess, **kwargs):
@@ -171,20 +154,10 @@ class DatabaseEnvironment(CommonEnvironment):
             guess=guess)
         answer.save()
 
-    def audit(self, key, user=None, item=None, item_secondary=None, limit=100000, symmetric=True):
-        with closing(connection.cursor()) as cursor:
-            where, where_params = self._where_single(key, user, item, item_secondary, symmetric)
-            cursor.execute(
-                'SELECT time, value FROM proso_models_audit WHERE '
-                + where +
-                ' ORDER BY time DESC LIMIT %s',
-                where_params + [limit])
-            return [(self._ensure_is_datetime(t), v) for t, v in cursor.fetchall()]
-
     def get_items_with_values(self, key, item, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_single(
-                key, user, item, None, force_null=False, symmetric=False, time_shift=False)
+                key, user, item, None, force_null=False, symmetric=False)
             cursor.execute(
                 '''
                 SELECT
@@ -200,7 +173,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def get_items_with_values_more_items(self, key, items, user=None):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(
-                key, items, user, None, force_null=['user_id'], symmetric=False, time_shift=False)
+                key, items, user, None, force_null=['user_id'], symmetric=False)
             cursor.execute(
                 '''
                 SELECT
@@ -219,36 +192,20 @@ class DatabaseEnvironment(CommonEnvironment):
     def read(self, key, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_single(key, user, item, item_secondary, symmetric=symmetric)
-            if (self._time is None and self._before_answer is None) or self._avoid_audit:
-                cursor.execute(
-                    'SELECT value FROM proso_models_variable WHERE ' + where,
-                    where_params)
-                fetched = cursor.fetchone()
-                return default if fetched is None else fetched[0]
-            else:
-                audit = self.audit(key, user, item, item_secondary, limit=1)
-                if len(audit) == 0:
-                    return default
-                else:
-                    return audit[0][1]
+            cursor.execute(
+                'SELECT value FROM proso_models_variable WHERE ' + where,
+                where_params)
+            fetched = cursor.fetchone()
+            return default if fetched is None else fetched[0]
 
     @timeit()
     def read_more_items(self, key, items, user=None, item=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(key, items, user, item, symmetric=symmetric)
-            if (self._time is None and self._before_answer is None) or self._avoid_audit:
-                cursor.execute(
-                    'SELECT item_primary_id, item_secondary_id, value FROM proso_models_variable WHERE '
-                    + where,
-                    where_params)
-            else:
-                cursor.execute(
-                    '''SELECT DISTINCT ON
-                        (key, item_primary_id, item_secondary_id, user_id)
-                        item_primary_id, item_secondary_id, value FROM proso_models_audit WHERE
-                    ''' + where +
-                    ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time DESC',
-                    where_params)
+            cursor.execute(
+                'SELECT item_primary_id, item_secondary_id, value FROM proso_models_variable WHERE '
+                + where,
+                where_params)
             result = {i: default for i in items}
             if item is None:
                 result.update({x_y_z[0]: x_y_z[2] for x_y_z in cursor})
@@ -260,19 +217,10 @@ class DatabaseEnvironment(CommonEnvironment):
     def read_more_keys(self, keys, user=None, item=None, item_secondary=None, default=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_single(keys, user, item, item_secondary, symmetric=symmetric)
-            if (self._time is None and self._before_answer is None) or self._avoid_audit:
-                cursor.execute(
-                    'SELECT key, value FROM proso_models_variable WHERE '
-                    + where,
-                    where_params)
-            else:
-                cursor.execute(
-                    '''SELECT DISTINCT ON
-                        (key, item_primary_id, item_secondary_id, user_id)
-                        key, value FROM proso_models_audit WHERE
-                    ''' + where +
-                    ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time DESC',
-                    where_params)
+            cursor.execute(
+                'SELECT key, value FROM proso_models_variable WHERE '
+                + where,
+                where_params)
             result = {i: default for i in keys}
             for k, v in cursor:
                 result[k] = v
@@ -282,54 +230,29 @@ class DatabaseEnvironment(CommonEnvironment):
     def read_all_with_key(self, key):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where({'key': key})
-            if (self._time is None and self._before_answer is None) or self._avoid_audit:
-                cursor.execute(
-                    'SELECT user_id, item_primary_id, item_secondary_id, value FROM proso_models_variable WHERE '
-                    + where,
-                    where_params)
-            else:
-                cursor.execute(
-                    '''SELECT DISTINCT ON
-                        (key, item_primary_id, item_secondary_id, user_id)
-                        user_id, item_primary_id, item_secondary_id, value FROM proso_models_audit WHERE
-                    ''' + where +
-                    ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time DESC',
-                    where_params)
+            cursor.execute(
+                'SELECT user_id, item_primary_id, item_secondary_id, value FROM proso_models_variable WHERE '
+                + where,
+                where_params)
             return cursor.fetchall()
 
     def time(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_single(key, user, item, item_secondary, symmetric=symmetric)
-            if self._time is None:
-                cursor.execute(
-                    'SELECT updated FROM proso_models_variable WHERE ' + where,
-                    where_params)
-                fetched = cursor.fetchone()
-                return None if fetched is None else self._ensure_is_datetime(fetched[0])
-            else:
-                audit = self.audit(key, user, item, item_secondary, limit=1)
-                if len(audit) == 0:
-                    return None
-                else:
-                    return self._ensure_is_datetime(audit[0][0])
+            cursor.execute(
+                'SELECT updated FROM proso_models_variable WHERE ' + where,
+                where_params)
+            fetched = cursor.fetchone()
+            return None if fetched is None else self._ensure_is_datetime(fetched[0])
 
     @timeit()
     def time_more_items(self, key, items, user=None, item=None, symmetric=True):
         with closing(connection.cursor()) as cursor:
             where, where_params = self._where_more_items(key, items, user, item, symmetric=symmetric)
-            if self._time is None:
-                cursor.execute(
-                    'SELECT item_primary_id, item_secondary_id, updated FROM proso_models_variable WHERE '
-                    + where,
-                    where_params)
-            else:
-                cursor.execute(
-                    '''SELECT DISTINCT ON
-                        (key, item_primary_id, item_secondary_id, user_id)
-                        item_primary_id, item_secondary_id, time FROM proso_models_audit WHERE
-                    ''' + where +
-                    ' ORDER BY key, item_primary_id, item_secondary_id, user_id, time',
-                    where_params)
+            cursor.execute(
+                'SELECT item_primary_id, item_secondary_id, updated FROM proso_models_variable WHERE '
+                + where,
+                where_params)
             result = {i: None for i in items}
             if item is None:
                 result.update({x_y_z2[0]: x_y_z2[2] for x_y_z2 in cursor})
@@ -337,9 +260,7 @@ class DatabaseEnvironment(CommonEnvironment):
                 result.update({x_y_z3[0]: x_y_z3[2] if x_y_z3[1] == item else (x_y_z3[1], x_y_z3[2]) for x_y_z3 in cursor})
             return result
 
-    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, audit=True, symmetric=True, permanent=False, answer=None):
-        if permanent:
-            audit = False
+    def write(self, key, value, user=None, item=None, item_secondary=None, time=None, symmetric=True, permanent=False, answer=None):
         if key is None:
             raise Exception('Key has to be specified')
         if value is None:
@@ -376,7 +297,6 @@ class DatabaseEnvironment(CommonEnvironment):
             return
         previous_value = variable.value
         variable.value = value
-        variable.audit = audit
         variable.permanent = permanent
         variable.answer_id = answer
         if not permanent:
@@ -531,14 +451,10 @@ class DatabaseEnvironment(CommonEnvironment):
                 result[i] = self._ensure_is_datetime(d)
             return result
 
-    def shift_time(self, new_time):
-        self._time = new_time
 
     def shift_answers(self, before_answer):
         self._before_answer = before_answer
 
-    def avoid_audit(self, avoid_audit):
-        self._avoid_audit = avoid_audit
 
     @timeit()
     def rolling_success(self, user, window_size=10, context=None):
@@ -616,10 +532,7 @@ class DatabaseEnvironment(CommonEnvironment):
     def export_values():
         pass
 
-    def export_audit():
-        pass
-
-    def _where_single(self, key, user=None, item=None, item_secondary=None, force_null=True, symmetric=True, time_shift=True, for_answers=False):
+    def _where_single(self, key, user=None, item=None, item_secondary=None, force_null=True, symmetric=True, for_answers=False):
         if key is None:
             raise Exception('Key has to be specified')
         items = [item_secondary, item]
@@ -629,9 +542,9 @@ class DatabaseEnvironment(CommonEnvironment):
             'user_id': user,
             'item_primary_id': items[1],
             'item_secondary_id': items[0],
-            'key': key}, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
+            'key': key}, force_null=force_null, for_answers=for_answers)
 
-    def _where_more_items(self, key, items, user=None, item=None, force_null=True, symmetric=True, time_shift=True, for_answers=False):
+    def _where_more_items(self, key, items, user=None, item=None, force_null=True, symmetric=True, for_answers=False):
         if key is None:
             raise Exception('Key has to be specified')
         cond_secondary = {
@@ -641,7 +554,7 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_secondary_id': item
         }
         if item is None or all([item <= x for x in items]) or not symmetric:
-            return self._where(cond_secondary, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
+            return self._where(cond_secondary, force_null=force_null, for_answers=for_answers)
         cond_primary = {
             'key': key,
             'user_id': user,
@@ -649,13 +562,13 @@ class DatabaseEnvironment(CommonEnvironment):
             'item_secondary_id': items
         }
         if all([item >= x for x in items]):
-            return self._where(cond_primary, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
+            return self._where(cond_primary, force_null=force_null, for_answers=for_answers)
         return self._where({
             'item is primary': cond_primary,
             'item is secondary': cond_secondary
-        }, force_null=force_null, time_shift=time_shift, for_answers=for_answers)
+        }, force_null=force_null, for_answers=for_answers)
 
-    def _where(self, condition, force_null=True, top_most=True, time_shift=True, for_answers=False, conjuction=True):
+    def _where(self, condition, force_null=True, top_most=True, for_answers=False, conjuction=True):
         if isinstance(condition, tuple):
             result_cond, result_params = self._column_comparison(
                 condition[0], condition[1], force_null=force_null)
@@ -671,16 +584,9 @@ class DatabaseEnvironment(CommonEnvironment):
         if top_most and not for_answers and self._info_id is not None:
             result_cond = ('(%s) AND (info_id = ? OR info_id IS NULL)' % result_cond)
             result_params = result_params + [self._info_id]
-        if top_most and self._time is not None and time_shift:
-            result_cond = ('(%s) AND time < ?' % result_cond)
-            result_params = result_params + [self._time.strftime('%Y-%m-%d %H:%M:%S')]
-        if top_most and self._before_answer:
-            if for_answers:
-                result_cond = ('(%s) AND id < ?' % result_cond)
-                result_params = result_params + [self._before_answer]
-            elif not self._avoid_audit:
-                result_cond = ('(%s) AND answer_id < ?' % result_cond)
-                result_params = result_params + [self._before_answer]
+        if top_most and self._before_answer and for_answers:
+            result_cond = ('(%s) AND id < ?' % result_cond)
+            result_params = result_params + [self._before_answer]
         result_cond = result_cond.replace('?', '%s')
         return result_cond, result_params
 

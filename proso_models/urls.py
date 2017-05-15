@@ -9,7 +9,6 @@ urlpatterns = patterns(
     url(r'^answer/$', 'answer', name='models_answer'),
     url(r'^answers/$', 'answers', name='models_answers'),
     url(r'^answers_per_month/$', 'answers_per_month', name='models_answers_per_month'),
-    url(r'^audit/(?P<key>[\w_]+)', 'audit', name='models_audit'),
     url(r'^learning_curve/', 'learning_curve', name='models_learning_curve'),
     url(r'^survival_answers/', 'survival_curve', {'metric': 'answers'}, name='models_survival_answers'),
     url(r'^survival_time/', 'survival_curve', {'metric': 'time'}, name='models_survival_time'),

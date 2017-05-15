@@ -112,7 +112,7 @@ class Command(BaseCommand):
 
     def handle_dry(self, options):
         info = self.load_environment_info(options['initial'], options['config_name'], True)
-        environment = InMemoryEnvironment(audit_enabled=False)
+        environment = InMemoryEnvironment()
         environment = self.load_environment(info)
         users, items = self.load_user_and_item_ids(info, options['batch_size'])
         items += list(set(flatten(Item.objects.get_reachable_parents(items).values())))
@@ -180,16 +180,13 @@ class Command(BaseCommand):
         with closing(connection.cursor()) as cursor:
             cursor.execute('DELETE FROM proso_models_variable WHERE info_id IN (%s)' % to_gc_str)
             variables = cursor.rowcount
-            cursor.execute('DELETE FROM proso_models_audit WHERE info_id IN (%s)' % to_gc_str)
-            audits = cursor.rowcount
             cursor.execute('DELETE FROM proso_models_environmentinfo WHERE id IN (%s)' % to_gc_str)
             infos = cursor.rowcount
             if is_on_postgresql():
                 timer('recompute_vacuum')
                 cursor.execute('VACUUM FULL ANALYZE VERBOSE proso_models_variable')
-                cursor.execute('VACUUM FULL ANALYZE VERBOSE proso_models_audit')
                 print(' -- vacuum phase, time:', timer('recompute_vacuum'), 'seconds')
-        print(' -- collecting garbage, time:', timer('recompute_gc'), 'seconds, deleted', variables, 'variables,', audits, 'audit records,', infos, 'environment info records')
+        print(' -- collecting garbage, time:', timer('recompute_gc'), 'seconds, deleted', variables, 'variables,', infos, 'environment info records')
 
     def handle_cancel(self, options):
         info = self.load_environment_info(False, options['config_name'], False)

@@ -527,41 +527,6 @@ def recommend_users(request):
 
 
 @allow_lazy_user
-def audit(request, key):
-    if 'user' in request.GET:
-        user = get_user_id(request)
-    else:
-        user = None
-    limit = 100
-    if request.user.is_staff:
-        limit = request.GET.get('limit', limit)
-    item_identifier = request.GET['item'] if 'item' in request.GET else None
-    item_secondary_identifier = request.GET['item_secondary'] if 'item_secondary' in request.GET else None
-    translated = Item.objects.translate_identifiers([i for i in [item_identifier, item_secondary_identifier] if i is not None], get_language(request))
-    item = translated.get(item_identifier)
-    item_secondary = translated.get(item_secondary_identifier)
-    time = get_time(request)
-    environment = get_environment()
-    if is_time_overridden(request):
-        environment.shift_time(time)
-    values = environment.audit(
-        key, user=user, item=item, item_secondary=item_secondary, limit=limit)
-
-    def _to_json_audit(audit):
-        (time, value) = audit
-        return {
-            'object_type': 'value',
-            'key': key,
-            'item_primary_id': item,
-            'item_secondary_id': item_secondary,
-            'user_id': user,
-            'value': value,
-            'time': time.strftime('%Y-%m-%d %H:%M:%S')
-        }
-    return render_json(request, list(map(_to_json_audit, values)), template='models_json.html')
-
-
-@allow_lazy_user
 def read(request, key):
     if 'user' in request.GET:
         user = get_user_id(request)
