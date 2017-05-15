@@ -74,24 +74,12 @@ TEMPLATE_CONTEXT_PROCESSORS = \
 
 TEMPLATE_DIRS = ()
 
-if TESTING:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'testproject.sqlite3')
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, ('test-' if TESTING else '') + 'testproject.sqlite3')
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': os.getenv('PROSO_DATABASE_ENGINE', 'django.db.backends.postgresql_psycopg2'),
-            'NAME': os.getenv('PROSO_DATABASE_NAME', 'proso_apps'),
-            'USER': os.getenv('PROSO_DATABASE_USER', 'proso_apps'),
-            'PASSWORD': os.getenv('PROSO_DATABASE_PASSWORD', 'proso_apps'),
-            'HOST': os.getenv('PROSO_DATABASE_HOST', 'localhost'),
-            'PORT': os.getenv('PROSO_DATABASE_PORT', None)
-        }
-    }
+}
 
 # Internationalization
 
