@@ -140,7 +140,7 @@ class DiscountCode(models.Model):
             if throw_exception:
                 raise BadRequestException('The given discount code has been already used by the given user.', 'discount_code_already_used')
             return False
-        if self.plan_id is not None and plan_description.plan_id != self.plan_id:
+        if self.plan_id is not None and plan_description is not None and plan_description.plan_id != self.plan_id:
             if throw_exception:
                 raise BadRequestException('The given discount code does not match with the given subscription plan.', 'discount_code_does_not_match')
             return False
