@@ -14,6 +14,8 @@ from geoip import geolite2
 from html2text import html2text
 from ipware.ip import get_ip
 from lazysignup.signals import converted
+from social_django.models import UserSocialAuth
+
 from proso.django.auth import is_user_lazy, convert_lazy_user, is_user_real, is_user_social, name_lazy_user
 from proso.django.models import disable_for_loaddata
 from proso.django.request import get_current_request
@@ -21,7 +23,6 @@ from proso.django.response import HttpError
 from proso.rand import random_string
 from proso_common.models import get_config
 from smtplib import SMTPException
-from social.apps.django_app.default.models import UserSocialAuth
 import copy
 import datetime
 import hashlib

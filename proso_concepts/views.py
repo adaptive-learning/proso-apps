@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from lazysignup.decorators import allow_lazy_user
-from social.apps.django_app.default.models import UserSocialAuth
+from social_django.models import UserSocialAuth
 
 import proso_common.views
 from proso.django.cache import cache_page_conditional

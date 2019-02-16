@@ -53,3 +53,8 @@ In case of final minor version (you have to be in `master` branch):
 In case of final micro version (you have to be in proper `master-*.X` branch):
 
 	make release-micro
+
+
+#### Migrate to python-social-auth
+
+https://github.com/omab/python-social-auth/blob/master/MIGRATING_TO_SOCIAL.md

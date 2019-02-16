@@ -2,7 +2,7 @@ from lazysignup.models import LazyUser
 from django.contrib.auth.models import User
 from lazysignup.signals import converted
 from django.template.defaultfilters import slugify
-from social.apps.django_app.default.models import UserSocialAuth
+from social_django.models import UserSocialAuth
 
 
 def is_username_present(username):

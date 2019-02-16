@@ -52,7 +52,7 @@ INSTALLED_APPS = (
     'proso_tasks',
     'proso_concepts',
     'proso_subscription',
-    'social.apps.django_app.default',
+    'social_django',
     'testproject.testapp',
 )
 
@@ -108,8 +108,8 @@ STATICFILES_FINDERS = (
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'lazysignup.backends.LazySignupBackend',
-    'social.backends.facebook.FacebookOAuth2',
-    'social.backends.google.GoogleOAuth2',
+    'social_core.backends.facebook.FacebookOAuth2',
+    'social_core.backends.google.GoogleOAuth2',
 )
 USER_STATS_API_KEY = {}
 
