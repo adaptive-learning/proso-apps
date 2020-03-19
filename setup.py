@@ -1,10 +1,20 @@
-from pip.req import parse_requirements
 from setuptools import setup
 import os
 import proso.release
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 VERSION = proso.release.VERSION
+
+
+def parse_requirements(filename):
+    """ load requirements from a pip requirements file """
+    lineiter = (line.strip() for line in open(filename))
+    return [
+        line
+        for line in lineiter
+        if line and not line.startswith("#") and not line.startswith('git+')
+    ]
+
 
 setup(
     name='proso-apps',
@@ -58,10 +68,7 @@ setup(
         'Sphinx>=1.3',
         'sphinxcontrib-napoleon>=0.5.0',
     ],
-    install_requires=[
-        str(r.req)
-        for r in parse_requirements(DIR + '/docs/requirements.txt', session=False)
-    ] + [
+    install_requires=parse_requirements(DIR + '/docs/requirements.txt') + [
         'ipython',
         'numpy',
     ],
