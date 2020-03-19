@@ -331,9 +331,8 @@ class InMemoryEnvironment(CommonEnvironment):
             for user, primaries in users.items():
                 for item_primary, secondaries in primaries.items():
                     for item_secondary, values in secondaries.items():
-                        if len(values) > 0:
-                            permanent, time, answer, value = values[-1]
-                            yield (key, user, item_primary, item_secondary, permanent, time, answer, value)
+                        permanent, time, answer, value = values
+                        yield (key, user, item_primary, item_secondary, permanent, time, answer, value)
 
     def _get(self, key, user=None, item=None, item_secondary=None, symmetric=True):
         items = [item_secondary, item]
